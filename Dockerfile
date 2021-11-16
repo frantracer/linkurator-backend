@@ -1,13 +1,11 @@
-FROM python:3.8-slim
+FROM python:3.8
 
-WORKDIR /app
+WORKDIR /src
 
-COPY requirements.txt .
+COPY ./ ./
 
-RUN pip install -r requirements.txt
+RUN make setup
 
-COPY ./src ./
+EXPOSE 9000
 
-EXPOSE 8080
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["make", "run"]

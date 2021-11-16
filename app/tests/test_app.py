@@ -1,12 +1,13 @@
 from typing import AsyncGenerator
+
+import pytest
 from httpx import AsyncClient
-from pytest import fixture
 from pytest import mark
-from main import app
+from server import app
 
 
-@fixture
-async def client() -> AsyncGenerator[AsyncClient, None]:
+@pytest.fixture(name="client")
+async def fixture_client() -> AsyncGenerator[AsyncClient, None]:
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
 
