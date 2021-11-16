@@ -8,8 +8,8 @@ jobs:
       - name: Install Docker
         uses: docker/setup-buildx-action@v1
       - name: Check linting
-        run: make check-linting
+        run: make docker-check-linting
       - name: Run tests
-        run: make test
+        run: make docker-test
       - name: Build Image
-        run: make build
+        run: make docker-build
