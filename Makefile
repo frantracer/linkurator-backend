@@ -1,5 +1,3 @@
-
-
 docker-build:
 	docker build -t linkurator-api .
 
@@ -15,8 +13,15 @@ docker-check-linting: docker-clean docker-build
 docker-test: docker-clean docker-build
 	docker run --name linkurator-api linkurator-api make test
 
+setup-dev-env:
+	sudo apt install python3.8-venv
+	pip3 install virtualenv
+	python3 -m venv env
+	echo "Enable:  source env/bin/activate"
+	echo "Disable: deactivate"
+
 setup:
-	pip install -r requirements.txt
+	pip3 install -r requirements.txt
 
 run:
 	cd app; uvicorn server:app --host 0.0.0.0 --port 9000
