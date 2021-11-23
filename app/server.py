@@ -64,11 +64,11 @@ async def get_all_subscriptions() -> Any:
     return []
 
 
-@app.get("/items",
+@app.get("/topics/{topic_id}/items",
          response_model=List[Item])
-async def items() -> Any:
+async def items_by_topic() -> Any:
     """
-    Get the items from all of the user subscriptions
+    Get the items from a topic
     """
     return []
 
