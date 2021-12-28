@@ -1,42 +1,71 @@
 """
 Main file of the application
 """
-import uuid
+from datetime import datetime
+from enum import Enum
+from uuid import UUID, uuid4
 from http import HTTPStatus
 from typing import List, Any
 from fastapi import FastAPI
 from pydantic import BaseModel, AnyUrl
+from pydantic.tools import parse_obj_as
 
 # Application initialisation
 app = FastAPI()
 
 
 # Output models
+class SubscriptionSource(str, Enum):
+    YOUTUBE = "youtube"
+    TWITTER = "twitter"
+
+
 class Subscription(BaseModel):
     """
     Information about the different channels the user is subscribed to
     """
-    id: uuid.UUID
+    uuid: UUID
+    source: SubscriptionSource
     name: str
+    url: AnyUrl
+    thumbnail: AnyUrl
+    last_update: datetime
+
+    def __init__(self, uuid: UUID, source: SubscriptionSource, name: str,
+                 url: AnyUrl, thumbnail: AnyUrl, last_update: datetime):
+        super().__init__(
+            uuid=uuid, source=source, name=name,
+            url=url, thumbnail=thumbnail, last_update=last_update
+        )
 
 
 class Item(BaseModel):
     """
     Content item that belongs to a subscription
     """
-    id: uuid.UUID
+    uuid: UUID
     name: str
     url: AnyUrl
-    subscription: Subscription
+    snippet: AnyUrl
+
+    def __init__(self, uuid: UUID, name: str, url: AnyUrl, snippet: AnyUrl):
+        super().__init__(
+            uuid=uuid, name=name, url=url, snippet=snippet
+        )
 
 
 class Topic(BaseModel):
     """
     Category that includes different subscriptions
     """
-    id: uuid.UUID
+    uuid: UUID
     name: str
-    subscriptions: List[Subscription]
+    subscriptions_ids: List[UUID]
+
+    def __init__(self, uuid: UUID, name: str, subscriptions_ids: List[UUID]):
+        super().__init__(
+            uuid=uuid, name=name, subscriptions_ids=subscriptions_ids
+        )
 
 
 class Message(BaseModel):
@@ -44,6 +73,9 @@ class Message(BaseModel):
     Message with information about the request
     """
     message: str
+
+    def __init__(self, message: str):
+        super().__init__(message=message)
 
 
 # Endpoints definition
@@ -61,7 +93,17 @@ async def get_all_subscriptions() -> Any:
     """
     Get the list of the user subscriptions
     """
-    return []
+    # Initialize dummy subscription
+    subscription = Subscription(
+        uuid=uuid4(),
+        source=SubscriptionSource.YOUTUBE,
+        name="Dummy",
+        url=parse_obj_as(AnyUrl, "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"),
+        thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
+        last_update=datetime.now()
+    )
+
+    return [subscription]
 
 
 @app.get("/topics/{topic_id}/items",
@@ -88,7 +130,11 @@ async def create_topic() -> Any:
     """
     Create a new topic for an user
     """
-    return Topic()
+    return Topic(
+        uuid=uuid4(),
+        name="Dummy",
+        subscriptions_ids=[]
+    )
 
 
 @app.delete("/topics/{topic_id}",
@@ -104,18 +150,26 @@ async def delete_topic() -> Any:
 @app.post("/topics/{topic_id}/subscriptions/{subscription_id}",
           response_model=Topic,
           responses={404: {"model": Message}})
-async def assign_subscription_to_topic(topic_id: uuid.UUID, subscription_id: uuid.UUID) -> Any:
+async def assign_subscription_to_topic(topic_id: UUID, subscription_id: UUID) -> Any:
     """
     Assign a subscription to a topic
     """
-    return Topic(id=topic_id, subscriptions=[Subscription(id=subscription_id)])
+    return Topic(
+        uuid=topic_id,
+        name="Dummy",
+        subscriptions_ids=[subscription_id]
+    )
 
 
 @app.delete("/topics/{topic_id}/subscriptions/{subscription_id}",
             response_model=Topic,
             responses={404: {"model": None}})
-async def remove_subscription_from_topic(topic_id: uuid.UUID, subscription_id: uuid.UUID) -> Any:
+async def remove_subscription_from_topic(topic_id: UUID, subscription_id: UUID) -> Any:
     """
     Remove subscription from topic
     """
-    return Topic(id=topic_id, subscriptions=[Subscription(id=subscription_id)])
+    return Topic(
+        uuid=topic_id,
+        name="Dummy",
+        subscriptions_ids=[subscription_id]
+    )

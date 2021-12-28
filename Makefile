@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 docker-build:
 	docker build -t linkurator-api .
 
@@ -13,29 +15,30 @@ docker-check-linting: docker-clean docker-build
 docker-test: docker-clean docker-build
 	docker run --name linkurator-api linkurator-api make test
 
-setup-dev-env:
-	sudo apt install python3.8-venv
+setup-venv:
+	sudo apt install -y python3.8-venv python3-pip
 	pip3 install virtualenv
-	python3 -m venv env
-	echo "Enable:  source env/bin/activate"
-	echo "Disable: deactivate"
+	python3 -m venv venv
 
-setup:
+activate-venv:
+	source venv/bin/activate
+
+setup: activate-venv
 	pip3 install -r requirements.txt
 
-run:
+run: activate-venv
 	cd app; uvicorn server:app --host 0.0.0.0 --port 9000
 
-dev-run:
+dev-run: activate-venv
 	cd app; uvicorn server:app --reload --host 0.0.0.0 --port 9000
 
 check-linting: mypy pylint
 
-mypy:
+mypy: activate-venv
 	mypy --strict app
 
-pylint:
+pylint: activate-venv
 	find app -name *.py | xargs pylint
 
-test:
+test: activate-venv
 	pytest -v ./app/tests
