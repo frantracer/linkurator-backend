@@ -15,6 +15,18 @@ app = FastAPI()
 
 
 # Output models
+class Topic(BaseModel):
+    """
+    Category that includes different subscriptions
+    """
+    uuid: UUID
+    name: str
+    subscriptions_ids: List[UUID]
+
+    def __init__(self, uuid: UUID, name: str, subscriptions_ids: List[UUID]):
+        super().__init__(uuid=uuid, name=name, subscriptions_ids=subscriptions_ids)
+
+
 class SubscriptionSource(str, Enum):
     YOUTUBE = "youtube"
     TWITTER = "twitter"
@@ -33,10 +45,8 @@ class Subscription(BaseModel):
 
     def __init__(self, uuid: UUID, source: SubscriptionSource, name: str,
                  url: AnyUrl, thumbnail: AnyUrl, last_update: datetime):
-        super().__init__(
-            uuid=uuid, source=source, name=name,
-            url=url, thumbnail=thumbnail, last_update=last_update
-        )
+        super().__init__(uuid=uuid, source=source, name=name,
+                         url=url, thumbnail=thumbnail, last_update=last_update)
 
 
 class Item(BaseModel):
@@ -46,26 +56,10 @@ class Item(BaseModel):
     uuid: UUID
     name: str
     url: AnyUrl
-    snippet: AnyUrl
+    thumbnail: AnyUrl
 
-    def __init__(self, uuid: UUID, name: str, url: AnyUrl, snippet: AnyUrl):
-        super().__init__(
-            uuid=uuid, name=name, url=url, snippet=snippet
-        )
-
-
-class Topic(BaseModel):
-    """
-    Category that includes different subscriptions
-    """
-    uuid: UUID
-    name: str
-    subscriptions_ids: List[UUID]
-
-    def __init__(self, uuid: UUID, name: str, subscriptions_ids: List[UUID]):
-        super().__init__(
-            uuid=uuid, name=name, subscriptions_ids=subscriptions_ids
-        )
+    def __init__(self, uuid: UUID, name: str, url: AnyUrl, thumbnail: AnyUrl):
+        super().__init__(uuid=uuid, name=name, url=url, thumbnail=thumbnail)
 
 
 class Message(BaseModel):
@@ -119,7 +113,7 @@ async def items_by_topic() -> Any:
          response_model=List[Topic])
 async def get_all_topics() -> Any:
     """
-    Get all the topics from an user
+    Get all the topics from a user
     """
     return []
 
