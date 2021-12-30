@@ -14,9 +14,9 @@ app = FastAPI()
 
 
 # Output models
-class Topic(BaseModel):
+class NewTopic(BaseModel):
     """
-    Category that includes different subscriptions
+    Input model for topic creation
     """
     uuid: UUID
     name: str
@@ -24,6 +24,21 @@ class Topic(BaseModel):
 
     def __init__(self, uuid: UUID, name: str, subscriptions_ids: List[UUID]):
         super().__init__(uuid=uuid, name=name, subscriptions_ids=subscriptions_ids)
+
+
+class Topic(BaseModel):
+    """
+    Category that includes different subscriptions
+    """
+    uuid: UUID
+    name: str
+    subscriptions_ids: List[UUID]
+    created_at: datetime
+
+    def __init__(self, uuid: UUID, name: str, subscriptions_ids: List[UUID],
+                 created_at: datetime):
+        super().__init__(uuid=uuid, name=name, subscriptions_ids=subscriptions_ids,
+                         created_at=created_at)
 
 
 class Subscription(BaseModel):
@@ -107,19 +122,39 @@ async def get_all_topics() -> Any:
     """
     Get all the topics from a user
     """
-    return []
+    return [Topic(
+        uuid=UUID("bc2e6ac4-3f23-40c5-84f6-d9f97172936f"),
+        name="Dummy Topic",
+        subscriptions_ids=[UUID("a9f8f8f8-3f23-40c5-84f6-d9f97172936f")],
+        created_at=datetime.now()
+    )]
+
+
+@app.get("/topics/{topic_id}",
+         response_model=Topic)
+async def get_topic(topic_id: UUID) -> Any:
+    """
+    Get a topic information from a user
+    """
+    return [Topic(
+        uuid=topic_id,
+        name="Dummy Topic",
+        subscriptions_ids=[UUID("ab81b97f-559d-4c87-9fd7-ef6db4b8b0de")],
+        created_at=datetime.now()
+    )]
 
 
 @app.post("/topics",
           response_model=Topic)
-async def create_topic() -> Any:
+async def create_topic(new_topic: NewTopic) -> Any:
     """
-    Create a new topic for an user
+    Create a new topic for a user
     """
     return Topic(
-        uuid=uuid4(),
-        name="Dummy",
-        subscriptions_ids=[]
+        uuid=new_topic.uuid,
+        name=new_topic.name,
+        subscriptions_ids=new_topic.subscriptions_ids,
+        created_at=datetime.now()
     )
 
 
@@ -143,7 +178,8 @@ async def assign_subscription_to_topic(topic_id: UUID, subscription_id: UUID) ->
     return Topic(
         uuid=topic_id,
         name="Dummy",
-        subscriptions_ids=[subscription_id]
+        subscriptions_ids=[subscription_id],
+        created_at=datetime.now()
     )
 
 
@@ -157,5 +193,6 @@ async def remove_subscription_from_topic(topic_id: UUID, subscription_id: UUID) 
     return Topic(
         uuid=topic_id,
         name="Dummy",
-        subscriptions_ids=[subscription_id]
+        subscriptions_ids=[subscription_id],
+        created_at=datetime.now()
     )
