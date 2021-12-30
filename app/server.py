@@ -2,7 +2,6 @@
 Main file of the application
 """
 from datetime import datetime
-from enum import Enum
 from uuid import UUID, uuid4
 from http import HTTPStatus
 from typing import List, Any
@@ -27,25 +26,19 @@ class Topic(BaseModel):
         super().__init__(uuid=uuid, name=name, subscriptions_ids=subscriptions_ids)
 
 
-class SubscriptionSource(str, Enum):
-    YOUTUBE = "youtube"
-    TWITTER = "twitter"
-
-
 class Subscription(BaseModel):
     """
     Information about the different channels the user is subscribed to
     """
     uuid: UUID
-    source: SubscriptionSource
     name: str
     url: AnyUrl
     thumbnail: AnyUrl
     last_update: datetime
 
-    def __init__(self, uuid: UUID, source: SubscriptionSource, name: str,
+    def __init__(self, uuid: UUID, name: str,
                  url: AnyUrl, thumbnail: AnyUrl, last_update: datetime):
-        super().__init__(uuid=uuid, source=source, name=name,
+        super().__init__(uuid=uuid, name=name,
                          url=url, thumbnail=thumbnail, last_update=last_update)
 
 
@@ -90,7 +83,6 @@ async def get_all_subscriptions() -> Any:
     # Initialize dummy subscription
     subscription = Subscription(
         uuid=uuid4(),
-        source=SubscriptionSource.YOUTUBE,
         name="Dummy",
         url=parse_obj_as(AnyUrl, "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"),
         thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
