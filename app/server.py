@@ -49,12 +49,13 @@ class Subscription(BaseModel):
     name: str
     url: AnyUrl
     thumbnail: AnyUrl
-    last_update: datetime
+    created_at: datetime
+    scanned_at: datetime
 
-    def __init__(self, uuid: UUID, name: str,
-                 url: AnyUrl, thumbnail: AnyUrl, last_update: datetime):
-        super().__init__(uuid=uuid, name=name,
-                         url=url, thumbnail=thumbnail, last_update=last_update)
+    def __init__(self, uuid: UUID, name: str, url: AnyUrl, thumbnail: AnyUrl,
+                 created_at: datetime, scanned_at: datetime):
+        super().__init__(uuid=uuid, name=name, url=url, thumbnail=thumbnail,
+                         created_at=created_at, scanned_at=scanned_at)
 
 
 class Item(BaseModel):
@@ -101,7 +102,8 @@ async def get_all_subscriptions() -> Any:
         name="Dummy",
         url=parse_obj_as(AnyUrl, "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"),
         thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
-        last_update=datetime.now()
+        created_at=datetime.now(),
+        scanned_at=datetime.now()
     )
 
     return [subscription]
