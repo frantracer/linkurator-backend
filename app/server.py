@@ -4,16 +4,39 @@ Main file of the application
 from datetime import datetime
 from uuid import UUID, uuid4
 from http import HTTPStatus
-from typing import List, Any
+from typing import List, Any, Generic, TypeVar, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel, AnyUrl
+from pydantic.generics import GenericModel
 from pydantic.tools import parse_obj_as
 
 # Application initialisation
 app = FastAPI()
 
+# Type definition
+Element = TypeVar("Element")
+
 
 # Output models
+class Page(GenericModel, Generic[Element]):
+    """
+    Page model
+    """
+    elements: List[Element]
+    next_page: Optional[AnyUrl]
+    previous_page: Optional[AnyUrl]
+    total_elements: int
+    page_size: int
+    page_number: int
+
+    def __init__(self, elements: List[Element], total_elements: int,
+                 page_number: int, page_size: int,
+                 previous_page: Optional[AnyUrl], next_page: Optional[AnyUrl]):
+        super().__init__(elements=elements, total_elements=total_elements,
+                         page_number=page_number, page_size=page_size,
+                         previous_page=previous_page, next_page=next_page)
+
+
 class NewTopic(BaseModel):
     """
     Input model for topic creation
@@ -91,7 +114,7 @@ async def health() -> None:
 
 
 @app.get("/subscriptions",
-         response_model=List[Subscription])
+         response_model=Page[Subscription])
 async def get_all_subscriptions() -> Any:
     """
     Get the list of the user subscriptions
@@ -106,30 +129,53 @@ async def get_all_subscriptions() -> Any:
         scanned_at=datetime.now()
     )
 
-    return [subscription]
+    return Page[Subscription](
+        elements=[subscription],
+        total_elements=1,
+        page_number=0,
+        page_size=50,
+        previous_page=None,
+        next_page=None
+    )
 
 
 @app.get("/topics/{topic_id}/items",
-         response_model=List[Item])
+         response_model=Page[Item])
 async def items_by_topic() -> Any:
     """
     Get the items from a topic
     """
-    return []
+    return Page[Item](
+        elements=[],
+        total_elements=0,
+        page_number=0,
+        page_size=50,
+        previous_page=None,
+        next_page=None
+    )
 
 
 @app.get("/topics",
-         response_model=List[Topic])
+         response_model=Page[Topic])
 async def get_all_topics() -> Any:
     """
     Get all the topics from a user
     """
-    return [Topic(
+    topic = Topic(
         uuid=UUID("bc2e6ac4-3f23-40c5-84f6-d9f97172936f"),
         name="Dummy Topic",
         subscriptions_ids=[UUID("a9f8f8f8-3f23-40c5-84f6-d9f97172936f")],
         created_at=datetime.now()
-    )]
+    )
+
+    return Page[Topic](
+        elements=[topic],
+        total_elements=1,
+        page_number=0,
+        page_size=50,
+        previous_page=None,
+        next_page=None
+    )
 
 
 @app.get("/topics/{topic_id}",
