@@ -86,13 +86,16 @@ class Item(BaseModel):
     Content item that belongs to a subscription
     """
     uuid: UUID
+    subscription_uuid: UUID
     name: str
     url: AnyUrl
     thumbnail: AnyUrl
     created_at: datetime
 
-    def __init__(self, uuid: UUID, name: str, url: AnyUrl, thumbnail: AnyUrl, created_at: datetime):
-        super().__init__(uuid=uuid, name=name, url=url, thumbnail=thumbnail, created_at=created_at)
+    def __init__(self, uuid: UUID, subscription_uuid: UUID, name: str, url: AnyUrl,
+                 thumbnail: AnyUrl, created_at: datetime):
+        super().__init__(uuid=uuid, subscription_uuid=subscription_uuid, name=name,
+                         url=url, thumbnail=thumbnail, created_at=created_at)
 
 
 class Message(BaseModel):
@@ -150,6 +153,7 @@ async def items_by_topic(page_number: NonNegativeInt = 0, page_size: PositiveInt
     """
     item = Item(
         uuid=UUID("b5badcd0-a187-427c-8583-962cecb002c9"),
+        subscription_uuid=UUID("310e66ed-df47-470b-b904-7389d2246a9b"),
         name="Dummy Item",
         url=parse_obj_as(AnyUrl, "https://www.youtube.com/watch?v=tntOCGkgt98"),
         thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
