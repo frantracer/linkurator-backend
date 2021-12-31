@@ -146,11 +146,14 @@ async def get_all_subscriptions(page_number: NonNegativeInt = 0, page_size: Posi
 
 @app.get("/topics/{topic_id}/items",
          response_model=Page[Item])
-async def items_by_topic(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
-                         created_before: datetime = datetime.now()) -> Any:
+async def items_by_topic(
+        topic_id: UUID, page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
+        created_before: datetime = datetime.now()) -> Any:
     """
     Get the items from a topic
     """
+    print(f"fetching items for topic {topic_id}")
+
     item = Item(
         uuid=UUID("b5badcd0-a187-427c-8583-962cecb002c9"),
         subscription_uuid=UUID("310e66ed-df47-470b-b904-7389d2246a9b"),
@@ -225,10 +228,11 @@ async def create_topic(new_topic: NewTopic) -> Any:
 @app.delete("/topics/{topic_id}",
             status_code=HTTPStatus.NO_CONTENT,
             responses={404: {"model": None}})
-async def delete_topic() -> Any:
+async def delete_topic(topic_id: UUID) -> Any:
     """
     Delete a topic
     """
+    print(f"deleting topic {topic_id}")
     return
 
 
