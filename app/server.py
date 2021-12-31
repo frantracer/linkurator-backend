@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from http import HTTPStatus
 from typing import List, Any, Generic, TypeVar, Optional
 from fastapi import FastAPI
-from pydantic import BaseModel, AnyUrl
+from pydantic import BaseModel, AnyUrl, NonNegativeInt, PositiveInt
 from pydantic.generics import GenericModel
 from pydantic.tools import parse_obj_as
 
@@ -89,9 +89,10 @@ class Item(BaseModel):
     name: str
     url: AnyUrl
     thumbnail: AnyUrl
+    created_at: datetime
 
-    def __init__(self, uuid: UUID, name: str, url: AnyUrl, thumbnail: AnyUrl):
-        super().__init__(uuid=uuid, name=name, url=url, thumbnail=thumbnail)
+    def __init__(self, uuid: UUID, name: str, url: AnyUrl, thumbnail: AnyUrl, created_at: datetime):
+        super().__init__(uuid=uuid, name=name, url=url, thumbnail=thumbnail, created_at=created_at)
 
 
 class Message(BaseModel):
@@ -115,7 +116,8 @@ async def health() -> None:
 
 @app.get("/subscriptions",
          response_model=Page[Subscription])
-async def get_all_subscriptions() -> Any:
+async def get_all_subscriptions(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
+                                created_before: datetime = datetime.now()) -> Any:
     """
     Get the list of the user subscriptions
     """
@@ -125,15 +127,15 @@ async def get_all_subscriptions() -> Any:
         name="Dummy",
         url=parse_obj_as(AnyUrl, "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"),
         thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
-        created_at=datetime.now(),
+        created_at=created_before,
         scanned_at=datetime.now()
     )
 
     return Page[Subscription](
         elements=[subscription],
         total_elements=1,
-        page_number=0,
-        page_size=50,
+        page_number=page_number,
+        page_size=page_size,
         previous_page=None,
         next_page=None
     )
@@ -141,15 +143,24 @@ async def get_all_subscriptions() -> Any:
 
 @app.get("/topics/{topic_id}/items",
          response_model=Page[Item])
-async def items_by_topic() -> Any:
+async def items_by_topic(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
+                         created_before: datetime = datetime.now()) -> Any:
     """
     Get the items from a topic
     """
+    item = Item(
+        uuid=UUID("b5badcd0-a187-427c-8583-962cecb002c9"),
+        name="Dummy Item",
+        url=parse_obj_as(AnyUrl, "https://www.youtube.com/watch?v=tntOCGkgt98"),
+        thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
+        created_at=created_before
+    )
+
     return Page[Item](
-        elements=[],
-        total_elements=0,
-        page_number=0,
-        page_size=50,
+        elements=[item],
+        total_elements=1,
+        page_number=page_number,
+        page_size=page_size,
         previous_page=None,
         next_page=None
     )
@@ -157,7 +168,8 @@ async def items_by_topic() -> Any:
 
 @app.get("/topics",
          response_model=Page[Topic])
-async def get_all_topics() -> Any:
+async def get_all_topics(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
+                         created_before: datetime = datetime.now()) -> Any:
     """
     Get all the topics from a user
     """
@@ -165,14 +177,14 @@ async def get_all_topics() -> Any:
         uuid=UUID("bc2e6ac4-3f23-40c5-84f6-d9f97172936f"),
         name="Dummy Topic",
         subscriptions_ids=[UUID("a9f8f8f8-3f23-40c5-84f6-d9f97172936f")],
-        created_at=datetime.now()
+        created_at=created_before
     )
 
     return Page[Topic](
         elements=[topic],
         total_elements=1,
-        page_number=0,
-        page_size=50,
+        page_number=page_number,
+        page_size=page_size,
         previous_page=None,
         next_page=None
     )
@@ -184,12 +196,12 @@ async def get_topic(topic_id: UUID) -> Any:
     """
     Get a topic information from a user
     """
-    return [Topic(
+    return Topic(
         uuid=topic_id,
         name="Dummy Topic",
         subscriptions_ids=[UUID("ab81b97f-559d-4c87-9fd7-ef6db4b8b0de")],
         created_at=datetime.now()
-    )]
+    )
 
 
 @app.post("/topics",
