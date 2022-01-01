@@ -10,9 +10,6 @@ from pydantic import BaseModel, AnyUrl, NonNegativeInt, PositiveInt
 from pydantic.generics import GenericModel
 from pydantic.tools import parse_obj_as
 
-# Application initialisation
-app = FastAPI()
-
 # Type definition
 Element = TypeVar("Element")
 
@@ -109,158 +106,163 @@ class Message(BaseModel):
 
 
 # Endpoints definition
-@app.get("/health")
-async def health() -> None:
+def create_app() -> FastAPI:
     """
-    Health endpoint returns a 200 if the service is alive
+    Create the application
     """
-    return
+
+    api = FastAPI()
+
+    @api.get("/health")
+    async def health() -> None:
+        """
+        Health endpoint returns a 200 if the service is alive
+        """
+        return
+
+    @api.get("/subscriptions",
+             response_model=Page[Subscription])
+    async def get_all_subscriptions(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
+                                    created_before: datetime = datetime.now()) -> Any:
+        """
+        Get the list of the user subscriptions
+        """
+        # Initialize dummy subscription
+        subscription = Subscription(
+            uuid=uuid4(),
+            name="Dummy",
+            url=parse_obj_as(AnyUrl, "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"),
+            thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
+            created_at=created_before,
+            scanned_at=datetime.now()
+        )
+
+        return Page[Subscription](
+            elements=[subscription],
+            total_elements=1,
+            page_number=page_number,
+            page_size=page_size,
+            previous_page=None,
+            next_page=None
+        )
+
+    @api.get("/topics/{topic_id}/items",
+             response_model=Page[Item])
+    async def items_by_topic(
+            topic_id: UUID, page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
+            created_before: datetime = datetime.now()) -> Any:
+        """
+        Get the items from a topic
+        """
+        print(f"fetching items for topic {topic_id}")
+
+        item = Item(
+            uuid=UUID("b5badcd0-a187-427c-8583-962cecb002c9"),
+            subscription_uuid=UUID("310e66ed-df47-470b-b904-7389d2246a9b"),
+            name="Dummy Item",
+            url=parse_obj_as(AnyUrl, "https://www.youtube.com/watch?v=tntOCGkgt98"),
+            thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
+            created_at=created_before
+        )
+
+        return Page[Item](
+            elements=[item],
+            total_elements=1,
+            page_number=page_number,
+            page_size=page_size,
+            previous_page=None,
+            next_page=None
+        )
+
+    @api.get("/topics",
+             response_model=Page[Topic])
+    async def get_all_topics(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
+                             created_before: datetime = datetime.now()) -> Any:
+        """
+        Get all the topics from a user
+        """
+        topic = Topic(
+            uuid=UUID("bc2e6ac4-3f23-40c5-84f6-d9f97172936f"),
+            name="Dummy Topic",
+            subscriptions_ids=[UUID("a9f8f8f8-3f23-40c5-84f6-d9f97172936f")],
+            created_at=created_before
+        )
+
+        return Page[Topic](
+            elements=[topic],
+            total_elements=1,
+            page_number=page_number,
+            page_size=page_size,
+            previous_page=None,
+            next_page=None
+        )
+
+    @api.get("/topics/{topic_id}",
+             response_model=Topic)
+    async def get_topic(topic_id: UUID) -> Any:
+        """
+        Get a topic information from a user
+        """
+        return Topic(
+            uuid=topic_id,
+            name="Dummy Topic",
+            subscriptions_ids=[UUID("ab81b97f-559d-4c87-9fd7-ef6db4b8b0de")],
+            created_at=datetime.now()
+        )
+
+    @api.post("/topics",
+              response_model=Topic)
+    async def create_topic(new_topic: NewTopic) -> Any:
+        """
+        Create a new topic for a user
+        """
+        return Topic(
+            uuid=new_topic.uuid,
+            name=new_topic.name,
+            subscriptions_ids=new_topic.subscriptions_ids,
+            created_at=datetime.now()
+        )
+
+    @api.delete("/topics/{topic_id}",
+                status_code=HTTPStatus.NO_CONTENT,
+                responses={404: {"model": None}})
+    async def delete_topic(topic_id: UUID) -> Any:
+        """
+        Delete a topic
+        """
+        print(f"deleting topic {topic_id}")
+        return
+
+    @api.post("/topics/{topic_id}/subscriptions/{subscription_id}",
+              response_model=Topic,
+              responses={404: {"model": Message}})
+    async def assign_subscription_to_topic(topic_id: UUID, subscription_id: UUID) -> Any:
+        """
+        Assign a subscription to a topic
+        """
+        return Topic(
+            uuid=topic_id,
+            name="Dummy",
+            subscriptions_ids=[subscription_id],
+            created_at=datetime.now()
+        )
+
+    @api.delete("/topics/{topic_id}/subscriptions/{subscription_id}",
+                response_model=Topic,
+                responses={404: {"model": None}})
+    async def remove_subscription_from_topic(topic_id: UUID, subscription_id: UUID) -> Any:
+        """
+        Remove subscription from topic
+        """
+        return Topic(
+            uuid=topic_id,
+            name="Dummy",
+            subscriptions_ids=[subscription_id],
+            created_at=datetime.now()
+        )
+
+    return api
 
 
-@app.get("/subscriptions",
-         response_model=Page[Subscription])
-async def get_all_subscriptions(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
-                                created_before: datetime = datetime.now()) -> Any:
-    """
-    Get the list of the user subscriptions
-    """
-    # Initialize dummy subscription
-    subscription = Subscription(
-        uuid=uuid4(),
-        name="Dummy",
-        url=parse_obj_as(AnyUrl, "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"),
-        thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
-        created_at=created_before,
-        scanned_at=datetime.now()
-    )
-
-    return Page[Subscription](
-        elements=[subscription],
-        total_elements=1,
-        page_number=page_number,
-        page_size=page_size,
-        previous_page=None,
-        next_page=None
-    )
-
-
-@app.get("/topics/{topic_id}/items",
-         response_model=Page[Item])
-async def items_by_topic(
-        topic_id: UUID, page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
-        created_before: datetime = datetime.now()) -> Any:
-    """
-    Get the items from a topic
-    """
-    print(f"fetching items for topic {topic_id}")
-
-    item = Item(
-        uuid=UUID("b5badcd0-a187-427c-8583-962cecb002c9"),
-        subscription_uuid=UUID("310e66ed-df47-470b-b904-7389d2246a9b"),
-        name="Dummy Item",
-        url=parse_obj_as(AnyUrl, "https://www.youtube.com/watch?v=tntOCGkgt98"),
-        thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
-        created_at=created_before
-    )
-
-    return Page[Item](
-        elements=[item],
-        total_elements=1,
-        page_number=page_number,
-        page_size=page_size,
-        previous_page=None,
-        next_page=None
-    )
-
-
-@app.get("/topics",
-         response_model=Page[Topic])
-async def get_all_topics(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
-                         created_before: datetime = datetime.now()) -> Any:
-    """
-    Get all the topics from a user
-    """
-    topic = Topic(
-        uuid=UUID("bc2e6ac4-3f23-40c5-84f6-d9f97172936f"),
-        name="Dummy Topic",
-        subscriptions_ids=[UUID("a9f8f8f8-3f23-40c5-84f6-d9f97172936f")],
-        created_at=created_before
-    )
-
-    return Page[Topic](
-        elements=[topic],
-        total_elements=1,
-        page_number=page_number,
-        page_size=page_size,
-        previous_page=None,
-        next_page=None
-    )
-
-
-@app.get("/topics/{topic_id}",
-         response_model=Topic)
-async def get_topic(topic_id: UUID) -> Any:
-    """
-    Get a topic information from a user
-    """
-    return Topic(
-        uuid=topic_id,
-        name="Dummy Topic",
-        subscriptions_ids=[UUID("ab81b97f-559d-4c87-9fd7-ef6db4b8b0de")],
-        created_at=datetime.now()
-    )
-
-
-@app.post("/topics",
-          response_model=Topic)
-async def create_topic(new_topic: NewTopic) -> Any:
-    """
-    Create a new topic for a user
-    """
-    return Topic(
-        uuid=new_topic.uuid,
-        name=new_topic.name,
-        subscriptions_ids=new_topic.subscriptions_ids,
-        created_at=datetime.now()
-    )
-
-
-@app.delete("/topics/{topic_id}",
-            status_code=HTTPStatus.NO_CONTENT,
-            responses={404: {"model": None}})
-async def delete_topic(topic_id: UUID) -> Any:
-    """
-    Delete a topic
-    """
-    print(f"deleting topic {topic_id}")
-    return
-
-
-@app.post("/topics/{topic_id}/subscriptions/{subscription_id}",
-          response_model=Topic,
-          responses={404: {"model": Message}})
-async def assign_subscription_to_topic(topic_id: UUID, subscription_id: UUID) -> Any:
-    """
-    Assign a subscription to a topic
-    """
-    return Topic(
-        uuid=topic_id,
-        name="Dummy",
-        subscriptions_ids=[subscription_id],
-        created_at=datetime.now()
-    )
-
-
-@app.delete("/topics/{topic_id}/subscriptions/{subscription_id}",
-            response_model=Topic,
-            responses={404: {"model": None}})
-async def remove_subscription_from_topic(topic_id: UUID, subscription_id: UUID) -> Any:
-    """
-    Remove subscription from topic
-    """
-    return Topic(
-        uuid=topic_id,
-        name="Dummy",
-        subscriptions_ids=[subscription_id],
-        created_at=datetime.now()
-    )
+# Application initialisation
+app = create_app()
