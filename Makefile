@@ -17,28 +17,28 @@ docker-test: docker-clean docker-build
 
 setup-venv:
 	sudo apt install -y python3.8-venv python3-pip
-	pip3 install virtualenv
-	python3 -m venv venv
+	python3.8 -m pip install virtualenv
+	python3.8 -m venv venv
+	@echo
+	@echo "Run 'source venv/bin/activate' before any other make command"
+	@echo "Run 'deactivate' to disable the virtual environment"
 
-activate-venv:
-	source venv/bin/activate
-
-setup: activate-venv
+setup:
 	pip3 install -r requirements.txt
 
-run: activate-venv
-	cd app; uvicorn server:app --host 0.0.0.0 --port 9000
+run:
+	cd src/entrypoints/fastapi; uvicorn app:app --host 0.0.0.0 --port 9000
 
-dev-run: activate-venv
-	cd app; uvicorn server:app --reload --host 0.0.0.0 --port 9000
+dev-run:
+	cd src/entrypoints/fastapi; uvicorn app:app --reload --host 0.0.0.0 --port 9000
 
 check-linting: mypy pylint
 
-mypy: activate-venv
-	mypy --strict app
+mypy:
+	mypy --config-file mypy.ini src tests
 
-pylint: activate-venv
-	find app -name *.py | xargs pylint
+pylint:
+	find src tests -name *.py | xargs pylint --rcfile=.pylintrc
 
-test: activate-venv
-	pytest -v ./app/tests
+test:
+	pytest -v ./tests

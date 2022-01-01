@@ -3,7 +3,7 @@ from typing import AsyncGenerator
 import pytest
 from httpx import AsyncClient
 from pytest import mark
-from server import app
+from src.entrypoints.fastapi.app import app
 
 
 @pytest.fixture(name="client")
