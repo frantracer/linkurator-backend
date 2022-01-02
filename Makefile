@@ -27,10 +27,10 @@ setup:
 	pip3 install -r requirements.txt
 
 run:
-	cd src/entrypoints/fastapi; uvicorn app:app --host 0.0.0.0 --port 9000
+	python3.8 src
 
 dev-run:
-	cd src/entrypoints/fastapi; uvicorn app:app --reload --host 0.0.0.0 --port 9000
+	python3.8 src --reload --workers 1 --debug
 
 check-linting: mypy pylint
 
