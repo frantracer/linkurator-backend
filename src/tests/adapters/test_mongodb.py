@@ -35,3 +35,16 @@ def test_get_user_that_does_not_exist(user_repo: MongoDBUserRepository):
     the_user = user_repo.get(uuid.UUID("c04c2880-6376-4fe1-a0bf-eac1ae0801ad"))
 
     assert the_user is None
+
+
+def test_delete_user(user_repo: MongoDBUserRepository):
+    user = User(name="test", email="test@test.com", uuid=uuid.UUID("1006a7a9-4c12-4475-9c4a-7c0f6c9f8eb3"),
+                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+
+    user_repo.add(user)
+    the_user = user_repo.get(user.uuid)
+    assert the_user is not None
+
+    user_repo.delete(user.uuid)
+    deleted_user = user_repo.get(user.uuid)
+    assert deleted_user is None

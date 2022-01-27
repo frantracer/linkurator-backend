@@ -62,4 +62,5 @@ class MongoDBUserRepository(AbstractUserRepository):
         return db_user_to_domain_user(MongoDBUser(**user))
 
     def delete(self, user_id: UUID):
-        raise NotImplementedError
+        collection = self.client[self.db_name]['users']
+        collection.delete_one({'_id': str(user_id)})
