@@ -7,9 +7,9 @@ jobs:
       - uses: actions/checkout@v1
       - name: Install Docker
         uses: docker/setup-buildx-action@v1
+      - name: Build Image
+        run: make docker-build
       - name: Check linting
         run: make docker-check-linting
       - name: Run tests
         run: make docker-test
-      - name: Build Image
-        run: make docker-build

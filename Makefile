@@ -1,19 +1,20 @@
 SHELL := /bin/bash
 
 docker-build:
+	docker rmi -f linkurator-api
 	docker build -t linkurator-api .
 
-docker-clean:
+docker-run:
 	docker rm -f linkurator-api
-
-docker-run: docker-clean docker-build
 	docker run --name linkurator-api -p 9000:9000 -d linkurator-api
 
-docker-check-linting: docker-clean docker-build
-	docker run --name linkurator-api --rm linkurator-api make check-linting
+docker-check-linting:
+	docker rm -f linkurator-api-check-linting
+	docker run --name linkurator-api-check-linting --rm linkurator-api make check-linting
 
-docker-test: docker-clean docker-build
-	docker run --name linkurator-api linkurator-api make test
+docker-test:
+	docker rm -f linkurator-api-test
+	docker run --name linkurator-api-test linkurator-api make test
 
 setup-venv:
 	sudo apt install -y python3.8-venv python3-pip
