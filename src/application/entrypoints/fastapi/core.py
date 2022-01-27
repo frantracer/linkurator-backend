@@ -1,6 +1,7 @@
 """
 Main file of the application
 """
+from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID, uuid4
 from http import HTTPStatus
@@ -9,6 +10,10 @@ from fastapi import FastAPI
 from pydantic import BaseModel, AnyUrl, NonNegativeInt, PositiveInt
 from pydantic.generics import GenericModel
 from pydantic.tools import parse_obj_as
+
+# FastAPI application
+app: FastAPI = FastAPI()
+
 
 # Type definition
 Element = TypeVar("Element")
@@ -106,7 +111,12 @@ class Message(BaseModel):
 
 
 # Endpoints definition
-def create_app() -> FastAPI:
+@dataclass
+class Handlers:
+    message: str = "Hello world!"
+
+
+def create_app(handlers: Handlers) -> FastAPI:
     """
     Create the application
     """
@@ -114,11 +124,11 @@ def create_app() -> FastAPI:
     api = FastAPI()
 
     @api.get("/health")
-    async def health() -> None:
+    async def health() -> str:
         """
         Health endpoint returns a 200 if the service is alive
         """
-        return
+        return handlers.message
 
     @api.get("/subscriptions",
              response_model=Page[Subscription])
@@ -262,7 +272,3 @@ def create_app() -> FastAPI:
         )
 
     return api
-
-
-# Application initialisation
-app = create_app()

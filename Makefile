@@ -28,18 +28,18 @@ setup:
 	pip3 install -r requirements.txt
 
 run:
-	python3.8 src
+	python3.8 src/main.py
 
 dev-run:
-	python3.8 src --reload --workers 1 --debug
+	python3.8 src/main.py --reload --workers 1 --debug
 
 check-linting: mypy pylint
 
 mypy:
-	mypy --config-file mypy.ini src tests
+	mypy --config-file mypy.ini src
 
 pylint:
-	find src tests -name *.py | xargs pylint --rcfile=.pylintrc
+	find src -name '*.py' | xargs pylint --rcfile=.pylintrc
 
 test:
-	pytest -v ./tests
+	pytest -v ./src/tests

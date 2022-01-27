@@ -2,6 +2,8 @@ import argparse
 import sys
 from dataclasses import dataclass
 from gunicorn.app.wsgiapp import WSGIApplication  # type: ignore
+import application
+from application.entrypoints.fastapi.core import create_app, Handlers
 
 
 @dataclass
@@ -14,7 +16,9 @@ class Arguments:
 
 def main():
     args = parse_args()
-    run_server(app_path='src.entrypoints.fastapi.app:app',
+
+    application.entrypoints.fastapi.core.app = create_app(Handlers(message="OK!"))
+    run_server(app_path='application.entrypoints.fastapi.core:app',
                port=args.port, workers=args.workers, debug=args.debug, reload=args.reload)
 
 
