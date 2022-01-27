@@ -10,11 +10,14 @@ docker-run:
 
 docker-check-linting:
 	docker rm -f linkurator-api-check-linting
-	docker run --name linkurator-api-check-linting --rm linkurator-api make check-linting
+	docker run --name linkurator-api-check-linting --network host linkurator-api make check-linting
 
-docker-test:
+docker-run-external-services:
+	docker-compose up -d
+
+docker-test: docker-run-external-services
 	docker rm -f linkurator-api-test
-	docker run --name linkurator-api-test linkurator-api make test
+	docker run --name linkurator-api-test --network host linkurator-api make test
 
 setup-venv:
 	sudo apt install -y python3.8-venv python3-pip
