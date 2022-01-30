@@ -21,25 +21,24 @@ class MongoDBUser:
     def uuid(self):
         return self._id
 
+    @staticmethod
+    def from_domain_user(user: User) -> 'MongoDBUser':
+        return MongoDBUser(
+            _id=user.uuid,
+            name=user.name,
+            email=user.email,
+            created_at=user.created_at,
+            updated_at=user.updated_at
+        )
 
-def domain_user_to_db_user(user: User) -> MongoDBUser:
-    return MongoDBUser(
-        _id=user.uuid,
-        name=user.name,
-        email=user.email,
-        created_at=user.created_at,
-        updated_at=user.updated_at
-    )
-
-
-def db_user_to_domain_user(db_user: MongoDBUser) -> User:
-    return User(
-        uuid=db_user.uuid,
-        name=db_user.name,
-        email=db_user.email,
-        created_at=db_user.created_at,
-        updated_at=db_user.updated_at
-    )
+    def to_domain_user(self) -> User:
+        return User(
+            uuid=self.uuid,
+            name=self.name,
+            email=self.email,
+            created_at=self.created_at,
+            updated_at=self.updated_at
+        )
 
 
 class MongoDBUserRepository(AbstractUserRepository):
@@ -53,14 +52,14 @@ class MongoDBUserRepository(AbstractUserRepository):
 
     def add(self, user: User):
         collection = self.client[self.db_name]['users']
-        collection.insert_one(asdict(domain_user_to_db_user(user)))
+        collection.insert_one(asdict(MongoDBUser.from_domain_user(user)))
 
     def get(self, user_id: UUID) -> Optional[User]:
         collection = self.client[self.db_name]['users']
         user = collection.find_one({'_id': user_id})
         if user is None:
             return None
-        return db_user_to_domain_user(MongoDBUser(**user))
+        return MongoDBUser(**user).to_domain_user()
 
     def delete(self, user_id: UUID):
         collection = self.client[self.db_name]['users']
@@ -80,27 +79,26 @@ class MongoDBTopic:
     def uuid(self):
         return self._id
 
+    @staticmethod
+    def from_domain_topic(topic: Topic) -> 'MongoDBTopic':
+        return MongoDBTopic(
+            _id=topic.uuid,
+            name=topic.name,
+            subscriptions_ids=topic.subscriptions_ids,
+            user_id=topic.user_id,
+            created_at=topic.created_at,
+            updated_at=topic.updated_at
+        )
 
-def domain_topic_to_db_topic(topic: Topic) -> MongoDBTopic:
-    return MongoDBTopic(
-        _id=topic.uuid,
-        name=topic.name,
-        subscriptions_ids=topic.subscriptions_ids,
-        user_id=topic.user_id,
-        created_at=topic.created_at,
-        updated_at=topic.updated_at
-    )
-
-
-def db_topic_to_domain_topic(db_topic: MongoDBTopic) -> Topic:
-    return Topic(
-        uuid=db_topic.uuid,
-        name=db_topic.name,
-        subscriptions_ids=db_topic.subscriptions_ids,
-        user_id=db_topic.user_id,
-        created_at=db_topic.created_at,
-        updated_at=db_topic.updated_at
-    )
+    def to_domain_topic(self) -> Topic:
+        return Topic(
+            uuid=self.uuid,
+            name=self.name,
+            subscriptions_ids=self.subscriptions_ids,
+            user_id=self.user_id,
+            created_at=self.created_at,
+            updated_at=self.updated_at
+        )
 
 
 class MongoDBTopicRepository(AbstractTopicRepository):
@@ -114,14 +112,14 @@ class MongoDBTopicRepository(AbstractTopicRepository):
 
     def add(self, topic: Topic):
         collection = self._topic_collection()
-        collection.insert_one(asdict(domain_topic_to_db_topic(topic)))
+        collection.insert_one(asdict(MongoDBTopic.from_domain_topic(topic)))
 
     def get(self, topic_id: UUID) -> Optional[Topic]:
         collection = self._topic_collection()
         topic: Optional[Dict] = collection.find_one({'_id': topic_id})
         if topic is None:
             return None
-        return db_topic_to_domain_topic(MongoDBTopic(**topic))
+        return MongoDBTopic(**topic).to_domain_topic()
 
     def delete(self, topic_id: UUID):
         collection = self._topic_collection()
