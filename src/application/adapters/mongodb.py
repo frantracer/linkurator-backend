@@ -3,10 +3,12 @@ from datetime import datetime
 from typing import Optional, Dict, List
 from uuid import UUID
 from ipaddress import IPv4Address
+from pydantic import AnyUrl
 from pymongo import MongoClient  # type: ignore
 import pymongo
-from application.domain.model import User, Topic
-from application.service_layer.repositories import AbstractUserRepository, AbstractTopicRepository
+from application.domain.model import User, Topic, Subscription
+from application.service_layer.repositories import AbstractUserRepository, AbstractTopicRepository, \
+    AbstractSubscriptionRepository
 
 
 @dataclass
@@ -127,3 +129,69 @@ class MongoDBTopicRepository(AbstractTopicRepository):
 
     def _topic_collection(self) -> pymongo.collection.Collection:
         return self.client[self.db_name]['topics']
+
+
+@dataclass
+class MongoDBSubscription:
+    _id: UUID
+    name: str
+    url: AnyUrl
+    thumbnail: AnyUrl
+    created_at: datetime
+    updated_at: datetime
+    scanned_at: datetime
+
+    @property
+    def uuid(self):
+        return self._id
+
+    @staticmethod
+    def from_domain_subscription(subscription: Subscription) -> 'MongoDBSubscription':
+        return MongoDBSubscription(
+            _id=subscription.uuid,
+            name=subscription.name,
+            url=subscription.url,
+            thumbnail=subscription.thumbnail,
+            created_at=subscription.created_at,
+            updated_at=subscription.updated_at,
+            scanned_at=subscription.scanned_at
+        )
+
+    def to_domain_subscription(self) -> Subscription:
+        return Subscription(
+            uuid=self.uuid,
+            name=self.name,
+            url=self.url,
+            thumbnail=self.thumbnail,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            scanned_at=self.scanned_at
+        )
+
+
+class MongoDBSubscriptionRepository(AbstractSubscriptionRepository):
+    client: MongoClient
+    db_name: str
+
+    def __init__(self, ip: IPv4Address, port: int, db_name: str):
+        super().__init__()
+        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', uuidRepresentation='standard')
+        self.db_name = db_name
+
+    def add(self, subscription: Subscription):
+        collection = self._subscription_collection()
+        collection.insert_one(asdict(MongoDBSubscription.from_domain_subscription(subscription)))
+
+    def get(self, subscription_id: UUID) -> Optional[Subscription]:
+        collection = self._subscription_collection()
+        subscription: Optional[Dict] = collection.find_one({'_id': subscription_id})
+        if subscription is None:
+            return None
+        return MongoDBSubscription(**subscription).to_domain_subscription()
+
+    def delete(self, subscription_id: UUID):
+        collection = self._subscription_collection()
+        collection.delete_one({'_id': subscription_id})
+
+    def _subscription_collection(self) -> pymongo.collection.Collection:
+        return self.client[self.db_name]['subscriptions']

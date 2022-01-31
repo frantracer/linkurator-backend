@@ -2,11 +2,10 @@ import datetime
 import ipaddress
 import uuid
 from math import floor
-
 import pytest
-
-from application.adapters.mongodb import MongoDBUserRepository, MongoDBTopicRepository
-from application.domain.model import User, Topic
+from application.adapters.mongodb import MongoDBUserRepository, MongoDBTopicRepository, MongoDBSubscriptionRepository
+from application.domain.model import User, Topic, Subscription
+from common import utils
 
 
 @pytest.fixture(name="db_name")
@@ -23,6 +22,11 @@ def fixture_user_repo(db_name) -> MongoDBUserRepository:
 @pytest.fixture(name="topic_repo")
 def fixture_topic_repo(db_name) -> MongoDBTopicRepository:
     return MongoDBTopicRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
+
+
+@pytest.fixture(name="subscription_repo")
+def fixture_subscription_repo(db_name) -> MongoDBSubscriptionRepository:
+    return MongoDBSubscriptionRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
 
 
 def test_add_user_to_mongodb(user_repo: MongoDBUserRepository):
@@ -96,3 +100,45 @@ def test_delete_topic(topic_repo: MongoDBTopicRepository):
     topic_repo.delete(topic.uuid)
     deleted_topic = topic_repo.get(topic.uuid)
     assert deleted_topic is None
+
+
+def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository):
+    subscription = Subscription(name="test", uuid=uuid.UUID("8d9e9e1f-c9b4-4b8f-b8c4-c8f1e7b7d9a1"),
+                                url=utils.parse_url('https://test.com'),
+                                thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(),
+                                scanned_at=datetime.datetime(1970, 1, 1, 0, 0, 0, 0))
+
+    subscription_repo.add(subscription)
+    the_subscription = subscription_repo.get(subscription.uuid)
+
+    assert the_subscription is not None
+    assert the_subscription.name == subscription.name
+    assert the_subscription.uuid == subscription.uuid
+    assert the_subscription.url == subscription.url
+    assert the_subscription.thumbnail == subscription.thumbnail
+    assert int(the_subscription.created_at.timestamp() * 100) == floor(subscription.created_at.timestamp() * 100)
+    assert int(the_subscription.updated_at.timestamp() * 100) == floor(subscription.updated_at.timestamp() * 100)
+    assert int(the_subscription.scanned_at.timestamp() * 100) == floor(subscription.scanned_at.timestamp() * 100)
+
+
+def test_get_subscription_that_does_not_exist(subscription_repo: MongoDBSubscriptionRepository):
+    the_subscription = subscription_repo.get(uuid.UUID("0af092ed-e3f9-4919-8202-c19bfd0627a9"))
+
+    assert the_subscription is None
+
+
+def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository):
+    subscription = Subscription(name="test", uuid=uuid.UUID("0af092ed-e3f9-4919-8202-c19bfd0627a9"),
+                                url=utils.parse_url('https://test.com'),
+                                thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(),
+                                scanned_at=datetime.datetime(1970, 1, 1, 0, 0, 0, 0))
+
+    subscription_repo.add(subscription)
+    the_subscription = subscription_repo.get(subscription.uuid)
+    assert the_subscription is not None
+
+    subscription_repo.delete(subscription.uuid)
+    deleted_subscription = subscription_repo.get(subscription.uuid)
+    assert deleted_subscription is None

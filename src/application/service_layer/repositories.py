@@ -38,7 +38,7 @@ class AbstractSubscriptionRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_by_topic_id(self, topic_id: UUID) -> List[Subscription]:
+    def delete(self, subscription_id: UUID):
         raise NotImplementedError
 
 
