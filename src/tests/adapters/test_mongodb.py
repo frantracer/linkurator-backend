@@ -3,8 +3,9 @@ import ipaddress
 import uuid
 from math import floor
 import pytest
-from application.adapters.mongodb import MongoDBUserRepository, MongoDBTopicRepository, MongoDBSubscriptionRepository
-from application.domain.model import User, Topic, Subscription
+from application.adapters.mongodb import MongoDBUserRepository, MongoDBTopicRepository, MongoDBSubscriptionRepository, \
+    MongoDBItemRepository
+from application.domain.model import User, Topic, Subscription, Item
 from common import utils
 
 
@@ -27,6 +28,11 @@ def fixture_topic_repo(db_name) -> MongoDBTopicRepository:
 @pytest.fixture(name="subscription_repo")
 def fixture_subscription_repo(db_name) -> MongoDBSubscriptionRepository:
     return MongoDBSubscriptionRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
+
+
+@pytest.fixture(name="item_repo")
+def fixture_item_repo(db_name) -> MongoDBItemRepository:
+    return MongoDBItemRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
 
 
 def test_add_user_to_mongodb(user_repo: MongoDBUserRepository):
@@ -142,3 +148,42 @@ def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository):
     subscription_repo.delete(subscription.uuid)
     deleted_subscription = subscription_repo.get(subscription.uuid)
     assert deleted_subscription is None
+
+
+def test_get_item(item_repo: MongoDBItemRepository):
+    item = Item(name="test", uuid=uuid.UUID("9cedfb45-70fb-4283-bfee-993941b05b53"),
+                subscription_uuid=uuid.UUID("6ae3792e-6427-4b61-bdc1-66cc9c61fe29"),
+                url=utils.parse_url('https://test.com'),
+                thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+    item_repo.add(item)
+    the_item = item_repo.get(item.uuid)
+
+    assert the_item is not None
+    assert the_item.name == item.name
+    assert the_item.uuid == item.uuid
+    assert the_item.url == item.url
+    assert the_item.thumbnail == item.thumbnail
+    assert int(the_item.created_at.timestamp() * 100) == floor(item.created_at.timestamp() * 100)
+    assert int(the_item.updated_at.timestamp() * 100) == floor(item.updated_at.timestamp() * 100)
+
+
+def test_get_item_that_does_not_exist(item_repo: MongoDBItemRepository):
+    the_item = item_repo.get(uuid.UUID("88aa425f-28d9-4a25-a87a-8c877cac772d"))
+
+    assert the_item is None
+
+
+def test_delete_item(item_repo: MongoDBItemRepository):
+    item = Item(name="test", uuid=uuid.UUID("4bf64498-239e-4bcb-a5a1-b84a7708ad01"),
+                subscription_uuid=uuid.UUID("d1dc868b-598c-4547-92d6-011e9b7e38e6"),
+                url=utils.parse_url('https://test.com'),
+                thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+    item_repo.add(item)
+    the_item = item_repo.get(item.uuid)
+    assert the_item is not None
+
+    item_repo.delete(item.uuid)
+    deleted_item = item_repo.get(item.uuid)
+    assert deleted_item is None
