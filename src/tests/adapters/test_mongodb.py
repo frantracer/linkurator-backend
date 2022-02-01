@@ -9,28 +9,28 @@ from application.domain.model import User, Topic, Subscription, Item
 from common import utils
 
 
-@pytest.fixture(name="db_name")
+@pytest.fixture(name="db_name", scope="session")
 def fixture_db_name() -> str:
     db_name = f'test-{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}'
     return db_name
 
 
-@pytest.fixture(name="user_repo")
+@pytest.fixture(name="user_repo", scope="session")
 def fixture_user_repo(db_name) -> MongoDBUserRepository:
     return MongoDBUserRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
 
 
-@pytest.fixture(name="topic_repo")
+@pytest.fixture(name="topic_repo", scope="session")
 def fixture_topic_repo(db_name) -> MongoDBTopicRepository:
     return MongoDBTopicRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
 
 
-@pytest.fixture(name="subscription_repo")
+@pytest.fixture(name="subscription_repo", scope="session")
 def fixture_subscription_repo(db_name) -> MongoDBSubscriptionRepository:
     return MongoDBSubscriptionRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
 
 
-@pytest.fixture(name="item_repo")
+@pytest.fixture(name="item_repo", scope="session")
 def fixture_item_repo(db_name) -> MongoDBItemRepository:
     return MongoDBItemRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
 
