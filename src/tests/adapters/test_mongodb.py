@@ -2,9 +2,12 @@ import datetime
 import ipaddress
 import uuid
 from math import floor
+from unittest import mock
+from unittest.mock import MagicMock
+
 import pytest
 from application.adapters.mongodb import MongoDBUserRepository, MongoDBTopicRepository, MongoDBSubscriptionRepository, \
-    MongoDBItemRepository
+    MongoDBItemRepository, MongoDBUser, MongoDBTopic, MongoDBSubscription, MongoDBItem
 from application.domain.model import User, Topic, Subscription, Item
 from common import utils
 
@@ -56,6 +59,18 @@ def test_get_user_that_does_not_exist(user_repo: MongoDBUserRepository):
     assert the_user is None
 
 
+def test_get_user_with_invalid_format_raises_an_exception(user_repo: MongoDBUserRepository):
+    user_dict = dict(MongoDBUser(uuid=uuid.UUID("449e3bee-6f9b-4cbc-8a09-64a6fcface96"),
+                                 name="test", email="test@email.com",
+                                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now()))
+    user_dict['uuid'] = 'invalid_uuid'
+    user_collection_mock = MagicMock()
+    user_collection_mock.find_one = MagicMock(return_value=user_dict)
+    with mock.patch.object(MongoDBUserRepository, '_user_collection', return_value=user_collection_mock):
+        with pytest.raises(ValueError):
+            user_repo.get(uuid.UUID("c0d59790-bb68-415b-9be5-79c3088aada0"))
+
+
 def test_delete_user(user_repo: MongoDBUserRepository):
     user = User(name="test", email="test@test.com", uuid=uuid.UUID("1006a7a9-4c12-4475-9c4a-7c0f6c9f8eb3"),
                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
@@ -91,6 +106,20 @@ def test_get_topic_that_does_not_exist(topic_repo: MongoDBTopicRepository):
     the_topic = topic_repo.get(uuid.UUID("b613c205-f99d-43b9-9d63-4b7ebe4119a3"))
 
     assert the_topic is None
+
+
+def test_get_topic_with_invalid_format_raises_an_exception(topic_repo: MongoDBTopicRepository):
+    topic_dict = dict(MongoDBTopic(uuid=uuid.UUID("3ab7068b-1412-46ed-bc1f-46d5f03542e7"),
+                                   user_id=uuid.UUID("a23ba1fc-bccb-4e70-a535-7eeca00dbac0"),
+                                   subscriptions_ids=[],
+                                   name="test", email="test@email.com",
+                                   created_at=datetime.datetime.now(), updated_at=datetime.datetime.now()))
+    topic_dict['uuid'] = 'invalid_uuid'
+    topic_collection_mock = MagicMock()
+    topic_collection_mock.find_one = MagicMock(return_value=topic_dict)
+    with mock.patch.object(MongoDBTopicRepository, '_topic_collection', return_value=topic_collection_mock):
+        with pytest.raises(ValueError):
+            topic_repo.get(uuid.UUID("c0d59790-bb68-415b-9be5-79c3088aada0"))
 
 
 def test_delete_topic(topic_repo: MongoDBTopicRepository):
@@ -134,6 +163,21 @@ def test_get_subscription_that_does_not_exist(subscription_repo: MongoDBSubscrip
     assert the_subscription is None
 
 
+def test_get_subscription_with_invalid_format_raises_an_exception(subscription_repo: MongoDBSubscriptionRepository):
+    subscription_dict = dict(MongoDBSubscription(uuid=uuid.UUID("3ab7068b-1412-46ed-bc1f-46d5f03542e7"),
+                                                 name="test", url=utils.parse_url('https://test.com'),
+                                                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                                                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(),
+                                                 scanned_at=datetime.datetime(1970, 1, 1, 0, 0, 0, 0)))
+    subscription_dict['uuid'] = 'invalid_uuid'
+    subscription_collection_mock = MagicMock()
+    subscription_collection_mock.find_one = MagicMock(return_value=subscription_dict)
+    with mock.patch.object(MongoDBSubscriptionRepository, '_subscription_collection',
+                           return_value=subscription_collection_mock):
+        with pytest.raises(ValueError):
+            subscription_repo.get(uuid.UUID("81f7d26c-4a7f-4a27-a081-bb77e034fb30"))
+
+
 def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository):
     subscription = Subscription(name="test", uuid=uuid.UUID("0af092ed-e3f9-4919-8202-c19bfd0627a9"),
                                 url=utils.parse_url('https://test.com'),
@@ -172,6 +216,21 @@ def test_get_item_that_does_not_exist(item_repo: MongoDBItemRepository):
     the_item = item_repo.get(uuid.UUID("88aa425f-28d9-4a25-a87a-8c877cac772d"))
 
     assert the_item is None
+
+
+def test_get_item_with_invalid_format_raises_an_exception(item_repo: MongoDBItemRepository):
+    item_dict = dict(MongoDBItem(uuid=uuid.UUID("67a06616-e127-4bf0-bcc0-faa221d554c5"),
+                                 subscription_uuid=uuid.UUID("9753d304-3a43-414e-a5cd-496672b27c34"),
+                                 name="test", url=utils.parse_url('https://test.com'),
+                                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now()))
+    item_dict['uuid'] = 'invalid_uuid'
+    item_collection_mock = MagicMock()
+    item_collection_mock.find_one = MagicMock(return_value=item_dict)
+    with mock.patch.object(MongoDBItemRepository, '_item_collection',
+                           return_value=item_collection_mock):
+        with pytest.raises(ValueError):
+            item_repo.get(uuid.UUID("756b6b0d-5f54-4099-ae7e-c900666f0a0d"))
 
 
 def test_delete_item(item_repo: MongoDBItemRepository):

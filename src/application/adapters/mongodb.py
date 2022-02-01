@@ -1,9 +1,8 @@
-from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Optional, Dict, List
 from uuid import UUID
 from ipaddress import IPv4Address
-from pydantic import AnyUrl
+from pydantic import AnyUrl, BaseModel
 from pymongo import MongoClient  # type: ignore
 import pymongo
 from application.domain.model import User, Topic, Subscription, Item
@@ -11,22 +10,17 @@ from application.service_layer.repositories import AbstractUserRepository, Abstr
     AbstractSubscriptionRepository, AbstractItemRepository
 
 
-@dataclass
-class MongoDBUser:
-    _id: UUID
+class MongoDBUser(BaseModel):
+    uuid: UUID
     name: str
     email: str
     created_at: datetime
     updated_at: datetime
 
-    @property
-    def uuid(self):
-        return self._id
-
     @staticmethod
     def from_domain_user(user: User) -> 'MongoDBUser':
         return MongoDBUser(
-            _id=user.uuid,
+            uuid=user.uuid,
             name=user.name,
             email=user.email,
             created_at=user.created_at,
@@ -53,38 +47,37 @@ class MongoDBUserRepository(AbstractUserRepository):
         self.db_name = db_name
 
     def add(self, user: User):
-        collection = self.client[self.db_name]['users']
-        collection.insert_one(asdict(MongoDBUser.from_domain_user(user)))
+        collection = self._user_collection()
+        collection.insert_one(dict(MongoDBUser.from_domain_user(user)))
 
     def get(self, user_id: UUID) -> Optional[User]:
-        collection = self.client[self.db_name]['users']
-        user = collection.find_one({'_id': user_id})
+        collection = self._user_collection()
+        user = collection.find_one({'uuid': user_id})
         if user is None:
             return None
+        user.pop('_id', None)
         return MongoDBUser(**user).to_domain_user()
 
     def delete(self, user_id: UUID):
-        collection = self.client[self.db_name]['users']
-        collection.delete_one({'_id': user_id})
+        collection = self._user_collection()
+        collection.delete_one({'uuid': user_id})
+
+    def _user_collection(self) -> pymongo.collection.Collection:
+        return self.client[self.db_name]['users']
 
 
-@dataclass
-class MongoDBTopic:
-    _id: UUID
+class MongoDBTopic(BaseModel):
+    uuid: UUID
     name: str
     user_id: UUID
     subscriptions_ids: List[UUID]
     created_at: datetime
     updated_at: datetime
 
-    @property
-    def uuid(self):
-        return self._id
-
     @staticmethod
     def from_domain_topic(topic: Topic) -> 'MongoDBTopic':
         return MongoDBTopic(
-            _id=topic.uuid,
+            uuid=topic.uuid,
             name=topic.name,
             subscriptions_ids=topic.subscriptions_ids,
             user_id=topic.user_id,
@@ -114,26 +107,25 @@ class MongoDBTopicRepository(AbstractTopicRepository):
 
     def add(self, topic: Topic):
         collection = self._topic_collection()
-        collection.insert_one(asdict(MongoDBTopic.from_domain_topic(topic)))
+        collection.insert_one(dict(MongoDBTopic.from_domain_topic(topic)))
 
     def get(self, topic_id: UUID) -> Optional[Topic]:
         collection = self._topic_collection()
-        topic: Optional[Dict] = collection.find_one({'_id': topic_id})
+        topic: Optional[Dict] = collection.find_one({'uuid': topic_id})
         if topic is None:
             return None
         return MongoDBTopic(**topic).to_domain_topic()
 
     def delete(self, topic_id: UUID):
         collection = self._topic_collection()
-        collection.delete_one({'_id': topic_id})
+        collection.delete_one({'uuid': topic_id})
 
     def _topic_collection(self) -> pymongo.collection.Collection:
         return self.client[self.db_name]['topics']
 
 
-@dataclass
-class MongoDBSubscription:
-    _id: UUID
+class MongoDBSubscription(BaseModel):
+    uuid: UUID
     name: str
     url: AnyUrl
     thumbnail: AnyUrl
@@ -141,14 +133,10 @@ class MongoDBSubscription:
     updated_at: datetime
     scanned_at: datetime
 
-    @property
-    def uuid(self):
-        return self._id
-
     @staticmethod
     def from_domain_subscription(subscription: Subscription) -> 'MongoDBSubscription':
         return MongoDBSubscription(
-            _id=subscription.uuid,
+            uuid=subscription.uuid,
             name=subscription.name,
             url=subscription.url,
             thumbnail=subscription.thumbnail,
@@ -180,26 +168,25 @@ class MongoDBSubscriptionRepository(AbstractSubscriptionRepository):
 
     def add(self, subscription: Subscription):
         collection = self._subscription_collection()
-        collection.insert_one(asdict(MongoDBSubscription.from_domain_subscription(subscription)))
+        collection.insert_one(dict(MongoDBSubscription.from_domain_subscription(subscription)))
 
     def get(self, subscription_id: UUID) -> Optional[Subscription]:
         collection = self._subscription_collection()
-        subscription: Optional[Dict] = collection.find_one({'_id': subscription_id})
+        subscription: Optional[Dict] = collection.find_one({'uuid': subscription_id})
         if subscription is None:
             return None
         return MongoDBSubscription(**subscription).to_domain_subscription()
 
     def delete(self, subscription_id: UUID):
         collection = self._subscription_collection()
-        collection.delete_one({'_id': subscription_id})
+        collection.delete_one({'uuid': subscription_id})
 
     def _subscription_collection(self) -> pymongo.collection.Collection:
         return self.client[self.db_name]['subscriptions']
 
 
-@dataclass
-class MongoDBItem:
-    _id: UUID
+class MongoDBItem(BaseModel):
+    uuid: UUID
     subscription_uuid: UUID
     name: str
     url: AnyUrl
@@ -207,14 +194,10 @@ class MongoDBItem:
     created_at: datetime
     updated_at: datetime
 
-    @property
-    def uuid(self):
-        return self._id
-
     @staticmethod
     def from_domain_item(item: Item) -> 'MongoDBItem':
         return MongoDBItem(
-            _id=item.uuid,
+            uuid=item.uuid,
             subscription_uuid=item.subscription_uuid,
             name=item.name,
             url=item.url,
@@ -246,18 +229,18 @@ class MongoDBItemRepository(AbstractItemRepository):
 
     def add(self, item: Item):
         collection = self._item_collection()
-        collection.insert_one(asdict(MongoDBItem.from_domain_item(item)))
+        collection.insert_one(dict(MongoDBItem.from_domain_item(item)))
 
     def get(self, item_id: UUID) -> Optional[Item]:
         collection = self._item_collection()
-        item: Optional[Dict] = collection.find_one({'_id': item_id})
+        item: Optional[Dict] = collection.find_one({'uuid': item_id})
         if item is None:
             return None
         return MongoDBItem(**item).to_domain_item()
 
     def delete(self, item_id: UUID):
         collection = self._item_collection()
-        collection.delete_one({'_id': item_id})
+        collection.delete_one({'uuid': item_id})
 
     def get_by_subscription_id(self, subscription_id: UUID) -> List[Item]:
         collection = self._item_collection()
