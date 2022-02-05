@@ -1,13 +1,36 @@
+import pathlib
 from datetime import datetime
 from typing import Optional, Dict, List
 from uuid import UUID
 from ipaddress import IPv4Address
+from mongodb_migrations.cli import MigrationManager # type: ignore
+from mongodb_migrations.config import Configuration, Execution  # type: ignore
 from pydantic import AnyUrl, BaseModel
 from pymongo import MongoClient  # type: ignore
 import pymongo
 from application.domain.model import User, Topic, Subscription, Item
 from application.service_layer.repositories import AbstractUserRepository, AbstractTopicRepository, \
     AbstractSubscriptionRepository, AbstractItemRepository
+
+
+def run_mongodb_migrations(address: IPv4Address, port: int, db_name: str, user: str, password: str) -> None:
+    mongodb_migrations_manager = MigrationManager(config=Configuration({
+        'mongo_host': str(address),
+        'mongo_port': port,
+        'mongo_database': db_name,
+        'mongo_username': user,
+        'mongo_password': password,
+        'mongo_migrations_path': f'{pathlib.Path(__file__).parent.absolute()}/mongodb_migrations',
+        'metastore': 'database_migrations',
+        'execution': Execution.MIGRATE,
+        'to_datetime': datetime.now().strftime('%Y%m%d%H%M%S')
+    }))
+
+    mongodb_migrations_manager.run()
+
+
+class CollectionIsNotInitialized(Exception):
+    pass
 
 
 class MongoDBUser(BaseModel):
@@ -40,11 +63,16 @@ class MongoDBUser(BaseModel):
 class MongoDBUserRepository(AbstractUserRepository):
     client: MongoClient
     db_name: str
+    _collection_name: str = 'users'
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str):
         super().__init__()
         self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', uuidRepresentation='standard')
         self.db_name = db_name
+
+        if self._collection_name not in self.client[self.db_name].list_collection_names():
+            raise CollectionIsNotInitialized(
+                f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
 
     def add(self, user: User):
         collection = self._user_collection()
@@ -63,7 +91,7 @@ class MongoDBUserRepository(AbstractUserRepository):
         collection.delete_one({'uuid': user_id})
 
     def _user_collection(self) -> pymongo.collection.Collection:
-        return self.client[self.db_name]['users']
+        return self.client.get_database(self.db_name).get_collection(self._collection_name)
 
 
 class MongoDBTopic(BaseModel):
@@ -99,11 +127,16 @@ class MongoDBTopic(BaseModel):
 class MongoDBTopicRepository(AbstractTopicRepository):
     client: MongoClient
     db_name: str
+    _collection_name: str = 'topics'
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str):
         super().__init__()
         self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', uuidRepresentation='standard')
         self.db_name = db_name
+
+        if self._collection_name not in self.client[self.db_name].list_collection_names():
+            raise CollectionIsNotInitialized(
+                f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
 
     def add(self, topic: Topic):
         collection = self._topic_collection()
@@ -121,7 +154,7 @@ class MongoDBTopicRepository(AbstractTopicRepository):
         collection.delete_one({'uuid': topic_id})
 
     def _topic_collection(self) -> pymongo.collection.Collection:
-        return self.client[self.db_name]['topics']
+        return self.client[self.db_name][self._collection_name]
 
 
 class MongoDBSubscription(BaseModel):
@@ -160,11 +193,16 @@ class MongoDBSubscription(BaseModel):
 class MongoDBSubscriptionRepository(AbstractSubscriptionRepository):
     client: MongoClient
     db_name: str
+    _collection_name: str = 'subscriptions'
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str):
         super().__init__()
         self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', uuidRepresentation='standard')
         self.db_name = db_name
+
+        if self._collection_name not in self.client[self.db_name].list_collection_names():
+            raise CollectionIsNotInitialized(
+                f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
 
     def add(self, subscription: Subscription):
         collection = self._subscription_collection()
@@ -182,7 +220,7 @@ class MongoDBSubscriptionRepository(AbstractSubscriptionRepository):
         collection.delete_one({'uuid': subscription_id})
 
     def _subscription_collection(self) -> pymongo.collection.Collection:
-        return self.client[self.db_name]['subscriptions']
+        return self.client[self.db_name][self._collection_name]
 
 
 class MongoDBItem(BaseModel):
@@ -221,11 +259,16 @@ class MongoDBItem(BaseModel):
 class MongoDBItemRepository(AbstractItemRepository):
     client: MongoClient
     db_name: str
+    _collection_name: str = 'items'
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str):
         super().__init__()
         self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', uuidRepresentation='standard')
         self.db_name = db_name
+
+        if self._collection_name not in self.client[self.db_name].list_collection_names():
+            raise CollectionIsNotInitialized(
+                f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
 
     def add(self, item: Item):
         collection = self._item_collection()
@@ -249,4 +292,4 @@ class MongoDBItemRepository(AbstractItemRepository):
         return [MongoDBItem(**item).to_domain_item() for item in items]
 
     def _item_collection(self) -> pymongo.collection.Collection:
-        return self.client[self.db_name]['items']
+        return self.client[self.db_name][self._collection_name]

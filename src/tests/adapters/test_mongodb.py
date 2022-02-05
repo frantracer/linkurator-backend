@@ -1,5 +1,5 @@
 import datetime
-import ipaddress
+from ipaddress import IPv4Address
 import uuid
 from math import floor
 from unittest import mock
@@ -7,7 +7,8 @@ from unittest.mock import MagicMock
 
 import pytest
 from application.adapters.mongodb import MongoDBUserRepository, MongoDBTopicRepository, MongoDBSubscriptionRepository, \
-    MongoDBItemRepository, MongoDBUser, MongoDBTopic, MongoDBSubscription, MongoDBItem
+    MongoDBItemRepository, MongoDBUser, MongoDBTopic, MongoDBSubscription, MongoDBItem, run_mongodb_migrations, \
+    CollectionIsNotInitialized
 from application.domain.model import User, Topic, Subscription, Item
 from common import utils
 
@@ -15,27 +16,34 @@ from common import utils
 @pytest.fixture(name="db_name", scope="session")
 def fixture_db_name() -> str:
     db_name = f'test-{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}'
+    run_mongodb_migrations(IPv4Address('127.0.0.1'), 27017, db_name, "", "")
     return db_name
 
 
 @pytest.fixture(name="user_repo", scope="session")
 def fixture_user_repo(db_name) -> MongoDBUserRepository:
-    return MongoDBUserRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
+    return MongoDBUserRepository(IPv4Address('127.0.0.1'), 27017, db_name)
 
 
 @pytest.fixture(name="topic_repo", scope="session")
 def fixture_topic_repo(db_name) -> MongoDBTopicRepository:
-    return MongoDBTopicRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
+    return MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, db_name)
 
 
 @pytest.fixture(name="subscription_repo", scope="session")
 def fixture_subscription_repo(db_name) -> MongoDBSubscriptionRepository:
-    return MongoDBSubscriptionRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
+    return MongoDBSubscriptionRepository(IPv4Address('127.0.0.1'), 27017, db_name)
 
 
 @pytest.fixture(name="item_repo", scope="session")
 def fixture_item_repo(db_name) -> MongoDBItemRepository:
-    return MongoDBItemRepository(ipaddress.IPv4Address('127.0.0.1'), 27017, db_name)
+    return MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, db_name)
+
+
+def test_exception_is_raised_if_users_collection_is_not_created():
+    non_existent_db_name = f"test-{uuid.uuid4()}"
+    with pytest.raises(CollectionIsNotInitialized):
+        MongoDBUserRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name)
 
 
 def test_add_user_to_mongodb(user_repo: MongoDBUserRepository):
@@ -82,6 +90,12 @@ def test_delete_user(user_repo: MongoDBUserRepository):
     user_repo.delete(user.uuid)
     deleted_user = user_repo.get(user.uuid)
     assert deleted_user is None
+
+
+def test_exception_is_raised_if_topics_collection_is_not_created():
+    non_existent_db_name = f"test-{uuid.uuid4()}"
+    with pytest.raises(CollectionIsNotInitialized):
+        MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name)
 
 
 def test_add_topic(topic_repo: MongoDBTopicRepository):
@@ -135,6 +149,12 @@ def test_delete_topic(topic_repo: MongoDBTopicRepository):
     topic_repo.delete(topic.uuid)
     deleted_topic = topic_repo.get(topic.uuid)
     assert deleted_topic is None
+
+
+def test_exception_is_raised_if_subscriptions_collection_is_not_created():
+    non_existent_db_name = f"test-{uuid.uuid4()}"
+    with pytest.raises(CollectionIsNotInitialized):
+        MongoDBSubscriptionRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name)
 
 
 def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository):
@@ -194,6 +214,12 @@ def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository):
     assert deleted_subscription is None
 
 
+def test_exception_is_raised_if_items_collection_is_not_created():
+    non_existent_db_name = f"test-{uuid.uuid4()}"
+    with pytest.raises(CollectionIsNotInitialized):
+        MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name)
+
+
 def test_get_item(item_repo: MongoDBItemRepository):
     item = Item(name="test", uuid=uuid.UUID("9cedfb45-70fb-4283-bfee-993941b05b53"),
                 subscription_uuid=uuid.UUID("6ae3792e-6427-4b61-bdc1-66cc9c61fe29"),
@@ -249,8 +275,8 @@ def test_delete_item(item_repo: MongoDBItemRepository):
 
 
 def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
-    subscription_uuid_1 = uuid.UUID("6ae3792e-6427-4b61-bdc1-66cc9c61fe29")
-    subscription_uuid_2 = uuid.UUID("d1dc868b-598c-4547-92d6-011e9b7e38e6")
+    subscription_uuid_1 = uuid.UUID("49e16717-3b41-4e1b-a2d8-8fccf1b6c184")
+    subscription_uuid_2 = uuid.UUID("d3e22c40-c767-468b-8a61-cc61bcfd55ec")
     subscription_uuid_3 = uuid.UUID("9753d304-3a43-414e-a5cd-496672b27c34")
 
     item1 = Item(name="item1", uuid=uuid.UUID("6469596f-5128-4c12-87f1-9b7b462517f3"),
