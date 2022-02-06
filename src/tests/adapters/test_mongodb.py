@@ -136,6 +136,23 @@ def test_get_topic_with_invalid_format_raises_an_exception(topic_repo: MongoDBTo
             topic_repo.get(uuid.UUID("c0d59790-bb68-415b-9be5-79c3088aada0"))
 
 
+def test_get_topics_by_user_id(topic_repo: MongoDBTopicRepository):
+    user_uuid = uuid.UUID("fb0b5160-7704-4310-9bea-d7045574290b")
+    topic1 = Topic(name="test_topic_1", uuid=uuid.UUID("33d0aa86-9c70-40d1-8eb2-b402249d2511"),
+                   user_id=user_uuid, subscriptions_ids=[],
+                   created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+    topic2 = Topic(name="test_topic_2", uuid=uuid.UUID("24d56f9d-a1ca-4736-aa45-9beb18cd109d"),
+                   user_id=user_uuid, subscriptions_ids=[],
+                   created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+    topic_repo.add(topic1)
+    topic_repo.add(topic2)
+    the_topics = topic_repo.get_by_user_id(user_uuid)
+
+    assert len(the_topics) == 2
+    assert the_topics[0].uuid in [topic1.uuid, topic2.uuid]
+    assert the_topics[1].uuid in [topic1.uuid, topic2.uuid]
+
+
 def test_delete_topic(topic_repo: MongoDBTopicRepository):
     topic = Topic(name="test", uuid=uuid.UUID("abc2130f-5a83-499f-a3dc-3115b483f6ba"),
                   user_id=uuid.UUID("1ba6cf89-adc3-4841-9f05-7f3d5dcbf79d"),

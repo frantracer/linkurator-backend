@@ -3,14 +3,14 @@ from datetime import datetime
 from typing import Optional, Dict, List
 from uuid import UUID
 from ipaddress import IPv4Address
-from mongodb_migrations.cli import MigrationManager # type: ignore
+from mongodb_migrations.cli import MigrationManager  # type: ignore
 from mongodb_migrations.config import Configuration, Execution  # type: ignore
 from pydantic import AnyUrl, BaseModel
 from pymongo import MongoClient  # type: ignore
 import pymongo
 from application.domain.model import User, Topic, Subscription, Item
-from application.service_layer.repositories import AbstractUserRepository, AbstractTopicRepository, \
-    AbstractSubscriptionRepository, AbstractItemRepository
+from application.service_layer.repositories import UserRepository, TopicRepository, \
+    SubscriptionRepository, ItemRepository
 
 
 def run_mongodb_migrations(address: IPv4Address, port: int, db_name: str, user: str, password: str) -> None:
@@ -60,7 +60,7 @@ class MongoDBUser(BaseModel):
         )
 
 
-class MongoDBUserRepository(AbstractUserRepository):
+class MongoDBUserRepository(UserRepository):
     client: MongoClient
     db_name: str
     _collection_name: str = 'users'
@@ -124,7 +124,7 @@ class MongoDBTopic(BaseModel):
         )
 
 
-class MongoDBTopicRepository(AbstractTopicRepository):
+class MongoDBTopicRepository(TopicRepository):
     client: MongoClient
     db_name: str
     _collection_name: str = 'topics'
@@ -152,6 +152,11 @@ class MongoDBTopicRepository(AbstractTopicRepository):
     def delete(self, topic_id: UUID):
         collection = self._topic_collection()
         collection.delete_one({'uuid': topic_id})
+
+    def get_by_user_id(self, user_id: UUID) -> List[Topic]:
+        collection = self._topic_collection()
+        topics = collection.find({'user_id': user_id})
+        return [MongoDBTopic(**topic).to_domain_topic() for topic in topics]
 
     def _topic_collection(self) -> pymongo.collection.Collection:
         return self.client[self.db_name][self._collection_name]
@@ -190,7 +195,7 @@ class MongoDBSubscription(BaseModel):
         )
 
 
-class MongoDBSubscriptionRepository(AbstractSubscriptionRepository):
+class MongoDBSubscriptionRepository(SubscriptionRepository):
     client: MongoClient
     db_name: str
     _collection_name: str = 'subscriptions'
@@ -256,7 +261,7 @@ class MongoDBItem(BaseModel):
         )
 
 
-class MongoDBItemRepository(AbstractItemRepository):
+class MongoDBItemRepository(ItemRepository):
     client: MongoClient
     db_name: str
     _collection_name: str = 'items'

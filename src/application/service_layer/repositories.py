@@ -4,7 +4,7 @@ from uuid import UUID
 from application.domain.model import Item, Subscription, Topic, User
 
 
-class AbstractItemRepository(abc.ABC):
+class ItemRepository(abc.ABC):
     def __init__(self):
         pass
 
@@ -25,7 +25,7 @@ class AbstractItemRepository(abc.ABC):
         raise NotImplementedError
 
 
-class AbstractSubscriptionRepository(abc.ABC):
+class SubscriptionRepository(abc.ABC):
     def __init__(self):
         pass
 
@@ -42,7 +42,7 @@ class AbstractSubscriptionRepository(abc.ABC):
         raise NotImplementedError
 
 
-class AbstractTopicRepository(abc.ABC):
+class TopicRepository(abc.ABC):
     def __init__(self):
         pass
 
@@ -58,8 +58,12 @@ class AbstractTopicRepository(abc.ABC):
     def delete(self, topic_id: UUID):
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def get_by_user_id(self, user_id: UUID) -> List[Topic]:
+        raise NotImplementedError
 
-class AbstractUserRepository(abc.ABC):
+
+class UserRepository(abc.ABC):
     def __init__(self):
         pass
 
