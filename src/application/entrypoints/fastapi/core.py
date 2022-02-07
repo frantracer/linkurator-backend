@@ -39,7 +39,7 @@ class Page(GenericModel, Generic[Element]):
                          previous_page=previous_page, next_page=next_page)
 
 
-class NewTopic(BaseModel):
+class NewTopicSchema(BaseModel):
     """
     Input model for topic creation
     """
@@ -51,7 +51,7 @@ class NewTopic(BaseModel):
         super().__init__(uuid=uuid, name=name, subscriptions_ids=subscriptions_ids)
 
 
-class Topic(BaseModel):
+class TopicSchema(BaseModel):
     """
     Category that includes different subscriptions
     """
@@ -66,7 +66,7 @@ class Topic(BaseModel):
                          created_at=created_at)
 
 
-class Subscription(BaseModel):
+class SubscriptionSchema(BaseModel):
     """
     Information about the different channels the user is subscribed to
     """
@@ -83,7 +83,7 @@ class Subscription(BaseModel):
                          created_at=created_at, scanned_at=scanned_at)
 
 
-class Item(BaseModel):
+class ItemSchema(BaseModel):
     """
     Content item that belongs to a subscription
     """
@@ -131,14 +131,14 @@ def create_app(handlers: Handlers) -> FastAPI:
         return handlers.message
 
     @api.get("/subscriptions",
-             response_model=Page[Subscription])
+             response_model=Page[SubscriptionSchema])
     async def get_all_subscriptions(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
                                     created_before: datetime = datetime.now()) -> Any:
         """
         Get the list of the user subscriptions
         """
         # Initialize dummy subscription
-        subscription = Subscription(
+        subscription = SubscriptionSchema(
             uuid=uuid4(),
             name="Dummy",
             url=parse_obj_as(AnyUrl, "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"),
@@ -147,7 +147,7 @@ def create_app(handlers: Handlers) -> FastAPI:
             scanned_at=datetime.now()
         )
 
-        return Page[Subscription](
+        return Page[SubscriptionSchema](
             elements=[subscription],
             total_elements=1,
             page_number=page_number,
@@ -157,7 +157,7 @@ def create_app(handlers: Handlers) -> FastAPI:
         )
 
     @api.get("/topics/{topic_id}/items",
-             response_model=Page[Item])
+             response_model=Page[ItemSchema])
     async def items_by_topic(
             topic_id: UUID, page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
             created_before: datetime = datetime.now()) -> Any:
@@ -166,7 +166,7 @@ def create_app(handlers: Handlers) -> FastAPI:
         """
         print(f"fetching items for topic {topic_id}")
 
-        item = Item(
+        item = ItemSchema(
             uuid=UUID("b5badcd0-a187-427c-8583-962cecb002c9"),
             subscription_uuid=UUID("310e66ed-df47-470b-b904-7389d2246a9b"),
             name="Dummy Item",
@@ -175,7 +175,7 @@ def create_app(handlers: Handlers) -> FastAPI:
             created_at=created_before
         )
 
-        return Page[Item](
+        return Page[ItemSchema](
             elements=[item],
             total_elements=1,
             page_number=page_number,
@@ -185,20 +185,20 @@ def create_app(handlers: Handlers) -> FastAPI:
         )
 
     @api.get("/topics",
-             response_model=Page[Topic])
+             response_model=Page[TopicSchema])
     async def get_all_topics(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
                              created_before: datetime = datetime.now()) -> Any:
         """
         Get all the topics from a user
         """
-        topic = Topic(
+        topic = TopicSchema(
             uuid=UUID("bc2e6ac4-3f23-40c5-84f6-d9f97172936f"),
             name="Dummy Topic",
             subscriptions_ids=[UUID("a9f8f8f8-3f23-40c5-84f6-d9f97172936f")],
             created_at=created_before
         )
 
-        return Page[Topic](
+        return Page[TopicSchema](
             elements=[topic],
             total_elements=1,
             page_number=page_number,
@@ -208,12 +208,12 @@ def create_app(handlers: Handlers) -> FastAPI:
         )
 
     @api.get("/topics/{topic_id}",
-             response_model=Topic)
+             response_model=TopicSchema)
     async def get_topic(topic_id: UUID) -> Any:
         """
         Get a topic information from a user
         """
-        return Topic(
+        return TopicSchema(
             uuid=topic_id,
             name="Dummy Topic",
             subscriptions_ids=[UUID("ab81b97f-559d-4c87-9fd7-ef6db4b8b0de")],
@@ -221,12 +221,12 @@ def create_app(handlers: Handlers) -> FastAPI:
         )
 
     @api.post("/topics",
-              response_model=Topic)
-    async def create_topic(new_topic: NewTopic) -> Any:
+              response_model=TopicSchema)
+    async def create_topic(new_topic: NewTopicSchema) -> Any:
         """
         Create a new topic for a user
         """
-        return Topic(
+        return TopicSchema(
             uuid=new_topic.uuid,
             name=new_topic.name,
             subscriptions_ids=new_topic.subscriptions_ids,
@@ -244,13 +244,13 @@ def create_app(handlers: Handlers) -> FastAPI:
         return
 
     @api.post("/topics/{topic_id}/subscriptions/{subscription_id}",
-              response_model=Topic,
+              response_model=TopicSchema,
               responses={404: {"model": Message}})
     async def assign_subscription_to_topic(topic_id: UUID, subscription_id: UUID) -> Any:
         """
         Assign a subscription to a topic
         """
-        return Topic(
+        return TopicSchema(
             uuid=topic_id,
             name="Dummy",
             subscriptions_ids=[subscription_id],
@@ -258,13 +258,13 @@ def create_app(handlers: Handlers) -> FastAPI:
         )
 
     @api.delete("/topics/{topic_id}/subscriptions/{subscription_id}",
-                response_model=Topic,
+                response_model=TopicSchema,
                 responses={404: {"model": None}})
     async def remove_subscription_from_topic(topic_id: UUID, subscription_id: UUID) -> Any:
         """
         Remove subscription from topic
         """
-        return Topic(
+        return TopicSchema(
             uuid=topic_id,
             name="Dummy",
             subscriptions_ids=[subscription_id],
