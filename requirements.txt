@@ -9,4 +9,5 @@ pydantic==1.8.2
 gunicorn==20.1.0
 pymongo~=4.0.1
 requests==2.26.0
+types-requests==2.27.11
 mongodb_migrations==1.1.1

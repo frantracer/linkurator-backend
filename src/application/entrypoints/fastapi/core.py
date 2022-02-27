@@ -1,19 +1,25 @@
 """
 Main file of the application
 """
+import http
+import json
+from urllib.parse import urlencode
 from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID, uuid4
 from http import HTTPStatus
-from typing import List, Any, Generic, TypeVar, Optional
-from fastapi import FastAPI
+from typing import List, Any, Generic, TypeVar, Optional, Dict
+from fastapi import FastAPI, Cookie
+import fastapi
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, AnyUrl, NonNegativeInt, PositiveInt
 from pydantic.generics import GenericModel
 from pydantic.tools import parse_obj_as
+import requests
+from requests.auth import HTTPBasicAuth
 
 # FastAPI application
 app: FastAPI = FastAPI()
-
 
 # Type definition
 Element = TypeVar("Element")
@@ -123,12 +129,85 @@ def create_app(handlers: Handlers) -> FastAPI:
 
     api = FastAPI()
 
+    with open("client_secret.json", "r", encoding='UTF-8') as secrets_file:
+        secrets = json.loads(secrets_file.read())
+        client_id = secrets["web"]["client_id"]
+        client_secret = secrets["web"]["client_secret"]
+    scopes = ['email', 'openid']
+
     @api.get("/health")
     async def health() -> str:
         """
         Health endpoint returns a 200 if the service is alive
         """
         return handlers.message
+
+    @api.route("/login", methods=["GET", "POST"])
+    async def login(request: fastapi.Request) -> Any:
+        """
+        Login endpoint
+        """
+        token = request.cookies.get("token")
+        if token is not None:
+            return JSONResponse(content={"token_login": token})
+
+        google_oauth_url = "https://accounts.google.com/o/oauth2/auth"
+        query_params: Dict[str, str] = {
+            "response_type": "code",
+            "client_id": client_id,
+            "redirect_uri": "http://localhost:9000/auth",
+            "scope": " ".join(scopes),
+            "state": "ETL04Oop9e1yFQQFRM2KpHvbWwtMRV",
+            "access_type": "offline",
+            "include_granted_scopes": "true"
+        }
+        authorization_url = f"{google_oauth_url}?{urlencode(query_params)}"
+        return fastapi.responses.RedirectResponse(
+            authorization_url,
+            status_code=http.HTTPStatus.FOUND)
+
+    @api.get("/auth")
+    async def auth(code: str = "") -> Any:
+        """
+        Auth endpoint
+        """
+        google_oauth_url = "https://oauth2.googleapis.com/token"
+        query_params: Dict[str, str] = {
+            'grant_type': "authorization_code",
+            "code": code,
+            "redirect_uri": "http://localhost:9000/auth"
+        }
+        token_response = requests.post(google_oauth_url, auth=HTTPBasicAuth(client_id, client_secret),
+                                       data=query_params)
+        token = token_response.json().get("access_token")
+
+        if token is not None:
+            response = JSONResponse(content={"token_auth": token})
+            response.set_cookie(key="token", value=token)
+            return response
+        return JSONResponse(content={"error": "Authentication failed"}, status_code=http.HTTPStatus.UNAUTHORIZED)
+
+    @api.get("/logout")
+    async def logout() -> Any:
+        """
+        Logout endpoint
+        """
+        response = JSONResponse(content={"message": "Logged out successfully"})
+        response.delete_cookie(key="token")
+        return response
+
+    @api.get("/revoke")
+    async def revoke(token: Optional[str] = Cookie(None)) -> Any:
+        revoke_response = requests.post('https://oauth2.googleapis.com/revoke',
+                                        params={'token': token},
+                                        headers={'content-type': 'application/x-www-form-urlencoded'})
+
+        if revoke_response.status_code == HTTPStatus.OK:
+            response = JSONResponse(content={"message": "Token revoked"})
+            response.delete_cookie(key="token")
+            return response
+        return JSONResponse(content={"error": "Failed to revoke token"},
+                            status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
     @api.get("/subscriptions",
              response_model=Page[SubscriptionSchema])
