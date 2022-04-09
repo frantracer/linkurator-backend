@@ -4,9 +4,9 @@ from ipaddress import IPv4Address
 from typing import Dict, List, Optional
 from uuid import UUID
 
-import pymongo
-from mongodb_migrations.cli import MigrationManager  # type: ignore
+import pymongo  # type: ignore
 from mongodb_migrations.config import Configuration, Execution  # type: ignore
+from mongodb_migrations.cli import MigrationManager  # type: ignore
 from pydantic.main import BaseModel
 from pydantic.networks import AnyUrl
 from pymongo import MongoClient  # type: ignore
@@ -28,7 +28,7 @@ def run_mongodb_migrations(address: IPv4Address, port: int, db_name: str, user: 
         'mongo_database': db_name,
         'mongo_username': user,
         'mongo_password': password,
-        'mongo_migrations_path': f'{pathlib.Path(__file__).parent.absolute()}/mongodb_migrations',
+        'mongo_migrations_path': f'{pathlib.Path(__file__).parent.absolute()}/migrations',
         'metastore': 'database_migrations',
         'execution': Execution.MIGRATE,
         'to_datetime': datetime.now().strftime('%Y%m%d%H%M%S')

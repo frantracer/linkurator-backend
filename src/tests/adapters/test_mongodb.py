@@ -6,9 +6,9 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
-from application.adapters.mongodb import MongoDBUserRepository, MongoDBTopicRepository, MongoDBSubscriptionRepository, \
-    MongoDBItemRepository, MongoDBUser, MongoDBTopic, MongoDBSubscription, MongoDBItem, run_mongodb_migrations, \
-    CollectionIsNotInitialized
+from application.infrastructure.mongodb.repositories import MongoDBUserRepository, MongoDBTopicRepository, \
+    MongoDBSubscriptionRepository, MongoDBItemRepository, MongoDBUser, MongoDBTopic, MongoDBSubscription, \
+    MongoDBItem, run_mongodb_migrations, CollectionIsNotInitialized
 from application.domain.user import User
 from application.domain.topic import Topic
 from application.domain.subscription import Subscription

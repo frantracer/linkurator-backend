@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from ipaddress import IPv4Address
 from gunicorn.app.wsgiapp import WSGIApplication  # type: ignore
 import application
-from application.adapters.mongodb import run_mongodb_migrations
+from application.infrastructure.mongodb.repositories import run_mongodb_migrations
 from application.infrastructure.fastapi.core import create_app, Handlers
 
 
