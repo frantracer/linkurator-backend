@@ -29,18 +29,19 @@ setup:
 	@echo "Run 'deactivate' to disable the virtual environment."
 
 run:
-	./venv/bin/python3.8 src/main.py
+	./venv/bin/python3.8 -m linkurator_core
 
 dev-run:
-	./venv/bin/python3.8 src/main.py --reload --workers 1 --debug
+	./venv/bin/python3.8 -m linkurator_core --reload --workers 1 --debug
 
 check-linting: mypy pylint
 
 mypy:
-	./venv/bin/mypy --config-file mypy.ini src
+	./venv/bin/mypy --config-file mypy.ini linkurator_core tests
 
 pylint:
-	find src -name '*.py' | xargs pylint --rcfile=.pylintrc
+	find ./linkurator_core -name '*.py' | xargs pylint --rcfile=.pylintrc
+	find ./tests -name '*.py' | xargs pylint --rcfile=.pylintrc
 
 test:
-	./venv/bin/pytest -v ./src/tests
+	./venv/bin/pytest -v tests
