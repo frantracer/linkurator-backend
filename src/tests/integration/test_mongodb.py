@@ -13,7 +13,7 @@ from application.domain.user import User
 from application.domain.topic import Topic
 from application.domain.subscription import Subscription
 from application.domain.item import Item
-from common import utils
+from application.common import utils
 
 
 @pytest.fixture(name="db_name", scope="session")
