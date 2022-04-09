@@ -1,5 +1,5 @@
 import pytest
-from pydantic import AnyUrl
+from pydantic.networks import AnyUrl
 from common.utils import parse_url
 
 

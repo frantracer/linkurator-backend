@@ -8,7 +8,10 @@ from mongodb_migrations.config import Configuration, Execution  # type: ignore
 from pydantic import AnyUrl, BaseModel
 from pymongo import MongoClient  # type: ignore
 import pymongo
-from application.domain.model import User, Topic, Subscription, Item
+from application.domain.user import User
+from application.domain.topic import Topic
+from application.domain.subscription import Subscription
+from application.domain.item import Item
 from application.service_layer.repositories import UserRepository, TopicRepository, \
     SubscriptionRepository, ItemRepository
 

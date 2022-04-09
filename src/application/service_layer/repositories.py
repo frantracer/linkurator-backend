@@ -1,7 +1,10 @@
 import abc
 from typing import List, Optional
 from uuid import UUID
-from application.domain.model import Item, Subscription, Topic, User
+from application.domain.user import User
+from application.domain.topic import Topic
+from application.domain.subscription import Subscription
+from application.domain.item import Item
 
 
 class ItemRepository(abc.ABC):
