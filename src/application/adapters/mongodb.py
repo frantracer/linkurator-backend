@@ -1,21 +1,24 @@
 import pathlib
 from datetime import datetime
-from typing import Optional, Dict, List
-from uuid import UUID
 from ipaddress import IPv4Address
+from typing import Dict, List, Optional
+from uuid import UUID
+
+import pymongo
 from mongodb_migrations.cli import MigrationManager  # type: ignore
 from mongodb_migrations.config import Configuration, Execution  # type: ignore
-from pydantic import AnyUrl, BaseModel
+from pydantic.main import BaseModel
+from pydantic.networks import AnyUrl
 from pymongo import MongoClient  # type: ignore
-import pymongo
-from application.domain.user import User
-from application.domain.topic import Topic
-from application.domain.subscription import Subscription
+
 from application.domain.item import Item
-from application.domain.user_repository import UserRepository
-from application.domain.topic_repository import TopicRepository
-from application.domain.subscription_repository import SubscriptionRepository
 from application.domain.item_repository import ItemRepository
+from application.domain.subscription import Subscription
+from application.domain.subscription_repository import SubscriptionRepository
+from application.domain.topic import Topic
+from application.domain.topic_repository import TopicRepository
+from application.domain.user import User
+from application.domain.user_repository import UserRepository
 
 
 def run_mongodb_migrations(address: IPv4Address, port: int, db_name: str, user: str, password: str) -> None:
