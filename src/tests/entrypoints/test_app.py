@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from application.entrypoints.fastapi.core import Handlers, create_app
+from application.infrastructure.fastapi.core import Handlers, create_app
 
 
 def test_health_returns_200() -> None:

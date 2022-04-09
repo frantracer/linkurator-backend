@@ -12,8 +12,10 @@ from application.domain.user import User
 from application.domain.topic import Topic
 from application.domain.subscription import Subscription
 from application.domain.item import Item
-from application.service_layer.repositories import UserRepository, TopicRepository, \
-    SubscriptionRepository, ItemRepository
+from application.domain.user_repository import UserRepository
+from application.domain.topic_repository import TopicRepository
+from application.domain.subscription_repository import SubscriptionRepository
+from application.domain.item_repository import ItemRepository
 
 
 def run_mongodb_migrations(address: IPv4Address, port: int, db_name: str, user: str, password: str) -> None:

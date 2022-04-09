@@ -5,7 +5,7 @@ from ipaddress import IPv4Address
 from gunicorn.app.wsgiapp import WSGIApplication  # type: ignore
 import application
 from application.adapters.mongodb import run_mongodb_migrations
-from application.entrypoints.fastapi.core import create_app, Handlers
+from application.infrastructure.fastapi.core import create_app, Handlers
 
 
 @dataclass
@@ -36,8 +36,8 @@ def main():
 
     run_mongodb_migrations(args.db.address, args.db.port, args.db.name, args.db.user, args.db.password)
 
-    application.entrypoints.fastapi.core.app = create_app(Handlers(message="OK!"))
-    run_server(app_path='application.entrypoints.fastapi.core:app',
+    application.infrastructure.fastapi.core.app = create_app(Handlers(message="OK!"))
+    run_server(app_path='application.infrastructure.fastapi.core:app',
                port=args.api.port, workers=args.api.workers, debug=args.api.debug, reload=args.api.reload)
 
 
