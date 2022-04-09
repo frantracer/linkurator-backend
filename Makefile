@@ -6,7 +6,7 @@ docker-build:
 
 docker-run:
 	docker rm -f linkurator-api
-	docker run --name linkurator-api -p 9000:9000 -d linkurator-api
+	docker run --name linkurator-api --network host -p 9000:9000 -d linkurator-api
 
 docker-check-linting:
 	docker rm -f linkurator-api-check-linting
