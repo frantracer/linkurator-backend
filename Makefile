@@ -19,30 +19,28 @@ docker-test: docker-run-external-services
 	docker rm -f linkurator-api-test
 	docker run --name linkurator-api-test --network host linkurator-api make test
 
-setup-venv:
+setup:
 	sudo apt install -y python3.8-venv python3-pip
 	python3.8 -m pip install virtualenv
 	python3.8 -m venv venv
+	./venv/bin/pip3 install -r requirements.txt
 	@echo
-	@echo "Run 'source venv/bin/activate' before any other make command"
-	@echo "Run 'deactivate' to disable the virtual environment"
-
-setup:
-	pip3 install -r requirements.txt
+	@echo "Run 'source venv/bin/activate' to activate the virtual environment."
+	@echo "Run 'deactivate' to disable the virtual environment."
 
 run:
-	python3.8 src/main.py
+	./venv/bin/python3.8 src/main.py
 
 dev-run:
-	python3.8 src/main.py --reload --workers 1 --debug
+	./venv/bin/python3.8 src/main.py --reload --workers 1 --debug
 
 check-linting: mypy pylint
 
 mypy:
-	mypy --config-file mypy.ini src
+	./venv/bin/mypy --config-file mypy.ini src
 
 pylint:
 	find src -name '*.py' | xargs pylint --rcfile=.pylintrc
 
 test:
-	pytest -v ./src/tests
+	./venv/bin/pytest -v ./src/tests
