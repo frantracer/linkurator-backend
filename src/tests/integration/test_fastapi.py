@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from application.infrastructure.fastapi.app import Handlers, create_app
+from linkurator_core.infrastructure.fastapi.app import Handlers, create_app
 
 
 def test_health_returns_200() -> None:

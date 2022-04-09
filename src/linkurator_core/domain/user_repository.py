@@ -2,7 +2,7 @@ import abc
 from typing import Optional
 from uuid import UUID
 
-from application.domain.user import User
+from linkurator_core.domain.user import User
 
 
 class UserRepository(abc.ABC):

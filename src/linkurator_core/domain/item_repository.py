@@ -2,7 +2,7 @@ import abc
 from typing import List, Optional
 from uuid import UUID
 
-from application.domain.item import Item
+from linkurator_core.domain.item import Item
 
 
 class ItemRepository(abc.ABC):

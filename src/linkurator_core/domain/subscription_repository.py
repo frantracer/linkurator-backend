@@ -2,7 +2,7 @@ import abc
 from typing import Optional
 from uuid import UUID
 
-from application.domain.subscription import Subscription
+from linkurator_core.domain.subscription import Subscription
 
 
 class SubscriptionRepository(abc.ABC):

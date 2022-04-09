@@ -11,14 +11,14 @@ from pydantic.main import BaseModel
 from pydantic.networks import AnyUrl
 from pymongo import MongoClient  # type: ignore
 
-from application.domain.item import Item
-from application.domain.item_repository import ItemRepository
-from application.domain.subscription import Subscription
-from application.domain.subscription_repository import SubscriptionRepository
-from application.domain.topic import Topic
-from application.domain.topic_repository import TopicRepository
-from application.domain.user import User
-from application.domain.user_repository import UserRepository
+from linkurator_core.domain.item import Item
+from linkurator_core.domain.item_repository import ItemRepository
+from linkurator_core.domain.subscription import Subscription
+from linkurator_core.domain.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.topic import Topic
+from linkurator_core.domain.topic_repository import TopicRepository
+from linkurator_core.domain.user import User
+from linkurator_core.domain.user_repository import UserRepository
 
 
 def run_mongodb_migrations(address: IPv4Address, port: int, db_name: str, user: str, password: str) -> None:

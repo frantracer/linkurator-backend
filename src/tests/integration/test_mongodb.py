@@ -6,14 +6,14 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
-from application.infrastructure.mongodb.repositories import MongoDBUserRepository, MongoDBTopicRepository, \
+from linkurator_core.infrastructure.mongodb.repositories import MongoDBUserRepository, MongoDBTopicRepository, \
     MongoDBSubscriptionRepository, MongoDBItemRepository, MongoDBUser, MongoDBTopic, MongoDBSubscription, \
     MongoDBItem, run_mongodb_migrations, CollectionIsNotInitialized
-from application.domain.user import User
-from application.domain.topic import Topic
-from application.domain.subscription import Subscription
-from application.domain.item import Item
-from application.common import utils
+from linkurator_core.domain.user import User
+from linkurator_core.domain.topic import Topic
+from linkurator_core.domain.subscription import Subscription
+from linkurator_core.domain.item import Item
+from linkurator_core.common import utils
 
 
 @pytest.fixture(name="db_name", scope="session")

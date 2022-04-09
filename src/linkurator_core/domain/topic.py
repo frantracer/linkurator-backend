@@ -1,16 +1,14 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import List
 from uuid import UUID
-
-from pydantic.networks import AnyUrl
 
 
 @dataclass
-class Subscription:
+class Topic:
     uuid: UUID
     name: str
-    url: AnyUrl
-    thumbnail: AnyUrl
+    user_id: UUID
+    subscriptions_ids: List[UUID]
     created_at: datetime
     updated_at: datetime
-    scanned_at: datetime

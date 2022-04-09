@@ -1,7 +1,7 @@
 import pytest
 from pydantic.networks import AnyUrl
 
-from application.common.utils import parse_url
+from linkurator_core.common.utils import parse_url
 
 
 def test_convert_string_to_url():
