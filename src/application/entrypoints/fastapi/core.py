@@ -3,19 +3,23 @@ Main file of the application
 """
 import http
 import json
-from urllib.parse import urlencode
 from dataclasses import dataclass
 from datetime import datetime
-from uuid import UUID, uuid4
 from http import HTTPStatus
-from typing import List, Any, Generic, TypeVar, Optional, Dict
-from fastapi import FastAPI, Cookie
+from typing import Any, Dict, Generic, List, Optional, TypeVar
+from urllib.parse import urlencode
+from uuid import UUID, uuid4
+
 import fastapi
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, AnyUrl, NonNegativeInt, PositiveInt
-from pydantic.generics import GenericModel
-from pydantic.tools import parse_obj_as
 import requests
+from fastapi.applications import FastAPI
+from fastapi.param_functions import Cookie
+from fastapi.responses import JSONResponse
+from pydantic.generics import GenericModel
+from pydantic.main import BaseModel
+from pydantic.networks import AnyUrl
+from pydantic.tools import parse_obj_as
+from pydantic.types import NonNegativeInt, PositiveInt
 from requests.auth import HTTPBasicAuth
 
 # FastAPI application
