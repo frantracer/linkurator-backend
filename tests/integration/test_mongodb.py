@@ -1,19 +1,23 @@
 import datetime
-from ipaddress import IPv4Address
 import uuid
-from math import floor
+from ipaddress import IPv4Address
 from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
-from linkurator_core.infrastructure.mongodb.repositories import MongoDBUserRepository, MongoDBTopicRepository, \
-    MongoDBSubscriptionRepository, MongoDBItemRepository, MongoDBUser, MongoDBTopic, MongoDBSubscription, \
-    MongoDBItem, run_mongodb_migrations, CollectionIsNotInitialized
-from linkurator_core.domain.user import User
-from linkurator_core.domain.topic import Topic
-from linkurator_core.domain.subscription import Subscription
-from linkurator_core.domain.item import Item
+from math import floor
+
 from linkurator_core.common import utils
+from linkurator_core.domain.item import Item
+from linkurator_core.domain.subscription import Subscription
+from linkurator_core.domain.topic import Topic
+from linkurator_core.domain.user import User
+from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItem, MongoDBItemRepository
+from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized, run_mongodb_migrations
+from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscription, \
+    MongoDBSubscriptionRepository
+from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopic, MongoDBTopicRepository
+from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUser, MongoDBUserRepository
 
 
 @pytest.fixture(name="db_name", scope="session")
