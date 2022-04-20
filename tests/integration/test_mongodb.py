@@ -13,6 +13,7 @@ from linkurator_core.domain.session import Session
 from linkurator_core.domain.subscription import Subscription
 from linkurator_core.domain.topic import Topic
 from linkurator_core.domain.user import User
+from linkurator_core.domain.user_repository import EmailAlreadyInUse
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItem, MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized, run_mongodb_migrations
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository, TokenAlreadyExists
@@ -104,6 +105,29 @@ def test_delete_user(user_repo: MongoDBUserRepository):
     user_repo.delete(user.uuid)
     deleted_user = user_repo.get(user.uuid)
     assert deleted_user is None
+
+
+def test_get_user_by_email(user_repo: MongoDBUserRepository):
+    user = User(name="test", email="sample_1@test.com", uuid=uuid.UUID("bb43a19d-cb28-4634-8ca7-4a5f6539678c"),
+                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+
+    user_repo.add(user)
+    the_user = user_repo.get_by_email(user.email)
+
+    assert the_user is not None
+    assert the_user.uuid == user.uuid
+
+
+def test_the_email_is_unique(user_repo: MongoDBUserRepository):
+    user_1 = User(name="test", email="sample_2@test.com", uuid=uuid.UUID("18244f86-75ea-4420-abcb-3552a51289ea"),
+                  created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+    user_2 = User(name="test", email="sample_2@test.com", uuid=uuid.UUID("b310f930-0f0b-467e-b746-0ed1c11449b8"),
+                  created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+
+    user_repo.add(user_1)
+
+    with pytest.raises(EmailAlreadyInUse):
+        user_repo.add(user_2)
 
 
 def test_exception_is_raised_if_topics_collection_is_not_created():

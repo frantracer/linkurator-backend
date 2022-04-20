@@ -8,9 +8,10 @@ from uuid import UUID
 import pymongo  # type: ignore
 from pydantic import BaseModel
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError  # type: ignore
 
 from linkurator_core.domain.user import User
-from linkurator_core.domain.user_repository import UserRepository
+from linkurator_core.domain.user_repository import UserRepository, EmailAlreadyInUse
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 
@@ -57,11 +58,23 @@ class MongoDBUserRepository(UserRepository):
 
     def add(self, user: User):
         collection = self._user_collection()
-        collection.insert_one(dict(MongoDBUser.from_domain_user(user)))
+        try:
+            collection.insert_one(dict(MongoDBUser.from_domain_user(user)))
+        except DuplicateKeyError as error:
+            if 'email_unique' in error.details.get('errmsg', ''):
+                raise EmailAlreadyInUse(f"Email '{user.email}' is already in use") from error
 
     def get(self, user_id: UUID) -> Optional[User]:
         collection = self._user_collection()
         user = collection.find_one({'uuid': user_id})
+        if user is None:
+            return None
+        user.pop('_id', None)
+        return MongoDBUser(**user).to_domain_user()
+
+    def get_by_email(self, email: str) -> Optional[User]:
+        collection = self._user_collection()
+        user = collection.find_one({'email': email})
         if user is None:
             return None
         user.pop('_id', None)

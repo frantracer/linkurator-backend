@@ -5,6 +5,10 @@ from uuid import UUID
 from linkurator_core.domain.user import User
 
 
+class EmailAlreadyInUse(Exception):
+    pass
+
+
 class UserRepository(abc.ABC):
     def __init__(self):
         pass
@@ -15,6 +19,10 @@ class UserRepository(abc.ABC):
 
     @abc.abstractmethod
     def get(self, user_id: UUID) -> Optional[User]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_by_email(self, email: str) -> Optional[User]:
         raise NotImplementedError
 
     @abc.abstractmethod
