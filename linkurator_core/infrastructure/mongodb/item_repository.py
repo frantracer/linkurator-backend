@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from uuid import UUID
 
 import pymongo  # type: ignore
 from pydantic import AnyUrl
 from pydantic.main import BaseModel
 from pymongo import MongoClient
+from pymongo.cursor import Cursor
 
 from linkurator_core.domain.item import Item
 from linkurator_core.domain.item_repository import ItemRepository
@@ -79,7 +80,7 @@ class MongoDBItemRepository(ItemRepository):
 
     def get_by_subscription_id(self, subscription_id: UUID) -> List[Item]:
         collection = self._item_collection()
-        items: List[Dict] = collection.find({'subscription_uuid': subscription_id}) \
+        items: Cursor[Any] = collection.find({'subscription_uuid': subscription_id}) \
             .sort('created_at', pymongo.DESCENDING)
         return [MongoDBItem(**item).to_domain_item() for item in items]
 
