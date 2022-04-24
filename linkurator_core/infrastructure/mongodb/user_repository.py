@@ -21,6 +21,7 @@ class MongoDBUser(BaseModel):
     email: str
     created_at: datetime
     updated_at: datetime
+    google_refresh_token: str
 
     @staticmethod
     def from_domain_user(user: User) -> MongoDBUser:
@@ -29,7 +30,8 @@ class MongoDBUser(BaseModel):
             name=user.name,
             email=user.email,
             created_at=user.created_at,
-            updated_at=user.updated_at
+            updated_at=user.updated_at,
+            google_refresh_token=user.google_refresh_token
         )
 
     def to_domain_user(self) -> User:
@@ -38,7 +40,8 @@ class MongoDBUser(BaseModel):
             name=self.name,
             email=self.email,
             created_at=self.created_at,
-            updated_at=self.updated_at
+            updated_at=self.updated_at,
+            google_refresh_token=self.google_refresh_token,
         )
 
 
@@ -61,7 +64,7 @@ class MongoDBUserRepository(UserRepository):
         try:
             collection.insert_one(dict(MongoDBUser.from_domain_user(user)))
         except DuplicateKeyError as error:
-            if 'email_unique' in error.details.get('errmsg', ''):
+            if error.details is not None and 'email_unique' in error.details.get('errmsg', ''):
                 raise EmailAlreadyInUse(f"Email '{user.email}' is already in use") from error
 
     def get(self, user_id: UUID) -> Optional[User]:

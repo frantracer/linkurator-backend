@@ -1,18 +1,11 @@
 import http
-from dataclasses import dataclass
 from typing import Dict, List, Optional
 from urllib.parse import urlencode
 
 import requests
 from requests.auth import HTTPBasicAuth
 
-from linkurator_core.application.account_service import AccountService, UserInfo
-
-
-@dataclass
-class CodeValidationResponse:
-    access_token: str
-    refresh_token: Optional[str]
+from linkurator_core.application.account_service import AccountService, UserInfo, CodeValidationResponse
 
 
 class GoogleAccountService(AccountService):
@@ -21,6 +14,7 @@ class GoogleAccountService(AccountService):
 
     More documentation: https://developers.google.com/identity/protocols/oauth2/openid-connect
     """
+
     def __init__(self, client_id: str, client_secret: str):
         self.client_id = client_id
         self.client_secret = client_secret
@@ -61,7 +55,7 @@ class GoogleAccountService(AccountService):
         if revoke_response.status_code != http.HTTPStatus.OK:
             raise Exception(f'Failed to revoke token: {str(revoke_response.content)}')
 
-    def generate_access_token_from_refresh_token(self, refresh_token: str) -> str:
+    def generate_access_token_from_refresh_token(self, refresh_token: str) -> Optional[str]:
         google_oauth_url = "https://oauth2.googleapis.com/token"
         query_params: Dict[str, str] = {
             'grant_type': "refresh_token",
@@ -71,13 +65,16 @@ class GoogleAccountService(AccountService):
         }
         token_response = requests.post(google_oauth_url, auth=HTTPBasicAuth(self.client_id, self.client_secret),
                                        data=query_params)
-        return token_response.json()['access_token']
+        return token_response.json().get('access_token', None)
 
     def get_user_info(self, access_token: str) -> Optional[UserInfo]:
         user_info_url = "https://openidconnect.googleapis.com/v1/userinfo"
         user_info_response = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
-        user_info = dict(user_info_response.json())
 
+        if user_info_response.status_code != http.HTTPStatus.OK:
+            return None
+
+        user_info = dict(user_info_response.json())
         return UserInfo(
             given_name=user_info['given_name'],
             family_name=user_info['family_name'],
