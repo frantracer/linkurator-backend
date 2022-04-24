@@ -10,4 +10,4 @@ class Session:
     expires_at: datetime
 
     def is_expired(self) -> bool:
-        return self.expires_at > datetime.now()
+        return self.expires_at < datetime.now()
