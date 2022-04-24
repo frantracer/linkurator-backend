@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import pathlib
 from datetime import datetime
 from ipaddress import IPv4Address
+import pathlib
 
-import pymongo  # type: ignore
 from mongodb_migrations.cli import MigrationManager  # type: ignore
 from mongodb_migrations.config import Configuration, Execution  # type: ignore
-from pymongo import MongoClient  # type: ignore
 
 
 def run_mongodb_migrations(address: IPv4Address, port: int, db_name: str, user: str, password: str) -> None:
