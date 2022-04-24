@@ -1,11 +1,11 @@
 import argparse
-import sys
 from dataclasses import dataclass
-from ipaddress import IPv4Address
-from gunicorn.app.wsgiapp import WSGIApplication  # type: ignore
-import linkurator_core
+import subprocess
+
+import uvicorn  # type: ignore
+
+from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.mongodb.repositories import run_mongodb_migrations
-from linkurator_core.infrastructure.fastapi.app import create_app, Handlers
 
 
 @dataclass
@@ -14,79 +14,56 @@ class ApiArguments:
     workers: int
     debug: bool
     reload: bool
+    with_gunicorn: bool
 
 
 @dataclass
-class DbArguments:
-    address: IPv4Address
-    port: int
-    user: str
-    password: str
-    name: str
-
-
-@dataclass
-class Arguments:
+class Settings:
     api: ApiArguments
-    db: DbArguments  # pylint: disable=invalid-name
+    db: MongoDBSettings  # pylint: disable=invalid-name
 
 
 def main():
-    args = parse_args()
+    settings = Settings(
+        api=parse_args(),
+        db=MongoDBSettings()
+    )
 
-    run_mongodb_migrations(args.db.address, args.db.port, args.db.name, args.db.user, args.db.password)
+    run_mongodb_migrations(settings.db.address, settings.db.port, settings.db.db_name, settings.db.user,
+                           settings.db.password)
 
-    linkurator_core.infrastructure.fastapi.app.app = create_app(Handlers(message="OK!"))
     run_server(app_path='linkurator_core.infrastructure.fastapi.app:app',
-               port=args.api.port, workers=args.api.workers, debug=args.api.debug, reload=args.api.reload)
+               port=settings.api.port, workers=settings.api.workers, debug=settings.api.debug,
+               reload=settings.api.reload, with_gunicorn=settings.api.with_gunicorn)
 
 
-def parse_args() -> Arguments:
+def parse_args() -> ApiArguments:
     parser = argparse.ArgumentParser("Run the API server")
     parser.add_argument("--port", type=int, default=9000, help="Port to run the server on")
     parser.add_argument("--workers", type=int, default=4, help="Number of workers to run")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     parser.add_argument("--reload", action="store_true", help="Reload server if code changes")
-    parser.add_argument("--db-address", type=IPv4Address, default="127.0.0.1", help="IP address of the database")
-    parser.add_argument("--db-port", type=int, default=27017, help="Port of the database")
-    parser.add_argument("--db-user", type=str, default="", help="Username for the database")
-    parser.add_argument("--db-password", type=str, default="", help="Password for the database")
-    parser.add_argument("--db-name", type=str, default="main", help="Name of the database")
+    parser.add_argument("--without-gunicorn", action="store_true", help="Run using only uvicorn without gunicorn")
     args = parser.parse_args()
 
-    return Arguments(
-        api=ApiArguments(
-            port=args.port,
-            workers=args.workers,
-            debug=args.debug,
-            reload=args.reload
-        ),
-        db=DbArguments(
-            address=args.db_address,
-            port=args.db_port,
-            user=args.db_user,
-            password=args.db_password,
-            name=args.db_name
-        )
+    return ApiArguments(
+        port=args.port,
+        workers=args.workers,
+        debug=args.debug,
+        reload=args.reload,
+        with_gunicorn=not args.without_gunicorn
     )
 
 
-def run_server(app_path: str, port: int, workers: int, debug: bool, reload: bool):
-    sys.argv = [
-        'gunicorn', app_path,
-        '--workers', f"{workers}",
-        '--worker-class', 'uvicorn.workers.UvicornWorker',
-        '--bind', f"0.0.0.0:{port}",
-        '--access-logfile', '-',
-    ]
-    if reload:
-        sys.argv.append('--reload')
-    if debug:
-        sys.argv.append('--log-level')
-        sys.argv.append('debug')
-
-    app = WSGIApplication()
-    app.run()
+def run_server(app_path: str, port: int, workers: int, debug: bool, reload: bool, with_gunicorn: bool):
+    if with_gunicorn:
+        with subprocess.Popen(['./venv/bin/gunicorn', app_path, '--workers', f"{workers}",
+                               '--worker-class', 'uvicorn.workers.UvicornWorker',
+                               '--bind', f"0.0.0.0:{port}", '--access-logfile', '-']) as gunicorn:
+            gunicorn.wait()
+    else:
+        uvicorn.run(app_path, port=port, reload=reload, workers=workers, debug=debug,
+                    log_level="debug" if debug else "info")
 
 
 if __name__ == "__main__":
