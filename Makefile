@@ -43,8 +43,8 @@ mypy:
 	./venv/bin/mypy --config-file mypy.ini linkurator_core tests
 
 pylint:
-	find ./linkurator_core -name '*.py' | xargs pylint --rcfile=.pylintrc
-	find ./tests -name '*.py' | xargs pylint --rcfile=.pylintrc
+	find ./linkurator_core -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
+	find ./tests -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
 
 test:
 	./venv/bin/pytest -v tests
