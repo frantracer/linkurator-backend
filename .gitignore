@@ -1,0 +1,6 @@
+secrets
+venv
+.mypy_cache
+.pytest_cache
+
+.idea

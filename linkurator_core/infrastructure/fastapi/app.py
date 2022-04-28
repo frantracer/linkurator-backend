@@ -14,7 +14,7 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 
-google_client_secret_path = os.environ.get('LINKURATOR_GOOGLE_SECRET_PATH', "client_secret.json")
+google_client_secret_path = os.environ.get('LINKURATOR_GOOGLE_SECRET_PATH', "secrets/client_secret.json")
 with open(google_client_secret_path, "r", encoding='UTF-8') as secrets_file:
     secrets = json.loads(secrets_file.read())
     client_id = secrets["web"]["client_id"]

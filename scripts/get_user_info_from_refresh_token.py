@@ -13,7 +13,7 @@ def main():
 
     refresh_token = args.refresh_token
 
-    secret_path = f'{pathlib.Path(__file__).parent.absolute()}/../client_secret.json'
+    secret_path = f'{pathlib.Path(__file__).parent.absolute()}/../secrets/client_secret.json'
     with open(secret_path, "r", encoding='UTF-8') as secrets_file:
         secrets = json.loads(secrets_file.read())
     client_id = secrets["web"]["client_id"]

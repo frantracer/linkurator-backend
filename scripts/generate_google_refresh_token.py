@@ -6,7 +6,7 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 
 
 def main():
-    secret_path = f'{pathlib.Path(__file__).parent.absolute()}/../client_secret.json'
+    secret_path = f'{pathlib.Path(__file__).parent.absolute()}/../secrets/client_secret.json'
     with open(secret_path, "r", encoding='UTF-8') as secrets_file:
         secrets = json.loads(secrets_file.read())
     client_id = secrets["web"]["client_id"]
