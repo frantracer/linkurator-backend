@@ -6,7 +6,6 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 
 
 def main():
-
     parser = argparse.ArgumentParser(description='Get google account user information')
     parser.add_argument('--refresh-token', type=str, required=True,
                         help='Refresh token that will be used to get the Access token')
@@ -24,9 +23,11 @@ def main():
 
     access_token = google_account_service.generate_access_token_from_refresh_token(refresh_token)
 
-    user_info = google_account_service.get_user_info(access_token)
-
-    print(user_info)
+    if access_token is not None:
+        user_info = google_account_service.get_user_info(access_token)
+        print(user_info)
+    else:
+        print("Refresh token is not valid")
 
 
 if __name__ == '__main__':
