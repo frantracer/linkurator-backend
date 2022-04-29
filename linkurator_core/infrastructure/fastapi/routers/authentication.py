@@ -1,5 +1,6 @@
 import http
 from typing import Any, Optional
+from urllib.parse import urljoin
 
 import fastapi
 from fastapi.applications import Request
@@ -32,15 +33,16 @@ def get_router(validate_token_handler: ValidateTokenHandler, register_user_handl
 
         return fastapi.responses.RedirectResponse(
             google_client.authorization_url(scopes=['profile', 'email', 'openid'],
-                                            redirect_uri="http://localhost:9000/auth"),
+                                            redirect_uri=urljoin(str(request.base_url), "/auth")),
             status_code=http.HTTPStatus.FOUND)
 
     @router.get("/auth")
-    async def auth(code: str = "") -> Any:
+    async def auth(request: Request) -> Any:
         """
         Auth endpoint
         """
-        tokens = google_client.validate_code(code=code, redirect_uri="http://localhost:9000/auth")
+        code = request.query_params.get("code", "")
+        tokens = google_client.validate_code(code=code, redirect_uri=urljoin(str(request.base_url), "/auth"))
         if tokens is not None:
             token = tokens.access_token
 
