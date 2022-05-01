@@ -50,9 +50,10 @@ class MongoDBUserRepository(UserRepository):
     db_name: str
     _collection_name: str = 'users'
 
-    def __init__(self, ip: IPv4Address, port: int, db_name: str):
+    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str):
         super().__init__()
-        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', uuidRepresentation='standard')
+        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password,
+                                  uuidRepresentation='standard')
         self.db_name = db_name
 
         if self._collection_name not in self.client[self.db_name].list_collection_names():

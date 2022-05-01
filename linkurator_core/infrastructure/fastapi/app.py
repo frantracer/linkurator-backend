@@ -24,9 +24,11 @@ account_service = GoogleAccountService(
     client_secret=client_secret)
 
 db_settings = MongoDBSettings()
-user_repository = MongoDBUserRepository(ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name)
+user_repository = MongoDBUserRepository(ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+                                        username=db_settings.user, password=db_settings.password)
 session_repository = MongoDBSessionRepository(ip=db_settings.address, port=db_settings.port,
-                                              db_name=db_settings.db_name)
+                                              db_name=db_settings.db_name,
+                                              username=db_settings.user, password=db_settings.password)
 
 app_handlers = Handlers(
     register_user=RegisterUserHandler(user_repository, account_service),

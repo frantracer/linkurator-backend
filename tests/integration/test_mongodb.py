@@ -26,39 +26,39 @@ from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUser, 
 @pytest.fixture(name="db_name", scope="session")
 def fixture_db_name() -> str:
     db_name = f'test-{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}'
-    run_mongodb_migrations(IPv4Address('127.0.0.1'), 27017, db_name, "", "")
+    run_mongodb_migrations(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
     return db_name
 
 
 @pytest.fixture(name="user_repo", scope="session")
 def fixture_user_repo(db_name) -> MongoDBUserRepository:
-    return MongoDBUserRepository(IPv4Address('127.0.0.1'), 27017, db_name)
+    return MongoDBUserRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
 @pytest.fixture(name="topic_repo", scope="session")
 def fixture_topic_repo(db_name) -> MongoDBTopicRepository:
-    return MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, db_name)
+    return MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
 @pytest.fixture(name="subscription_repo", scope="session")
 def fixture_subscription_repo(db_name) -> MongoDBSubscriptionRepository:
-    return MongoDBSubscriptionRepository(IPv4Address('127.0.0.1'), 27017, db_name)
+    return MongoDBSubscriptionRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
 @pytest.fixture(name="item_repo", scope="session")
 def fixture_item_repo(db_name) -> MongoDBItemRepository:
-    return MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, db_name)
+    return MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
 @pytest.fixture(name="session_repo", scope="session")
 def fixture_session_repo(db_name) -> MongoDBSessionRepository:
-    return MongoDBSessionRepository(IPv4Address('127.0.0.1'), 27017, db_name)
+    return MongoDBSessionRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
 def test_exception_is_raised_if_users_collection_is_not_created():
     non_existent_db_name = f"test-{uuid.uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
-        MongoDBUserRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name)
+        MongoDBUserRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name, "develop", "develop")
 
 
 def test_add_user_to_mongodb(user_repo: MongoDBUserRepository):
@@ -134,7 +134,7 @@ def test_the_email_is_unique(user_repo: MongoDBUserRepository):
 def test_exception_is_raised_if_topics_collection_is_not_created():
     non_existent_db_name = f"test-{uuid.uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
-        MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name)
+        MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name, "develop", "develop")
 
 
 def test_add_topic(topic_repo: MongoDBTopicRepository):
@@ -210,7 +210,7 @@ def test_delete_topic(topic_repo: MongoDBTopicRepository):
 def test_exception_is_raised_if_subscriptions_collection_is_not_created():
     non_existent_db_name = f"test-{uuid.uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
-        MongoDBSubscriptionRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name)
+        MongoDBSubscriptionRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name, "develop", "develop")
 
 
 def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository):
@@ -273,7 +273,7 @@ def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository):
 def test_exception_is_raised_if_items_collection_is_not_created():
     non_existent_db_name = f"test-{uuid.uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
-        MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name)
+        MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name, "develop", "develop")
 
 
 def test_get_item(item_repo: MongoDBItemRepository):

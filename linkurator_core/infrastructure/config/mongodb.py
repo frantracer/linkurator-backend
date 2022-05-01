@@ -1,5 +1,6 @@
 from ipaddress import IPv4Address
 import os
+import configparser
 
 
 class MongoDBSettings:
@@ -10,8 +11,16 @@ class MongoDBSettings:
     db_name: str
 
     def __init__(self):
-        self.address = IPv4Address(os.environ.get('LINKURATOR_DB_ADDRESS', '127.0.0.1'))
-        self.port = int(os.environ.get('LINKURATOR_DB_PORT', 27017))
-        self.db_name = os.environ.get('LINKURATOR_DB_NAME', 'main')
-        self.user = os.environ.get('LINKURATOR_DB_USER', '')
-        self.password = os.environ.get('LINKURATOR_DB_PASSWORD', '')
+        config_file_path = './secrets/app_config.ini'
+
+        if not os.path.exists(config_file_path):
+            raise FileNotFoundError(f'Configuration file not found at {config_file_path}')
+
+        config = configparser.ConfigParser()
+        config.read(config_file_path)
+
+        self.address = IPv4Address(config['MONGODB']['ip_address'])
+        self.port = int(config['MONGODB']['port'])
+        self.db_name = config['MONGODB']['database']
+        self.user = config['MONGODB']['user']
+        self.password = config['MONGODB']['password']

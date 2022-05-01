@@ -36,7 +36,7 @@ deploy: check-vault-pass-is-defined check-ssh-connection
 	ssh root@$(SSH_IP_ADDRESS) "docker rm $(DOCKER_CONTAINER_APP)"
 	ssh root@$(SSH_IP_ADDRESS) "docker pull $(DOCKER_IMAGE)"
 	@ssh root@$(SSH_IP_ADDRESS) "docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
-		--name $(DOCKER_CONTAINER_APP) --network host -d $(DOCKER_IMAGE)"
+		-e 'LINKURATOR_ENVIRONMENT=PRODUCTION' --name $(DOCKER_CONTAINER_APP) --network host -d $(DOCKER_IMAGE)"
 	ssh root@$(SSH_IP_ADDRESS) "docker image prune -a -f"
 	@echo "Latest image is deployed"
 
@@ -64,6 +64,7 @@ encrypt-secrets: create-vault-pass
 	cp secrets/cert.pem config/cert.pem.enc
 	cp secrets/chain.pem config/chain.pem.enc
 	cp secrets/privkey.pem config/privkey.pem.enc
+	cp secrets/app_config_production.ini config/app_config_production.ini.enc
 
 	ansible-vault encrypt --vault-password-file=secrets/vault_password.txt config/*.enc
 
@@ -75,16 +76,27 @@ decrypt-secrets: create-vault-pass
 	mv -f secrets/cert.pem.enc secrets/cert.pem
 	mv -f secrets/chain.pem.enc secrets/chain.pem
 	mv -f secrets/privkey.pem.enc secrets/privkey.pem
+	mv -f secrets/app_config_production.ini.enc secrets/app_config_production.ini
+
+link-config: decrypt-secrets
+	@if [ "${LINKURATOR_ENVIRONMENT}" = "PRODUCTION" ]; then \
+		ln -sfn app_config_production.ini secrets/app_config.ini; \
+	elif [ "${LINKURATOR_ENVIRONMENT}" = "DEVELOPMENT" ]; then \
+		ln -sfn ../config/app_config_develop.ini secrets/app_config.ini; \
+	else \
+		echo "LINKURATOR_ENVIRONMENT environment variable must be set to PRODUCTION or DEVELOPMENT"; \
+		exit 1; \
+	fi
 
 create-vault-pass: check-vault-pass-is-defined
 	@mkdir -p secrets
 	@echo -n $(LINKURATOR_VAULT_PASSWORD) > secrets/vault_password.txt
 	@echo "Vault password stored in secrets/vault_password.txt"
 
-run: decrypt-secrets
+run: link-config
 	./venv/bin/python3.8 -m linkurator_core
 
-dev-run: decrypt-secrets
+dev-run: link-config
 	./venv/bin/python3.8 -m linkurator_core --reload --workers 1 --debug --without-gunicorn
 
 check-linting: mypy pylint
