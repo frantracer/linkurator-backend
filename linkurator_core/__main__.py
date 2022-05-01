@@ -57,9 +57,14 @@ def parse_args() -> ApiArguments:
 
 def run_server(app_path: str, port: int, workers: int, debug: bool, reload: bool, with_gunicorn: bool):
     if with_gunicorn:
-        with subprocess.Popen(['./venv/bin/gunicorn', app_path, '--workers', f"{workers}",
+        with subprocess.Popen(['./venv/bin/gunicorn', app_path,
+                               '--workers', f"{workers}",
                                '--worker-class', 'uvicorn.workers.UvicornWorker',
-                               '--bind', f"0.0.0.0:{port}", '--access-logfile', '-']) as gunicorn:
+                               '--bind', f"0.0.0.0:{port}",
+                               '--access-logfile', '-',
+                               '--keyfile', 'secrets/privkey.pem',
+                               '--certfile', 'secrets/cert.pem',
+                               '--ca-certs', 'secrets/chain.pem']) as gunicorn:
             gunicorn.wait()
     else:
         uvicorn.run(app_path, port=port, reload=reload, workers=workers, debug=debug,

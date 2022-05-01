@@ -61,11 +61,20 @@ check-ssh-connection:
 
 encrypt-secrets: create-vault-pass
 	cp secrets/client_secret.json config/client_secret.json.enc
-	ansible-vault encrypt --vault-password-file=secrets/vault_password.txt config/client_secret.json.enc
+	cp secrets/cert.pem config/cert.pem.enc
+	cp secrets/chain.pem config/chain.pem.enc
+	cp secrets/privkey.pem config/privkey.pem.enc
+
+	ansible-vault encrypt --vault-password-file=secrets/vault_password.txt config/*.enc
 
 decrypt-secrets: create-vault-pass
-	cp config/client_secret.json.enc secrets/client_secret.json
-	ansible-vault decrypt --vault-password-file=secrets/vault_password.txt secrets/client_secret.json
+	cp config/*.enc secrets/
+	ansible-vault decrypt --vault-password-file=secrets/vault_password.txt secrets/*.enc
+
+	mv -f secrets/client_secret.json.enc secrets/client_secret.json
+	mv -f secrets/cert.pem.enc secrets/cert.pem
+	mv -f secrets/chain.pem.enc secrets/chain.pem
+	mv -f secrets/privkey.pem.enc secrets/privkey.pem
 
 create-vault-pass: check-vault-pass-is-defined
 	@mkdir -p secrets
