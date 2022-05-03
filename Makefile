@@ -9,7 +9,8 @@ docker-build:
 	docker rmi -f $(DOCKER_IMAGE)
 	docker build -t $(DOCKER_IMAGE) .
 
-docker-push:
+docker-push: decrypt-secrets
+	@docker login -u frantracer -p $(shell cat ./secrets/docker_token.txt)
 	docker push $(DOCKER_IMAGE)
 
 docker-run: check-vault-pass-is-defined
@@ -65,6 +66,7 @@ encrypt-secrets: create-vault-pass
 	cp secrets/chain.pem config/chain.pem.enc
 	cp secrets/privkey.pem config/privkey.pem.enc
 	cp secrets/app_config_production.ini config/app_config_production.ini.enc
+	cp secrets/docker_token.txt config/docker_token.txt.enc
 
 	ansible-vault encrypt --vault-password-file=secrets/vault_password.txt config/*.enc
 
@@ -77,6 +79,7 @@ decrypt-secrets: create-vault-pass
 	mv -f secrets/chain.pem.enc secrets/chain.pem
 	mv -f secrets/privkey.pem.enc secrets/privkey.pem
 	mv -f secrets/app_config_production.ini.enc secrets/app_config_production.ini
+	mv -f secrets/docker_token.txt.enc secrets/docker_token.txt
 
 link-config: decrypt-secrets
 	@if [ "${LINKURATOR_ENVIRONMENT}" = "PRODUCTION" ]; then \

@@ -1,0 +1,32 @@
+name: Continuous Deployment
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Docker
+        uses: docker/setup-buildx-action@v1
+      - name: Build Image
+        run: make docker-build
+      - name: Check linting
+        run: make docker-check-linting
+      - name: Run tests
+        run: make docker-test
+      # Only deploy main branch
+      - name: Deploy image to production
+        if: github.ref_name == 'main'
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          make docker-push
+          make deploy
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
+          SSH_KNOWN_HOSTS: ${{secrets.SSH_KNOWN_HOSTS}}
+          SSH_IP_ADDRESS: ${{secrets.PRODUCTION_IP_ADDRESS}}
+          LINKURATOR_VAULT_PASSWORD: ${{secrets.LINKURATOR_VAULT_PASSWORD}}
