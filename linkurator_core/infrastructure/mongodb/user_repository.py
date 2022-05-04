@@ -17,17 +17,19 @@ from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotI
 
 class MongoDBUser(BaseModel):
     uuid: UUID
-    name: str
+    first_name: str
+    last_name: str
     email: str
     created_at: datetime
     updated_at: datetime
-    google_refresh_token: str
+    google_refresh_token: Optional[str]
 
     @staticmethod
     def from_domain_user(user: User) -> MongoDBUser:
         return MongoDBUser(
             uuid=user.uuid,
-            name=user.name,
+            first_name=user.first_name,
+            last_name=user.last_name,
             email=user.email,
             created_at=user.created_at,
             updated_at=user.updated_at,
@@ -37,7 +39,8 @@ class MongoDBUser(BaseModel):
     def to_domain_user(self) -> User:
         return User(
             uuid=self.uuid,
-            name=self.name,
+            first_name=self.first_name,
+            last_name=self.last_name,
             email=self.email,
             created_at=self.created_at,
             updated_at=self.updated_at,

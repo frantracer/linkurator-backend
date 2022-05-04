@@ -16,14 +16,14 @@ class TestValidateTokenHandler(unittest.TestCase):
         session_repo_mock.get.return_value = dummy_session
 
         user_repo_mock = MagicMock()
-        dummy_user = User(user_id, "Jonh", "john@example.com", datetime.now(), datetime.now(), "myrefreshtoken")
+        dummy_user = User(user_id, "Jonh", "Doe", "john@example.com", datetime.now(), datetime.now(), "myrefreshtoken")
         user_repo_mock.get.return_value = dummy_user
 
         account_service_mock = MagicMock()
 
         handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock)
 
-        the_session = handler.handle(access_token="mytoken")
+        the_session = handler.handle(access_token="mytoken", refresh_token=None)
         self.assertEqual(dummy_session, the_session)
 
     def test_a_invalid_session_returns_none(self):
@@ -38,7 +38,7 @@ class TestValidateTokenHandler(unittest.TestCase):
 
         handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock)
 
-        user = handler.handle(access_token="mytoken")
+        user = handler.handle(access_token="mytoken", refresh_token=None)
         self.assertIsNone(user)
 
     def test_an_expired_session_returns_none(self):
@@ -52,5 +52,5 @@ class TestValidateTokenHandler(unittest.TestCase):
 
         handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock)
 
-        user = handler.handle(access_token="mytoken")
+        user = handler.handle(access_token="mytoken", refresh_token=None)
         self.assertIsNone(user)

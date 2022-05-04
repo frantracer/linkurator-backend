@@ -8,7 +8,6 @@ from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_a
 def test_health_returns_200() -> None:
     handlers = Handlers(
         validate_token=MagicMock(),
-        register_user=MagicMock(),
         google_client=MagicMock()
     )
     client = TestClient(create_app(handlers))

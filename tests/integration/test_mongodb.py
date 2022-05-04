@@ -62,14 +62,15 @@ def test_exception_is_raised_if_users_collection_is_not_created():
 
 
 def test_add_user_to_mongodb(user_repo: MongoDBUserRepository):
-    user = User(name="test", email="test@test.com", uuid=uuid.UUID("679c6db9-a54e-4947-b825-57a96fb5f599"),
+    user = User(first_name="test", last_name="test", email="test@test.com",
+                uuid=uuid.UUID("679c6db9-a54e-4947-b825-57a96fb5f599"),
                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), google_refresh_token="token")
 
     user_repo.add(user)
     the_user = user_repo.get(user.uuid)
 
     assert the_user is not None
-    assert the_user.name == user.name
+    assert the_user.first_name == user.first_name
     assert the_user.email == user.email
     assert the_user.uuid == user.uuid
     assert int(the_user.created_at.timestamp() * 100) == floor(user.created_at.timestamp() * 100)
@@ -84,7 +85,7 @@ def test_get_user_that_does_not_exist(user_repo: MongoDBUserRepository):
 
 def test_get_user_with_invalid_format_raises_an_exception(user_repo: MongoDBUserRepository):
     user_dict = dict(MongoDBUser(uuid=uuid.UUID("449e3bee-6f9b-4cbc-8a09-64a6fcface96"),
-                                 name="test", email="test@email.com",
+                                 first_name="test", last_name="test", email="test@email.com",
                                  created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(),
                                  google_refresh_token="token"))
     user_dict['uuid'] = 'invalid_uuid'
@@ -96,7 +97,8 @@ def test_get_user_with_invalid_format_raises_an_exception(user_repo: MongoDBUser
 
 
 def test_delete_user(user_repo: MongoDBUserRepository):
-    user = User(name="test", email="test_1@test.com", uuid=uuid.UUID("1006a7a9-4c12-4475-9c4a-7c0f6c9f8eb3"),
+    user = User(first_name="test", last_name="test", email="test_1@test.com",
+                uuid=uuid.UUID("1006a7a9-4c12-4475-9c4a-7c0f6c9f8eb3"),
                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), google_refresh_token="token")
 
     user_repo.add(user)
@@ -109,7 +111,8 @@ def test_delete_user(user_repo: MongoDBUserRepository):
 
 
 def test_get_user_by_email(user_repo: MongoDBUserRepository):
-    user = User(name="test", email="sample_1@test.com", uuid=uuid.UUID("bb43a19d-cb28-4634-8ca7-4a5f6539678c"),
+    user = User(first_name="test", last_name="test", email="sample_1@test.com",
+                uuid=uuid.UUID("bb43a19d-cb28-4634-8ca7-4a5f6539678c"),
                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), google_refresh_token="token")
 
     user_repo.add(user)
@@ -120,9 +123,11 @@ def test_get_user_by_email(user_repo: MongoDBUserRepository):
 
 
 def test_the_email_is_unique(user_repo: MongoDBUserRepository):
-    user_1 = User(name="test", email="sample_2@test.com", uuid=uuid.UUID("18244f86-75ea-4420-abcb-3552a51289ea"),
+    user_1 = User(first_name="test", last_name="test", email="sample_2@test.com",
+                  uuid=uuid.UUID("18244f86-75ea-4420-abcb-3552a51289ea"),
                   created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), google_refresh_token="token")
-    user_2 = User(name="test", email="sample_2@test.com", uuid=uuid.UUID("b310f930-0f0b-467e-b746-0ed1c11449b8"),
+    user_2 = User(first_name="test", last_name="test", email="sample_2@test.com",
+                  uuid=uuid.UUID("b310f930-0f0b-467e-b746-0ed1c11449b8"),
                   created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), google_refresh_token="token")
 
     user_repo.add(user_1)

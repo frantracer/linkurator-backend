@@ -7,7 +7,6 @@ import os
 from fastapi.applications import FastAPI
 
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
-from linkurator_core.application.register_user_handler import RegisterUserHandler
 from linkurator_core.application.validate_token_handler import ValidateTokenHandler
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
@@ -31,7 +30,6 @@ session_repository = MongoDBSessionRepository(ip=db_settings.address, port=db_se
                                               username=db_settings.user, password=db_settings.password)
 
 app_handlers = Handlers(
-    register_user=RegisterUserHandler(user_repository, account_service),
     validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
     google_client=account_service
 )

@@ -8,13 +8,11 @@ from fastapi.param_functions import Cookie
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 
-from linkurator_core.application.register_user_handler import RegisterUserHandler
 from linkurator_core.application.validate_token_handler import ValidateTokenHandler
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
-def get_router(validate_token_handler: ValidateTokenHandler, register_user_handler: RegisterUserHandler,
-               google_client: GoogleAccountService) -> APIRouter:
+def get_router(validate_token_handler: ValidateTokenHandler, google_client: GoogleAccountService) -> APIRouter:
     router = APIRouter()
 
     @router.route("/login", methods=["GET", "POST"])
@@ -24,7 +22,7 @@ def get_router(validate_token_handler: ValidateTokenHandler, register_user_handl
         """
         token = request.cookies.get("token")
         if token is not None:
-            session = validate_token_handler.handle(access_token=token)
+            session = validate_token_handler.handle(access_token=token, refresh_token=None)
             if session is None:
                 response = JSONResponse(content={"message": "Invalid token"}, status_code=http.HTTPStatus.UNAUTHORIZED)
                 response.delete_cookie(key="token")
@@ -46,10 +44,7 @@ def get_router(validate_token_handler: ValidateTokenHandler, register_user_handl
         if tokens is not None:
             token = tokens.access_token
 
-            if tokens.refresh_token is not None:
-                register_user_handler.handle(tokens.refresh_token)
-
-            session = validate_token_handler.handle(access_token=token)
+            session = validate_token_handler.handle(access_token=token, refresh_token=tokens.refresh_token)
 
             if session is None:
                 return JSONResponse(content={"message": "Invalid token"}, status_code=http.HTTPStatus.UNAUTHORIZED)
