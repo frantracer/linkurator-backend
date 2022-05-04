@@ -29,7 +29,7 @@ class ValidateTokenHandler:
                                 first_name=user_info.given_name, last_name=user_info.family_name,
                                 google_refresh_token=refresh_token)
                 self.user_repository.add(user)
-            elif user.google_refresh_token != refresh_token:
+            elif refresh_token is not None and user.google_refresh_token != refresh_token:
                 user.google_refresh_token = refresh_token
                 self.user_repository.delete(user.uuid)
                 self.user_repository.add(user)
