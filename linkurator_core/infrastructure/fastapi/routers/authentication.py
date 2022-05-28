@@ -29,8 +29,9 @@ def get_router(validate_token_handler: ValidateTokenHandler, google_client: Goog
                 return response
             return JSONResponse(content={"token": session.token})
 
+        scopes = ['profile', 'email', 'openid', "https://www.googleapis.com/auth/youtube.readonly"]
         return fastapi.responses.RedirectResponse(
-            google_client.authorization_url(scopes=['profile', 'email', 'openid'],
+            google_client.authorization_url(scopes=scopes,
                                             redirect_uri=urljoin(str(request.base_url), "/auth")),
             status_code=http.HTTPStatus.FOUND)
 

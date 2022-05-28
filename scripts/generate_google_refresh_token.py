@@ -13,9 +13,10 @@ def main():
     client_secret = secrets["web"]["client_secret"]
 
     google_account_service = GoogleAccountService(client_id=client_id, client_secret=client_secret)
-    redirect_uri = "http://localhost:9000"
+    redirect_uri = "https://localhost:9000/auth"
 
-    auth_url = google_account_service.authorization_url(["openid", "profile", "email"], redirect_uri)
+    scopes = ["openid", "profile", "email", "https://www.googleapis.com/auth/youtube.readonly"]
+    auth_url = google_account_service.authorization_url(scopes, redirect_uri)
 
     print(f'Please visit the following URL to authorize the application:\n {auth_url}')
     print('\nAfter authorization, copy the redirected URL and paste it here:')
