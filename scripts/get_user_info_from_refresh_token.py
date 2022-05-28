@@ -1,7 +1,6 @@
 import argparse
-import json
-import pathlib
 
+from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
@@ -13,13 +12,9 @@ def main():
 
     refresh_token = args.refresh_token
 
-    secret_path = f'{pathlib.Path(__file__).parent.absolute()}/../secrets/client_secret.json'
-    with open(secret_path, "r", encoding='UTF-8') as secrets_file:
-        secrets = json.loads(secrets_file.read())
-    client_id = secrets["web"]["client_id"]
-    client_secret = secrets["web"]["client_secret"]
-
-    google_account_service = GoogleAccountService(client_id=client_id, client_secret=client_secret)
+    google_secrets = GoogleClientSecrets()
+    google_account_service = GoogleAccountService(client_id=google_secrets.client_id,
+                                                  client_secret=google_secrets.client_secret)
 
     access_token = google_account_service.generate_access_token_from_refresh_token(refresh_token)
 

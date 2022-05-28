@@ -1,26 +1,23 @@
 """
 Main file of the application
 """
-import json
 import os
 
 from fastapi.applications import FastAPI
 
-from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.application.validate_token_handler import ValidateTokenHandler
+from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
+from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 
 google_client_secret_path = os.environ.get('LINKURATOR_GOOGLE_SECRET_PATH', "secrets/client_secret.json")
-with open(google_client_secret_path, "r", encoding='UTF-8') as secrets_file:
-    secrets = json.loads(secrets_file.read())
-    client_id = secrets["web"]["client_id"]
-    client_secret = secrets["web"]["client_secret"]
+google_secrets = GoogleClientSecrets(google_client_secret_path)
 account_service = GoogleAccountService(
-    client_id=client_id,
-    client_secret=client_secret)
+    client_id=google_secrets.client_id,
+    client_secret=google_secrets.client_secret)
 
 db_settings = MongoDBSettings()
 user_repository = MongoDBUserRepository(ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,

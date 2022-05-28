@@ -1,18 +1,13 @@
-import json
-import pathlib
 from urllib.parse import parse_qs, urlparse
 
+from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
 def main():
-    secret_path = f'{pathlib.Path(__file__).parent.absolute()}/../secrets/client_secret.json'
-    with open(secret_path, "r", encoding='UTF-8') as secrets_file:
-        secrets = json.loads(secrets_file.read())
-    client_id = secrets["web"]["client_id"]
-    client_secret = secrets["web"]["client_secret"]
-
-    google_account_service = GoogleAccountService(client_id=client_id, client_secret=client_secret)
+    google_secrets = GoogleClientSecrets()
+    google_account_service = GoogleAccountService(client_id=google_secrets.client_id,
+                                                  client_secret=google_secrets.client_secret)
     redirect_uri = "https://localhost:9000/auth"
 
     scopes = ["openid", "profile", "email", "https://www.googleapis.com/auth/youtube.readonly"]
