@@ -1,9 +1,10 @@
 import argparse
+import asyncio
 from dataclasses import dataclass
-import subprocess
 
-import uvicorn  # type: ignore
+from uvicorn import Config, Server  # type: ignore
 
+from linkurator_core.infrastructure.asyncio.event_bus_service import AsyncioEventBusService
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.mongodb.repositories import run_mongodb_migrations
 
@@ -23,7 +24,7 @@ class Settings:
     db: MongoDBSettings  # pylint: disable=invalid-name
 
 
-def main():
+async def main():
     settings = Settings(
         api=parse_args(),
         db=MongoDBSettings()
@@ -32,9 +33,11 @@ def main():
     run_mongodb_migrations(settings.db.address, settings.db.port, settings.db.db_name, settings.db.user,
                            settings.db.password)
 
-    run_server(app_path='linkurator_core.infrastructure.fastapi.app:app',
-               port=settings.api.port, workers=settings.api.workers, debug=settings.api.debug,
-               reload=settings.api.reload, with_gunicorn=settings.api.with_gunicorn)
+    event_bus = AsyncioEventBusService()
+    api_server = run_server(app_path='linkurator_core.infrastructure.fastapi.app:app',
+                            port=settings.api.port, workers=settings.api.workers, debug=settings.api.debug,
+                            reload=settings.api.reload, with_gunicorn=settings.api.with_gunicorn)
+    await asyncio.gather(api_server, event_bus.start())
 
 
 def parse_args() -> ApiArguments:
@@ -55,21 +58,23 @@ def parse_args() -> ApiArguments:
     )
 
 
-def run_server(app_path: str, port: int, workers: int, debug: bool, reload: bool, with_gunicorn: bool):
+async def run_server(app_path: str, port: int, workers: int, debug: bool, reload: bool, with_gunicorn: bool):
     if with_gunicorn:
-        with subprocess.Popen(['./venv/bin/gunicorn', app_path,
-                               '--workers', f"{workers}",
-                               '--worker-class', 'uvicorn.workers.UvicornWorker',
-                               '--bind', f"0.0.0.0:{port}",
-                               '--access-logfile', '-',
-                               '--keyfile', 'secrets/privkey.pem',
-                               '--certfile', 'secrets/cert.pem',
-                               '--ca-certs', 'secrets/chain.pem']) as gunicorn:
-            gunicorn.wait()
+        await asyncio.create_subprocess_shell(" ".join(
+            ['./venv/bin/gunicorn', app_path,
+             '--workers', f"{workers}",
+             '--worker-class', 'uvicorn.workers.UvicornWorker',
+             '--bind', f"0.0.0.0:{port}",
+             '--access-logfile', '-',
+             '--keyfile', 'secrets/privkey.pem',
+             '--certfile', 'secrets/cert.pem',
+             '--ca-certs', 'secrets/chain.pem']))
     else:
-        uvicorn.run(app_path, port=port, reload=reload, workers=workers, debug=debug,
-                    log_level="debug" if debug else "info")
+        uvicorn_config = Config(app_path, port=port, reload=reload, workers=workers, debug=debug,
+                                log_level="debug" if debug else "info")
+        uvicorn_server = Server(config=uvicorn_config)
+        await uvicorn_server.serve()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
