@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 import pymongo  # type: ignore
@@ -22,7 +22,8 @@ class MongoDBUser(BaseModel):
     email: str
     created_at: datetime
     updated_at: datetime
-    google_refresh_token: Optional[str]
+    google_refresh_token: Optional[str] = None
+    subscription_uuids: List[UUID] = []
 
     @staticmethod
     def from_domain_user(user: User) -> MongoDBUser:
@@ -33,7 +34,8 @@ class MongoDBUser(BaseModel):
             email=user.email,
             created_at=user.created_at,
             updated_at=user.updated_at,
-            google_refresh_token=user.google_refresh_token
+            google_refresh_token=user.google_refresh_token,
+            subscription_uuids=user.subscription_uuids
         )
 
     def to_domain_user(self) -> User:
@@ -45,6 +47,7 @@ class MongoDBUser(BaseModel):
             created_at=self.created_at,
             updated_at=self.updated_at,
             google_refresh_token=self.google_refresh_token,
+            subscription_uuids=self.subscription_uuids
         )
 
 
@@ -90,6 +93,10 @@ class MongoDBUserRepository(UserRepository):
     def delete(self, user_id: UUID):
         collection = self._user_collection()
         collection.delete_one({'uuid': user_id})
+
+    def update(self, user: User):
+        collection = self._user_collection()
+        collection.update_one({'uuid': user.uuid}, {'$set': dict(MongoDBUser.from_domain_user(user))})
 
     def _user_collection(self) -> pymongo.collection.Collection:
         return self.client.get_database(self.db_name).get_collection(self._collection_name)

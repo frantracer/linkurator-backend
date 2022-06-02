@@ -62,9 +62,9 @@ def test_exception_is_raised_if_users_collection_is_not_created():
 
 
 def test_add_user_to_mongodb(user_repo: MongoDBUserRepository):
-    user = User(first_name="test", last_name="test", email="test@test.com",
-                uuid=uuid.UUID("679c6db9-a54e-4947-b825-57a96fb5f599"),
-                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), google_refresh_token="token")
+    user = User.new(first_name="test", last_name="test", email="test@test.com",
+                    uuid=uuid.UUID("679c6db9-a54e-4947-b825-57a96fb5f599"),
+                    google_refresh_token="token")
 
     user_repo.add(user)
     the_user = user_repo.get(user.uuid)
@@ -97,9 +97,9 @@ def test_get_user_with_invalid_format_raises_an_exception(user_repo: MongoDBUser
 
 
 def test_delete_user(user_repo: MongoDBUserRepository):
-    user = User(first_name="test", last_name="test", email="test_1@test.com",
-                uuid=uuid.UUID("1006a7a9-4c12-4475-9c4a-7c0f6c9f8eb3"),
-                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), google_refresh_token="token")
+    user = User.new(first_name="test", last_name="test", email="test_1@test.com",
+                    uuid=uuid.UUID("1006a7a9-4c12-4475-9c4a-7c0f6c9f8eb3"),
+                    google_refresh_token="token")
 
     user_repo.add(user)
     the_user = user_repo.get(user.uuid)
@@ -110,10 +110,26 @@ def test_delete_user(user_repo: MongoDBUserRepository):
     assert deleted_user is None
 
 
+def test_update_user(user_repo: MongoDBUserRepository):
+    user = User.new(first_name="test", last_name="test", email="update_1@email.com",
+                    uuid=uuid.UUID("0a634935-2fca-4103-b036-94dfa5d3eeaa"),
+                    google_refresh_token="token")
+
+    user_repo.add(user)
+    the_user = user_repo.get(user.uuid)
+    assert the_user is not None
+
+    user.first_name = "updated"
+    user_repo.update(user)
+    updated_user = user_repo.get(user.uuid)
+    assert updated_user is not None
+    assert updated_user.first_name == user.first_name
+
+
 def test_get_user_by_email(user_repo: MongoDBUserRepository):
-    user = User(first_name="test", last_name="test", email="sample_1@test.com",
-                uuid=uuid.UUID("bb43a19d-cb28-4634-8ca7-4a5f6539678c"),
-                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), google_refresh_token="token")
+    user = User.new(first_name="test", last_name="test", email="sample_1@test.com",
+                    uuid=uuid.UUID("bb43a19d-cb28-4634-8ca7-4a5f6539678c"),
+                    google_refresh_token="token")
 
     user_repo.add(user)
     the_user = user_repo.get_by_email(user.email)
@@ -123,12 +139,12 @@ def test_get_user_by_email(user_repo: MongoDBUserRepository):
 
 
 def test_the_email_is_unique(user_repo: MongoDBUserRepository):
-    user_1 = User(first_name="test", last_name="test", email="sample_2@test.com",
-                  uuid=uuid.UUID("18244f86-75ea-4420-abcb-3552a51289ea"),
-                  created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), google_refresh_token="token")
-    user_2 = User(first_name="test", last_name="test", email="sample_2@test.com",
-                  uuid=uuid.UUID("b310f930-0f0b-467e-b746-0ed1c11449b8"),
-                  created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), google_refresh_token="token")
+    user_1 = User.new(first_name="test", last_name="test", email="sample_2@test.com",
+                      uuid=uuid.UUID("18244f86-75ea-4420-abcb-3552a51289ea"),
+                      google_refresh_token="token")
+    user_2 = User.new(first_name="test", last_name="test", email="sample_2@test.com",
+                      uuid=uuid.UUID("b310f930-0f0b-467e-b746-0ed1c11449b8"),
+                      google_refresh_token="token")
 
     user_repo.add(user_1)
 
@@ -219,11 +235,10 @@ def test_exception_is_raised_if_subscriptions_collection_is_not_created():
 
 
 def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository):
-    subscription = Subscription(name="test", uuid=uuid.UUID("8d9e9e1f-c9b4-4b8f-b8c4-c8f1e7b7d9a1"),
-                                url=utils.parse_url('https://test.com'),
-                                thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(),
-                                scanned_at=datetime.datetime(1970, 1, 1, 0, 0, 0, 0))
+    subscription = Subscription.new(name="test", uuid=uuid.UUID("8d9e9e1f-c9b4-4b8f-b8c4-c8f1e7b7d9a1"),
+                                    url=utils.parse_url('https://test.com'),
+                                    thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                                    external_id='1', provider="test")
 
     subscription_repo.add(subscription)
     the_subscription = subscription_repo.get(subscription.uuid)
@@ -238,6 +253,32 @@ def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository):
     assert int(the_subscription.scanned_at.timestamp() * 100) == floor(subscription.scanned_at.timestamp() * 100)
 
 
+def test_find_a_subscription_that_already_exist(subscription_repo: MongoDBSubscriptionRepository):
+    sub1 = Subscription.new(name="test", uuid=uuid.UUID("e329b931-9bf0-410f-9789-d48ea4eb816b"),
+                            url=utils.parse_url('https://the-same-url.com'),
+                            thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                            external_id='1', provider="test")
+    sub2 = Subscription.new(name="test", uuid=uuid.UUID("92fd4909-6d56-427a-acc4-3215e56375d0"),
+                            url=utils.parse_url('https://the-same-url.com'),
+                            thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                            external_id='1', provider="test")
+
+    subscription_repo.add(sub1)
+    found_subscription = subscription_repo.find(sub2)
+    assert found_subscription is not None
+    assert found_subscription.uuid == sub1.uuid
+
+
+def test_find_a_subscription_that_does_not_exist(subscription_repo: MongoDBSubscriptionRepository):
+    sub1 = Subscription.new(name="test", uuid=uuid.UUID("391f6292-b677-494f-b60d-791e51d22f08"),
+                            url=utils.parse_url('https://391f6292-b677-494f-b60d-791e51d22f08.com'),
+                            thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                            external_id='1', provider="test")
+
+    found_subscription = subscription_repo.find(sub1)
+    assert found_subscription is None
+
+
 def test_get_subscription_that_does_not_exist(subscription_repo: MongoDBSubscriptionRepository):
     the_subscription = subscription_repo.get(uuid.UUID("0af092ed-e3f9-4919-8202-c19bfd0627a9"))
 
@@ -246,6 +287,7 @@ def test_get_subscription_that_does_not_exist(subscription_repo: MongoDBSubscrip
 
 def test_get_subscription_with_invalid_format_raises_an_exception(subscription_repo: MongoDBSubscriptionRepository):
     subscription_dict = dict(MongoDBSubscription(uuid=uuid.UUID("3ab7068b-1412-46ed-bc1f-46d5f03542e7"),
+                                                 provider="test", external_id="1",
                                                  name="test", url=utils.parse_url('https://test.com'),
                                                  thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
                                                  created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(),
@@ -260,11 +302,10 @@ def test_get_subscription_with_invalid_format_raises_an_exception(subscription_r
 
 
 def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository):
-    subscription = Subscription(name="test", uuid=uuid.UUID("0af092ed-e3f9-4919-8202-c19bfd0627a9"),
-                                url=utils.parse_url('https://test.com'),
-                                thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(),
-                                scanned_at=datetime.datetime(1970, 1, 1, 0, 0, 0, 0))
+    subscription = Subscription.new(name="test", uuid=uuid.UUID("0af092ed-e3f9-4919-8202-c19bfd0627a9"),
+                                    url=utils.parse_url('https://test.com'),
+                                    thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                                    external_id='1', provider="test")
 
     subscription_repo.add(subscription)
     the_subscription = subscription_repo.get(subscription.uuid)

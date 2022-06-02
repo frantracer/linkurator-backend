@@ -18,7 +18,8 @@ class TestValidateTokenHandler(unittest.TestCase):
         session_repo_mock.get.return_value = dummy_session
 
         user_repo_mock = MagicMock()
-        dummy_user = User(user_id, "John", "Doe", "john@example.com", datetime.now(), datetime.now(), "myrefreshtoken")
+        dummy_user = User.new(uuid=user_id, first_name="John", last_name="Doe", email="john@example.com",
+                              google_refresh_token="myrefreshtoken")
         user_repo_mock.get.return_value = dummy_user
 
         account_service_mock = MagicMock()
@@ -90,14 +91,12 @@ class TestValidateTokenHandler(unittest.TestCase):
         session_repo_mock.get.return_value = None
 
         user_repo_mock = MagicMock()
-        user_repo_mock.get_by_email.return_value = User(
+        user_repo_mock.get_by_email.return_value = User.new(
             uuid=uuid.uuid4(),
             first_name="John",
             last_name="Doe",
             email="john@email.com",
-            google_refresh_token="oldtoken",
-            created_at=datetime.now(),
-            updated_at=datetime.now()
+            google_refresh_token="oldtoken"
         )
 
         account_service_mock = MagicMock()
@@ -124,14 +123,12 @@ class TestValidateTokenHandler(unittest.TestCase):
         session_repo_mock.get.return_value = None
 
         user_repo_mock = MagicMock()
-        user_repo_mock.get_by_email.return_value = User(
+        user_repo_mock.get_by_email.return_value = User.new(
             uuid=uuid.uuid4(),
             first_name="John",
             last_name="Doe",
             email="jonh@email.com",
-            google_refresh_token="oldtoken",
-            created_at=datetime.now(),
-            updated_at=datetime.now()
+            google_refresh_token="oldtoken"
         )
 
         account_service_mock = MagicMock()

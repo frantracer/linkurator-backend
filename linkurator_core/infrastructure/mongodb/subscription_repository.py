@@ -18,6 +18,8 @@ from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotI
 class MongoDBSubscription(BaseModel):
     uuid: UUID
     name: str
+    provider: str
+    external_id: str
     url: AnyUrl
     thumbnail: AnyUrl
     created_at: datetime
@@ -29,6 +31,8 @@ class MongoDBSubscription(BaseModel):
         return MongoDBSubscription(
             uuid=subscription.uuid,
             name=subscription.name,
+            provider=subscription.provider,
+            external_id=subscription.external_id,
             url=subscription.url,
             thumbnail=subscription.thumbnail,
             created_at=subscription.created_at,
@@ -40,6 +44,8 @@ class MongoDBSubscription(BaseModel):
         return Subscription(
             uuid=self.uuid,
             name=self.name,
+            provider=self.provider,
+            external_id=self.external_id,
             url=self.url,
             thumbnail=self.thumbnail,
             created_at=self.created_at,
@@ -77,6 +83,13 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
     def delete(self, subscription_id: UUID):
         collection = self._subscription_collection()
         collection.delete_one({'uuid': subscription_id})
+
+    def find(self, subscription: Subscription) -> Optional[Subscription]:
+        collection = self._subscription_collection()
+        found_subscription: Optional[Dict] = collection.find_one({'url': subscription.url})
+        if found_subscription is None:
+            return None
+        return MongoDBSubscription(**found_subscription).to_domain_subscription()
 
     def _subscription_collection(self) -> pymongo.collection.Collection:
         return self.client[self.db_name][self._collection_name]
