@@ -20,3 +20,7 @@ class SubscriptionRepository(abc.ABC):
     @abc.abstractmethod
     def delete(self, subscription_id: UUID):
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def find(self, subscription: Subscription) -> Optional[Subscription]:
+        raise NotImplementedError

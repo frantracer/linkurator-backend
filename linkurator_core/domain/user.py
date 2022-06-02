@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 
@@ -14,6 +14,7 @@ class User:
     created_at: datetime
     updated_at: datetime
     google_refresh_token: Optional[str]
+    subscription_uuids: List[UUID]
 
     @classmethod
     def new(cls, uuid: UUID, first_name: str, last_name: str, email: str, google_refresh_token: Optional[str]) -> User:
@@ -25,5 +26,6 @@ class User:
             email=email,
             created_at=now,
             updated_at=now,
-            google_refresh_token=google_refresh_token
+            google_refresh_token=google_refresh_token,
+            subscription_uuids=[]
         )
