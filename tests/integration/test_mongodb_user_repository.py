@@ -113,3 +113,23 @@ def test_the_email_is_unique(user_repo: MongoDBUserRepository):
 
     with pytest.raises(EmailAlreadyInUse):
         user_repo.add(user_2)
+
+
+def test_find_latest_scan(user_repo: MongoDBUserRepository):
+    user1 = User.new(first_name="test", last_name="test", email="c2d73a23@email.com",
+                     uuid=uuid.UUID("c2d73a23-217b-4985-a4f6-7f5828daa964"),
+                     google_refresh_token="token")
+    user1.scanned_at = datetime.datetime.fromisoformat("2020-01-01T00:00:00")
+
+    user2 = User.new(first_name="test", last_name="test", email="4cef3a68@email.com",
+                     uuid=uuid.UUID("4cef3a68-9ec0-48e8-a6de-a56dd3ba1adf"),
+                     google_refresh_token="token")
+    user2.scanned_at = datetime.datetime.fromisoformat("2020-01-02T00:00:00")
+
+    user_repo.add(user1)
+    user_repo.add(user2)
+
+    users = user_repo.find_latest_scan_before(datetime.datetime.fromisoformat("2020-01-01T12:00:00"))
+
+    assert len(users) == 1
+    assert users[0].uuid == user1.uuid

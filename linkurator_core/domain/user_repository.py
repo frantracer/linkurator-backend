@@ -1,5 +1,6 @@
 import abc
-from typing import Optional
+import datetime
+from typing import List, Optional
 from uuid import UUID
 
 from linkurator_core.domain.user import User
@@ -31,4 +32,8 @@ class UserRepository(abc.ABC):
 
     @abc.abstractmethod
     def update(self, user: User):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def find_latest_scan_before(self, timestamp: datetime.datetime) -> List[User]:
         raise NotImplementedError

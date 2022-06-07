@@ -13,6 +13,7 @@ class User:
     email: str
     created_at: datetime
     updated_at: datetime
+    scanned_at: datetime
     google_refresh_token: Optional[str]
     subscription_uuids: List[UUID]
 
@@ -26,6 +27,7 @@ class User:
             email=email,
             created_at=now,
             updated_at=now,
+            scanned_at=datetime.fromtimestamp(0),
             google_refresh_token=google_refresh_token,
             subscription_uuids=[]
         )
