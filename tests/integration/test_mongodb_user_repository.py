@@ -126,10 +126,12 @@ def test_find_latest_scan(user_repo: MongoDBUserRepository):
                      google_refresh_token="token")
     user2.scanned_at = datetime.datetime.fromisoformat("2020-01-02T00:00:00")
 
+    users_first_call = user_repo.find_latest_scan_before(datetime.datetime.fromisoformat("2020-01-01T12:00:00"))
+
     user_repo.add(user1)
     user_repo.add(user2)
 
-    users = user_repo.find_latest_scan_before(datetime.datetime.fromisoformat("2020-01-01T12:00:00"))
+    users_second_call = user_repo.find_latest_scan_before(datetime.datetime.fromisoformat("2020-01-01T12:00:00"))
 
-    assert len(users) == 1
-    assert users[0].uuid == user1.uuid
+    assert len(users_second_call) - len(users_first_call) == 1
+    assert user1.uuid in [user.uuid for user in users_second_call]
