@@ -1,4 +1,5 @@
 import argparse
+from unittest.mock import MagicMock
 
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
@@ -14,9 +15,9 @@ def main():
 
     google_account_service = GoogleAccountService(client_id=secrets.client_id, client_secret=secrets.client_secret)
 
-    youtube_service = YoutubeService(google_account_service, refresh_token)
+    youtube_service = YoutubeService(google_account_service=google_account_service, user_repository=MagicMock())
 
-    subscriptions = youtube_service.get_subscriptions()
+    subscriptions = youtube_service.get_channels(refresh_token)
     for subscription in subscriptions:
         print(f'{subscription.title} -> {subscription.url}')
 

@@ -1,9 +1,14 @@
+import uuid
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
 import requests
 
+from linkurator_core.application.subscription_service import SubscriptionService
+from linkurator_core.common import utils
+from linkurator_core.domain.subscription import Subscription
+from linkurator_core.domain.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
@@ -34,62 +39,55 @@ class YoutubeChannel:
         )
 
 
-class YoutubeService:
-    def __init__(self, google_account_service: GoogleAccountService, refresh_token: str):
+class YoutubeService(SubscriptionService):
+    def __init__(self, google_account_service: GoogleAccountService, user_repository: UserRepository):
         self.google_account_service = google_account_service
-        self.refresh_token = refresh_token
+        self.user_repository = user_repository
 
-    def get_subscriptions(self) -> List[YoutubeChannel]:
+    def get_subscriptions(self, user_id: uuid.UUID) -> List[Subscription]:
+        user = self.user_repository.get(user_id)
+        youtube_channels = []
 
-        access_token = self.google_account_service.generate_access_token_from_refresh_token(self.refresh_token)
+        def map_channel_to_subscription(channel: YoutubeChannel) -> Subscription:
+            return Subscription.new(
+                uuid=uuid.uuid4(),
+                name=channel.title,
+                provider="youtube",
+                external_id=channel.channel_id,
+                url=utils.parse_url(channel.url),
+                thumbnail=utils.parse_url(channel.thumbnail_url)
+            )
+
+        if user is not None and user.google_refresh_token is not None:
+            youtube_channels = [map_channel_to_subscription(c) for c in self.get_channels(user.google_refresh_token)]
+
+        return youtube_channels
+
+    def get_channels(self, refresh_token: str) -> List[YoutubeChannel]:
+        access_token = self.google_account_service.generate_access_token_from_refresh_token(refresh_token)
         if access_token is None:
             return []
 
-        youtube_api_url = "https://youtube.googleapis.com/youtube/v3/subscriptions"
-        youtube_api_channels_url =  "https://youtube.googleapis.com/youtube/v3/channels"
         next_page_token = None
         subscriptions: List[YoutubeChannel] = []
 
         while True:
-            # Get subscriptions
-            subs_query_params: Dict[str, Any] = {
-                "part": "snippet",
-                "mine": "true",
-                "maxResults": 50
-            }
-            if next_page_token is not None:
-                subs_query_params["pageToken"] = next_page_token
 
-            url = f"{youtube_api_url}?{urlencode(subs_query_params)}"
-
-            subs_response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
-
-            if subs_response.status_code != 200:
+            subs_response_json, subs_status_code = YoutubeService._get_youtube_subscriptions(
+                access_token, next_page_token)
+            if subs_status_code != 200:
                 return []
-
-            subs_response_json = subs_response.json()
 
             next_page_token = subs_response_json.get("nextPageToken", None)
 
             # Get channels associated to the subscriptions
-            channels_query_params: Dict[str, Any] = {
-                "part": "snippet,contentDetails",
-                "id": ",".join([d["snippet"]["resourceId"]["channelId"] for d in subs_response_json["items"]]),
-                "maxResults": 50
-            }
+            channel_ids = [d["snippet"]["resourceId"]["channelId"] for d in subs_response_json["items"]]
 
-            url = f"{youtube_api_channels_url}?{urlencode(channels_query_params)}"
-
-            channels_response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
-
-            if subs_response.status_code != 200:
+            channels_response_json, channels_status_code = YoutubeService._get_youtube_channels(
+                access_token, channel_ids)
+            if channels_status_code != 200:
                 return []
 
-            channels_response_json = channels_response.json()
-
-            # Join subscription and channel information
-            youtube_subscriptions = list(subs_response_json["items"])
-            youtube_subscriptions.sort(key=lambda i: i["snippet"]["resourceId"]["channelId"])
             youtube_channels = list(channels_response_json["items"])
             youtube_channels.sort(key=lambda i: i["id"])
 
@@ -100,3 +98,37 @@ class YoutubeService:
                 break
 
         return subscriptions
+
+    @staticmethod
+    def _get_youtube_subscriptions(access_token: str, next_page_token: Optional[str]) -> Tuple[Dict[str, Any], int]:
+        youtube_api_url = "https://youtube.googleapis.com/youtube/v3/subscriptions"
+
+        subs_query_params: Dict[str, Any] = {
+            "part": "snippet",
+            "mine": "true",
+            "maxResults": 50
+        }
+        if next_page_token is not None:
+            subs_query_params["pageToken"] = next_page_token
+
+        url = f"{youtube_api_url}?{urlencode(subs_query_params)}"
+
+        subs_response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
+
+        return subs_response.json(), subs_response.status_code
+
+    @staticmethod
+    def _get_youtube_channels(access_token: str, channel_ids: List[str]) -> Tuple[Dict[str, Any], int]:
+        youtube_api_channels_url = "https://youtube.googleapis.com/youtube/v3/channels"
+
+        channels_query_params: Dict[str, Any] = {
+            "part": "snippet,contentDetails",
+            "id": ",".join(channel_ids),
+            "maxResults": 50
+        }
+
+        url = f"{youtube_api_channels_url}?{urlencode(channels_query_params)}"
+
+        channels_response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
+
+        return channels_response.json(), channels_response.status_code
