@@ -1,8 +1,9 @@
+import uuid
 from unittest.mock import MagicMock
 
 import pytest
 
-from linkurator_core.application.event_bus_service import Event, EventType
+from linkurator_core.domain.event import UserSubscriptionsBecameOutdatedEvent
 from linkurator_core.infrastructure.asyncio.event_bus_service import AsyncioEventBusService
 from linkurator_core.infrastructure.asyncio.utils import run_parallel, run_sequence, wait_until
 
@@ -11,8 +12,8 @@ from linkurator_core.infrastructure.asyncio.utils import run_parallel, run_seque
 async def test_publish_and_subscribe() -> None:
     event_bus = AsyncioEventBusService()
     dummy_function = MagicMock()
-    event_bus.subscribe(EventType.ACCOUNT_CREATED, dummy_function)
-    event_bus.publish(Event(EventType.ACCOUNT_CREATED, 'dummy_data'))
+    event_bus.subscribe(UserSubscriptionsBecameOutdatedEvent, dummy_function)
+    event_bus.publish(UserSubscriptionsBecameOutdatedEvent(uuid.uuid4(), uuid.uuid4()))
 
     results = await run_parallel(
         event_bus.start(),

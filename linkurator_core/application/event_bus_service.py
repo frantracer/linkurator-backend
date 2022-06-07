@@ -1,20 +1,7 @@
 import abc
-from enum import Enum
-from typing import Callable
+from typing import Callable, Type
 
-
-class EventType(Enum):
-    ACCOUNT_CREATED = 'account_created'
-    SHUTDOWN = 'shutdown'
-
-
-class Event:
-    def __init__(self, event_type, data):
-        self.event_type = event_type
-        self.data = data
-
-    def __str__(self):
-        return f"Event type: {self.event_type}, data: {self.data}"
+from linkurator_core.domain.event import Event
 
 
 class EventBusService(abc.ABC):
@@ -23,7 +10,7 @@ class EventBusService(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def subscribe(self, event_type: EventType, callback: Callable) -> None:
+    def subscribe(self, event_type: Type[Event], callback: Callable) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod
