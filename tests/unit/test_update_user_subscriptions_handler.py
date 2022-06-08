@@ -1,3 +1,5 @@
+import copy
+from datetime import datetime
 import uuid
 from unittest.mock import MagicMock
 
@@ -18,11 +20,17 @@ def test_update_user_subscriptions_with_a_subscription_that_is_not_registered():
     subscription_repository.add.return_value = None
 
     user_repository = MagicMock()
-    user = User.new(uuid=uuid.UUID("7869ee20-fda4-4ec9-88d3-c952bff2c613"),
-                    email="test@email.com",
-                    first_name="test", last_name="test",
-                    google_refresh_token="refresh_token")
-    user_repository.get.return_value = user
+    user = User(
+        uuid=uuid.UUID("7869ee20-fda4-4ec9-88d3-c952bff2c613"),
+        email="test@email.com",
+        first_name="test",
+        last_name="test",
+        google_refresh_token="refresh_token",
+        subscription_uuids=[],
+        created_at=datetime.fromtimestamp(0),
+        updated_at=datetime.fromtimestamp(0),
+        scanned_at=datetime.fromtimestamp(0))
+    user_repository.get.return_value = copy.deepcopy(user)
     user_repository.update.return_value = None
 
     handler = UpdateUserSubscriptionsHandler(subscription_service=subscription_service,
@@ -39,6 +47,7 @@ def test_update_user_subscriptions_with_a_subscription_that_is_not_registered():
     user_input: User = user_repository.update.call_args[0][0]
     assert user_input.uuid == user.uuid
     assert user_input.subscription_uuids[0] == sub1.uuid
+    assert user_input.scanned_at > user.scanned_at
 
 
 def test_update_user_subscription_with_subscription_that_is_already_registered():
