@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
-import pymongo  # type: ignore
 from pydantic import AnyUrl
 from pydantic.main import BaseModel
+import pymongo  # type: ignore
 from pymongo import MongoClient
 
 from linkurator_core.domain.subscription import Subscription
@@ -79,6 +79,13 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
         if subscription is None:
             return None
         return MongoDBSubscription(**subscription).to_domain_subscription()
+
+    def get_list(self, subscription_ids: List[UUID]) -> List[Subscription]:
+        collection = self._subscription_collection()
+        subscriptions: List[Dict] = list(collection.
+                                         find({'uuid': {'$in': subscription_ids}}).
+                                         sort('created_at', pymongo.DESCENDING))
+        return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
 
     def delete(self, subscription_id: UUID):
         collection = self._subscription_collection()

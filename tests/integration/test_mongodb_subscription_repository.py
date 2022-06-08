@@ -92,6 +92,49 @@ def test_get_subscription_with_invalid_format_raises_an_exception(subscription_r
             subscription_repo.get(uuid.UUID("81f7d26c-4a7f-4a27-a081-bb77e034fb30"))
 
 
+def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: MongoDBSubscriptionRepository):
+    sub1 = Subscription(
+        name="test",
+        uuid=uuid.UUID("83ea331c-fa87-4654-89d0-055972a64e5b"),
+        url=utils.parse_url('https://url.com'),
+        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        external_id='1',
+        provider="test",
+        created_at=datetime.datetime.fromisoformat("2020-01-02T00:00:00.000000"),
+        updated_at=datetime.datetime.fromtimestamp(0),
+        scanned_at=datetime.datetime.fromtimestamp(0))
+    sub2 = Subscription(
+        name="test",
+        uuid=uuid.UUID("5745b75b-9a0a-49ff-85c5-b69c03bd1ba2"),
+        url=utils.parse_url('https://url.com'),
+        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        external_id='2',
+        provider="test",
+        created_at=datetime.datetime.fromisoformat("2020-01-03T00:00:00.000000"),
+        updated_at=datetime.datetime.fromtimestamp(0),
+        scanned_at=datetime.datetime.fromtimestamp(0))
+    sub3 = Subscription(
+        name="test",
+        uuid=uuid.UUID("d30ca1c8-40c4-4bcd-8b4f-81f0e315c975"),
+        url=utils.parse_url('https://url.com'),
+        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        external_id='3',
+        provider="test",
+        created_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000"),
+        updated_at=datetime.datetime.fromtimestamp(0),
+        scanned_at=datetime.datetime.fromtimestamp(0))
+
+    subscription_repo.add(sub1)
+    subscription_repo.add(sub2)
+    subscription_repo.add(sub3)
+
+    subscriptions = subscription_repo.get_list([sub1.uuid, sub2.uuid, sub3.uuid])
+    assert len(subscriptions) == 3
+    assert subscriptions[0].uuid == sub2.uuid
+    assert subscriptions[1].uuid == sub1.uuid
+    assert subscriptions[2].uuid == sub3.uuid
+
+
 def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository):
     subscription = Subscription.new(name="test", uuid=uuid.UUID("0af092ed-e3f9-4919-8202-c19bfd0627a9"),
                                     url=utils.parse_url('https://test.com'),

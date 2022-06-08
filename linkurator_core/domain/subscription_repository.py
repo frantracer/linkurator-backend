@@ -1,5 +1,5 @@
 import abc
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 from linkurator_core.domain.subscription import Subscription
@@ -15,6 +15,10 @@ class SubscriptionRepository(abc.ABC):
 
     @abc.abstractmethod
     def get(self, subscription_id: UUID) -> Optional[Subscription]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_list(self, subscription_ids: List[UUID]) -> List[Subscription]:
         raise NotImplementedError
 
     @abc.abstractmethod
