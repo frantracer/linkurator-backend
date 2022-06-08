@@ -1,42 +1,54 @@
 from datetime import datetime
-from typing import Any
-from uuid import uuid4
+import http
+from typing import Any, Callable, Optional
 
+from fastapi import Depends
+from fastapi.applications import Request
+from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
-from pydantic.networks import AnyUrl
-from pydantic.tools import parse_obj_as
 from pydantic.types import NonNegativeInt, PositiveInt
 
+from linkurator_core.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
+from linkurator_core.common import utils
+from linkurator_core.domain.session import Session
 from linkurator_core.infrastructure.fastapi.models.page import Page
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 
 
-def get_router() -> APIRouter:
+def get_router(get_session: Callable, get_user_subscriptions_handler: GetUserSubscriptionsHandler) -> APIRouter:
     router = APIRouter()
 
     @router.get("/", response_model=Page[SubscriptionSchema])
-    async def get_all_subscriptions(page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
-                                    created_before: datetime = datetime.now()) -> Any:
+    async def get_all_subscriptions(request: Request, page_number: NonNegativeInt = 0, page_size: PositiveInt = 50,
+                                    created_before_ts: float = datetime.now().timestamp(),
+                                    session: Optional[Session] = Depends(get_session)) -> Any:
         """
         Get the list of the user subscriptions
         """
-        # Initialize dummy subscription
-        subscription = SubscriptionSchema(
-            uuid=uuid4(),
-            name="Dummy",
-            url=parse_obj_as(AnyUrl, "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ"),
-            thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
-            created_at=created_before,
-            scanned_at=datetime.now()
-        )
+        if session is None:
+            return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
+
+        subscriptions, total_subs = get_user_subscriptions_handler.handle(
+            session.user_id, page_number, page_size, datetime.fromtimestamp(created_before_ts))
+
+        base_url = request.url.remove_query_params(["page_number", "page_size", "created_before"])
+        next_page_url = None
+        if page_number < total_subs // page_size:
+            next_page_url = utils.parse_url(str(base_url.include_query_params(
+                page_number=page_number + 1, page_size=page_size, created_before=created_before_ts)))
+
+        previous_page_url = None
+        if page_number > 0:
+            previous_page_url = utils.parse_url(str(base_url.include_query_params(
+                page_number=page_number - 1, page_size=page_size, created_before=created_before_ts)))
 
         return Page[SubscriptionSchema](
-            elements=[subscription],
-            total_elements=1,
+            elements=[SubscriptionSchema.from_domain_subscription(subscription) for subscription in subscriptions],
+            total_elements=total_subs,
             page_number=page_number,
             page_size=page_size,
-            previous_page=None,
-            next_page=None
+            previous_page=previous_page_url,
+            next_page=next_page_url
         )
 
     return router
