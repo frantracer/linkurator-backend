@@ -17,9 +17,9 @@ def main():
 
     youtube_service = YoutubeService(google_account_service=google_account_service, user_repository=MagicMock())
 
-    subscriptions = youtube_service.get_channels(refresh_token)
+    subscriptions = youtube_service.get_youtube_channels(refresh_token)
     for subscription in subscriptions:
-        print(f'{subscription.title} -> {subscription.url}')
+        print(f'{subscription.title} -> {subscription.playlist_id}')
 
 
 if __name__ == '__main__':
