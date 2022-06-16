@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Dict, Optional
 from uuid import UUID
 
 from pydantic.networks import AnyUrl
@@ -12,7 +13,7 @@ class Subscription:
     uuid: UUID
     name: str
     provider: str
-    external_id: str
+    external_data: Dict[str, str]
     url: AnyUrl
     thumbnail: AnyUrl
     created_at: datetime
@@ -20,13 +21,14 @@ class Subscription:
     scanned_at: datetime
 
     @classmethod
-    def new(cls, uuid: UUID, name: str, provider: str, external_id: str, url: AnyUrl, thumbnail: AnyUrl):
+    def new(cls, uuid: UUID, name: str, provider: str, url: AnyUrl, thumbnail: AnyUrl,
+            external_data: Optional[Dict[str, str]] = None) -> Subscription:
         now = datetime.now()
         return cls(
             uuid=uuid,
             name=name,
             provider=provider,
-            external_id=external_id,
+            external_data=external_data or {},
             url=url,
             thumbnail=thumbnail,
             created_at=now,

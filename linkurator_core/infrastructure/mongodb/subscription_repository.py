@@ -19,7 +19,7 @@ class MongoDBSubscription(BaseModel):
     uuid: UUID
     name: str
     provider: str
-    external_id: str
+    external_data: Dict[str, str]
     url: AnyUrl
     thumbnail: AnyUrl
     created_at: datetime
@@ -32,7 +32,7 @@ class MongoDBSubscription(BaseModel):
             uuid=subscription.uuid,
             name=subscription.name,
             provider=subscription.provider,
-            external_id=subscription.external_id,
+            external_data=subscription.external_data,
             url=subscription.url,
             thumbnail=subscription.thumbnail,
             created_at=subscription.created_at,
@@ -45,7 +45,7 @@ class MongoDBSubscription(BaseModel):
             uuid=self.uuid,
             name=self.name,
             provider=self.provider,
-            external_id=self.external_id,
+            external_data=self.external_data,
             url=self.url,
             thumbnail=self.thumbnail,
             created_at=self.created_at,

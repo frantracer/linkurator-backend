@@ -53,7 +53,10 @@ class YoutubeService(SubscriptionService):
                 uuid=uuid.uuid4(),
                 name=channel.title,
                 provider="youtube",
-                external_id=channel.channel_id,
+                external_data={
+                    "channel_id": channel.channel_id,
+                    "playlist_id": channel.playlist_id
+                },
                 url=utils.parse_url(channel.url),
                 thumbnail=utils.parse_url(channel.thumbnail_url)
             )
