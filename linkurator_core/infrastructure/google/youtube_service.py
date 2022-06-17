@@ -7,11 +7,11 @@ import uuid
 import aiohttp
 import requests
 
-from linkurator_core.domain.subscription_repository import SubscriptionRepository
 from linkurator_core.application.subscription_service import SubscriptionService
 from linkurator_core.common import utils
 from linkurator_core.domain.item import Item
 from linkurator_core.domain.subscription import Subscription
+from linkurator_core.domain.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
@@ -93,17 +93,40 @@ class YoutubeService(SubscriptionService):
                 thumbnail=utils.parse_url(channel.thumbnail_url)
             )
 
+        access_token = None
         if user is not None and user.google_refresh_token is not None:
+            access_token = self.google_account_service.generate_access_token_from_refresh_token(
+                user.google_refresh_token)
+
+        if access_token is not None:
             youtube_channels = [map_channel_to_subscription(c)
-                                for c in self.get_youtube_channels(user.google_refresh_token)]
+                                for c in YoutubeService.get_youtube_channels(access_token)]
 
         return youtube_channels
 
-    def get_youtube_channels(self, refresh_token: str) -> List[YoutubeChannel]:
-        access_token = self.google_account_service.generate_access_token_from_refresh_token(refresh_token)
-        if access_token is None:
+    async def get_items(self, sub_id: uuid.UUID, from_date: datetime) -> List[Item]:
+        subscription = self.subscription_repository.get(sub_id)
+        if subscription is None or subscription.provider != "youtube":
             return []
 
+        def map_video_to_item(video: YoutubeVideo) -> Item:
+            return Item.new(
+                uuid=uuid.uuid4(),
+                subscription_uuid=sub_id,
+                name=video.title,
+                url=utils.parse_url(video.url),
+                thumbnail=utils.parse_url(video.thumbnail_url)
+            )
+
+        videos = await YoutubeService.get_youtube_videos(
+            api_key=self.api_key,
+            playlist_id=subscription.external_data["playlist_id"],
+            from_date=from_date)
+
+        return [map_video_to_item(v) for v in videos]
+
+    @staticmethod
+    def get_youtube_channels(access_token: str) -> List[YoutubeChannel]:
         next_page_token = None
         subscriptions: List[YoutubeChannel] = []
 
@@ -133,27 +156,6 @@ class YoutubeService(SubscriptionService):
                 break
 
         return subscriptions
-
-    async def get_items(self, sub_id: uuid.UUID, from_date: datetime) -> List[Item]:
-        subscription = self.subscription_repository.get(sub_id)
-        if subscription is None or subscription.provider != "youtube":
-            return []
-
-        def map_video_to_item(video: YoutubeVideo) -> Item:
-            return Item.new(
-                uuid=uuid.uuid4(),
-                subscription_uuid=sub_id,
-                name=video.title,
-                url=utils.parse_url(video.url),
-                thumbnail=utils.parse_url(video.thumbnail_url)
-            )
-
-        videos = await YoutubeService.get_youtube_videos(
-            api_key=self.api_key,
-            playlist_id=subscription.external_data["playlist_id"],
-            from_date=from_date)
-
-        return [map_video_to_item(v) for v in videos]
 
     @staticmethod
     async def get_youtube_videos(api_key: str, playlist_id: str, from_date: datetime) -> List[YoutubeVideo]:
