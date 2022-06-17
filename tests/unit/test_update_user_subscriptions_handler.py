@@ -1,7 +1,9 @@
 import copy
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
 import uuid
-from unittest.mock import MagicMock
+
+import pytest
 
 from linkurator_core.application.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.common.utils import parse_url
@@ -9,8 +11,9 @@ from linkurator_core.domain.subscription import Subscription
 from linkurator_core.domain.user import User
 
 
-def test_update_user_subscriptions_with_a_subscription_that_is_not_registered():
-    subscription_service = MagicMock()
+@pytest.mark.asyncio
+async def test_update_user_subscriptions_with_a_subscription_that_is_not_registered():
+    subscription_service = AsyncMock()
     sub1 = Subscription.new(
         uuid=uuid.UUID("db051fbc-3f2e-47bc-a03a-8a567e4604c9"),
         name="sub1",
@@ -39,7 +42,7 @@ def test_update_user_subscriptions_with_a_subscription_that_is_not_registered():
     handler = UpdateUserSubscriptionsHandler(subscription_service=subscription_service,
                                              user_repository=user_repository,
                                              subscription_repository=subscription_repository)
-    handler.handle(user.uuid)
+    await handler.handle(user.uuid)
 
     assert subscription_service.get_subscriptions.call_count == 1
     assert subscription_service.get_subscriptions.call_args[0][0] == user.uuid
@@ -53,8 +56,9 @@ def test_update_user_subscriptions_with_a_subscription_that_is_not_registered():
     assert user_input.scanned_at > user.scanned_at
 
 
-def test_update_user_subscription_with_subscription_that_is_already_registered():
-    subscription_service = MagicMock()
+@pytest.mark.asyncio
+async def test_update_user_subscription_with_subscription_that_is_already_registered():
+    subscription_service = AsyncMock()
     sub1 = Subscription.new(
         uuid=uuid.UUID("8c9879ec-35d1-44d5-84c1-ef1939330033"),
         name="sub1",
@@ -83,7 +87,7 @@ def test_update_user_subscription_with_subscription_that_is_already_registered()
     handler = UpdateUserSubscriptionsHandler(subscription_service=subscription_service,
                                              user_repository=user_repository,
                                              subscription_repository=subscription_repository)
-    handler.handle(user.uuid)
+    await handler.handle(user.uuid)
 
     assert subscription_service.get_subscriptions.call_count == 1
     assert subscription_service.get_subscriptions.call_args[0][0] == user.uuid

@@ -5,7 +5,6 @@ from urllib.parse import urlencode
 import uuid
 
 import aiohttp
-import requests
 
 from linkurator_core.application.subscription_service import SubscriptionService
 from linkurator_core.common import utils
@@ -76,7 +75,7 @@ class YoutubeService(SubscriptionService):
         self.subscription_repository = subscription_repository
         self.api_key = api_key
 
-    def get_subscriptions(self, user_id: uuid.UUID) -> List[Subscription]:
+    async def get_subscriptions(self, user_id: uuid.UUID) -> List[Subscription]:
         user = self.user_repository.get(user_id)
         youtube_channels = []
 
@@ -100,7 +99,7 @@ class YoutubeService(SubscriptionService):
 
         if access_token is not None:
             youtube_channels = [map_channel_to_subscription(c)
-                                for c in YoutubeService.get_youtube_channels(access_token)]
+                                for c in await YoutubeService.get_youtube_channels(access_token)]
 
         return youtube_channels
 
@@ -126,12 +125,12 @@ class YoutubeService(SubscriptionService):
         return [map_video_to_item(v) for v in videos]
 
     @staticmethod
-    def get_youtube_channels(access_token: str) -> List[YoutubeChannel]:
+    async def get_youtube_channels(access_token: str) -> List[YoutubeChannel]:
         next_page_token = None
         subscriptions: List[YoutubeChannel] = []
 
         while True:
-            subs_response_json, subs_status_code = YoutubeService._request_youtube_subscriptions(
+            subs_response_json, subs_status_code = await YoutubeService._request_youtube_subscriptions(
                 access_token, next_page_token)
             if subs_status_code != 200:
                 return []
@@ -141,7 +140,7 @@ class YoutubeService(SubscriptionService):
             # Get channels associated to the subscriptions
             channel_ids = [d["snippet"]["resourceId"]["channelId"] for d in subs_response_json["items"]]
 
-            channels_response_json, channels_status_code = YoutubeService._request_youtube_channels(
+            channels_response_json, channels_status_code = await YoutubeService._request_youtube_channels(
                 access_token, channel_ids)
             if channels_status_code != 200:
                 return []
@@ -194,7 +193,9 @@ class YoutubeService(SubscriptionService):
         return videos
 
     @staticmethod
-    def _request_youtube_subscriptions(access_token: str, next_page_token: Optional[str]) -> Tuple[Dict[str, Any], int]:
+    async def _request_youtube_subscriptions(
+            access_token: str, next_page_token: Optional[str]
+    ) -> Tuple[Dict[str, Any], int]:
         youtube_api_url = "https://youtube.googleapis.com/youtube/v3/subscriptions"
 
         subs_query_params: Dict[str, Any] = {
@@ -207,12 +208,15 @@ class YoutubeService(SubscriptionService):
 
         url = f"{youtube_api_url}?{urlencode(subs_query_params)}"
 
-        subs_response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
+        async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {access_token}"}) as session:
+            async with session.get(url) as resp:
+                resp_body = await resp.json()
+                resp_status = resp.status
 
-        return subs_response.json(), subs_response.status_code
+        return resp_body, resp_status
 
     @staticmethod
-    def _request_youtube_channels(access_token: str, channel_ids: List[str]) -> Tuple[Dict[str, Any], int]:
+    async def _request_youtube_channels(access_token: str, channel_ids: List[str]) -> Tuple[Dict[str, Any], int]:
         youtube_api_channels_url = "https://youtube.googleapis.com/youtube/v3/channels"
 
         channels_query_params: Dict[str, Any] = {
@@ -223,9 +227,12 @@ class YoutubeService(SubscriptionService):
 
         url = f"{youtube_api_channels_url}?{urlencode(channels_query_params)}"
 
-        channels_response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
+        async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {access_token}"}) as session:
+            async with session.get(url) as resp:
+                resp_body = await resp.json()
+                resp_status = resp.status
 
-        return channels_response.json(), channels_response.status_code
+        return resp_body, resp_status
 
     @staticmethod
     async def _request_youtube_playlist_items(

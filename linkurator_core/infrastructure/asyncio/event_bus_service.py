@@ -1,5 +1,5 @@
 import asyncio
-from typing import Callable, Dict, List, Type
+from typing import Any, Callable, Coroutine, Dict, List, Type
 
 from linkurator_core.application.event_bus_service import Event, EventBusService
 
@@ -9,13 +9,13 @@ SHUTDOWN_MESSAGE = 'shutdown'
 class AsyncioEventBusService(EventBusService):
     def __init__(self):
         self._queue: asyncio.Queue = asyncio.Queue()
-        self._callbacks: Dict[Type[Event], List[Callable]] = {}
+        self._callbacks: Dict[Type[Event], List[Callable[[Event], Coroutine[Any, Any, None]]]] = {}
         self._is_running = False
 
     def publish(self, event: Event):
         self._queue.put_nowait(event)
 
-    def subscribe(self, event_type: Type[Event], callback: Callable):
+    def subscribe(self, event_type: Type[Event], callback: Callable[[Event], Coroutine[Any, Any, None]]):
         if event_type not in self._callbacks:
             self._callbacks[event_type] = []
         self._callbacks[event_type].append(callback)
@@ -29,7 +29,7 @@ class AsyncioEventBusService(EventBusService):
                 event_type = type(event)
                 if event_type in self._callbacks:
                     for callback in self._callbacks[event_type]:
-                        callback(event)
+                        asyncio.create_task(callback(event))
             elif event == SHUTDOWN_MESSAGE:
                 self._is_running = False
             self._queue.task_done()

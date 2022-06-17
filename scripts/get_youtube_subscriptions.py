@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 
 import sys
 
@@ -7,7 +8,7 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 
 
-def main():
+async def main():
     args = argparse.ArgumentParser()
     args.add_argument("--refresh-token", required=True, help="Refresh token of the google account")
     refresh_token = args.parse_args().refresh_token
@@ -22,11 +23,11 @@ def main():
         print("Refresh token is not valid")
         sys.exit(1)
 
-    subscriptions = YoutubeService.get_youtube_channels(access_token=access_token)
+    subscriptions = await YoutubeService.get_youtube_channels(access_token=access_token)
     subscriptions.sort(key=lambda s: s.title)
     for subscription in subscriptions:
         print(f'{subscription.title} -> {subscription.playlist_id} ({subscription.url})')
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
