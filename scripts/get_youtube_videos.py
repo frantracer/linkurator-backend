@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 from datetime import datetime
 from unittest.mock import MagicMock
 
@@ -7,7 +8,7 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 
 
-def main():
+async def main():
     args = argparse.ArgumentParser()
     args.add_argument("--refresh-token", required=True, help="Refresh token of the google account")
     args.add_argument("--playlist-id", required=True, help="Playlist ID of the youtube channel main playlist")
@@ -24,7 +25,7 @@ def main():
 
     youtube_service = YoutubeService(google_account_service=google_account_service, user_repository=MagicMock())
 
-    videos = youtube_service.get_youtube_videos(
+    videos = await youtube_service.get_youtube_videos(
         refresh_token=refresh_token,
         playlist_id=playlist_id,
         from_date=from_date)
@@ -36,4 +37,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())

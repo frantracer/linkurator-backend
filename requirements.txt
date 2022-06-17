@@ -10,3 +10,4 @@ pymongo==4.1.1
 requests==2.27.1
 types-requests==2.27.16
 mongodb_migrations==1.1.1
+aiohttp==3.8.1

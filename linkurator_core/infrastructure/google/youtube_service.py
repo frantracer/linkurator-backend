@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 import uuid
 
+import aiohttp
 import requests
 
 from linkurator_core.application.subscription_service import SubscriptionService
@@ -128,7 +129,7 @@ class YoutubeService(SubscriptionService):
 
         return subscriptions
 
-    def get_youtube_videos(self, refresh_token: str, playlist_id: str, from_date: datetime) -> List[YoutubeVideo]:
+    async def get_youtube_videos(self, refresh_token: str, playlist_id: str, from_date: datetime) -> List[YoutubeVideo]:
         access_token = self.google_account_service.generate_access_token_from_refresh_token(refresh_token)
         if access_token is None:
             return []
@@ -137,7 +138,7 @@ class YoutubeService(SubscriptionService):
         videos: List[YoutubeVideo] = []
 
         while True:
-            playlist_response_json, playlist_status_code = YoutubeService._request_youtube_playlist_items(
+            playlist_response_json, playlist_status_code = await YoutubeService._request_youtube_playlist_items(
                 access_token, playlist_id, next_page_token)
             if playlist_status_code != 200:
                 return []
@@ -150,7 +151,7 @@ class YoutubeService(SubscriptionService):
                                   for playlist_item in playlist_items
                                   if playlist_item["snippet"]["publishedAt"] >= from_date.isoformat()]
 
-            videos_response_json, videos_status_code = YoutubeService._request_youtube_videos(
+            videos_response_json, videos_status_code = await YoutubeService._request_youtube_videos(
                 access_token, filtered_video_ids)
             if videos_status_code != 200:
                 return []
@@ -202,8 +203,9 @@ class YoutubeService(SubscriptionService):
         return channels_response.json(), channels_response.status_code
 
     @staticmethod
-    def _request_youtube_playlist_items(access_token: str, playlist_id: str, next_page_token: Optional[str]) -> Tuple[
-        Dict[str, Any], int]:
+    async def _request_youtube_playlist_items(
+            access_token: str, playlist_id: str, next_page_token: Optional[str]
+    ) -> Tuple[Dict[str, Any], int]:
         youtube_api_url = "https://youtube.googleapis.com/youtube/v3/playlistItems"
 
         playlist_items_query_params: Dict[str, Any] = {
@@ -216,12 +218,15 @@ class YoutubeService(SubscriptionService):
 
         url = f"{youtube_api_url}?{urlencode(playlist_items_query_params)}"
 
-        playlist_items_response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
+        async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {access_token}"}) as session:
+            async with session.get(url) as resp:
+                resp_body = await resp.json()
+                resp_status = resp.status
 
-        return playlist_items_response.json(), playlist_items_response.status_code
+        return resp_body, resp_status
 
     @staticmethod
-    def _request_youtube_videos(access_token: str, video_ids: List[str]) -> Tuple[Dict[str, Any], int]:
+    async def _request_youtube_videos(access_token: str, video_ids: List[str]) -> Tuple[Dict[str, Any], int]:
         youtube_api_videos_url = "https://youtube.googleapis.com/youtube/v3/videos"
 
         videos_query_params: Dict[str, Any] = {
@@ -232,6 +237,9 @@ class YoutubeService(SubscriptionService):
 
         url = f"{youtube_api_videos_url}?{urlencode(videos_query_params)}"
 
-        videos_response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
+        async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {access_token}"}) as session:
+            async with session.get(url) as resp:
+                resp_body = await resp.json()
+                resp_status = resp.status
 
-        return videos_response.json(), videos_response.status_code
+        return resp_body, resp_status
