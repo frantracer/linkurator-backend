@@ -14,3 +14,16 @@ class Item:
     thumbnail: AnyUrl
     created_at: datetime
     updated_at: datetime
+
+    @classmethod
+    def new(cls, uuid: UUID, subscription_uuid: UUID, name: str, url: AnyUrl, thumbnail: AnyUrl):
+        now = datetime.now()
+        return cls(
+            uuid=uuid,
+            subscription_uuid=subscription_uuid,
+            name=name,
+            url=url,
+            thumbnail=thumbnail,
+            created_at=now,
+            updated_at=now
+        )

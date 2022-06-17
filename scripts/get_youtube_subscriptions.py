@@ -15,7 +15,11 @@ def main():
 
     google_account_service = GoogleAccountService(client_id=secrets.client_id, client_secret=secrets.client_secret)
 
-    youtube_service = YoutubeService(google_account_service=google_account_service, user_repository=MagicMock())
+    youtube_service = YoutubeService(
+        google_account_service=google_account_service,
+        user_repository=MagicMock(),
+        subscription_repository=MagicMock(),
+        api_key='')
 
     subscriptions = youtube_service.get_youtube_channels(refresh_token)
     for subscription in subscriptions:

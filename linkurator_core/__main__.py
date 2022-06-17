@@ -64,7 +64,11 @@ async def main():  # pylint: disable=too-many-locals
     account_service = GoogleAccountService(
         client_id=google_secrets.client_id,
         client_secret=google_secrets.client_secret)
-    youtube_service = YoutubeService(google_account_service=account_service, user_repository=user_repository)
+    youtube_service = YoutubeService(
+        google_account_service=account_service,
+        user_repository=user_repository,
+        subscription_repository=subscription_repository,
+        api_key=google_secrets.api_key)
 
     # Event bus
     loop = asyncio.get_event_loop()
