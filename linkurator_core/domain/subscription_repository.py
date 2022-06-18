@@ -27,6 +27,10 @@ class SubscriptionRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def update(self, subscription: Subscription):
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def find(self, subscription: Subscription) -> Optional[Subscription]:
         raise NotImplementedError
 

@@ -194,6 +194,41 @@ def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: Mong
     assert subscriptions[2].uuid == sub3.uuid
 
 
+def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository):
+    sub = Subscription(
+        name="test",
+        uuid=uuid.UUID("1515c810-e22a-4b13-bf34-329f8ebe2491"),
+        url=utils.parse_url('https://url.com'),
+        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        provider="test",
+        external_data={},
+        created_at=datetime.datetime.fromtimestamp(0),
+        updated_at=datetime.datetime.fromtimestamp(0),
+        scanned_at=datetime.datetime.fromtimestamp(0))
+    subscription_repo.add(sub)
+
+    sub.name = "new name"
+    sub.url = utils.parse_url('https://new.com')
+    sub.thumbnail = utils.parse_url('https://new.com/thumbnail.png')
+    sub.provider = "new provider"
+    sub.external_data = {"new": "data"}
+    sub.created_at = datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
+    sub.updated_at = datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
+    sub.scanned_at = datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
+
+    subscription_repo.update(sub)
+    updated_subscription = subscription_repo.get(sub.uuid)
+    assert updated_subscription is not None
+    assert updated_subscription.name == "new name"
+    assert updated_subscription.url == utils.parse_url('https://new.com')
+    assert updated_subscription.thumbnail == utils.parse_url('https://new.com/thumbnail.png')
+    assert updated_subscription.provider == "new provider"
+    assert updated_subscription.external_data == {"new": "data"}
+    assert updated_subscription.created_at == datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
+    assert updated_subscription.updated_at == datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
+    assert updated_subscription.scanned_at == datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
+
+
 def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository):
     subscription = Subscription.new(name="test",
                                     uuid=uuid.UUID("5f0430b3-6044-4cca-b739-d63c75794b3c"),

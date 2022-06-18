@@ -91,6 +91,11 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
         collection = self._subscription_collection()
         collection.delete_one({'uuid': subscription_id})
 
+    def update(self, subscription: Subscription):
+        collection = self._subscription_collection()
+        collection.update_one({'uuid': subscription.uuid},
+                              {'$set': dict(MongoDBSubscription.from_domain_subscription(subscription))})
+
     def find(self, subscription: Subscription) -> Optional[Subscription]:
         collection = self._subscription_collection()
         found_subscription: Optional[Dict] = collection.find_one({'url': subscription.url})
