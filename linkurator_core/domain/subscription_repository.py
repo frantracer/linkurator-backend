@@ -1,4 +1,5 @@
 import abc
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -27,4 +28,8 @@ class SubscriptionRepository(abc.ABC):
 
     @abc.abstractmethod
     def find(self, subscription: Subscription) -> Optional[Subscription]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def find_latest_scan_before(self, datetime_limit: datetime) -> List[Subscription]:
         raise NotImplementedError

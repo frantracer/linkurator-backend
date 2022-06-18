@@ -93,6 +93,38 @@ def test_find_a_subscription_that_does_not_exist(subscription_repo: MongoDBSubsc
     assert found_subscription is None
 
 
+def test_find_subscriptions_scanned_before_a_date(subscription_repo: MongoDBSubscriptionRepository):
+    sub1 = Subscription(
+        name="test",
+        uuid=uuid.UUID("2e17788f-0411-4383-a3f6-69c2c1a07901"),
+        url=utils.parse_url('https://2e17788f.com'),
+        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        provider="test",
+        created_at=datetime.datetime(2022, 1, 2, 0, 0, 0),
+        updated_at=datetime.datetime(2022, 1, 2, 0, 0, 0),
+        scanned_at=datetime.datetime(2022, 1, 2, 0, 0, 0),
+        external_data={}
+    )
+    sub2 = Subscription(
+        name="test",
+        uuid=uuid.UUID("9270daf8-1c06-4566-adfd-ace610c67811"),
+        url=utils.parse_url('https://9270daf8.com'),
+        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        provider="test",
+        created_at=datetime.datetime(2022, 1, 1, 0, 0, 0),
+        updated_at=datetime.datetime(2022, 1, 1, 0, 0, 0),
+        scanned_at=datetime.datetime(2022, 1, 1, 0, 0, 0),
+        external_data={}
+    )
+
+    current_subscriptions = subscription_repo.find_latest_scan_before(datetime.datetime(2022, 1, 2, 0, 0, 0))
+    subscription_repo.add(sub1)
+    subscription_repo.add(sub2)
+    updated_subscriptions = subscription_repo.find_latest_scan_before(datetime.datetime(2022, 1, 2, 0, 0, 0))
+
+    assert len(updated_subscriptions) - len(current_subscriptions) == 1
+
+
 def test_get_subscription_that_does_not_exist(subscription_repo: MongoDBSubscriptionRepository):
     the_subscription = subscription_repo.get(uuid.UUID("0af092ed-e3f9-4919-8202-c19bfd0627a9"))
 

@@ -98,5 +98,12 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
             return None
         return MongoDBSubscription(**found_subscription).to_domain_subscription()
 
+    def find_latest_scan_before(self, datetime_limit: datetime) -> List[Subscription]:
+        collection = self._subscription_collection()
+        subscriptions: List[Dict] = list(collection.
+                                         find({'scanned_at': {'$lt': datetime_limit}}).
+                                         sort('scanned_at', pymongo.DESCENDING))
+        return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
+
     def _subscription_collection(self) -> pymongo.collection.Collection:
         return self.client[self.db_name][self._collection_name]
