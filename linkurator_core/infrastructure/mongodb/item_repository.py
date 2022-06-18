@@ -85,5 +85,12 @@ class MongoDBItemRepository(ItemRepository):
             .sort('created_at', pymongo.DESCENDING)
         return [MongoDBItem(**item).to_domain_item() for item in items]
 
+    def find(self, item: Item) -> Optional[Item]:
+        collection = self._item_collection()
+        db_item: Optional[Dict] = collection.find_one({'url': item.url})
+        if db_item is None:
+            return None
+        return MongoDBItem(**db_item).to_domain_item()
+
     def _item_collection(self) -> pymongo.collection.Collection:
         return self.client[self.db_name][self._collection_name]

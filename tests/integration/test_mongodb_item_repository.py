@@ -109,3 +109,38 @@ def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
     assert len(items_from_sub1) == 2
     assert len(items_from_sub2) == 1
     assert len(items_from_sub3) == 0
+
+
+def test_find_item_with_same_url(item_repo: MongoDBItemRepository):
+    item1 = Item.new(name="item1",
+                     uuid=uuid.UUID("8fc4fbca-439c-4c0e-937d-4147ef3b299c"),
+                     subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
+                     url=utils.parse_url('https://item-with-same-url.com'),
+                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'))
+    item2 = Item.new(name="item2",
+                     uuid=uuid.UUID("fe5542fa-276e-461f-aa20-d52b1b3ce4e1"),
+                     subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
+                     url=utils.parse_url('https://item-with-same-url.com'),
+                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'))
+    item_repo.add(item1)
+
+    found_item = item_repo.find(item2)
+    assert found_item is not None
+    assert found_item.uuid == item1.uuid
+
+
+def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemRepository):
+    item1 = Item.new(name="item1",
+                     uuid=uuid.UUID("40f3edbf-66a4-4074-9f26-53a7a9832fe7"),
+                     subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
+                     url=utils.parse_url('https://40f3edbf.com'),
+                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'))
+    item2 = Item.new(name="item2",
+                     uuid=uuid.UUID("b996a1fb-91db-44de-9c4f-c111c056d299"),
+                     subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
+                     url=utils.parse_url('https://b996a1fb.com'),
+                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'))
+    item_repo.add(item1)
+
+    found_item = item_repo.find(item2)
+    assert found_item is None

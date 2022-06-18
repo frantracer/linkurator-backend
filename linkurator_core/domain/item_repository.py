@@ -24,3 +24,7 @@ class ItemRepository(abc.ABC):
     @abc.abstractmethod
     def get_by_subscription_id(self, subscription_id: UUID) -> List[Item]:
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def find(self, item: Item) -> Optional[Item]:
+        raise NotImplementedError
