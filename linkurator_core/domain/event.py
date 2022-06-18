@@ -21,3 +21,11 @@ class UserSubscriptionsBecameOutdatedEvent(Event):
     def __init__(self, event_id: uuid.UUID, user_id: uuid.UUID):
         super().__init__(event_id)
         self.user_id = user_id
+
+
+class SubscriptionBecameOutdatedEvent(Event):
+    subscription_id: uuid.UUID
+
+    def __init__(self, event_id: uuid.UUID, subscription_id: uuid.UUID):
+        super().__init__(event_id)
+        self.subscription_id = subscription_id
