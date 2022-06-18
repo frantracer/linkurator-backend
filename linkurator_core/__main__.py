@@ -8,11 +8,12 @@ from typing import Optional
 from uvicorn import Config, Server  # type: ignore
 import uvicorn.server  # type: ignore
 
+from linkurator_core.application.find_outdated_subscriptions_handler import FindOutdatedSubscriptionsHandler
 from linkurator_core.application.find_outdated_users_handler import FindOutdatedUsersHandler
 from linkurator_core.infrastructure.asyncio.scheduler import TaskScheduler
 from linkurator_core.application.event_handler import EventHandler
 from linkurator_core.application.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
-from linkurator_core.domain.event import UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.domain.event import SubscriptionBecameOutdatedEvent, UserSubscriptionsBecameOutdatedEvent
 from linkurator_core.infrastructure.asyncio.event_bus_service import AsyncioEventBusService
 from linkurator_core.infrastructure.asyncio.utils import run_parallel
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
@@ -78,13 +79,16 @@ async def main():  # pylint: disable=too-many-locals
     update_user_subscriptions = UpdateUserSubscriptionsHandler(
         youtube_service, user_repository, subscription_repository)
     find_outdated_users = FindOutdatedUsersHandler(user_repository, event_bus)
+    find_outdated_subscriptions = FindOutdatedSubscriptionsHandler(subscription_repository, event_bus)
     event_handler = EventHandler(update_user_subscriptions)
 
     event_bus.subscribe(UserSubscriptionsBecameOutdatedEvent, event_handler.handle)
+    event_bus.subscribe(SubscriptionBecameOutdatedEvent, event_handler.handle)
 
     # Task scheduler
     scheduler = TaskScheduler()
     scheduler.schedule_recurring_task(task=find_outdated_users.handle, interval_seconds=60 * 5)
+    scheduler.schedule_recurring_task(task=find_outdated_subscriptions.handle, interval_seconds=60)
 
     # API
     api_server = ApiServer(app_path='linkurator_core.infrastructure.fastapi.app:app',

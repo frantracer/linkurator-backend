@@ -10,3 +10,5 @@ class EventHandler:
     async def handle(self, event: Event) -> None:
         if isinstance(event, UserSubscriptionsBecameOutdatedEvent):
             await self.update_user_subscriptions_handler.handle(event.user_id)
+        else:
+            print(f'Unhandled event: {event}')
