@@ -10,6 +10,7 @@ import uvicorn.server  # type: ignore
 
 from linkurator_core.application.find_outdated_subscriptions_handler import FindOutdatedSubscriptionsHandler
 from linkurator_core.application.find_outdated_users_handler import FindOutdatedUsersHandler
+from linkurator_core.application.update_subscription_items_handler import UpdateSubscriptionItemsHandler
 from linkurator_core.infrastructure.asyncio.scheduler import TaskScheduler
 from linkurator_core.application.event_handler import EventHandler
 from linkurator_core.application.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
@@ -20,6 +21,7 @@ from linkurator_core.infrastructure.config.google_secrets import GoogleClientSec
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
+from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import run_mongodb_migrations
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
@@ -58,6 +60,10 @@ async def main():  # pylint: disable=too-many-locals
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password
     )
+    item_repository = MongoDBItemRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password
+    )
 
     # Services
     google_client_secret_path = os.environ.get('LINKURATOR_GOOGLE_SECRET_PATH', "secrets/client_secret.json")
@@ -78,9 +84,15 @@ async def main():  # pylint: disable=too-many-locals
     # Event handlers
     update_user_subscriptions = UpdateUserSubscriptionsHandler(
         youtube_service, user_repository, subscription_repository)
+    update_subscriptions_items = UpdateSubscriptionItemsHandler(
+        subscription_repository=subscription_repository,
+        item_repository=item_repository,
+        subscription_service=youtube_service)
     find_outdated_users = FindOutdatedUsersHandler(user_repository, event_bus)
     find_outdated_subscriptions = FindOutdatedSubscriptionsHandler(subscription_repository, event_bus)
-    event_handler = EventHandler(update_user_subscriptions)
+    event_handler = EventHandler(
+        update_user_subscriptions_handler=update_user_subscriptions,
+        update_subscription_items_handler=update_subscriptions_items)
 
     event_bus.subscribe(UserSubscriptionsBecameOutdatedEvent, event_handler.handle)
     event_bus.subscribe(SubscriptionBecameOutdatedEvent, event_handler.handle)
