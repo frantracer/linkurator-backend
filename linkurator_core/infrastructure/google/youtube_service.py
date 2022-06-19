@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 import uuid
 
 import aiohttp
+import backoff
 
 from linkurator_core.application.subscription_service import SubscriptionService
 from linkurator_core.common import utils
@@ -197,6 +198,10 @@ class YoutubeService(SubscriptionService):
         return videos
 
     @staticmethod
+    @backoff.on_exception(backoff.expo,
+                          aiohttp.ClientConnectorError,
+                          max_time=60,
+                          jitter=None)
     async def _request_youtube_subscriptions(
             access_token: str, next_page_token: Optional[str]
     ) -> Tuple[Dict[str, Any], int]:
@@ -220,6 +225,10 @@ class YoutubeService(SubscriptionService):
         return resp_body, resp_status
 
     @staticmethod
+    @backoff.on_exception(backoff.expo,
+                          aiohttp.ClientConnectorError,
+                          max_time=60,
+                          jitter=None)
     async def _request_youtube_channels(access_token: str, channel_ids: List[str]) -> Tuple[Dict[str, Any], int]:
         youtube_api_channels_url = "https://youtube.googleapis.com/youtube/v3/channels"
 
@@ -239,6 +248,10 @@ class YoutubeService(SubscriptionService):
         return resp_body, resp_status
 
     @staticmethod
+    @backoff.on_exception(backoff.expo,
+                          aiohttp.ClientConnectorError,
+                          max_time=60,
+                          jitter=None)
     async def _request_youtube_playlist_items(
             api_key: str, playlist_id: str, next_page_token: Optional[str]
     ) -> Tuple[Dict[str, Any], int]:
@@ -263,6 +276,10 @@ class YoutubeService(SubscriptionService):
         return resp_body, resp_status
 
     @staticmethod
+    @backoff.on_exception(backoff.expo,
+                          aiohttp.ClientConnectorError,
+                          max_time=60,
+                          jitter=None)
     async def _request_youtube_videos(
             api_key: str, video_ids: List[str]
     ) -> Tuple[Dict[str, Any], int]:
