@@ -20,10 +20,12 @@ class MongoDBItem(BaseModel):
     uuid: UUID
     subscription_uuid: UUID
     name: str
+    description: str
     url: AnyUrl
     thumbnail: AnyUrl
     created_at: datetime
     updated_at: datetime
+    published_at: datetime
 
     @staticmethod
     def from_domain_item(item: Item) -> MongoDBItem:
@@ -31,10 +33,12 @@ class MongoDBItem(BaseModel):
             uuid=item.uuid,
             subscription_uuid=item.subscription_uuid,
             name=item.name,
+            description=item.description,
             url=item.url,
             thumbnail=item.thumbnail,
             created_at=item.created_at,
-            updated_at=item.updated_at
+            updated_at=item.updated_at,
+            published_at=item.published_at
         )
 
     def to_domain_item(self) -> Item:
@@ -42,10 +46,12 @@ class MongoDBItem(BaseModel):
             uuid=self.uuid,
             subscription_uuid=self.subscription_uuid,
             name=self.name,
+            description=self.description,
             url=self.url,
             thumbnail=self.thumbnail,
             created_at=self.created_at,
-            updated_at=self.updated_at
+            updated_at=self.updated_at,
+            published_at=self.published_at
         )
 
 

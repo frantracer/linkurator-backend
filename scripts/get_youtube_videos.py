@@ -23,7 +23,7 @@ async def main():
         from_date=from_date)
 
     for video in videos:
-        print(f'[{video.published_at}] {video.title} -> {video.url}')
+        print(f'* [{video.published_at}] {video.title} -> {video.url}\n{video.description}')
 
     print(f"Total {len(videos)} videos")
 

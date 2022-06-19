@@ -45,6 +45,7 @@ class YoutubeChannel:
 @dataclass
 class YoutubeVideo:
     title: str
+    description: str
     video_id: str
     published_at: datetime
     thumbnail_url: str
@@ -57,6 +58,7 @@ class YoutubeVideo:
     def from_dict(video: dict):
         return YoutubeVideo(
             title=video["snippet"]["title"],
+            description=video["snippet"]["description"],
             video_id=video["id"],
             published_at=datetime.strptime(video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ"),
             thumbnail_url=video["snippet"]["thumbnails"]["default"]["url"],
@@ -113,8 +115,10 @@ class YoutubeService(SubscriptionService):
                 uuid=uuid.uuid4(),
                 subscription_uuid=sub_id,
                 name=video.title,
+                description=video.description,
                 url=utils.parse_url(video.url),
-                thumbnail=utils.parse_url(video.thumbnail_url)
+                thumbnail=utils.parse_url(video.thumbnail_url),
+                published_at=video.published_at
             )
 
         videos = await YoutubeService.get_youtube_videos(

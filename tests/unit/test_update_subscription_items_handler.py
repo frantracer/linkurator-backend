@@ -27,9 +27,11 @@ async def test_update_subscriptions_items_with_a_items_that_are_not_registered()
     item1 = Item.new(
         uuid=uuid.UUID("64ad0bbb-27d5-4b45-bc9b-d3a09c1d8df2"),
         name="item1",
+        description="",
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
-        subscription_uuid=sub1.uuid)
+        subscription_uuid=sub1.uuid,
+        published_at=datetime.fromtimestamp(0))
 
     subscription_service = AsyncMock()
     subscription_service.get_items.return_value = [item1]
@@ -74,16 +76,20 @@ async def test_update_subscriptions_items_with_a_items_that_are_already_register
     item1 = Item.new(
         uuid=uuid.UUID("64ad0bbb-27d5-4b45-bc9b-d3a09c1d8df2"),
         name="item1",
+        description="",
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
-        subscription_uuid=sub1.uuid)
+        subscription_uuid=sub1.uuid,
+        published_at=datetime.fromtimestamp(0))
 
     item2 = Item.new(
         uuid=uuid.UUID("64ad0bbb-27d5-4b45-bc9b-d3a09c1d8df3"),
         name="item2",
+        description="",
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
-        subscription_uuid=sub1.uuid)
+        subscription_uuid=sub1.uuid,
+        published_at=datetime.fromtimestamp(0))
 
     subscription_service = AsyncMock()
     subscription_service.get_items.return_value = [item1]

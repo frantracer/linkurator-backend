@@ -25,21 +25,27 @@ def test_exception_is_raised_if_items_collection_is_not_created():
 
 
 def test_get_item(item_repo: MongoDBItemRepository):
-    item = Item(name="test", uuid=uuid.UUID("9cedfb45-70fb-4283-bfee-993941b05b53"),
+    item = Item(name="test",
+                description="some description with emojis 🙂",
+                uuid=uuid.UUID("9cedfb45-70fb-4283-bfee-993941b05b53"),
                 subscription_uuid=uuid.UUID("6ae3792e-6427-4b61-bdc1-66cc9c61fe29"),
                 url=utils.parse_url('https://test.com'),
                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+                created_at=datetime.datetime.now(),
+                updated_at=datetime.datetime.now(),
+                published_at=datetime.datetime.now())
     item_repo.add(item)
     the_item = item_repo.get(item.uuid)
 
     assert the_item is not None
     assert the_item.name == item.name
+    assert the_item.description == item.description
     assert the_item.uuid == item.uuid
     assert the_item.url == item.url
     assert the_item.thumbnail == item.thumbnail
     assert int(the_item.created_at.timestamp() * 100) == floor(item.created_at.timestamp() * 100)
     assert int(the_item.updated_at.timestamp() * 100) == floor(item.updated_at.timestamp() * 100)
+    assert int(the_item.published_at.timestamp() * 100) == floor(item.published_at.timestamp() * 100)
 
 
 def test_get_item_that_does_not_exist(item_repo: MongoDBItemRepository):
@@ -49,11 +55,16 @@ def test_get_item_that_does_not_exist(item_repo: MongoDBItemRepository):
 
 
 def test_get_item_with_invalid_format_raises_an_exception(item_repo: MongoDBItemRepository):
-    item_dict = dict(MongoDBItem(uuid=uuid.UUID("67a06616-e127-4bf0-bcc0-faa221d554c5"),
-                                 subscription_uuid=uuid.UUID("9753d304-3a43-414e-a5cd-496672b27c34"),
-                                 name="test", url=utils.parse_url('https://test.com'),
-                                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now()))
+    item_dict = dict(MongoDBItem(
+        uuid=uuid.UUID("67a06616-e127-4bf0-bcc0-faa221d554c5"),
+        subscription_uuid=uuid.UUID("9753d304-3a43-414e-a5cd-496672b27c34"),
+        name="test",
+        description="",
+        url=utils.parse_url('https://test.com'),
+        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        created_at=datetime.datetime.now(),
+        updated_at=datetime.datetime.now(),
+        published_at=datetime.datetime.fromtimestamp(0)))
     item_dict['uuid'] = 'invalid_uuid'
     item_collection_mock = MagicMock()
     item_collection_mock.find_one = MagicMock(return_value=item_dict)
@@ -64,11 +75,15 @@ def test_get_item_with_invalid_format_raises_an_exception(item_repo: MongoDBItem
 
 
 def test_delete_item(item_repo: MongoDBItemRepository):
-    item = Item(name="test", uuid=uuid.UUID("4bf64498-239e-4bcb-a5a1-b84a7708ad01"),
+    item = Item(name="test",
+                description="",
+                uuid=uuid.UUID("4bf64498-239e-4bcb-a5a1-b84a7708ad01"),
                 subscription_uuid=uuid.UUID("d1dc868b-598c-4547-92d6-011e9b7e38e6"),
                 url=utils.parse_url('https://test.com'),
                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+                created_at=datetime.datetime.now(),
+                updated_at=datetime.datetime.now(),
+                published_at=datetime.datetime.fromtimestamp(0))
     item_repo.add(item)
     the_item = item_repo.get(item.uuid)
     assert the_item is not None
@@ -83,21 +98,33 @@ def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
     subscription_uuid_2 = uuid.UUID("d3e22c40-c767-468b-8a61-cc61bcfd55ec")
     subscription_uuid_3 = uuid.UUID("9753d304-3a43-414e-a5cd-496672b27c34")
 
-    item1 = Item(name="item1", uuid=uuid.UUID("6469596f-5128-4c12-87f1-9b7b462517f3"),
+    item1 = Item(name="item1",
+                 description="",
+                 uuid=uuid.UUID("6469596f-5128-4c12-87f1-9b7b462517f3"),
                  subscription_uuid=subscription_uuid_1,
                  url=utils.parse_url('https://test.com'),
                  thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
-    item2 = Item(name="item2", uuid=uuid.UUID("2dcc5c6b-3d95-421d-a9cf-81ac475cee4c"),
+                 created_at=datetime.datetime.now(),
+                 updated_at=datetime.datetime.now(),
+                 published_at=datetime.datetime.fromtimestamp(0))
+    item2 = Item(name="item2",
+                 description="",
+                 uuid=uuid.UUID("2dcc5c6b-3d95-421d-a9cf-81ac475cee4c"),
                  subscription_uuid=subscription_uuid_1,
                  url=utils.parse_url('https://test.com'),
                  thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
-    item3 = Item(name="item3", uuid=uuid.UUID("2f7fa436-e1db-4ac7-bcce-6299c246e39f"),
+                 created_at=datetime.datetime.now(),
+                 updated_at=datetime.datetime.now(),
+                 published_at=datetime.datetime.fromtimestamp(0))
+    item3 = Item(name="item3",
+                 description="",
+                 uuid=uuid.UUID("2f7fa436-e1db-4ac7-bcce-6299c246e39f"),
                  subscription_uuid=subscription_uuid_2,
                  url=utils.parse_url('https://test.com'),
                  thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+                 created_at=datetime.datetime.now(),
+                 updated_at=datetime.datetime.now(),
+                 published_at=datetime.datetime.fromtimestamp(0))
     item_repo.add(item1)
     item_repo.add(item2)
     item_repo.add(item3)
@@ -113,15 +140,19 @@ def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
 
 def test_find_item_with_same_url(item_repo: MongoDBItemRepository):
     item1 = Item.new(name="item1",
+                     description="",
                      uuid=uuid.UUID("8fc4fbca-439c-4c0e-937d-4147ef3b299c"),
                      subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
                      url=utils.parse_url('https://item-with-same-url.com'),
-                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'))
+                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                     published_at=datetime.datetime.fromtimestamp(0))
     item2 = Item.new(name="item2",
+                     description="",
                      uuid=uuid.UUID("fe5542fa-276e-461f-aa20-d52b1b3ce4e1"),
                      subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
                      url=utils.parse_url('https://item-with-same-url.com'),
-                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'))
+                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                     published_at=datetime.datetime.fromtimestamp(0))
     item_repo.add(item1)
 
     found_item = item_repo.find(item2)
@@ -131,15 +162,19 @@ def test_find_item_with_same_url(item_repo: MongoDBItemRepository):
 
 def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemRepository):
     item1 = Item.new(name="item1",
+                     description="",
                      uuid=uuid.UUID("40f3edbf-66a4-4074-9f26-53a7a9832fe7"),
                      subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
                      url=utils.parse_url('https://40f3edbf.com'),
-                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'))
+                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                     published_at=datetime.datetime.fromtimestamp(0))
     item2 = Item.new(name="item2",
+                     description="",
                      uuid=uuid.UUID("b996a1fb-91db-44de-9c4f-c111c056d299"),
                      subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
                      url=utils.parse_url('https://b996a1fb.com'),
-                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'))
+                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                     published_at=datetime.datetime.fromtimestamp(0))
     item_repo.add(item1)
 
     found_item = item_repo.find(item2)
