@@ -179,3 +179,79 @@ def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemReposit
 
     found_item = item_repo.find(item2)
     assert found_item is None
+
+
+def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publish_date(
+        item_repo: MongoDBItemRepository):
+    item1 = Item(name="item1",
+                 description="",
+                 uuid=uuid.UUID("72e47bdc-793e-4420-b6b6-f6a415cb1e3c"),
+                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
+                 url=utils.parse_url('https://72e47bdc.com'),
+                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                 published_at=datetime.datetime(2020, 1, 1, 8, 8, 8),
+                 created_at=datetime.datetime(2022, 1, 1, 0, 0, 0),
+                 updated_at=datetime.datetime.fromtimestamp(0))
+    item2 = Item(name="item2",
+                 description="",
+                 uuid=uuid.UUID("1db7ac48-4388-49a6-94c2-1a28657ec2f9"),
+                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
+                 url=utils.parse_url('https://1db7ac48.com'),
+                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                 published_at=datetime.datetime(2021, 1, 1, 6, 6, 6),
+                 created_at=datetime.datetime(2022, 1, 2, 0, 0, 0),
+                 updated_at=datetime.datetime.fromtimestamp(0))
+    item3 = Item(name="item3",
+                 description="",
+                 uuid=uuid.UUID("a45500be-967a-47fc-93f9-9b7642f51a52"),
+                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
+                 url=utils.parse_url('https://a45500be.com'),
+                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                 published_at=datetime.datetime(2020, 1, 1, 4, 4, 4),
+                 created_at=datetime.datetime(2023, 2, 2, 0, 0, 0),
+                 updated_at=datetime.datetime.fromtimestamp(0))
+    item4 = Item(name="item4",
+                 description="",
+                 uuid=uuid.UUID("0a4c8807-0876-4ee0-82b6-333133bb66ee"),
+                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
+                 url=utils.parse_url('https://0a4c8807.com'),
+                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                 published_at=datetime.datetime(2020, 1, 1, 8, 8, 9),
+                 created_at=datetime.datetime(2021, 1, 1, 0, 0, 0),
+                 updated_at=datetime.datetime.fromtimestamp(0))
+    item_repo.add(item1)
+    item_repo.add(item2)
+    item_repo.add(item3)
+    item_repo.add(item4)
+
+    found_items, total_items = item_repo.find_sorted_by_publish_date(
+        sub_ids=[uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10")],
+        published_after=datetime.datetime(2020, 1, 1, 4, 4, 4),
+        created_before=datetime.datetime(2022, 1, 2, 0, 0, 0),
+        page_number=0,
+        max_results=1)
+
+    assert len(found_items) == 1
+    assert total_items == 2
+    assert found_items[0].uuid == item4.uuid
+
+    found_items, total_items = item_repo.find_sorted_by_publish_date(
+        sub_ids=[uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10")],
+        published_after=datetime.datetime(2020, 1, 1, 4, 4, 4),
+        created_before=datetime.datetime(2022, 1, 2, 0, 0, 0),
+        page_number=1,
+        max_results=1)
+
+    assert len(found_items) == 1
+    assert total_items == 2
+    assert found_items[0].uuid == item1.uuid
+
+    found_items, total_items = item_repo.find_sorted_by_publish_date(
+        sub_ids=[uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10")],
+        published_after=datetime.datetime(2020, 1, 1, 4, 4, 4),
+        created_before=datetime.datetime(2022, 1, 2, 0, 0, 0),
+        page_number=2,
+        max_results=1)
+
+    assert len(found_items) == 0
+    assert total_items == 2

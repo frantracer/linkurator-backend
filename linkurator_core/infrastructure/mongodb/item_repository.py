@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
-import pymongo  # type: ignore
 from pydantic import AnyUrl
 from pydantic.main import BaseModel
+import pymongo  # type: ignore
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
 
@@ -97,6 +97,34 @@ class MongoDBItemRepository(ItemRepository):
         if db_item is None:
             return None
         return MongoDBItem(**db_item).to_domain_item()
+
+    def find_sorted_by_publish_date(
+            self,
+            sub_ids: List[UUID],
+            published_after: datetime,
+            created_before: datetime,
+            max_results: int,
+            page_number: int
+    ) -> Tuple[List[Item], int]:
+        collection = self._item_collection()
+
+        total_items: int = collection.count_documents({
+            'subscription_uuid': {'$in': sub_ids},
+            'published_at': {'$gt': published_after},
+            'created_at': {'$lt': created_before}})
+
+        items: Cursor[Any] = collection.find({
+            'subscription_uuid': {'$in': sub_ids},
+            'published_at': {'$gt': published_after},
+            'created_at': {'$lt': created_before}
+        }).sort(
+            'published_at', pymongo.DESCENDING
+        ).skip(
+            page_number * max_results
+        ).limit(
+            max_results)
+
+        return [MongoDBItem(**item).to_domain_item() for item in items], total_items
 
     def _item_collection(self) -> pymongo.collection.Collection:
         return self.client[self.db_name][self._collection_name]

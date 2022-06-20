@@ -1,5 +1,6 @@
 import abc
-from typing import List, Optional
+from datetime import datetime
+from typing import List, Optional, Tuple
 from uuid import UUID
 
 from linkurator_core.domain.item import Item
@@ -27,4 +28,15 @@ class ItemRepository(abc.ABC):
 
     @abc.abstractmethod
     def find(self, item: Item) -> Optional[Item]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def find_sorted_by_publish_date(
+            self,
+            sub_ids: List[UUID],
+            published_after: datetime,
+            created_before: datetime,
+            max_results: int,
+            page_number: int
+    ) -> Tuple[List[Item], int]:
         raise NotImplementedError
