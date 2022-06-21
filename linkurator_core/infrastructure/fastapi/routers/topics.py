@@ -36,7 +36,9 @@ def get_router() -> APIRouter:
             name="Dummy Item",
             url=parse_obj_as(AnyUrl, "https://www.youtube.com/watch?v=tntOCGkgt98"),
             thumbnail=parse_obj_as(AnyUrl, "https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg"),
-            created_at=created_before
+            created_at=created_before,
+            published_at=datetime.fromtimestamp(0),
+            description=""
         )
 
         return Page[ItemSchema](
