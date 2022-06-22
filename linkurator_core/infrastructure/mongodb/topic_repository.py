@@ -70,6 +70,10 @@ class MongoDBTopicRepository(TopicRepository):
             return None
         return MongoDBTopic(**topic).to_domain_topic()
 
+    def update(self, topic: Topic) -> None:
+        collection = self._topic_collection()
+        collection.update_one({'uuid': topic.uuid}, {'$set': dict(MongoDBTopic.from_domain_topic(topic))})
+
     def delete(self, topic_id: UUID):
         collection = self._topic_collection()
         collection.delete_one({'uuid': topic_id})

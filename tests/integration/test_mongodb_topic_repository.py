@@ -78,6 +78,33 @@ def test_get_topics_by_user_id(topic_repo: MongoDBTopicRepository):
     assert the_topics[1].uuid in [topic1.uuid, topic2.uuid]
 
 
+def test_update_topic_parameters(topic_repo: MongoDBTopicRepository):
+    topic = Topic(name="test",
+                  uuid=uuid.UUID("634b81ca-9dde-4bb9-b573-0c6b2cb958df"),
+                  user_id=uuid.UUID("0362d52f-6e05-48f9-8144-e3483bbd2517"),
+                  subscriptions_ids=[uuid.UUID("680dde6c-7982-48b6-9dfb-51235852d2e5")],
+                  created_at=datetime.datetime.fromtimestamp(0),
+                  updated_at=datetime.datetime.fromtimestamp(0))
+
+    topic_repo.add(topic)
+
+    topic.name = "new_name"
+    topic.subscriptions_ids = [uuid.UUID("f7740d31-c74b-43c9-a8f8-4f5c79bd16d4"),
+                               uuid.UUID("f004114c-0790-440c-8bec-fe1c43f55140")]
+    topic.updated_at = datetime.datetime.fromtimestamp(1)
+
+    topic_repo.update(topic)
+    the_topic = topic_repo.get(topic.uuid)
+
+    assert the_topic is not None
+    assert the_topic.name == topic.name
+    assert the_topic.uuid == topic.uuid
+    assert the_topic.user_id == topic.user_id
+    assert the_topic.subscriptions_ids == topic.subscriptions_ids
+    assert int(the_topic.created_at.timestamp() * 100) == floor(topic.created_at.timestamp() * 100)
+    assert int(the_topic.updated_at.timestamp() * 100) == floor(topic.updated_at.timestamp() * 100)
+
+
 def test_delete_topic(topic_repo: MongoDBTopicRepository):
     topic = Topic(name="test", uuid=uuid.UUID("abc2130f-5a83-499f-a3dc-3115b483f6ba"),
                   user_id=uuid.UUID("1ba6cf89-adc3-4841-9f05-7f3d5dcbf79d"),

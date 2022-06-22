@@ -18,6 +18,10 @@ class TopicRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def update(self, topic: Topic) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def delete(self, topic_id: UUID):
         raise NotImplementedError
 
