@@ -59,7 +59,7 @@ def get_router(
             request: Request,
             sub_id: UUID,
             page_number: NonNegativeInt = 0,
-            page_size: PositiveInt = 5,
+            page_size: PositiveInt = 50,
             created_before_ts: float = datetime.now().timestamp(),
             session: Optional[Session] = Depends(get_session)
     ) -> Any:
