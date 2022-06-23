@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock
 import uuid
 
@@ -44,9 +44,9 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         first_name="first name",
         last_name="last name",
         email="test@email.com",
-        updated_at=datetime.fromtimestamp(0),
-        created_at=datetime.fromtimestamp(0),
-        scanned_at=datetime.fromtimestamp(0),
+        updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
         subscription_uuids=[],
         google_refresh_token="refresh token"
     )
@@ -60,8 +60,8 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
     assert response.json()['first_name'] == 'first name'
     assert response.json()['last_name'] == 'last name'
     assert response.json()['email'] == 'test@email.com'
-    assert response.json()['created_at'] == '1970-01-01T01:00:00'
-    assert response.json()['last_scanned_at'] == '1970-01-01T01:00:00'
+    assert response.json()['created_at'] == '1970-01-01T00:00:00Z'
+    assert response.json()['last_scanned_at'] == '1970-01-01T00:00:00Z'
 
 
 def test_user_profile_returns_404_when_user_not_found(handlers: Handlers) -> None:
