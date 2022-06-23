@@ -23,17 +23,17 @@ def get_router(validate_token_handler: ValidateTokenHandler, google_client: Goog
         token = request.cookies.get("token")
         if token is not None:
             session = validate_token_handler.handle(access_token=token, refresh_token=None)
-            if session is None:
-                response = JSONResponse(content={"message": "Invalid token"}, status_code=http.HTTPStatus.UNAUTHORIZED)
-                response.delete_cookie(key="token")
-                return response
-            return JSONResponse(content={"token": session.token})
+            if session is not None:
+                return JSONResponse(content={"token": session.token})
 
         scopes = ['profile', 'email', 'openid', "https://www.googleapis.com/auth/youtube.readonly"]
-        return fastapi.responses.RedirectResponse(
-            google_client.authorization_url(scopes=scopes,
-                                            redirect_uri=urljoin(str(request.base_url), "/auth")),
+        response = fastapi.responses.RedirectResponse(
+            url=google_client.authorization_url(
+                scopes=scopes,
+                redirect_uri=urljoin(str(request.base_url), "/auth")),
             status_code=http.HTTPStatus.FOUND)
+        response.delete_cookie(key="token")
+        return response
 
     @router.get("/auth")
     async def auth(request: Request) -> Any:
