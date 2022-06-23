@@ -6,6 +6,7 @@ import os
 from fastapi.applications import FastAPI
 
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
+from linkurator_core.application.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.validate_token_handler import ValidateTokenHandler
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
@@ -41,7 +42,8 @@ app_handlers = Handlers(
     validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
     google_client=account_service,
     get_user_subscriptions=GetUserSubscriptionsHandler(subscription_repository, user_repository),
-    get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository)
+    get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository),
+    get_user_profile_handler=GetUserProfileHandler(user_repository)
 )
 
 # FastAPI application

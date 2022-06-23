@@ -7,10 +7,11 @@ from typing import Optional
 from fastapi.applications import FastAPI, Request
 
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
+from linkurator_core.application.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.session import Session
-from linkurator_core.infrastructure.fastapi.routers import authentication, subscriptions, topics
+from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
@@ -20,6 +21,7 @@ class Handlers:
     google_client: GoogleAccountService
     get_user_subscriptions: GetUserSubscriptionsHandler
     get_subscription_items_handler: GetSubscriptionItemsHandler
+    get_user_profile_handler: GetUserProfileHandler
 
 
 def create_app(handlers: Handlers) -> FastAPI:
@@ -39,6 +41,13 @@ def create_app(handlers: Handlers) -> FastAPI:
         """
         return "OK"
 
+    app.include_router(
+        profile.get_router(
+            get_session=get_current_session,
+            get_user_profile_handler=handlers.get_user_profile_handler
+        ),
+        prefix="/profile"
+    )
     app.include_router(
         authentication.get_router(
             validate_token_handler=handlers.validate_token,

@@ -8,6 +8,7 @@ import pytest
 from linkurator_core.common import utils
 from linkurator_core.domain.item import Item
 from linkurator_core.domain.session import Session
+from linkurator_core.domain.user import User
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app
 
 
@@ -23,7 +24,8 @@ def dummy_handlers() -> Handlers:
         validate_token=dummy_validate_token_handler,
         google_client=MagicMock(),
         get_user_subscriptions=MagicMock(),
-        get_subscription_items_handler=MagicMock()
+        get_subscription_items_handler=MagicMock(),
+        get_user_profile_handler=MagicMock()
     )
 
 
@@ -33,6 +35,44 @@ def test_health_returns_200(handlers: Handlers) -> None:
     response = client.get('/health')
     assert response.content == b'"OK"'
     assert response.status_code == 200
+
+
+def test_user_profile_returns_200(handlers: Handlers) -> None:
+    dummy_get_user_profile_handler = MagicMock()
+    dummy_get_user_profile_handler.handle.return_value = User(
+        uuid=uuid.UUID("cb856f4f-8371-4648-af75-38fb34231092"),
+        first_name="first name",
+        last_name="last name",
+        email="test@email.com",
+        updated_at=datetime.fromtimestamp(0),
+        created_at=datetime.fromtimestamp(0),
+        scanned_at=datetime.fromtimestamp(0),
+        subscription_uuids=[],
+        google_refresh_token="refresh token"
+    )
+    handlers.get_user_profile_handler = dummy_get_user_profile_handler
+
+    client = TestClient(create_app(handlers))
+
+    response = client.get('/profile', cookies={'token': 'token'})
+    assert response.status_code == 200
+    assert response.json()['uuid'] == 'cb856f4f-8371-4648-af75-38fb34231092'
+    assert response.json()['first_name'] == 'first name'
+    assert response.json()['last_name'] == 'last name'
+    assert response.json()['email'] == 'test@email.com'
+    assert response.json()['created_at'] == '1970-01-01T01:00:00'
+    assert response.json()['last_scanned_at'] == '1970-01-01T01:00:00'
+
+
+def test_user_profile_returns_404_when_user_not_found(handlers: Handlers) -> None:
+    dummy_get_user_profile_handler = MagicMock()
+    dummy_get_user_profile_handler.handle.return_value = None
+    handlers.get_user_profile_handler = dummy_get_user_profile_handler
+
+    client = TestClient(create_app(handlers))
+
+    response = client.get('/profile', cookies={'token': 'token'})
+    assert response.status_code == 404
 
 
 def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
