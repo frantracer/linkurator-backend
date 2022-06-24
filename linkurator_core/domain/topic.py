@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
-from datetime import timezone
-from typing import List
+from datetime import datetime, timezone
+from typing import List, Optional
 from uuid import UUID
 
 
@@ -17,11 +16,16 @@ class Topic:
     updated_at: datetime
 
     @classmethod
-    def new(cls, uuid: UUID, name: str, user_id: UUID) -> Topic:
+    def new(cls,
+            uuid: UUID,
+            name: str,
+            user_id: UUID,
+            subscription_ids: Optional[List[UUID]] = None
+            ) -> Topic:
         return cls(uuid=uuid,
                    name=name,
                    user_id=user_id,
-                   subscriptions_ids=[],
+                   subscriptions_ids=[] if subscription_ids is None else subscription_ids,
                    created_at=datetime.now(timezone.utc),
                    updated_at=datetime.now(timezone.utc))
 
