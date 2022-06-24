@@ -24,3 +24,7 @@ class Topic:
                    subscriptions_ids=[],
                    created_at=datetime.now(timezone.utc),
                    updated_at=datetime.now(timezone.utc))
+
+    def add_subscription(self, subscription_id: UUID) -> None:
+        self.subscriptions_ids.append(subscription_id)
+        self.updated_at = datetime.now(timezone.utc)

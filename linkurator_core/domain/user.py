@@ -18,7 +18,13 @@ class User:
     subscription_uuids: List[UUID]
 
     @classmethod
-    def new(cls, uuid: UUID, first_name: str, last_name: str, email: str, google_refresh_token: Optional[str]) -> User:
+    def new(cls,
+            uuid: UUID,
+            first_name: str,
+            last_name: str,
+            email: str,
+            google_refresh_token: Optional[str],
+            subscription_uuids: Optional[List[UUID]] = None) -> User:
         now = datetime.now()
         return cls(
             uuid=uuid,
@@ -29,5 +35,5 @@ class User:
             updated_at=now,
             scanned_at=datetime.fromtimestamp(0),
             google_refresh_token=google_refresh_token,
-            subscription_uuids=[]
+            subscription_uuids=[] if subscription_uuids is None else subscription_uuids
         )

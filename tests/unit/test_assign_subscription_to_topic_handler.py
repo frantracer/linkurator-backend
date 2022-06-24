@@ -1,0 +1,201 @@
+from unittest.mock import MagicMock
+from uuid import UUID
+
+import pytest
+
+from linkurator_core.application.assign_subscription_to_user_topic import AssignSubscriptionToTopicHandler
+from linkurator_core.application.exceptions import SubscriptionNotFoundError, TopicNotFoundError, UserNotFoundError
+from linkurator_core.common import utils
+from linkurator_core.domain.subscription import Subscription
+from linkurator_core.domain.topic import Topic
+from linkurator_core.domain.user import User
+
+
+def test_assign_subscription_to_topic_handler():
+    user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
+    subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
+    topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
+
+    user_repo_mock = MagicMock()
+    user_repo_mock.get.return_value = User.new(
+        uuid=user_id,
+        first_name='John',
+        last_name='Doe',
+        email='jonh@doe.com',
+        google_refresh_token='token',
+        subscription_uuids=[subscription_id]
+    )
+    subs_repo_mock = MagicMock()
+    subs_repo_mock.get.return_value = Subscription.new(
+        uuid=subscription_id,
+        name='Subscription 1',
+        provider='provider',
+        url=utils.parse_url('https://example.com'),
+        thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
+        external_data={}
+    )
+    topic_repo_mock = MagicMock()
+    topic_repo_mock.get.return_value = Topic.new(
+        uuid=topic_id,
+        name='Topic 1',
+        user_id=user_id
+    )
+    handler = AssignSubscriptionToTopicHandler(
+        user_repository=user_repo_mock,
+        subscription_repository=subs_repo_mock,
+        topic_repository=topic_repo_mock)
+
+    handler.handle(user_id, subscription_id, topic_id)
+
+    assert user_repo_mock.get.called
+    assert subs_repo_mock.get.called
+    assert topic_repo_mock.get.called
+    assert topic_repo_mock.update.called
+    updated_topic: Topic = topic_repo_mock.update.call_args[0][0]
+    assert topic_id == updated_topic.uuid
+    assert subscription_id in updated_topic.subscriptions_ids
+
+
+def test_assign_subscription_to_topic_handler_user_not_found_raises_an_error():
+    user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
+    subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
+    topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
+
+    user_repo_mock = MagicMock()
+    user_repo_mock.get.return_value = None
+    handler = AssignSubscriptionToTopicHandler(
+        user_repository=user_repo_mock,
+        subscription_repository=MagicMock(),
+        topic_repository=MagicMock())
+
+    with pytest.raises(UserNotFoundError):
+        handler.handle(user_id, subscription_id, topic_id)
+
+
+def test_assign_subscription_to_topic_handler_subscription_not_found_raises_an_error():
+    user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
+    subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
+    topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
+
+    user_repo_mock = MagicMock()
+    user_repo_mock.get.return_value = User.new(
+        uuid=user_id,
+        first_name='John',
+        last_name='Doe',
+        email='test@email.com',
+        google_refresh_token='token',
+        subscription_uuids=[]
+    )
+    subs_repo_mock = MagicMock()
+    subs_repo_mock.get.return_value = None
+    handler = AssignSubscriptionToTopicHandler(
+        user_repository=user_repo_mock,
+        subscription_repository=subs_repo_mock,
+        topic_repository=MagicMock())
+
+    with pytest.raises(SubscriptionNotFoundError):
+        handler.handle(user_id, subscription_id, topic_id)
+
+
+def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subscription_raises_an_error():
+    user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
+    subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
+    topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
+
+    user_repo_mock = MagicMock()
+    user_repo_mock.get.return_value = User.new(
+        uuid=user_id,
+        first_name='John',
+        last_name='Doe',
+        email='test@email.com',
+        google_refresh_token='token',
+        subscription_uuids=[]
+    )
+    subs_repo_mock = MagicMock()
+    subs_repo_mock.get.return_value = Subscription.new(
+        uuid=subscription_id,
+        name='Subscription 1',
+        provider='provider',
+        url=utils.parse_url('https://example.com'),
+        thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
+        external_data={}
+    )
+    handler = AssignSubscriptionToTopicHandler(
+        user_repository=user_repo_mock,
+        subscription_repository=subs_repo_mock,
+        topic_repository=MagicMock())
+
+    with pytest.raises(SubscriptionNotFoundError):
+        handler.handle(user_id, subscription_id, topic_id)
+
+
+def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_error():
+    user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
+    subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
+    topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
+
+    user_repo_mock = MagicMock()
+    user_repo_mock.get.return_value = User.new(
+        uuid=user_id,
+        first_name='John',
+        last_name='Doe',
+        email='test@email.com',
+        google_refresh_token='token',
+        subscription_uuids=[subscription_id]
+    )
+    subs_repo_mock = MagicMock()
+    subs_repo_mock.get.return_value = Subscription.new(
+        uuid=subscription_id,
+        name='Subscription 1',
+        provider='provider',
+        url=utils.parse_url('https://example.com'),
+        thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
+        external_data={}
+    )
+    topic_repo_mock = MagicMock()
+    topic_repo_mock.get.return_value = None
+    handler = AssignSubscriptionToTopicHandler(
+        user_repository=user_repo_mock,
+        subscription_repository=subs_repo_mock,
+        topic_repository=topic_repo_mock)
+
+    with pytest.raises(TopicNotFoundError):
+        handler.handle(user_id, subscription_id, topic_id)
+
+
+def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_user_raises_an_error():
+    user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
+    subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
+    topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
+
+    user_repo_mock = MagicMock()
+    user_repo_mock.get.return_value = User.new(
+        uuid=user_id,
+        first_name='John',
+        last_name='Doe',
+        email='test@email.com',
+        google_refresh_token='token',
+        subscription_uuids=[subscription_id]
+    )
+    subs_repo_mock = MagicMock()
+    subs_repo_mock.get.return_value = Subscription.new(
+        uuid=subscription_id,
+        name='Subscription 1',
+        provider='provider',
+        url=utils.parse_url('https://example.com'),
+        thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
+        external_data={}
+    )
+    topic_repo_mock = MagicMock()
+    topic_repo_mock.get.return_value = Topic.new(
+        uuid=topic_id,
+        name='Topic 1',
+        user_id=UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
+    )
+    handler = AssignSubscriptionToTopicHandler(
+        user_repository=user_repo_mock,
+        subscription_repository=subs_repo_mock,
+        topic_repository=topic_repo_mock)
+
+    with pytest.raises(TopicNotFoundError):
+        handler.handle(user_id, subscription_id, topic_id)
