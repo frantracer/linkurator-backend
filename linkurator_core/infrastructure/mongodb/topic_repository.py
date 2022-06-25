@@ -9,6 +9,7 @@ import pymongo  # type: ignore
 from pydantic import BaseModel
 from pymongo import MongoClient
 
+from linkurator_core.application.exceptions import DuplicatedKeyError
 from linkurator_core.domain.topic import Topic
 from linkurator_core.domain.topic_repository import TopicRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
@@ -61,7 +62,10 @@ class MongoDBTopicRepository(TopicRepository):
 
     def add(self, topic: Topic):
         collection = self._topic_collection()
-        collection.insert_one(dict(MongoDBTopic.from_domain_topic(topic)))
+        try:
+            collection.insert_one(dict(MongoDBTopic.from_domain_topic(topic)))
+        except pymongo.errors.DuplicateKeyError as err:
+            raise DuplicatedKeyError(f"Topic with id '{topic.uuid}' already exists") from err
 
     def get(self, topic_id: UUID) -> Optional[Topic]:
         collection = self._topic_collection()

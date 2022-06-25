@@ -7,6 +7,7 @@ import uuid
 from math import floor
 import pytest
 
+from linkurator_core.application.exceptions import DuplicatedKeyError
 from linkurator_core.domain.topic import Topic
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopic, MongoDBTopicRepository
@@ -118,3 +119,14 @@ def test_delete_topic(topic_repo: MongoDBTopicRepository):
     topic_repo.delete(topic.uuid)
     deleted_topic = topic_repo.get(topic.uuid)
     assert deleted_topic is None
+
+
+def test_create_topic_with_same_raises_duplicated_key_exception(topic_repo: MongoDBTopicRepository):
+    topic = Topic.new(
+        name="test",
+        uuid=uuid.UUID("a0825ffa-9671-4114-b801-c1df2e71df13"),
+        user_id=uuid.UUID("6338822a-41b9-4770-93ce-b7b1a535f904"))
+
+    topic_repo.add(topic)
+    with pytest.raises(DuplicatedKeyError):
+        topic_repo.add(topic)

@@ -8,3 +8,7 @@ class TopicNotFoundError(Exception):
 
 class SubscriptionNotFoundError(Exception):
     pass
+
+
+class DuplicatedKeyError(Exception):
+    pass
