@@ -135,7 +135,8 @@ def get_router(  # pylint: disable-msg=too-many-locals
         create_topic_handler.handle(Topic.new(
             uuid=new_topic.uuid,
             name=new_topic.name,
-            user_id=session.user_id
+            user_id=session.user_id,
+            subscription_ids=new_topic.subscriptions_ids
         ))
 
         return Response(status_code=http.HTTPStatus.CREATED)
