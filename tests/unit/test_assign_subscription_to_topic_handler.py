@@ -3,7 +3,7 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.assign_subscription_to_user_topic import AssignSubscriptionToTopicHandler
+from linkurator_core.application.assign_subscription_to_user_topic_handler import AssignSubscriptionToTopicHandler
 from linkurator_core.application.exceptions import SubscriptionNotFoundError, TopicNotFoundError, UserNotFoundError
 from linkurator_core.common import utils
 from linkurator_core.domain.subscription import Subscription

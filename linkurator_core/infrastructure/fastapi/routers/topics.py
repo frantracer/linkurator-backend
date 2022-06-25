@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
-from linkurator_core.application.assign_subscription_to_user_topic import AssignSubscriptionToTopicHandler
+from linkurator_core.application.assign_subscription_to_user_topic_handler import AssignSubscriptionToTopicHandler
 from linkurator_core.application.create_user_topic_handler import CreateTopicHandler
 from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.exceptions import SubscriptionNotFoundError, TopicNotFoundError
