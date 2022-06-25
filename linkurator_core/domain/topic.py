@@ -32,3 +32,8 @@ class Topic:
     def add_subscription(self, subscription_id: UUID) -> None:
         self.subscriptions_ids.append(subscription_id)
         self.updated_at = datetime.now(timezone.utc)
+
+    def remove_subscription(self, subscription_id: UUID) -> None:
+        if subscription_id in self.subscriptions_ids:
+            self.subscriptions_ids.remove(subscription_id)
+            self.updated_at = datetime.now(timezone.utc)
