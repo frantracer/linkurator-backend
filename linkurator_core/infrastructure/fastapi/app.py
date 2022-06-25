@@ -6,7 +6,7 @@ import os
 from fastapi.applications import FastAPI
 
 from linkurator_core.application.assign_subscription_to_user_topic_handler import AssignSubscriptionToTopicHandler
-from linkurator_core.application.create_user_topic_handler import CreateTopicHandler
+from linkurator_core.application.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.get_topic_handler import GetTopicHandler
@@ -57,7 +57,7 @@ app_handlers = Handlers(
     get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository),
     get_user_profile_handler=GetUserProfileHandler(user_repository),
     get_user_topics_handler=GetUserTopicsHandler(topic_repo=topic_repository, user_repo=user_repository),
-    create_user_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
+    create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
     get_topic_items_handler=GetTopicItemsHandler(topic_repository=topic_repository, item_repository=item_repository),
     assign_subscription_to_topic_handler=AssignSubscriptionToTopicHandler(
         subscription_repository=subscription_repository,

@@ -10,7 +10,7 @@ from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.assign_subscription_to_user_topic_handler import AssignSubscriptionToTopicHandler
-from linkurator_core.application.create_user_topic_handler import CreateTopicHandler
+from linkurator_core.application.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.exceptions import SubscriptionNotFoundError, TopicNotFoundError
 from linkurator_core.application.get_topic_handler import GetTopicHandler
@@ -28,7 +28,7 @@ from linkurator_core.infrastructure.fastapi.models.topic import NewTopicSchema, 
 
 def get_router(  # pylint: disable-msg=too-many-locals
         get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
-        create_user_topic_handler: CreateTopicHandler,
+        create_topic_handler: CreateTopicHandler,
         get_user_topics_handler: GetUserTopicsHandler,
         get_topic_handler: GetTopicHandler,
         get_topic_items_handler: GetTopicItemsHandler,
@@ -132,7 +132,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
         if session is None:
             return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
 
-        create_user_topic_handler.handle(Topic.new(
+        create_topic_handler.handle(Topic.new(
             uuid=new_topic.uuid,
             name=new_topic.name,
             user_id=session.user_id

@@ -31,7 +31,7 @@ def dummy_handlers() -> Handlers:
         get_topic_handler=MagicMock(),
         get_topic_items_handler=MagicMock(),
         get_user_topics_handler=MagicMock(),
-        create_user_topic_handler=MagicMock(),
+        create_topic_handler=MagicMock(),
         assign_subscription_to_topic_handler=MagicMock(),
         delete_topic_handler=MagicMock(),
         unassign_subscription_from_topic_handler=MagicMock()

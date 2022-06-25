@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 from uuid import UUID
 
-from linkurator_core.application.create_user_topic_handler import CreateTopicHandler
+from linkurator_core.application.create_topic_handler import CreateTopicHandler
 from linkurator_core.domain.topic import Topic
 
 
