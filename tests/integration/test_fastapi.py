@@ -53,9 +53,12 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         first_name="first name",
         last_name="last name",
         email="test@email.com",
+        avatar_url=utils.parse_url('https://test.com/avatar.png'),
+        locale="en-US",
         updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
         scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        last_login_at=datetime.fromtimestamp(0, tz=timezone.utc),
         subscription_uuids=[],
         google_refresh_token="refresh token"
     )

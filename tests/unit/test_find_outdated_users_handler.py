@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 import uuid
 
 from linkurator_core.application.find_outdated_users_handler import FindOutdatedUsersHandler
+from linkurator_core.common import utils
 from linkurator_core.domain.event import UserSubscriptionsBecameOutdatedEvent
 from linkurator_core.domain.user import User
 
@@ -9,10 +10,18 @@ from linkurator_core.domain.user import User
 def test_handler_sends_two_events_if_there_are_two_outdated_users():
     user_repo_mock = MagicMock()
     user1 = User.new(uuid=uuid.UUID("844f3bfb-ddab-4280-a3e6-fabc53a2984b"),
-                     first_name='user1', last_name="name1", email='mock1@email.com',
+                     first_name='user1',
+                     last_name="name1",
+                     email='mock1@email.com',
+                     locale='en',
+                     avatar_url=utils.parse_url('https://example.com/avatar.png'),
                      google_refresh_token="token")
     user2 = User.new(uuid=uuid.UUID("844f3bfb-ddab-4280-a3e6-fabc53a2984b"),
-                     first_name='user2', last_name="name2", email='mock2@email.com',
+                     first_name='user2',
+                     last_name="name2",
+                     email='mock2@email.com',
+                     locale='en',
+                     avatar_url=utils.parse_url('https://example.com/avatar.png'),
                      google_refresh_token="token")
     user_repo_mock.find_latest_scan_before.return_value = [user1, user2]
 

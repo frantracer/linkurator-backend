@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from ipaddress import IPv4Address
 from typing import List, Optional
 from uuid import UUID
 
+from bson.codec_options import CodecOptions
+from bson.binary import UuidRepresentation
 import pymongo  # type: ignore
-from pydantic import BaseModel
+from pydantic import AnyUrl, BaseModel
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError  # type: ignore
 
+from linkurator_core.common import utils
 from linkurator_core.domain.user import User
 from linkurator_core.domain.user_repository import UserRepository, EmailAlreadyInUse
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
@@ -20,9 +23,12 @@ class MongoDBUser(BaseModel):
     first_name: str
     last_name: str
     email: str
+    locale: str = "en"
+    avatar_url: AnyUrl = utils.parse_url('https://www.linkurator.com/favicon.ico')
     created_at: datetime
     updated_at: datetime
-    scanned_at: datetime = datetime.fromtimestamp(0)
+    scanned_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
+    last_login_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
     google_refresh_token: Optional[str] = None
     subscription_uuids: List[UUID] = []
 
@@ -33,9 +39,12 @@ class MongoDBUser(BaseModel):
             first_name=user.first_name,
             last_name=user.last_name,
             email=user.email,
+            locale=user.locale,
+            avatar_url=user.avatar_url,
             created_at=user.created_at,
             updated_at=user.updated_at,
             scanned_at=user.scanned_at,
+            last_login_at=user.last_login_at,
             google_refresh_token=user.google_refresh_token,
             subscription_uuids=user.subscription_uuids
         )
@@ -46,9 +55,12 @@ class MongoDBUser(BaseModel):
             first_name=self.first_name,
             last_name=self.last_name,
             email=self.email,
+            locale=self.locale,
+            avatar_url=self.avatar_url,
             created_at=self.created_at,
             updated_at=self.updated_at,
             scanned_at=self.scanned_at,
+            last_login_at=self.last_login_at,
             google_refresh_token=self.google_refresh_token,
             subscription_uuids=self.subscription_uuids
         )
@@ -61,8 +73,7 @@ class MongoDBUserRepository(UserRepository):
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str):
         super().__init__()
-        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password,
-                                  uuidRepresentation='standard')
+        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
 
         if self._collection_name not in self.client[self.db_name].list_collection_names():
@@ -107,4 +118,7 @@ class MongoDBUserRepository(UserRepository):
         return [MongoDBUser(**user).to_domain_user() for user in users]
 
     def _user_collection(self) -> pymongo.collection.Collection:
-        return self.client.get_database(self.db_name).get_collection(self._collection_name)
+        codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
+        return self.client.get_database(self.db_name).get_collection(
+            self._collection_name,
+            codec_options=codec_options)

@@ -22,6 +22,8 @@ def test_assign_subscription_to_topic_handler():
         first_name='John',
         last_name='Doe',
         email='jonh@doe.com',
+        locale='en',
+        avatar_url=utils.parse_url('https://example.com/avatar.png'),
         google_refresh_token='token',
         subscription_uuids=[subscription_id]
     )
@@ -83,6 +85,8 @@ def test_assign_subscription_to_topic_handler_subscription_not_found_raises_an_e
         first_name='John',
         last_name='Doe',
         email='test@email.com',
+        locale='en',
+        avatar_url=utils.parse_url('https://example.com/avatar.png'),
         google_refresh_token='token',
         subscription_uuids=[]
     )
@@ -108,6 +112,8 @@ def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subscriptio
         first_name='John',
         last_name='Doe',
         email='test@email.com',
+        locale='en',
+        avatar_url=utils.parse_url('https://example.com/avatar.png'),
         google_refresh_token='token',
         subscription_uuids=[]
     )
@@ -140,6 +146,8 @@ def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_error():
         first_name='John',
         last_name='Doe',
         email='test@email.com',
+        locale='en',
+        avatar_url=utils.parse_url('https://example.com/avatar.png'),
         google_refresh_token='token',
         subscription_uuids=[subscription_id]
     )
@@ -174,6 +182,8 @@ def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_user_rais
         first_name='John',
         last_name='Doe',
         email='test@email.com',
+        locale='en',
+        avatar_url=utils.parse_url('https://example.com/avatar.png'),
         google_refresh_token='token',
         subscription_uuids=[subscription_id]
     )

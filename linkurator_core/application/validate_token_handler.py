@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
 
@@ -25,16 +25,30 @@ class ValidateTokenHandler:
         if user_info is not None:
             user = self.user_repository.get_by_email(user_info.email)
             if user is None:
-                user = User.new(uuid=uuid4(), email=user_info.email,
-                                first_name=user_info.given_name, last_name=user_info.family_name,
-                                google_refresh_token=refresh_token)
+                user = User.new(
+                    uuid=uuid4(),
+                    email=user_info.email,
+                    avatar_url=user_info.picture,
+                    locale=user_info.locale,
+                    first_name=user_info.given_name,
+                    last_name=user_info.family_name,
+                    google_refresh_token=refresh_token)
                 self.user_repository.add(user)
-            elif refresh_token is not None and user.google_refresh_token != refresh_token:
-                user.google_refresh_token = refresh_token
-                self.user_repository.delete(user.uuid)
-                self.user_repository.add(user)
+            else:
+                user.avatar_url = user_info.picture
+                user.locale = user_info.locale
+                user.first_name = user_info.given_name
+                user.last_name = user_info.family_name
+                if refresh_token is not None and user.google_refresh_token != refresh_token:
+                    user.google_refresh_token = refresh_token
+                now = datetime.now(timezone.utc)
+                user.updated_at = now
+                user.last_login_at = now
+                self.user_repository.update(user)
 
-            session = Session(user_id=user.uuid, token=access_token, expires_at=datetime.now() + timedelta(days=1))
+            session = Session(user_id=user.uuid,
+                              token=access_token,
+                              expires_at=datetime.now(timezone.utc) + timedelta(days=1))
             self.session_repository.add(session)
 
             return session

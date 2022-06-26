@@ -1,5 +1,5 @@
 import copy
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 import uuid
 
@@ -31,11 +31,14 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
         email="test@email.com",
         first_name="test",
         last_name="test",
+        locale="en",
+        avatar_url=parse_url("http://avatar.com/test.png"),
         google_refresh_token="refresh_token",
         subscription_uuids=[],
-        created_at=datetime.fromtimestamp(0),
-        updated_at=datetime.fromtimestamp(0),
-        scanned_at=datetime.fromtimestamp(0))
+        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        last_login_at=datetime.fromtimestamp(0, tz=timezone.utc))
     user_repository.get.return_value = copy.deepcopy(user)
     user_repository.update.return_value = None
 
@@ -79,7 +82,10 @@ async def test_update_user_subscription_with_subscription_that_is_already_regist
     user_repository = MagicMock()
     user = User.new(uuid=uuid.UUID("e55d0fe1-f70e-4387-9269-8e80cb747ccc"),
                     email="test@email.com",
-                    first_name="test", last_name="test",
+                    first_name="test",
+                    last_name="test",
+                    locale="en",
+                    avatar_url=parse_url("http://avatar.com/test.png"),
                     google_refresh_token="refresh_token")
     user_repository.get.return_value = user
     user_repository.update.return_value = None

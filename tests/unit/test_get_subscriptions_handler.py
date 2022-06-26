@@ -62,6 +62,8 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         first_name='John',
         last_name='Doe',
         email='jonh@email.com',
+        locale='en',
+        avatar_url=utils.parse_url("https://url.com/avatar.png"),
         google_refresh_token='token'
     )
     user_repo_mock.get.return_value = user

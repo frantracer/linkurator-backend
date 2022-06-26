@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from linkurator_core.domain.subscription import Subscription
@@ -27,7 +27,7 @@ class UpdateUserSubscriptionsHandler:
         updated_subscriptions = [self._get_or_create_subscription(subscription) for subscription in subscriptions]
 
         user.subscription_uuids = [subscription.uuid for subscription in updated_subscriptions]
-        user.scanned_at = datetime.now()
+        user.scanned_at = datetime.now(timezone.utc)
         self.user_repository.update(user)
 
     def _get_or_create_subscription(self, subscription: Subscription) -> Subscription:
