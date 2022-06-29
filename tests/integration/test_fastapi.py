@@ -72,8 +72,8 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
     assert response.json()['first_name'] == 'first name'
     assert response.json()['last_name'] == 'last name'
     assert response.json()['email'] == 'test@email.com'
-    assert response.json()['created_at'] == '1970-01-01T00:00:00Z'
-    assert response.json()['last_scanned_at'] == '1970-01-01T00:00:00Z'
+    assert response.json()['created_at'] == '1970-01-01T00:00:00+00:00'
+    assert response.json()['last_scanned_at'] == '1970-01-01T00:00:00+00:00'
 
 
 def test_user_profile_returns_404_when_user_not_found(handlers: Handlers) -> None:

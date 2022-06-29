@@ -21,11 +21,6 @@ class ProfileSchema(BaseModel):
     last_scanned_at: datetime
     last_login_at: datetime
 
-    class Config:
-        json_encoders = {
-            datetime: lambda dt: dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-        }
-
     @classmethod
     def from_domain_user(cls, user: User) -> ProfileSchema:
         return cls(
