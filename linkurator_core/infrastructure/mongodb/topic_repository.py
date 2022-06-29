@@ -5,8 +5,10 @@ from ipaddress import IPv4Address
 from typing import Dict, List, Optional
 from uuid import UUID
 
-import pymongo  # type: ignore
+from bson.binary import UuidRepresentation
+from bson.codec_options import CodecOptions
 from pydantic import BaseModel
+import pymongo  # type: ignore
 from pymongo import MongoClient
 
 from linkurator_core.application.exceptions import DuplicatedKeyError
@@ -52,8 +54,7 @@ class MongoDBTopicRepository(TopicRepository):
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str):
         super().__init__()
-        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password,
-                                  uuidRepresentation='standard')
+        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
 
         if self._collection_name not in self.client[self.db_name].list_collection_names():
@@ -88,4 +89,7 @@ class MongoDBTopicRepository(TopicRepository):
         return [MongoDBTopic(**topic).to_domain_topic() for topic in topics]
 
     def _topic_collection(self) -> pymongo.collection.Collection:
-        return self.client[self.db_name][self._collection_name]
+        codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
+        return self.client.get_database(self.db_name).get_collection(
+            self._collection_name,
+            codec_options=codec_options)
