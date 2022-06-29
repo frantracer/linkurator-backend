@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 
@@ -10,4 +10,5 @@ class Session:
     expires_at: datetime
 
     def is_expired(self) -> bool:
-        return self.expires_at < datetime.now()
+        now = datetime.now(tz=timezone.utc).timestamp()
+        return self.expires_at.timestamp() < now
