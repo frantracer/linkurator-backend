@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta, timezone
 import uuid
 
 from linkurator_core.application.event_bus_service import EventBusService
@@ -15,7 +15,7 @@ class FindOutdatedSubscriptionsHandler:
         self.event_bus = event_bus
 
     def handle(self):
-        datetime_limit = datetime.datetime.now() - datetime.timedelta(days=1)
+        datetime_limit = datetime.now(tz=timezone.utc) - timedelta(days=1)
         outdated_subscriptions = self.subscription_repository.find_latest_scan_before(datetime_limit)
 
         for subscription in outdated_subscriptions:

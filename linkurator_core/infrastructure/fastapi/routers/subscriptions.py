@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import http
 from typing import Any, Callable, Optional
 from uuid import UUID
@@ -29,7 +29,7 @@ def get_router(
             request: Request,
             page_number: NonNegativeInt = 0,
             page_size: PositiveInt = 50,
-            created_before_ts: float = datetime.now().timestamp(),
+            created_before_ts: float = datetime.now(tz=timezone.utc).timestamp(),
             session: Optional[Session] = Depends(get_session)
     ) -> Any:
         """
@@ -39,7 +39,7 @@ def get_router(
             return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
 
         subscriptions, total_subs = get_user_subscriptions_handler.handle(
-            session.user_id, page_number, page_size, datetime.fromtimestamp(created_before_ts))
+            session.user_id, page_number, page_size, datetime.fromtimestamp(created_before_ts, tz=timezone.utc))
 
         current_url = request.url.include_query_params(
             page_number=page_number,
@@ -60,7 +60,7 @@ def get_router(
             sub_id: UUID,
             page_number: NonNegativeInt = 0,
             page_size: PositiveInt = 50,
-            created_before_ts: float = datetime.now().timestamp(),
+            created_before_ts: float = datetime.now(tz=timezone.utc).timestamp(),
             session: Optional[Session] = Depends(get_session)
     ) -> Any:
         """
@@ -79,7 +79,7 @@ def get_router(
 
         items, total_items = get_subscription_items_handler.handle(
             subscription_id=sub_id,
-            created_before=datetime.fromtimestamp(created_before_ts),
+            created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
             page_number=page_number,
             page_size=page_size)
 

@@ -24,7 +24,10 @@ class GetUserSubscriptionsHandler:
 
         user_subscriptions = self.subscription_repository.get_list(user.subscription_uuids)
 
-        filtered_subscriptions = [sub for sub in user_subscriptions if sub.created_at < created_before]
+        filtered_subscriptions = [
+            sub for sub in user_subscriptions
+            if sub.created_at.timestamp() < created_before.timestamp()
+        ]
         total_subs = len(filtered_subscriptions)
 
         start_index = page_number * page_size

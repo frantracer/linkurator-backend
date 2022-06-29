@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Optional
 from uuid import UUID
 
@@ -23,7 +23,7 @@ class Subscription:
     @classmethod
     def new(cls, uuid: UUID, name: str, provider: str, url: AnyUrl, thumbnail: AnyUrl,
             external_data: Optional[Dict[str, str]] = None) -> Subscription:
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         return cls(
             uuid=uuid,
             name=name,
@@ -33,5 +33,5 @@ class Subscription:
             thumbnail=thumbnail,
             created_at=now,
             updated_at=now,
-            scanned_at=datetime.fromtimestamp(0)
+            scanned_at=datetime.fromtimestamp(0, tz=timezone.utc)
         )

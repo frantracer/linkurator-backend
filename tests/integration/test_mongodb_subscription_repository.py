@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 from ipaddress import IPv4Address
 from unittest import mock
 from unittest.mock import MagicMock
@@ -100,9 +100,9 @@ def test_find_subscriptions_scanned_before_a_date(subscription_repo: MongoDBSubs
         url=utils.parse_url('https://2e17788f.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         provider="test",
-        created_at=datetime.datetime(2022, 1, 2, 0, 0, 0),
-        updated_at=datetime.datetime(2022, 1, 2, 0, 0, 0),
-        scanned_at=datetime.datetime(2022, 1, 2, 0, 0, 0),
+        created_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+        updated_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+        scanned_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
         external_data={}
     )
     sub2 = Subscription(
@@ -111,16 +111,18 @@ def test_find_subscriptions_scanned_before_a_date(subscription_repo: MongoDBSubs
         url=utils.parse_url('https://9270daf8.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         provider="test",
-        created_at=datetime.datetime(2022, 1, 1, 0, 0, 0),
-        updated_at=datetime.datetime(2022, 1, 1, 0, 0, 0),
-        scanned_at=datetime.datetime(2022, 1, 1, 0, 0, 0),
+        created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        updated_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        scanned_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         external_data={}
     )
 
-    current_subscriptions = subscription_repo.find_latest_scan_before(datetime.datetime(2022, 1, 2, 0, 0, 0))
+    current_subscriptions = subscription_repo.find_latest_scan_before(
+        datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc))
     subscription_repo.add(sub1)
     subscription_repo.add(sub2)
-    updated_subscriptions = subscription_repo.find_latest_scan_before(datetime.datetime(2022, 1, 2, 0, 0, 0))
+    updated_subscriptions = subscription_repo.find_latest_scan_before(
+        datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc))
 
     assert len(updated_subscriptions) - len(current_subscriptions) == 1
 
@@ -139,9 +141,9 @@ def test_get_subscription_with_invalid_format_raises_an_exception(subscription_r
         name="test",
         url=utils.parse_url('https://test.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-        created_at=datetime.datetime.now(),
-        updated_at=datetime.datetime.now(),
-        scanned_at=datetime.datetime(1970, 1, 1, 0, 0, 0, 0)))
+        created_at=datetime.now(tz=timezone.utc),
+        updated_at=datetime.now(tz=timezone.utc),
+        scanned_at=datetime(1970, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc)))
     subscription_dict['uuid'] = 'invalid_uuid'
     subscription_collection_mock = MagicMock()
     subscription_collection_mock.find_one = MagicMock(return_value=subscription_dict)
@@ -159,9 +161,9 @@ def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: Mong
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         provider="test",
         external_data={},
-        created_at=datetime.datetime.fromisoformat("2020-01-02T00:00:00.000000"),
-        updated_at=datetime.datetime.fromtimestamp(0),
-        scanned_at=datetime.datetime.fromtimestamp(0))
+        created_at=datetime(2020, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+        updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc))
     sub2 = Subscription(
         name="test",
         uuid=uuid.UUID("5745b75b-9a0a-49ff-85c5-b69c03bd1ba2"),
@@ -169,9 +171,9 @@ def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: Mong
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         provider="test",
         external_data={},
-        created_at=datetime.datetime.fromisoformat("2020-01-03T00:00:00.000000"),
-        updated_at=datetime.datetime.fromtimestamp(0),
-        scanned_at=datetime.datetime.fromtimestamp(0))
+        created_at=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
+        updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc))
     sub3 = Subscription(
         name="test",
         uuid=uuid.UUID("d30ca1c8-40c4-4bcd-8b4f-81f0e315c975"),
@@ -179,9 +181,9 @@ def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: Mong
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         provider="test",
         external_data={},
-        created_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000"),
-        updated_at=datetime.datetime.fromtimestamp(0),
-        scanned_at=datetime.datetime.fromtimestamp(0))
+        created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc))
 
     subscription_repo.add(sub1)
     subscription_repo.add(sub2)
@@ -202,9 +204,9 @@ def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository):
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         provider="test",
         external_data={},
-        created_at=datetime.datetime.fromtimestamp(0),
-        updated_at=datetime.datetime.fromtimestamp(0),
-        scanned_at=datetime.datetime.fromtimestamp(0))
+        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc))
     subscription_repo.add(sub)
 
     sub.name = "new name"
@@ -212,9 +214,9 @@ def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository):
     sub.thumbnail = utils.parse_url('https://new.com/thumbnail.png')
     sub.provider = "new provider"
     sub.external_data = {"new": "data"}
-    sub.created_at = datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
-    sub.updated_at = datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
-    sub.scanned_at = datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
+    sub.created_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    sub.updated_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    sub.scanned_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
 
     subscription_repo.update(sub)
     updated_subscription = subscription_repo.get(sub.uuid)
@@ -224,9 +226,9 @@ def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository):
     assert updated_subscription.thumbnail == utils.parse_url('https://new.com/thumbnail.png')
     assert updated_subscription.provider == "new provider"
     assert updated_subscription.external_data == {"new": "data"}
-    assert updated_subscription.created_at == datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
-    assert updated_subscription.updated_at == datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
-    assert updated_subscription.scanned_at == datetime.datetime.fromisoformat("2020-01-01T00:00:00.000000")
+    assert updated_subscription.created_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    assert updated_subscription.updated_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    assert updated_subscription.scanned_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
 
 
 def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository):
