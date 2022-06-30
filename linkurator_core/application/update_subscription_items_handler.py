@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from linkurator_core.application.subscription_service import SubscriptionService
@@ -24,7 +24,7 @@ class UpdateSubscriptionItemsHandler:
             print(f"Cannot update items of subscription {subscription_id} because it does not exist")
             return
 
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
 
         new_items = await self.subscription_service.get_items(
             sub_id=subscription_id,

@@ -5,6 +5,8 @@ from ipaddress import IPv4Address
 from typing import Dict, List, Optional
 from uuid import UUID
 
+from bson.binary import UuidRepresentation
+from bson.codec_options import CodecOptions
 from pydantic import AnyUrl
 from pydantic.main import BaseModel
 import pymongo  # type: ignore
@@ -61,8 +63,7 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str):
         super().__init__()
-        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password,
-                                  uuidRepresentation='standard')
+        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
 
         if self._collection_name not in self.client[self.db_name].list_collection_names():
@@ -111,4 +112,7 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
         return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
 
     def _subscription_collection(self) -> pymongo.collection.Collection:
-        return self.client[self.db_name][self._collection_name]
+        codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
+        return self.client.get_database(self.db_name).get_collection(
+            self._collection_name,
+            codec_options=codec_options)

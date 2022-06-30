@@ -14,7 +14,7 @@ class TestValidateTokenHandler(unittest.TestCase):
     def test_an_existing_session_returns_a_session(self):
         session_repo_mock = MagicMock()
         user_id: uuid.UUID = uuid.UUID("15537505-3cc9-441a-9eb7-36045042fb4d")
-        dummy_session = Session("mytoken", user_id, datetime.now() + timedelta(days=1))
+        dummy_session = Session("mytoken", user_id, datetime.now(tz=timezone.utc) + timedelta(days=1))
         session_repo_mock.get.return_value = dummy_session
 
         user_repo_mock = MagicMock()
@@ -95,7 +95,11 @@ class TestValidateTokenHandler(unittest.TestCase):
 
     def test_an_expired_session_returns_none(self):
         session_repo_mock = MagicMock()
-        session_repo_mock.get.return_value = Session("mytoken", uuid.uuid4(), datetime.now() - timedelta(days=1))
+
+        session_repo_mock.get.return_value = Session(
+            token="mytoken",
+            user_id=uuid.uuid4(),
+            expires_at=datetime.now(tz=timezone.utc) - timedelta(days=1))
 
         user_repo_mock = MagicMock()
 

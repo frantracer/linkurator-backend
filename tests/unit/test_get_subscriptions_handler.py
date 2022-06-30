@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from unittest.mock import MagicMock
 import uuid
 
@@ -16,9 +16,9 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         provider='test',
         external_data={},
         thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
-        created_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00"),
-        updated_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00"),
-        scanned_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00")
+        created_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
+        updated_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
+        scanned_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00")
     )
     sub2 = Subscription(
         uuid=uuid.UUID("79a636a4-6d4b-41e2-be73-4cff46110e28"),
@@ -27,9 +27,9 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         provider='test',
         external_data={},
         thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
-        created_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00"),
-        updated_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00"),
-        scanned_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00")
+        created_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
+        updated_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
+        scanned_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00")
     )
     sub3 = Subscription(
         uuid=uuid.UUID("c497fecf-425c-4bb3-b597-5a3dc7ad2fe5"),
@@ -38,9 +38,9 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         provider='test',
         external_data={},
         thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
-        created_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00"),
-        updated_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00"),
-        scanned_at=datetime.datetime.fromisoformat("2020-01-01T00:00:00")
+        created_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
+        updated_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
+        scanned_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00")
     )
     sub4 = Subscription(
         uuid=uuid.UUID("c66b1e29-79af-49d8-85f4-17d3b5d0bf76"),
@@ -49,9 +49,9 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         provider='test',
         external_data={},
         thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
-        created_at=datetime.datetime.fromisoformat("2050-01-01T00:00:00"),
-        updated_at=datetime.datetime.fromisoformat("2050-01-01T00:00:00"),
-        scanned_at=datetime.datetime.fromisoformat("2050-01-01T00:00:00")
+        created_at=datetime.fromisoformat("2050-01-01T00:00:00+00:00"),
+        updated_at=datetime.fromisoformat("2050-01-01T00:00:00+00:00"),
+        scanned_at=datetime.fromisoformat("2050-01-01T00:00:00+00:00")
     )
 
     subscription_repo_mock = MagicMock()
@@ -73,7 +73,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         user_id=user.uuid,
         page_number=0,
         page_size=2,
-        created_before=datetime.datetime.fromisoformat('2020-01-02T00:00:00.000000')
+        created_before=datetime.fromisoformat("2020-01-02T00:00:00+00:00")
     )
 
     assert the_subscriptions == [sub3, sub2]
@@ -83,7 +83,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         user_id=user.uuid,
         page_number=1,
         page_size=2,
-        created_before=datetime.datetime.fromisoformat('2020-01-02T00:00:00.000000')
+        created_before=datetime.fromisoformat("2020-01-02T00:00:00+00:00")
     )
 
     assert the_subscriptions == [sub1]
@@ -93,7 +93,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         user_id=user.uuid,
         page_number=2,
         page_size=2,
-        created_before=datetime.datetime.fromisoformat('2020-01-02T00:00:00.000000')
+        created_before=datetime.fromisoformat("2020-01-02T00:00:00+00:00")
     )
 
     assert the_subscriptions == []

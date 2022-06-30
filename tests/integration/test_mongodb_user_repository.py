@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 from ipaddress import IPv4Address
 from unittest import mock
 from unittest.mock import MagicMock
@@ -64,9 +64,9 @@ def test_get_user_with_invalid_format_raises_an_exception(user_repo: MongoDBUser
                                  email="test@email.com",
                                  locale="en",
                                  avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
-                                 created_at=datetime.datetime.now(datetime.timezone.utc),
-                                 updated_at=datetime.datetime.now(datetime.timezone.utc),
-                                 last_login_at=datetime.datetime.now(datetime.timezone.utc),
+                                 created_at=datetime.now(timezone.utc),
+                                 updated_at=datetime.now(timezone.utc),
+                                 last_login_at=datetime.now(timezone.utc),
                                  google_refresh_token="token"))
     user_dict['uuid'] = 'invalid_uuid'
     user_collection_mock = MagicMock()
@@ -160,7 +160,7 @@ def test_find_latest_scan(user_repo: MongoDBUserRepository):
                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
                      uuid=uuid.UUID("c2d73a23-217b-4985-a4f6-7f5828daa964"),
                      google_refresh_token="token")
-    user1.scanned_at = datetime.datetime.fromisoformat("2020-01-01T00:00:00")
+    user1.scanned_at = datetime.fromisoformat("2020-01-01T00:00:00+00:00")
 
     user2 = User.new(first_name="test",
                      last_name="test",
@@ -169,14 +169,14 @@ def test_find_latest_scan(user_repo: MongoDBUserRepository):
                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
                      uuid=uuid.UUID("4cef3a68-9ec0-48e8-a6de-a56dd3ba1adf"),
                      google_refresh_token="token")
-    user2.scanned_at = datetime.datetime.fromisoformat("2020-01-02T00:00:00")
+    user2.scanned_at = datetime.fromisoformat("2020-01-02T00:00:00+00:00")
 
-    users_first_call = user_repo.find_latest_scan_before(datetime.datetime.fromisoformat("2020-01-01T12:00:00"))
+    users_first_call = user_repo.find_latest_scan_before(datetime.fromisoformat("2020-01-01T12:00:00+00:00"))
 
     user_repo.add(user1)
     user_repo.add(user2)
 
-    users_second_call = user_repo.find_latest_scan_before(datetime.datetime.fromisoformat("2020-01-01T12:00:00"))
+    users_second_call = user_repo.find_latest_scan_before(datetime.fromisoformat("2020-01-01T12:00:00+00:00"))
 
     assert len(users_second_call) - len(users_first_call) == 1
     assert user1.uuid in [user.uuid for user in users_second_call]

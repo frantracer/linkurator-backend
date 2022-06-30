@@ -1,15 +1,15 @@
 import abc
-import datetime
+from datetime import datetime, timezone
 import uuid
 
 
 class Event(abc.ABC):
     id: uuid.UUID
-    created_at: datetime.datetime
+    created_at: datetime
 
     def __init__(self, event_id: uuid.UUID):
         self.id = event_id
-        self.created_at = datetime.datetime.now()
+        self.created_at = datetime.now(tz=timezone.utc)
 
     def __str__(self):
         return f"{self.__class__.__name__} ({self.id}) at {self.created_at}"

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from pydantic.networks import AnyUrl
@@ -25,7 +25,7 @@ class Item:
             url: AnyUrl,
             thumbnail: AnyUrl,
             published_at: datetime):
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         return cls(
             uuid=uuid,
             subscription_uuid=subscription_uuid,
@@ -35,4 +35,4 @@ class Item:
             thumbnail=thumbnail,
             created_at=now,
             updated_at=now,
-            published_at=published_at)
+            published_at=published_at.astimezone(timezone.utc))

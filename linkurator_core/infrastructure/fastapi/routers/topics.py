@@ -61,7 +61,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
         try:
             items, total_items = get_topic_items_handler.handle(
                 topic_id=topic_id,
-                created_before=datetime.fromtimestamp(created_before_ts),
+                created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
                 page_number=page_number,
                 page_size=page_size)
 

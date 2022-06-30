@@ -1,5 +1,5 @@
 from copy import copy
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, call
 import uuid
 
@@ -19,9 +19,9 @@ async def test_update_subscriptions_items_with_a_items_that_are_not_registered()
         provider="myprovider",
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
-        created_at=datetime.fromtimestamp(0),
-        updated_at=datetime.fromtimestamp(1),
-        scanned_at=datetime.fromtimestamp(2),
+        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        updated_at=datetime.fromtimestamp(1, tz=timezone.utc),
+        scanned_at=datetime.fromtimestamp(2, tz=timezone.utc),
         external_data={})
 
     item1 = Item.new(
@@ -31,7 +31,7 @@ async def test_update_subscriptions_items_with_a_items_that_are_not_registered()
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
         subscription_uuid=sub1.uuid,
-        published_at=datetime.fromtimestamp(0))
+        published_at=datetime.fromtimestamp(0, tz=timezone.utc))
 
     subscription_service = AsyncMock()
     subscription_service.get_items.return_value = [item1]
@@ -68,9 +68,9 @@ async def test_update_subscriptions_items_with_a_items_that_are_already_register
         provider="myprovider",
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
-        created_at=datetime.fromtimestamp(0),
-        updated_at=datetime.fromtimestamp(1),
-        scanned_at=datetime.fromtimestamp(2),
+        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        updated_at=datetime.fromtimestamp(1, tz=timezone.utc),
+        scanned_at=datetime.fromtimestamp(2, tz=timezone.utc),
         external_data={})
 
     item1 = Item.new(
@@ -80,7 +80,7 @@ async def test_update_subscriptions_items_with_a_items_that_are_already_register
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
         subscription_uuid=sub1.uuid,
-        published_at=datetime.fromtimestamp(0))
+        published_at=datetime.fromtimestamp(0, tz=timezone.utc))
 
     item2 = Item.new(
         uuid=uuid.UUID("64ad0bbb-27d5-4b45-bc9b-d3a09c1d8df3"),
@@ -89,7 +89,7 @@ async def test_update_subscriptions_items_with_a_items_that_are_already_register
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
         subscription_uuid=sub1.uuid,
-        published_at=datetime.fromtimestamp(0))
+        published_at=datetime.fromtimestamp(0, tz=timezone.utc))
 
     subscription_service = AsyncMock()
     subscription_service.get_items.return_value = [item1]
