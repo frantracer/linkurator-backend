@@ -19,7 +19,7 @@ def dummy_handlers() -> Handlers:
     dummy_validate_token_handler = MagicMock()
     dummy_validate_token_handler.handle.return_value = Session(
         user_id=uuid.uuid4(),
-        expires_at=datetime.fromisoformat('3000-01-01T00:00:00'),
+        expires_at=datetime.fromisoformat('3000-01-01T00:00:00+00:00'),
         token='token')
 
     return Handlers(
@@ -94,7 +94,7 @@ def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
                      subscription_uuid=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
                      url=utils.parse_url('https://ae1b82ee.com'),
                      thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                     published_at=datetime.fromtimestamp(0))
+                     published_at=datetime.fromtimestamp(0, tz=timezone.utc))
     dummy_get_subscription_items_handler = MagicMock()
     dummy_get_subscription_items_handler.handle.return_value = ([item1], 1)
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
@@ -206,7 +206,7 @@ def test_get_topic_items_returns_200(handlers: Handlers) -> None:
         subscription_uuid=uuid.UUID("df836d19-1e78-4880-bf5f-af1c18e4d57d"),
         url=utils.parse_url('https://ae1b82ee.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-        published_at=datetime.fromtimestamp(0))
+        published_at=datetime.fromtimestamp(0, tz=timezone.utc))
     dummy_handler.handle.return_value = ([item1], 1)
     handlers.get_topic_items_handler = dummy_handler
 

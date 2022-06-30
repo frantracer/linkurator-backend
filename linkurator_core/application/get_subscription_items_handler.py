@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Tuple
 from uuid import UUID
 
@@ -18,7 +18,7 @@ class GetSubscriptionItemsHandler:
                ) -> Tuple[List[Item], int]:
         return self.item_repository.find_sorted_by_publish_date(
             sub_ids=[subscription_id],
-            published_after=datetime.fromtimestamp(0),
+            published_after=datetime.fromtimestamp(0, tz=timezone.utc),
             created_before=created_before,
             max_results=page_size,
             page_number=page_number
