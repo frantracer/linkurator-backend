@@ -8,6 +8,8 @@ from linkurator_core.domain.session import Session
 from linkurator_core.domain.session_repository import SessionRepository
 from linkurator_core.domain.user_repository import UserRepository
 
+SESSION_DURATION_IN_DAYS: int = 30
+
 
 class ValidateTokenHandler:
     def __init__(self, user_repository: UserRepository, session_repository: SessionRepository,
@@ -48,7 +50,7 @@ class ValidateTokenHandler:
 
             session = Session(user_id=user.uuid,
                               token=access_token,
-                              expires_at=datetime.now(timezone.utc) + timedelta(days=1))
+                              expires_at=datetime.now(timezone.utc) + timedelta(days=SESSION_DURATION_IN_DAYS))
             self.session_repository.add(session)
 
             return session
