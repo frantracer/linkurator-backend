@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from fastapi.applications import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 
 from linkurator_core.application.assign_subscription_to_user_topic_handler import AssignSubscriptionToTopicHandler
 from linkurator_core.application.create_topic_handler import CreateTopicHandler
@@ -85,5 +86,13 @@ def create_app(handlers: Handlers) -> FastAPI:
             get_user_subscriptions_handler=handlers.get_user_subscriptions,
             get_subscription_items_handler=handlers.get_subscription_items_handler),
         prefix="/subscriptions")
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"]
+    )
 
     return app
