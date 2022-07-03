@@ -2,10 +2,9 @@ import http
 from typing import Any, Optional
 from urllib.parse import urljoin
 
-import fastapi
 from fastapi.applications import Request
 from fastapi.param_functions import Cookie
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.routing import APIRouter
 
 from linkurator_core.application.validate_token_handler import ValidateTokenHandler
@@ -20,19 +19,29 @@ def get_router(validate_token_handler: ValidateTokenHandler, google_client: Goog
         """
         Login endpoint
         """
+        redirect_uri = request.cookies.get("redirect_uri")
+        if redirect_uri is None:
+            redirect_uri = request.query_params.get("redirect_uri")
+
         token = request.cookies.get("token")
         if token is not None:
             session = validate_token_handler.handle(access_token=token, refresh_token=None)
             if session is not None:
-                return JSONResponse(content={"token": session.token})
+                if redirect_uri is None:
+                    return JSONResponse(content={"token": session.token})
+                response = RedirectResponse(url=redirect_uri)
+                response.delete_cookie("redirect_uri")
+                return response
 
         scopes = ['profile', 'email', 'openid', "https://www.googleapis.com/auth/youtube.readonly"]
-        response = fastapi.responses.RedirectResponse(
+        response = RedirectResponse(
             url=google_client.authorization_url(
                 scopes=scopes,
                 redirect_uri=urljoin(str(request.base_url), "/auth")),
             status_code=http.HTTPStatus.FOUND)
         response.delete_cookie(key="token")
+        if redirect_uri is not None:
+            response.set_cookie("redirect_uri", redirect_uri)
         return response
 
     @router.get("/auth")
@@ -50,16 +59,22 @@ def get_router(validate_token_handler: ValidateTokenHandler, google_client: Goog
             if session is None:
                 return JSONResponse(content={"message": "Invalid token"}, status_code=http.HTTPStatus.UNAUTHORIZED)
 
-            response = JSONResponse(content={"token": session.token})
+            response = RedirectResponse(url=urljoin(str(request.base_url), "/login"))
             response.set_cookie(key="token", value=token)
             return response
         return JSONResponse(content={"error": "Authentication failed"}, status_code=http.HTTPStatus.UNAUTHORIZED)
 
     @router.get("/logout")
-    async def logout() -> Any:
+    async def logout(request: Request) -> Any:
         """
         Logout endpoint
         """
+        redirect_uri = request.query_params.get("redirect_uri")
+        if redirect_uri is not None:
+            redirect_res = RedirectResponse(url=redirect_uri)
+            redirect_res.delete_cookie(key="token")
+            return redirect_res
+
         response = JSONResponse(content={"message": "Logged out successfully"})
         response.delete_cookie(key="token")
         return response
