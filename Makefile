@@ -1,5 +1,7 @@
 SHELL := /bin/bash
 
+DOMAIN := api.linkurator.com
+
 DOCKER_IMAGE := frantracer/linkurator-api
 DOCKER_CONTAINER_APP := linkurator-api
 DOCKER_CONTAINER_LINTING := linkurator-api-check-linting
@@ -115,3 +117,17 @@ pylint:
 
 test:
 	./venv/bin/pytest -v tests
+
+run-remote-certbot:
+	@echo "Running certbot"
+	@ssh root@$(SSH_IP_ADDRESS) "certbot certonly --standalone -d $(DOMAIN)"
+	@echo "Certbot finished"
+
+copy-remote-certs:
+	@echo "Copying certs"
+	@scp root@$(SSH_IP_ADDRESS):/etc/letsencrypt/live/$(DOMAIN)/chain.pem secrets/chain.pem
+	@scp root@$(SSH_IP_ADDRESS):/etc/letsencrypt/live/$(DOMAIN)/privkey.pem secrets/privkey.pem
+	@scp root@$(SSH_IP_ADDRESS):/etc/letsencrypt/live/$(DOMAIN)/cert.pem secrets/cert.pem
+	@echo "Certs copied"
+
+renew-certs: check-ssh-connection run-remote-certbot copy-remote-certs
