@@ -1,21 +1,19 @@
 import argparse
 import asyncio
-from dataclasses import dataclass
 import os
 import signal
-from typing import Optional
+from dataclasses import dataclass
 
-from uvicorn import Config, Server  # type: ignore
 import uvicorn.server  # type: ignore
 
+from linkurator_core.application.event_handler import EventHandler
 from linkurator_core.application.find_outdated_subscriptions_handler import FindOutdatedSubscriptionsHandler
 from linkurator_core.application.find_outdated_users_handler import FindOutdatedUsersHandler
 from linkurator_core.application.update_subscription_items_handler import UpdateSubscriptionItemsHandler
-from linkurator_core.infrastructure.asyncio.scheduler import TaskScheduler
-from linkurator_core.application.event_handler import EventHandler
 from linkurator_core.application.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.event import SubscriptionBecameOutdatedEvent, UserSubscriptionsBecameOutdatedEvent
 from linkurator_core.infrastructure.asyncio.event_bus_service import AsyncioEventBusService
+from linkurator_core.infrastructure.asyncio.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio.utils import run_parallel
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
@@ -149,7 +147,6 @@ class ApiServer:
         self.debug = debug
         self.reload = reload
         self.with_gunicorn = with_gunicorn
-        self.uvicorn_server: Optional[uvicorn.Server] = None
 
     async def start(self):
         if self.with_gunicorn:
@@ -163,18 +160,20 @@ class ApiServer:
                  '--certfile', 'secrets/cert.pem',
                  '--ca-certs', 'secrets/chain.pem']))
         else:
-            uvicorn.server.HANDLED_SIGNALS = []
-            uvicorn_config = Config(self.app_path, port=self.port, reload=self.reload, workers=self.workers,
-                                    debug=self.debug, log_level="debug" if self.debug else "info")
-            self.uvicorn_server = Server(config=uvicorn_config)
-            await self.uvicorn_server.serve()
+            async def run_uvicorn():
+                return uvicorn.run(
+                    self.app_path,
+                    host="127.0.0.1",
+                    port=self.port,
+                    workers=self.workers,
+                    debug=self.debug,
+                    reload=self.reload)
+
+            await asyncio.create_task(run_uvicorn())
 
     async def stop(self):
         if self.with_gunicorn:
             await asyncio.create_subprocess_shell("kill -9 $(ps aux | grep gunicorn | awk '{print $2}')")
-        else:
-            if self.uvicorn_server is not None:
-                await self.uvicorn_server.shutdown()
 
 
 if __name__ == "__main__":
