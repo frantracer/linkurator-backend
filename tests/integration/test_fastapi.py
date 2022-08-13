@@ -11,7 +11,7 @@ from linkurator_core.domain.item import Item
 from linkurator_core.domain.session import Session
 from linkurator_core.domain.topic import Topic
 from linkurator_core.domain.user import User
-from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app
+from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 
 
 @pytest.fixture(name="handlers")
@@ -39,7 +39,7 @@ def dummy_handlers() -> Handlers:
 
 
 def test_health_returns_200(handlers: Handlers) -> None:
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.get('/health')
     assert response.content == b'"OK"'
@@ -64,7 +64,7 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
     )
     handlers.get_user_profile_handler = dummy_get_user_profile_handler
 
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.get('/profile', cookies={'token': 'token'})
     assert response.status_code == 200
@@ -81,7 +81,7 @@ def test_user_profile_returns_404_when_user_not_found(handlers: Handlers) -> Non
     dummy_get_user_profile_handler.handle.return_value = None
     handlers.get_user_profile_handler = dummy_get_user_profile_handler
 
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.get('/profile', cookies={'token': 'token'})
     assert response.status_code == 404
@@ -99,7 +99,7 @@ def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
     dummy_get_subscription_items_handler.handle.return_value = ([item1], 1)
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.get(
         '/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?page_number=0&page_size=1',
@@ -111,7 +111,7 @@ def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
 
 
 def test_create_user_topic_returns_201(handlers: Handlers) -> None:
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.post(
         '/topics/',
@@ -126,7 +126,7 @@ def test_create_user_topic_returns_201(handlers: Handlers) -> None:
 
 
 def test_delete_topic_returns_204(handlers: Handlers) -> None:
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.delete(
         '/topics/ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8',
@@ -139,7 +139,7 @@ def test_delete_non_existing_topic_returns_404(handlers: Handlers) -> None:
     dummy_handler = MagicMock()
     dummy_handler.handle.side_effect = TopicNotFoundError
     handlers.delete_topic_handler = dummy_handler
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.delete(
         '/topics/ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8',
@@ -157,7 +157,7 @@ def test_get_topics_returns_200(handlers: Handlers) -> None:
     )]
     handlers.get_user_topics_handler = dummy_handler
 
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.get('/topics', cookies={'token': 'token'})
     assert response.status_code == 200
@@ -176,7 +176,7 @@ def test_get_topic_returns_200(handlers: Handlers) -> None:
     )
     handlers.get_topic_handler = dummy_handler
 
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.get('/topics/f8be01d6-98b3-4ba7-a540-d2f008d1adbc', cookies={'token': 'token'})
     assert response.status_code == 200
@@ -191,7 +191,7 @@ def test_get_topic_returns_404_when_topic_not_found(handlers: Handlers) -> None:
     dummy_handler.handle.side_effect = TopicNotFoundError
     handlers.get_topic_handler = dummy_handler
 
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.get('/topics/925df229-e3cf-4435-88f0-9153b7ff37d6', cookies={'token': 'token'})
     assert response.status_code == 404
@@ -210,7 +210,7 @@ def test_get_topic_items_returns_200(handlers: Handlers) -> None:
     dummy_handler.handle.return_value = ([item1], 1)
     handlers.get_topic_items_handler = dummy_handler
 
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.get(
         '/topics/1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac/items?page_number=0&page_size=1',
@@ -226,7 +226,7 @@ def test_get_topic_items_for_non_existing_topic_returns_404(handlers: Handlers) 
     dummy_handler.handle.side_effect = TopicNotFoundError
     handlers.get_topic_items_handler = dummy_handler
 
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.get(
         '/topics/925df229-e3cf-4435-88f0-9153b7ff37d6/items?page_number=0&page_size=1',
@@ -235,7 +235,7 @@ def test_get_topic_items_for_non_existing_topic_returns_404(handlers: Handlers) 
 
 
 def test_assign_subscription_to_topic_returns_200(handlers: Handlers) -> None:
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.post(
         '/topics/f22b92da-5b90-455f-8141-fb4a37f07805/subscriptions/ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8',
@@ -248,7 +248,7 @@ def test_assign_non_existing_subscription_to_topic_returns_404(handlers: Handler
     dummy_handler = MagicMock()
     dummy_handler.handle.side_effect = SubscriptionNotFoundError
     handlers.assign_subscription_to_topic_handler = dummy_handler
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.post(
         '/topics/f22b92da-5b90-455f-8141-fb4a37f07805/subscriptions/ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8',
@@ -260,7 +260,7 @@ def test_assign_subscription_to_non_existing_topic_returns_404(handlers: Handler
     dummy_handler = MagicMock()
     dummy_handler.handle.side_effect = TopicNotFoundError
     handlers.assign_subscription_to_topic_handler = dummy_handler
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.post(
         '/topics/f22b92da-5b90-455f-8141-fb4a37f07805/subscriptions/ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8',
@@ -269,7 +269,7 @@ def test_assign_subscription_to_non_existing_topic_returns_404(handlers: Handler
 
 
 def test_unassign_subscription_from_topic_returns_204(handlers: Handlers) -> None:
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.delete(
         '/topics/f22b92da-5b90-455f-8141-fb4a37f07805/subscriptions/ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8',
@@ -282,7 +282,7 @@ def test_unassign_non_existing_subscription_from_topic_returns_404(handlers: Han
     dummy_handler = MagicMock()
     dummy_handler.handle.side_effect = SubscriptionNotFoundError
     handlers.unassign_subscription_from_topic_handler = dummy_handler
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.delete(
         '/topics/f22b92da-5b90-455f-8141-fb4a37f07805/subscriptions/ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8',
@@ -294,7 +294,7 @@ def test_unassign_subscription_from_non_existing_topic_returns_404(handlers: Han
     dummy_handler = MagicMock()
     dummy_handler.handle.side_effect = TopicNotFoundError
     handlers.unassign_subscription_from_topic_handler = dummy_handler
-    client = TestClient(create_app(handlers))
+    client = TestClient(create_app_from_handlers(handlers))
 
     response = client.delete(
         '/topics/f22b92da-5b90-455f-8141-fb4a37f07805/subscriptions/ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8',

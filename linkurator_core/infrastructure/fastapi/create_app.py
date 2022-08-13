@@ -40,7 +40,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     delete_topic_handler: DeleteUserTopicHandler
 
 
-def create_app(handlers: Handlers) -> FastAPI:
+def create_app_from_handlers(handlers: Handlers) -> FastAPI:
     app = FastAPI()
 
     async def get_current_session(request: Request) -> Optional[Session]:

@@ -101,7 +101,7 @@ async def main():  # pylint: disable=too-many-locals
     scheduler.schedule_recurring_task(task=find_outdated_subscriptions.handle, interval_seconds=60)
 
     # API
-    api_server = ApiServer(app_path='linkurator_core.infrastructure.fastapi.app:app',
+    api_server = ApiServer(app_path='linkurator_core.infrastructure.fastapi.app:create_app',
                            port=settings.api.port, workers=settings.api.workers, debug=settings.api.debug,
                            reload=settings.api.reload, with_gunicorn=settings.api.with_gunicorn)
 
@@ -167,7 +167,8 @@ class ApiServer:
                     port=self.port,
                     workers=self.workers,
                     debug=self.debug,
-                    reload=self.reload)
+                    reload=self.reload,
+                    factory=True)
 
             await asyncio.create_task(run_uvicorn())
 
