@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Generic, List, Optional, TypeVar
 
 from pydantic import AnyUrl
@@ -54,7 +55,7 @@ class Page(GenericModel, Generic[Element]):
         base_url = current_url.remove_query_params(["page_number", "page_size"])
         next_page_url = None
         next_page_number = current_page_number + 1
-        if (total_items // page_size) > next_page_number >= 0:
+        if math.ceil(total_items / page_size) > next_page_number >= 0:
             next_page_url = utils.parse_url(str(base_url.include_query_params(
                 page_number=next_page_number,
                 page_size=page_size)))
@@ -70,7 +71,7 @@ class Page(GenericModel, Generic[Element]):
         base_url = current_url.remove_query_params(["page_number", "page_size"])
         previous_page_url = None
         previous_page_number = current_page_number - 1
-        if (total_items // page_size) > previous_page_number >= 0:
+        if math.ceil(total_items / page_size) > previous_page_number >= 0:
             previous_page_url = utils.parse_url(str(base_url.include_query_params(
                 page_number=previous_page_number,
                 page_size=page_size)))
