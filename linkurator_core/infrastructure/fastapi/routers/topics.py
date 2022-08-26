@@ -18,12 +18,13 @@ from linkurator_core.application.get_topic_items_handler import GetTopicItemsHan
 from linkurator_core.application.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.application.unassign_subscription_from_user_topic_handler import \
     UnassignSubscriptionFromUserTopicHandler
+from linkurator_core.application.update_topic_handler import UpdateTopicHandler
 from linkurator_core.domain.session import Session
 from linkurator_core.domain.topic import Topic
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 from linkurator_core.infrastructure.fastapi.models.message import Message
 from linkurator_core.infrastructure.fastapi.models.page import Page
-from linkurator_core.infrastructure.fastapi.models.topic import NewTopicSchema, TopicSchema
+from linkurator_core.infrastructure.fastapi.models.topic import NewTopicSchema, TopicSchema, UpdateTopicSchema
 
 
 def get_router(  # pylint: disable-msg=too-many-locals
@@ -34,7 +35,8 @@ def get_router(  # pylint: disable-msg=too-many-locals
         get_topic_items_handler: GetTopicItemsHandler,
         assign_subscription_to_user_topic_handler: AssignSubscriptionToTopicHandler,
         unassign_subscription_from_user_topic_handler: UnassignSubscriptionFromUserTopicHandler,
-        delete_user_topic_handler: DeleteUserTopicHandler
+        delete_user_topic_handler: DeleteUserTopicHandler,
+        update_user_topic_handler: UpdateTopicHandler
 ) -> APIRouter:
     """
     Get the router for the topics
@@ -140,6 +142,30 @@ def get_router(  # pylint: disable-msg=too-many-locals
         ))
 
         return Response(status_code=http.HTTPStatus.CREATED)
+
+    @router.patch("/{topic_id}",
+                  responses={200: {"model": None}, 404: {"model": None}})
+    async def update_topic(
+            topic_id: UUID,
+            topic_update: UpdateTopicSchema,
+            session: Optional[Session] = Depends(get_session)
+    ) -> Any:
+        """
+        Update a topic
+        """
+        if session is None:
+            return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
+
+        try:
+            update_user_topic_handler.handle(
+                topic_id=topic_id,
+                name=topic_update.name,
+                subscriptions_ids=topic_update.subscriptions_ids)
+            return Response(status_code=http.HTTPStatus.OK)
+        except TopicNotFoundError:
+            return Response(status_code=http.HTTPStatus.NOT_FOUND)
+        except SubscriptionNotFoundError:
+            return Response(status_code=http.HTTPStatus.NOT_FOUND)
 
     @router.delete("/{topic_id}",
                    responses={404: {"model": None}})

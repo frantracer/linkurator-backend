@@ -16,6 +16,7 @@ from linkurator_core.application.get_user_subscriptions_handler import GetUserSu
 from linkurator_core.application.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.application.unassign_subscription_from_user_topic_handler import \
     UnassignSubscriptionFromUserTopicHandler
+from linkurator_core.application.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.validate_token_handler import ValidateTokenHandler
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
@@ -66,6 +67,9 @@ def app_handlers() -> Handlers:
             subscription_repository=subscription_repository,
             topic_repository=topic_repository,
             user_repository=user_repository),
+        update_topic_handler=UpdateTopicHandler(
+            topic_repository=topic_repository,
+            subscription_repository=subscription_repository),
         delete_topic_handler=DeleteUserTopicHandler(topic_repository=topic_repository),
         get_topic_handler=GetTopicHandler(topic_repository=topic_repository),
         unassign_subscription_from_topic_handler=UnassignSubscriptionFromUserTopicHandler(

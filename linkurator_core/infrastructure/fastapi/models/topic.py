@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic.main import BaseModel
@@ -17,6 +17,17 @@ class NewTopicSchema(BaseModel):
 
     def __init__(self, uuid: UUID, name: str, subscriptions_ids: List[UUID]):
         super().__init__(uuid=uuid, name=name, subscriptions_ids=subscriptions_ids)
+
+
+class UpdateTopicSchema(BaseModel):
+    """
+    Fields that can be updated on a topic
+    """
+    name: Optional[str]
+    subscriptions_ids: Optional[List[UUID]]
+
+    def __init__(self, name: Optional[str] = None, subscriptions_ids: Optional[List[UUID]] = None):
+        super().__init__(name=name, subscriptions_ids=subscriptions_ids)
 
 
 class TopicSchema(BaseModel):

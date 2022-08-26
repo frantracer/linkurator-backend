@@ -18,6 +18,7 @@ from linkurator_core.application.get_user_subscriptions_handler import GetUserSu
 from linkurator_core.application.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.application.unassign_subscription_from_user_topic_handler import \
     UnassignSubscriptionFromUserTopicHandler
+from linkurator_core.application.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.session import Session
 from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics
@@ -38,6 +39,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     unassign_subscription_from_topic_handler: UnassignSubscriptionFromUserTopicHandler
     get_topic_items_handler: GetTopicItemsHandler
     delete_topic_handler: DeleteUserTopicHandler
+    update_topic_handler: UpdateTopicHandler
 
 
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
@@ -77,7 +79,8 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             get_user_topics_handler=handlers.get_user_topics_handler,
             assign_subscription_to_user_topic_handler=handlers.assign_subscription_to_topic_handler,
             unassign_subscription_from_user_topic_handler=handlers.unassign_subscription_from_topic_handler,
-            delete_user_topic_handler=handlers.delete_topic_handler
+            delete_user_topic_handler=handlers.delete_topic_handler,
+            update_user_topic_handler=handlers.update_topic_handler
         ),
         prefix="/topics")
     app.include_router(
