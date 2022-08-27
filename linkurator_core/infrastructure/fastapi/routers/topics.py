@@ -144,7 +144,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
         return Response(status_code=http.HTTPStatus.CREATED)
 
     @router.patch("/{topic_id}",
-                  responses={200: {"model": None}, 404: {"model": None}})
+                  responses={204: {"model": None}, 404: {"model": None}})
     async def update_topic(
             topic_id: UUID,
             topic_update: UpdateTopicSchema,
@@ -161,7 +161,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
                 topic_id=topic_id,
                 name=topic_update.name,
                 subscriptions_ids=topic_update.subscriptions_ids)
-            return Response(status_code=http.HTTPStatus.OK)
+            return Response(status_code=http.HTTPStatus.NO_CONTENT)
         except TopicNotFoundError:
             return Response(status_code=http.HTTPStatus.NOT_FOUND)
         except SubscriptionNotFoundError:
