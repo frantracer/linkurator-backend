@@ -27,6 +27,7 @@ def dummy_handlers() -> Handlers:
         google_client=MagicMock(),
         get_user_subscriptions=MagicMock(),
         get_subscription_items_handler=MagicMock(),
+        delete_subscription_items_handler=MagicMock(),
         get_user_profile_handler=MagicMock(),
         get_topic_handler=MagicMock(),
         get_topic_items_handler=MagicMock(),
@@ -61,7 +62,8 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
         last_login_at=datetime.fromtimestamp(0, tz=timezone.utc),
         subscription_uuids=[],
-        google_refresh_token="refresh token"
+        google_refresh_token="refresh token",
+        is_admin=False
     )
     handlers.get_user_profile_handler = dummy_get_user_profile_handler
 

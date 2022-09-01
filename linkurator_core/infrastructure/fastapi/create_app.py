@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from linkurator_core.application.assign_subscription_to_user_topic_handler import AssignSubscriptionToTopicHandler
 from linkurator_core.application.create_topic_handler import CreateTopicHandler
+from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.get_topic_handler import GetTopicHandler
@@ -31,6 +32,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     google_client: GoogleAccountService
     get_user_subscriptions: GetUserSubscriptionsHandler
     get_subscription_items_handler: GetSubscriptionItemsHandler
+    delete_subscription_items_handler: DeleteSubscriptionItemsHandler
     get_user_profile_handler: GetUserProfileHandler
     create_topic_handler: CreateTopicHandler
     get_user_topics_handler: GetUserTopicsHandler
@@ -87,7 +89,8 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         subscriptions.get_router(
             get_session=get_current_session,
             get_user_subscriptions_handler=handlers.get_user_subscriptions,
-            get_subscription_items_handler=handlers.get_subscription_items_handler),
+            get_subscription_items_handler=handlers.get_subscription_items_handler,
+            delete_subscription_items_handler=handlers.delete_subscription_items_handler),
         prefix="/subscriptions")
 
     app.add_middleware(

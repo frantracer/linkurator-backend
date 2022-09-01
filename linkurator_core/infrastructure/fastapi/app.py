@@ -1,12 +1,14 @@
 """
 Main file of the application
 """
+import logging
 import os
 
 from fastapi.applications import FastAPI
 
 from linkurator_core.application.assign_subscription_to_user_topic_handler import AssignSubscriptionToTopicHandler
 from linkurator_core.application.create_topic_handler import CreateTopicHandler
+from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.get_topic_handler import GetTopicHandler
@@ -58,6 +60,10 @@ def app_handlers() -> Handlers:
         google_client=account_service,
         get_user_subscriptions=GetUserSubscriptionsHandler(subscription_repository, user_repository),
         get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository),
+        delete_subscription_items_handler=DeleteSubscriptionItemsHandler(
+            item_repository=item_repository,
+            subscription_repository=subscription_repository,
+            user_repository=user_repository),
         get_user_profile_handler=GetUserProfileHandler(user_repository),
         get_user_topics_handler=GetUserTopicsHandler(topic_repo=topic_repository, user_repo=user_repository),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
@@ -78,4 +84,6 @@ def app_handlers() -> Handlers:
 
 
 def create_app() -> FastAPI:
+    logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
+                        level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
     return create_app_from_handlers(app_handlers())

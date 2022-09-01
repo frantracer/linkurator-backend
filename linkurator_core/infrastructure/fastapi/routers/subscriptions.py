@@ -1,14 +1,15 @@
-from datetime import datetime, timezone
 import http
+from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import Depends, Response
 from fastapi.applications import Request
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
+from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.domain.session import Session
@@ -20,7 +21,8 @@ from linkurator_core.infrastructure.fastapi.models.subscription import Subscript
 def get_router(
         get_session: Callable,
         get_user_subscriptions_handler: GetUserSubscriptionsHandler,
-        get_subscription_items_handler: GetSubscriptionItemsHandler
+        get_subscription_items_handler: GetSubscriptionItemsHandler,
+        delete_subscription_items_handler: DeleteSubscriptionItemsHandler,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -95,5 +97,25 @@ def get_router(
             page_number=page_number,
             page_size=page_size,
             current_url=current_url)
+
+    @router.delete("/{sub_id}/items", response_model=None,
+                   responses={204: {"model": None}, 404: {"model": None}})
+    async def delete_subscription_items(
+            sub_id: UUID,
+            session: Optional[Session] = Depends(get_session)
+    ) -> Any:
+        """
+        Delete all the items of a subscription
+        :param sub_id: UUID of the subscripton included in the url
+        :param session: The session of the logged user
+        :return: UNAUTHORIZED status code if the session is invalid.
+        """
+
+        if session is None:
+            return Response(status_code=http.HTTPStatus.UNAUTHORIZED)
+
+        delete_subscription_items_handler.handle(user_id=session.user_id, subscription_id=sub_id)
+
+        return Response(status_code=http.HTTPStatus.NO_CONTENT)
 
     return router
