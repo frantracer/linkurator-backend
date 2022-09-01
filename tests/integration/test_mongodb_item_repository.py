@@ -1,8 +1,8 @@
+import uuid
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
 from unittest import mock
 from unittest.mock import MagicMock
-import uuid
 
 from math import floor
 import pytest
@@ -255,3 +255,32 @@ def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publ
 
     assert len(found_items) == 0
     assert total_items == 2
+
+
+def test_add_two_items_in_bulk(item_repo: MongoDBItemRepository):
+    item1 = Item(name="item1",
+                 description="",
+                 uuid=uuid.UUID("1875c0e6-5ad4-40c4-b68a-b5b47c05d675"),
+                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
+                 url=utils.parse_url('https://72e47bdc.com'),
+                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                 published_at=datetime(2020, 1, 1, 8, 8, 8, tzinfo=timezone.utc),
+                 created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+                 updated_at=datetime.fromtimestamp(0, tz=timezone.utc))
+    item2 = Item(name="item2",
+                 description="",
+                 uuid=uuid.UUID("765a121c-8e67-45da-b5e4-1ced03af68c4"),
+                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
+                 url=utils.parse_url('https://1db7ac48.com'),
+                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                 published_at=datetime(2021, 1, 1, 6, 6, 6, tzinfo=timezone.utc),
+                 created_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+                 updated_at=datetime.fromtimestamp(0, tz=timezone.utc))
+
+    item_repo.add_bulk([item1, item2])
+
+    item1_found = item_repo.get(item1.uuid)
+    item2_found = item_repo.get(item2.uuid)
+
+    assert item1_found == item1
+    assert item2_found == item2

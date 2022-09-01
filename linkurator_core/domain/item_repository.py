@@ -15,6 +15,10 @@ class ItemRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def add_bulk(self, items: List[Item]):
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def get(self, item_id: UUID) -> Optional[Item]:
         raise NotImplementedError
 

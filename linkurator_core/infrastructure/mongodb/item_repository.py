@@ -75,6 +75,10 @@ class MongoDBItemRepository(ItemRepository):
         collection = self._item_collection()
         collection.insert_one(dict(MongoDBItem.from_domain_item(item)))
 
+    def add_bulk(self, items: List[Item]):
+        collection = self._item_collection()
+        collection.insert_many([dict(MongoDBItem.from_domain_item(item)) for item in items])
+
     def get(self, item_id: UUID) -> Optional[Item]:
         collection = self._item_collection()
         item: Optional[Dict] = collection.find_one({'uuid': item_id})
