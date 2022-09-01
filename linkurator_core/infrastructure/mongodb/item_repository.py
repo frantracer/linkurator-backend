@@ -76,6 +76,8 @@ class MongoDBItemRepository(ItemRepository):
         collection.insert_one(dict(MongoDBItem.from_domain_item(item)))
 
     def add_bulk(self, items: List[Item]):
+        if len(items) == 0:
+            return
         collection = self._item_collection()
         collection.insert_many([dict(MongoDBItem.from_domain_item(item)) for item in items])
 

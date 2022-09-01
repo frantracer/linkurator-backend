@@ -284,3 +284,7 @@ def test_add_two_items_in_bulk(item_repo: MongoDBItemRepository):
 
     assert item1_found == item1
     assert item2_found == item2
+
+
+def test_add_empty_list_of_items_raises_no_error(item_repo: MongoDBItemRepository):
+    item_repo.add_bulk([])
