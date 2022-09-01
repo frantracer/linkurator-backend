@@ -99,7 +99,7 @@ def get_router(
             current_url=current_url)
 
     @router.delete("/{sub_id}/items", response_model=None,
-                   responses={204: {"model": None}, 404: {"model": None}})
+                   responses={204: {"model": None}, 403: {"model": None}, 404: {"model": None}})
     async def delete_subscription_items(
             sub_id: UUID,
             session: Optional[Session] = Depends(get_session)
@@ -114,8 +114,10 @@ def get_router(
         if session is None:
             return Response(status_code=http.HTTPStatus.UNAUTHORIZED)
 
-        delete_subscription_items_handler.handle(user_id=session.user_id, subscription_id=sub_id)
-
-        return Response(status_code=http.HTTPStatus.NO_CONTENT)
+        try:
+            delete_subscription_items_handler.handle(user_id=session.user_id, subscription_id=sub_id)
+            return Response(status_code=http.HTTPStatus.NO_CONTENT)
+        except PermissionError:
+            return Response(status_code=http.HTTPStatus.FORBIDDEN)
 
     return router
