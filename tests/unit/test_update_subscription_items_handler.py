@@ -1,7 +1,9 @@
+import asyncio
+import uuid
 from copy import copy
 from datetime import datetime, timezone
+from typing import List
 from unittest.mock import AsyncMock, MagicMock, call
-import uuid
 
 import pytest
 
@@ -12,6 +14,7 @@ from linkurator_core.domain.item import Item
 from linkurator_core.domain.item_repository import ItemRepository
 from linkurator_core.domain.subscription import Subscription
 from linkurator_core.domain.subscription_repository import SubscriptionRepository
+from linkurator_core.infrastructure.asyncio.utils import run_parallel
 
 
 @pytest.mark.asyncio
@@ -119,3 +122,41 @@ async def test_update_subscriptions_items_with_a_items_that_are_already_register
     assert subscription_repository.update.call_count == 1
     updated_sub = subscription_repository.update.call_args[0][0]
     assert updated_sub.scanned_at > sub1.scanned_at
+
+
+@pytest.mark.asyncio
+async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription():
+    sub1 = Subscription(
+        uuid=uuid.UUID("547d692c-d2a2-49ef-bfd6-97cb02fb03d1"),
+        name="sub1",
+        provider="myprovider",
+        url=parse_url("http://url.com"),
+        thumbnail=parse_url("http://thumbnail.com"),
+        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        updated_at=datetime.fromtimestamp(1, tz=timezone.utc),
+        scanned_at=datetime.fromtimestamp(2, tz=timezone.utc),
+        external_data={})
+
+    async def wait_1_second_and_return_no_items(
+            sub_id: uuid.UUID, from_date: datetime) -> List[Item]:  # pylint: disable=unused-argument
+        await asyncio.sleep(1)
+        return []
+
+    subscription_service = AsyncMock(spec=SubscriptionService)
+    subscription_service.get_items.side_effect = wait_1_second_and_return_no_items
+
+    subscription_repository = MagicMock(spec=SubscriptionRepository)
+    subscription_repository.get.return_value = copy(sub1)
+
+    item_repository = MagicMock(spec=ItemRepository)
+
+    handler = UpdateSubscriptionItemsHandler(subscription_service=subscription_service,
+                                             subscription_repository=subscription_repository,
+                                             item_repository=item_repository)
+    await run_parallel(
+        handler.handle(sub1.uuid),
+        handler.handle(sub1.uuid))
+
+    await handler.handle(sub1.uuid)
+
+    assert subscription_repository.update.call_count == 2
