@@ -50,7 +50,8 @@ class TestValidateTokenHandler(unittest.TestCase):
                           created_at=datetime.fromtimestamp(0, tz=timezone.utc),
                           updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
                           last_login_at=datetime.fromtimestamp(0, tz=timezone.utc),
-                          scanned_at=datetime.fromtimestamp(0, tz=timezone.utc))
+                          scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
+                          is_admin=False)
         user_repo_mock.get_by_email.return_value = dummy_user
 
         account_service_mock = MagicMock()

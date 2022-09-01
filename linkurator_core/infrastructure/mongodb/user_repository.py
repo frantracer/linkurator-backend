@@ -31,6 +31,7 @@ class MongoDBUser(BaseModel):
     last_login_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
     google_refresh_token: Optional[str] = None
     subscription_uuids: List[UUID] = []
+    is_admin: bool = False
 
     @staticmethod
     def from_domain_user(user: User) -> MongoDBUser:
@@ -46,7 +47,8 @@ class MongoDBUser(BaseModel):
             scanned_at=user.scanned_at,
             last_login_at=user.last_login_at,
             google_refresh_token=user.google_refresh_token,
-            subscription_uuids=user.subscription_uuids
+            subscription_uuids=user.subscription_uuids,
+            is_admin=user.is_admin
         )
 
     def to_domain_user(self) -> User:
@@ -62,7 +64,8 @@ class MongoDBUser(BaseModel):
             scanned_at=self.scanned_at,
             last_login_at=self.last_login_at,
             google_refresh_token=self.google_refresh_token,
-            subscription_uuids=self.subscription_uuids
+            subscription_uuids=self.subscription_uuids,
+            is_admin=self.is_admin
         )
 
 

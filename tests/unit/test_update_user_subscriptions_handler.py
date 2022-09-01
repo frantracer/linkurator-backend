@@ -38,7 +38,8 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
         updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
         scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        last_login_at=datetime.fromtimestamp(0, tz=timezone.utc))
+        last_login_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        is_admin=False)
     user_repository.get.return_value = copy.deepcopy(user)
     user_repository.update.return_value = None
 

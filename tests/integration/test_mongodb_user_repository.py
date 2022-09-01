@@ -33,7 +33,8 @@ def test_add_user_to_mongodb(user_repo: MongoDBUserRepository):
         locale="en",
         avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
         uuid=uuid.UUID("679c6db9-a54e-4947-b825-57a96fb5f599"),
-        google_refresh_token="token")
+        google_refresh_token="token",
+        is_admin=True)
 
     user_repo.add(user)
     the_user = user_repo.get(user.uuid)
@@ -49,6 +50,7 @@ def test_add_user_to_mongodb(user_repo: MongoDBUserRepository):
     assert int(the_user.updated_at.timestamp() * 100) == floor(user.updated_at.timestamp() * 100)
     assert int(the_user.scanned_at.timestamp() * 100) == floor(user.scanned_at.timestamp() * 100)
     assert int(the_user.last_login_at.timestamp() * 100) == floor(user.last_login_at.timestamp() * 100)
+    assert the_user.is_admin
 
 
 def test_get_user_that_does_not_exist(user_repo: MongoDBUserRepository):

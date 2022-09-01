@@ -8,7 +8,7 @@ from pydantic import AnyUrl
 
 
 @dataclass
-class User:
+class User:  # pylint: disable=too-many-instance-attributes
     uuid: UUID
     first_name: str
     last_name: str
@@ -21,6 +21,7 @@ class User:
     last_login_at: datetime
     google_refresh_token: Optional[str]
     subscription_uuids: List[UUID]
+    is_admin: bool
 
     @classmethod
     def new(cls,
@@ -31,7 +32,8 @@ class User:
             avatar_url: AnyUrl,
             locale: str,
             google_refresh_token: Optional[str],
-            subscription_uuids: Optional[List[UUID]] = None) -> User:
+            subscription_uuids: Optional[List[UUID]] = None,
+            is_admin: bool = False) -> User:
         now = datetime.now(timezone.utc)
         return cls(
             uuid=uuid,
@@ -45,5 +47,6 @@ class User:
             scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
             last_login_at=now,
             google_refresh_token=google_refresh_token,
-            subscription_uuids=[] if subscription_uuids is None else subscription_uuids
+            subscription_uuids=[] if subscription_uuids is None else subscription_uuids,
+            is_admin=is_admin
         )
