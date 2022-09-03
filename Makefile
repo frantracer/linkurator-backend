@@ -109,11 +109,12 @@ dev-run: link-config
 check-linting: mypy pylint
 
 mypy:
-	./venv/bin/mypy --config-file mypy.ini linkurator_core tests
+	./venv/bin/mypy --config-file mypy.ini linkurator_core tests scripts
 
 pylint:
 	find ./linkurator_core -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
 	find ./tests -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
+	find ./scripts -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
 
 test:
 	./venv/bin/pytest -v tests
