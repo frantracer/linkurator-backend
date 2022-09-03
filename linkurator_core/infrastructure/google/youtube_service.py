@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
@@ -166,6 +167,8 @@ class YoutubeService(SubscriptionService):
         next_page_token = None
         videos: List[YoutubeVideo] = []
 
+        logging.debug("Starting to retrieve videos from playlist %s", playlist_id)
+
         while True:
             playlist_response_json, playlist_status_code = await YoutubeService._request_youtube_playlist_items(
                 api_key, playlist_id, next_page_token)
@@ -190,11 +193,16 @@ class YoutubeService(SubscriptionService):
 
             videos = videos + [YoutubeVideo.from_dict(v) for v in youtube_videos]
 
+            logging.debug("Retrieved %s videos", len(videos))
+            if len(videos) > 0:
+                logging.debug("Last video published at %s", videos[-1].published_at)
+
             # Stop if there are no more videos to process
             if next_page_token is None or len(filtered_video_ids) < len(playlist_items):
                 break
 
         videos.sort(key=lambda i: i.published_at, reverse=True)
+        logging.debug("Retrieved %s videos from playlist %s", len(videos), playlist_id)
         return videos
 
     @staticmethod
