@@ -138,7 +138,7 @@ class YoutubeService(SubscriptionService):
             subs_response_json, subs_status_code = await YoutubeService._request_youtube_subscriptions(
                 access_token, next_page_token)
             if subs_status_code != 200:
-                return []
+                raise Exception(f"Error getting youtube subscriptions: {subs_response_json}")
 
             next_page_token = subs_response_json.get("nextPageToken", None)
 
@@ -148,7 +148,7 @@ class YoutubeService(SubscriptionService):
             channels_response_json, channels_status_code = await YoutubeService._request_youtube_channels(
                 access_token, channel_ids)
             if channels_status_code != 200:
-                return []
+                raise Exception(f"Error getting youtube channels: {channels_response_json}")
 
             youtube_channels = list(channels_response_json["items"])
             youtube_channels.sort(key=lambda i: i["id"])
@@ -170,7 +170,7 @@ class YoutubeService(SubscriptionService):
             playlist_response_json, playlist_status_code = await YoutubeService._request_youtube_playlist_items(
                 api_key, playlist_id, next_page_token)
             if playlist_status_code != 200:
-                return []
+                raise Exception(f"Error getting youtube playlist items: {playlist_response_json}")
 
             next_page_token = playlist_response_json.get("nextPageToken", None)
 
@@ -183,7 +183,7 @@ class YoutubeService(SubscriptionService):
             videos_response_json, videos_status_code = await YoutubeService._request_youtube_videos(
                 api_key, filtered_video_ids)
             if videos_status_code != 200:
-                return []
+                raise Exception(f"Error getting youtube videos: {videos_response_json}")
 
             youtube_videos = list(videos_response_json["items"])
             youtube_videos.sort(key=lambda i: i["id"])
