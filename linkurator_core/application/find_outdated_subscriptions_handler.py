@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 import uuid
 
@@ -19,5 +20,5 @@ class FindOutdatedSubscriptionsHandler:
         outdated_subscriptions = self.subscription_repository.find_latest_scan_before(datetime_limit)
 
         for subscription in outdated_subscriptions:
-            print(f'Found outdated subscription: {subscription.uuid}')
+            logging.info('Found outdated subscription: %s - %s', subscription.uuid, subscription.name)
             self.event_bus.publish(SubscriptionBecameOutdatedEvent(uuid.uuid4(), subscription.uuid))

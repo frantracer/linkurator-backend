@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Any, Callable, Coroutine, Dict, List, Type
 
 from linkurator_core.application.event_bus_service import Event, EventBusService
@@ -21,7 +22,7 @@ class AsyncioEventBusService(EventBusService):
         self._callbacks[event_type].append(callback)
 
     async def start(self) -> None:
-        print('event bus service started')
+        logging.info('event bus service started')
         self._is_running = True
         while self._is_running:
             event = await self._queue.get()
@@ -33,8 +34,8 @@ class AsyncioEventBusService(EventBusService):
             elif event == SHUTDOWN_MESSAGE:
                 self._is_running = False
             self._queue.task_done()
-        print('event bus service stopped')
+        logging.info('event bus service stopped')
 
     async def stop(self):
-        print('stopping event bus service')
+        logging.info('stopping event bus service')
         self._queue.put_nowait(SHUTDOWN_MESSAGE)

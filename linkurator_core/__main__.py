@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import logging
 import os
 import signal
 from dataclasses import dataclass
@@ -23,6 +24,8 @@ from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRe
 from linkurator_core.infrastructure.mongodb.repositories import run_mongodb_migrations
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
+
+logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 
 @dataclass
