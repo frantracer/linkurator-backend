@@ -51,7 +51,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
             topic_id: UUID,
             page_number: NonNegativeInt = 0,
             page_size: PositiveInt = 50,
-            created_before_ts: float = datetime.now(timezone.utc).timestamp(),
+            created_before_ts: Optional[float] = None,
             session: Optional[Session] = Depends(get_session)
     ) -> Any:
         """
@@ -59,6 +59,9 @@ def get_router(  # pylint: disable-msg=too-many-locals
         """
         if session is None:
             return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
+
+        if created_before_ts is None:
+            created_before_ts = datetime.now(timezone.utc).timestamp()
 
         try:
             items, total_items = get_topic_items_handler.handle(

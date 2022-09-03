@@ -31,7 +31,7 @@ def get_router(
             request: Request,
             page_number: NonNegativeInt = 0,
             page_size: PositiveInt = 50,
-            created_before_ts: float = datetime.now(tz=timezone.utc).timestamp(),
+            created_before_ts: Optional[float] = None,
             session: Optional[Session] = Depends(get_session)
     ) -> Any:
         """
@@ -39,6 +39,9 @@ def get_router(
         """
         if session is None:
             return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
+
+        if created_before_ts is None:
+            created_before_ts = datetime.now(tz=timezone.utc).timestamp()
 
         subscriptions, total_subs = get_user_subscriptions_handler.handle(
             session.user_id, page_number, page_size, datetime.fromtimestamp(created_before_ts, tz=timezone.utc))
@@ -62,7 +65,7 @@ def get_router(
             sub_id: UUID,
             page_number: NonNegativeInt = 0,
             page_size: PositiveInt = 50,
-            created_before_ts: float = datetime.now(tz=timezone.utc).timestamp(),
+            created_before_ts: Optional[float] = None,
             session: Optional[Session] = Depends(get_session)
     ) -> Any:
         """
@@ -78,6 +81,9 @@ def get_router(
 
         if session is None:
             return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
+
+        if created_before_ts is None:
+            created_before_ts = datetime.now(tz=timezone.utc).timestamp()
 
         items, total_items = get_subscription_items_handler.handle(
             subscription_id=sub_id,
