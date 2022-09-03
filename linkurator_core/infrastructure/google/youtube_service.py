@@ -36,7 +36,7 @@ class YoutubeChannel:
             channel_title=channel["snippet"]["title"],
             description=channel["snippet"]["description"],
             published_at=channel["snippet"]["publishedAt"],
-            thumbnail_url=channel["snippet"]["thumbnails"]["default"]["url"],
+            thumbnail_url=channel["snippet"]["thumbnails"]["medium"]["url"],
             url=f'https://www.youtube.com/channel/{channel["id"]}',
             playlist_id=channel["contentDetails"]["relatedPlaylists"]["uploads"],
             country=channel['snippet'].get('country', '')
@@ -62,7 +62,7 @@ class YoutubeVideo:
             description=video["snippet"]["description"],
             video_id=video["id"],
             published_at=datetime.strptime(video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ"),
-            thumbnail_url=video["snippet"]["thumbnails"]["default"]["url"],
+            thumbnail_url=video["snippet"]["thumbnails"]["medium"]["url"],
             url=f'https://www.youtube.com/watch?v={video["id"]}',
             channel_id=video["snippet"]["channelId"],
             channel_url=f'https://www.youtube.com/channel/{video["snippet"]["channelId"]}',
