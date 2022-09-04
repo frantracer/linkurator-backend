@@ -288,3 +288,29 @@ def test_add_two_items_in_bulk(item_repo: MongoDBItemRepository):
 
 def test_add_empty_list_of_items_raises_no_error(item_repo: MongoDBItemRepository):
     item_repo.add_bulk([])
+
+
+def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepository):
+    item1 = Item(name="item1",
+                 description="",
+                 uuid=uuid.UUID("e1f898c2-bcfb-435a-97c0-9f462f73e95b"),
+                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
+                 url=utils.parse_url('https://72e47bdc.com'),
+                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                 published_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc),
+                 created_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc),
+                 updated_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc))
+
+    item_repo.add(item1)
+
+    found_items = item_repo.get_items_created_before(date=datetime(2000, 1, 1, 0, 0, 11, tzinfo=timezone.utc), limit=1)
+    assert item1.uuid in [item.uuid for item in found_items]
+
+    found_items = item_repo.get_items_created_before(date=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc), limit=1)
+    assert item1.uuid not in [item.uuid for item in found_items]
+
+    found_items = item_repo.get_items_created_before(date=datetime(2000, 1, 1, 0, 0, 9, tzinfo=timezone.utc), limit=1)
+    assert item1.uuid not in [item.uuid for item in found_items]
+
+    found_items = item_repo.get_items_created_before(date=datetime(2000, 1, 1, 0, 0, 11, tzinfo=timezone.utc), limit=0)
+    assert len(found_items) == 0

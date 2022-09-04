@@ -98,6 +98,13 @@ class MongoDBItemRepository(ItemRepository):
             .sort('created_at', pymongo.DESCENDING)
         return [MongoDBItem(**item).to_domain_item() for item in items]
 
+    def get_items_created_before(self, date: datetime, limit: int) -> List[Item]:
+        if limit <= 0:
+            return []
+        collection = self._item_collection()
+        items: Cursor[Any] = collection.find({'created_at': {'$lt': date}}).limit(limit)
+        return [MongoDBItem(**item).to_domain_item() for item in items]
+
     def find(self, item: Item) -> Optional[Item]:
         collection = self._item_collection()
         db_item: Optional[Dict] = collection.find_one({'url': item.url})

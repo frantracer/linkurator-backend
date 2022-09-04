@@ -31,6 +31,10 @@ class ItemRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def get_items_created_before(self, date: datetime, limit: int) -> List[Item]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def find(self, item: Item) -> Optional[Item]:
         raise NotImplementedError
 
