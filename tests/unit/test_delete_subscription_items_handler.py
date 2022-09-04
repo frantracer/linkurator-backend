@@ -5,6 +5,7 @@ from uuid import UUID
 import pytest
 
 from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
+from linkurator_core.application.exceptions import SubscriptionNotFoundError
 from linkurator_core.common import utils
 from linkurator_core.domain.item import Item
 from linkurator_core.domain.item_repository import ItemRepository
@@ -84,4 +85,32 @@ def test_user_requires_to_be_admin_to_delete_subscription_items():
     with pytest.raises(PermissionError):
         handler.handle(
             user_id=UUID('f12c465f-4aa3-4e1f-ba04-389791080c6a'),
+            subscription_id=UUID('0a46b804-a370-480b-b64e-c2079aaaa64b'))
+
+
+def test_delete_items_handler_raises_exception_if_subscription_does_not_exist():
+    user_repo_mock = MagicMock(spec=UserRepository)
+    user_repo_mock.get.return_value = User.new(
+        uuid=UUID('1ae708ad-0cf8-4212-9bb7-a7aeb6440546'),
+        first_name='John',
+        last_name='Doe',
+        email='john@doe.com',
+        avatar_url=utils.parse_url('https://avatars0.githubusercontent.com/u/1234?v=4'),
+        locale='en',
+        google_refresh_token=None,
+        is_admin=True)
+
+    subscription_repo_mock = MagicMock(spec=SubscriptionRepository)
+    subscription_repo_mock.get.return_value = None
+
+    item_repo_mock = MagicMock(spec=ItemRepository)
+
+    handler = DeleteSubscriptionItemsHandler(
+        user_repository=user_repo_mock,
+        subscription_repository=subscription_repo_mock,
+        item_repository=item_repo_mock)
+
+    with pytest.raises(SubscriptionNotFoundError):
+        handler.handle(
+            user_id=UUID('1ae708ad-0cf8-4212-9bb7-a7aeb6440546'),
             subscription_id=UUID('0a46b804-a370-480b-b64e-c2079aaaa64b'))

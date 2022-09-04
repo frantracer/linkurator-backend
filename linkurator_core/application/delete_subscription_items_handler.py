@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
+from linkurator_core.application.exceptions import SubscriptionNotFoundError
 from linkurator_core.domain.item_repository import ItemRepository
 from linkurator_core.domain.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.user_repository import UserRepository
@@ -21,8 +22,7 @@ class DeleteSubscriptionItemsHandler:
 
         subscription = self.subscription_repository.get(subscription_id)
         if subscription is None:
-            logging.error("Cannot delete items of subscription %s because it does not exist", subscription_id)
-            return
+            raise SubscriptionNotFoundError(subscription_id)
 
         items = self.item_repository.get_by_subscription_id(subscription_id)
         for item in items:

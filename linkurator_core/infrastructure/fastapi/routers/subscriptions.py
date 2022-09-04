@@ -10,6 +10,7 @@ from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
+from linkurator_core.application.exceptions import SubscriptionNotFoundError
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.domain.session import Session
@@ -125,5 +126,7 @@ def get_router(
             return Response(status_code=http.HTTPStatus.NO_CONTENT)
         except PermissionError:
             return Response(status_code=http.HTTPStatus.FORBIDDEN)
+        except SubscriptionNotFoundError:
+            return Response(status_code=http.HTTPStatus.NOT_FOUND)
 
     return router
