@@ -7,7 +7,7 @@ RUN apt update  \
 WORKDIR /app
 
 COPY ./linkurator_core ./linkurator_core
-COPY ./scripts ./scripts
+COPY scripts ./scripts
 COPY ./tests ./tests
 COPY ./requirements.txt ./requirements.txt
 COPY ./.pylintrc ./.pylintrc
