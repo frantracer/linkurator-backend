@@ -16,6 +16,7 @@ class FindOutdatedSubscriptionsHandler:
         self.event_bus = event_bus
 
     def handle(self):
+        logging.info("Finding outdated subscriptions")
         datetime_limit = datetime.now(tz=timezone.utc) - timedelta(days=1)
         outdated_subscriptions = self.subscription_repository.find_latest_scan_before(datetime_limit)
 
