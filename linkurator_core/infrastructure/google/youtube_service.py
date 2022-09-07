@@ -183,13 +183,15 @@ class YoutubeService(SubscriptionService):
                                   for playlist_item in playlist_items
                                   if playlist_item["snippet"]["publishedAt"] >= from_date.isoformat()]
 
-            videos_response_json, videos_status_code = await YoutubeService._request_youtube_videos(
-                api_key, filtered_video_ids)
-            if videos_status_code != 200:
-                raise Exception(f"Error getting youtube videos: {videos_response_json}")
+            youtube_videos = []
+            if len(filtered_video_ids) > 0:
+                videos_response_json, videos_status_code = await YoutubeService._request_youtube_videos(
+                    api_key, filtered_video_ids)
+                if videos_status_code != 200:
+                    raise Exception(f"Error getting youtube videos: {videos_response_json}")
 
-            youtube_videos = list(videos_response_json["items"])
-            youtube_videos.sort(key=lambda i: i["id"])
+                youtube_videos = list(videos_response_json["items"])
+                youtube_videos.sort(key=lambda i: i["id"])
 
             videos = videos + [YoutubeVideo.from_dict(v) for v in youtube_videos]
 
