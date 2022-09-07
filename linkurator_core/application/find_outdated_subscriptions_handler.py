@@ -17,7 +17,7 @@ class FindOutdatedSubscriptionsHandler:
 
     def handle(self):
         logging.info("Finding outdated subscriptions")
-        datetime_limit = datetime.now(tz=timezone.utc) - timedelta(days=1)
+        datetime_limit = datetime.now(tz=timezone.utc) - timedelta(hours=2)
         outdated_subscriptions = self.subscription_repository.find_latest_scan_before(datetime_limit)
 
         for subscription in outdated_subscriptions:
