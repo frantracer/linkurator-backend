@@ -172,6 +172,9 @@ class YoutubeService(SubscriptionService):
         while True:
             playlist_response_json, playlist_status_code = await YoutubeService._request_youtube_playlist_items(
                 api_key, playlist_id, next_page_token)
+            if playlist_status_code == 404:
+                logging.debug("Playlist %s not found", playlist_id)
+                break
             if playlist_status_code != 200:
                 raise Exception(f"Error getting youtube playlist items: {playlist_response_json}")
 
