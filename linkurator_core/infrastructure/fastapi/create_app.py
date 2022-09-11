@@ -8,7 +8,9 @@ from fastapi.applications import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from linkurator_core.application.assign_subscription_to_user_topic_handler import AssignSubscriptionToTopicHandler
+from linkurator_core.application.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.create_topic_handler import CreateTopicHandler
+from linkurator_core.application.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
@@ -22,7 +24,7 @@ from linkurator_core.application.unassign_subscription_from_user_topic_handler i
 from linkurator_core.application.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.session import Session
-from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics
+from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
@@ -42,6 +44,8 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_topic_items_handler: GetTopicItemsHandler
     delete_topic_handler: DeleteUserTopicHandler
     update_topic_handler: UpdateTopicHandler
+    create_item_interaction_handler: CreateItemInteractionHandler
+    delete_item_interaction_handler: DeleteItemInteractionHandler
 
 
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
@@ -92,6 +96,12 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             get_subscription_items_handler=handlers.get_subscription_items_handler,
             delete_subscription_items_handler=handlers.delete_subscription_items_handler),
         prefix="/subscriptions")
+    app.include_router(
+        items.get_router(
+            get_session=get_current_session,
+            create_item_interaction_handler=handlers.create_item_interaction_handler,
+            delete_item_interaction_handler=handlers.delete_item_interaction_handler),
+        prefix="/items")
 
     app.add_middleware(
         CORSMiddleware,

@@ -7,7 +7,9 @@ import os
 from fastapi.applications import FastAPI
 
 from linkurator_core.application.assign_subscription_to_user_topic_handler import AssignSubscriptionToTopicHandler
+from linkurator_core.application.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.create_topic_handler import CreateTopicHandler
+from linkurator_core.application.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
@@ -83,7 +85,12 @@ def app_handlers() -> Handlers:
         delete_topic_handler=DeleteUserTopicHandler(topic_repository=topic_repository),
         get_topic_handler=GetTopicHandler(topic_repository=topic_repository),
         unassign_subscription_from_topic_handler=UnassignSubscriptionFromUserTopicHandler(
-            topic_repository=topic_repository)
+            topic_repository=topic_repository),
+        create_item_interaction_handler=CreateItemInteractionHandler(
+            item_repository=item_repository,
+            interaction_repository=interaction_repository),
+        delete_item_interaction_handler=DeleteItemInteractionHandler(
+            interaction_repository=interaction_repository)
     )
 
 
