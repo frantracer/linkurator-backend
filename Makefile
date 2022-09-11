@@ -3,7 +3,8 @@ SHELL := /bin/bash
 DOMAIN := api.linkurator.com
 
 DOCKER_IMAGE := frantracer/linkurator-api
-DOCKER_CONTAINER_APP := linkurator-api
+DOCKER_CONTAINER_API := linkurator-api
+DOCKER_CONTAINER_PROCESSOR := linkurator-processor
 DOCKER_CONTAINER_LINTING := linkurator-api-check-linting
 DOCKER_CONTAINER_TEST := linkurator-test
 
@@ -15,13 +16,20 @@ docker-push: decrypt-secrets
 	@docker login -u frantracer -p $(shell cat ./secrets/docker_token.txt)
 	docker push $(DOCKER_IMAGE)
 
-docker-run: check-vault-pass-is-defined
-	@docker rm -f $(DOCKER_CONTAINER_APP)
+docker-run-api: check-vault-pass-is-defined
+	@docker rm -f $(DOCKER_CONTAINER_API)
 	@docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
-		--name $(DOCKER_CONTAINER_APP) --network host -d $(DOCKER_IMAGE)
+		-e 'LINKURATOR_ENVIRONMENT=$(LINKURATOR_ENVIRONMENT)'\
+		--name $(DOCKER_CONTAINER_API) --network host -d $(DOCKER_IMAGE) make run-api
+
+docker-run-processor: check-vault-pass-is-defined
+	@docker rm -f $(DOCKER_CONTAINER_PROCESSOR)
+	@docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
+		-e 'LINKURATOR_ENVIRONMENT=$(LINKURATOR_ENVIRONMENT)'\
+		--name $(DOCKER_CONTAINER_PROCESSOR) --network host -d $(DOCKER_IMAGE) make run-processor
 
 docker-stop:
-	docker stop $(DOCKER_CONTAINER_APP)
+	docker stop $(DOCKER_CONTAINER_API) $(DOCKER_CONTAINER_PROCESSOR)
 
 docker-check-linting:
 	docker rm -f $(DOCKER_CONTAINER_LINTING)
@@ -35,11 +43,14 @@ docker-test: docker-run-external-services
 	docker run --name $(DOCKER_CONTAINER_TEST) --network host $(DOCKER_IMAGE) make test
 
 deploy: check-vault-pass-is-defined check-ssh-connection
-	ssh root@$(SSH_IP_ADDRESS) "docker stop $(DOCKER_CONTAINER_APP)"
-	ssh root@$(SSH_IP_ADDRESS) "docker rm $(DOCKER_CONTAINER_APP)"
+	ssh root@$(SSH_IP_ADDRESS) "docker rm -f $(DOCKER_CONTAINER_API) $(DOCKER_CONTAINER_PROCESSOR)"
 	ssh root@$(SSH_IP_ADDRESS) "docker pull $(DOCKER_IMAGE)"
 	@ssh root@$(SSH_IP_ADDRESS) "docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
-		-e 'LINKURATOR_ENVIRONMENT=PRODUCTION' --name $(DOCKER_CONTAINER_APP) --network host -d $(DOCKER_IMAGE)"
+		-e 'LINKURATOR_ENVIRONMENT=PRODUCTION' --name $(DOCKER_CONTAINER_API) --network host -d $(DOCKER_IMAGE) \
+		make run-api"
+	@ssh root@$(SSH_IP_ADDRESS) "docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
+		-e 'LINKURATOR_ENVIRONMENT=PRODUCTION' --name $(DOCKER_CONTAINER_PROCESSOR) --network host -d $(DOCKER_IMAGE) \
+		make run-processor"
 	ssh root@$(SSH_IP_ADDRESS) "docker image prune -a -f"
 	@echo "Latest image is deployed"
 
@@ -85,26 +96,42 @@ decrypt-secrets: create-vault-pass
 	mv -f secrets/docker_token.txt.enc secrets/docker_token.txt
 	mv -f secrets/google_api_key.txt.enc secrets/google_api_key.txt
 
-link-config: decrypt-secrets
+link-config:
 	@if [ "${LINKURATOR_ENVIRONMENT}" = "PRODUCTION" ]; then \
-		ln -sfn app_config_production.ini secrets/app_config.ini; \
+		make link-prod-config; \
 	elif [ "${LINKURATOR_ENVIRONMENT}" = "DEVELOPMENT" ]; then \
-		ln -sfn ../config/app_config_develop.ini secrets/app_config.ini; \
+		make link-dev-config; \
 	else \
 		echo "LINKURATOR_ENVIRONMENT environment variable must be set to PRODUCTION or DEVELOPMENT"; \
 		exit 1; \
 	fi
+
+link-dev-config: decrypt-secrets
+	ln -sfn ../config/app_config_develop.ini secrets/app_config.ini
+
+link-prod-config: decrypt-secrets
+	ln -sfn app_config_production.ini secrets/app_config.ini
 
 create-vault-pass: check-vault-pass-is-defined
 	@mkdir -p secrets
 	@echo -n $(LINKURATOR_VAULT_PASSWORD) > secrets/vault_password.txt
 	@echo "Vault password stored in secrets/vault_password.txt"
 
-run: link-config
-	./venv/bin/python3.8 -m linkurator_core
+run-api: link-config
+	@if [ "${LINKURATOR_ENVIRONMENT}" = "DEVELOPMENT" ]; then \
+    	./venv/bin/python3.8 -m linkurator_core --reload --workers 1 --debug --without-gunicorn; \
+	else \
+		./venv/bin/python3.8 -m linkurator_core; \
+	fi
 
-dev-run: link-config
-	./venv/bin/python3.8 -m linkurator_core --reload --workers 1 --debug --without-gunicorn
+run-processor: link-config
+	PYTHONPATH='.' ./venv/bin/python3.8 ./linkurator_core/processor.py
+
+dev-run-api:
+	LINKURATOR_ENVIRONMENT=DEVELOPMENT LINKURATOR_VAULT_PASSWORD=$$(cat ./secrets/vault_password.txt) make run-api
+
+dev-run-processor:
+	LINKURATOR_ENVIRONMENT=DEVELOPMENT LINKURATOR_VAULT_PASSWORD=$$(cat ./secrets/vault_password.txt) make run-processor
 
 check-linting: mypy pylint
 
