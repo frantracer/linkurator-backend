@@ -6,6 +6,8 @@ from fastapi.testclient import TestClient
 import pytest
 
 from linkurator_core.application.exceptions import SubscriptionNotFoundError, TopicNotFoundError
+from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
+from linkurator_core.application.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.common import utils
 from linkurator_core.domain.item import Item
 from linkurator_core.domain.session import Session
@@ -36,7 +38,9 @@ def dummy_handlers() -> Handlers:
         assign_subscription_to_topic_handler=MagicMock(),
         delete_topic_handler=MagicMock(),
         unassign_subscription_from_topic_handler=MagicMock(),
-        update_topic_handler=MagicMock()
+        update_topic_handler=MagicMock(),
+        create_item_interaction_handler=MagicMock(),
+        delete_item_interaction_handler=MagicMock(),
     )
 
 
@@ -98,8 +102,8 @@ def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
                      url=utils.parse_url('https://ae1b82ee.com'),
                      thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
                      published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    dummy_get_subscription_items_handler = MagicMock()
-    dummy_get_subscription_items_handler.handle.return_value = ([item1], 1)
+    dummy_get_subscription_items_handler = MagicMock(spec=GetSubscriptionItemsHandler)
+    dummy_get_subscription_items_handler.handle.return_value = ([(item1, [])], 1)
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
     client = TestClient(create_app_from_handlers(handlers))
@@ -201,7 +205,7 @@ def test_get_topic_returns_404_when_topic_not_found(handlers: Handlers) -> None:
 
 
 def test_get_topic_items_returns_200(handlers: Handlers) -> None:
-    dummy_handler = MagicMock()
+    dummy_handler = MagicMock(spec=GetTopicItemsHandler)
     item1 = Item.new(
         uuid=uuid.UUID("1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac"),
         name="item1",
@@ -210,7 +214,7 @@ def test_get_topic_items_returns_200(handlers: Handlers) -> None:
         url=utils.parse_url('https://ae1b82ee.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    dummy_handler.handle.return_value = ([item1], 1)
+    dummy_handler.handle.return_value = ([(item1, [])], 1)
     handlers.get_topic_items_handler = dummy_handler
 
     client = TestClient(create_app_from_handlers(handlers))

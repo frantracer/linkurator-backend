@@ -74,7 +74,8 @@ def app_handlers() -> Handlers:
         get_user_topics_handler=GetUserTopicsHandler(topic_repo=topic_repository, user_repo=user_repository),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
         get_topic_items_handler=GetTopicItemsHandler(topic_repository=topic_repository,
-                                                     item_repository=item_repository),
+                                                     item_repository=item_repository,
+                                                     interaction_repository=interaction_repository),
         assign_subscription_to_topic_handler=AssignSubscriptionToTopicHandler(
             subscription_repository=subscription_repository,
             topic_repository=topic_repository,
