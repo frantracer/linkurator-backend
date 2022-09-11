@@ -10,5 +10,9 @@ class SubscriptionNotFoundError(Exception):
     pass
 
 
+class ItemNotFoundError(Exception):
+    pass
+
+
 class DuplicatedKeyError(Exception):
     pass
