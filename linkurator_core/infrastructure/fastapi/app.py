@@ -24,6 +24,7 @@ from linkurator_core.infrastructure.config.google_secrets import GoogleClientSec
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+from linkurator_core.infrastructure.mongodb.interaction_repository import MongoDBInteractionRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
@@ -54,12 +55,15 @@ def app_handlers() -> Handlers:
     topic_repository = MongoDBTopicRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
+    interaction_repository = MongoDBInteractionRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password)
 
     return Handlers(
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
         google_client=account_service,
         get_user_subscriptions=GetUserSubscriptionsHandler(subscription_repository, user_repository),
-        get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository),
+        get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository, interaction_repository),
         delete_subscription_items_handler=DeleteSubscriptionItemsHandler(
             item_repository=item_repository,
             subscription_repository=subscription_repository,
