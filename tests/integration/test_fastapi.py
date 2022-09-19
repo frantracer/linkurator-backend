@@ -39,6 +39,7 @@ def dummy_handlers() -> Handlers:
         delete_topic_handler=MagicMock(),
         unassign_subscription_from_topic_handler=MagicMock(),
         update_topic_handler=MagicMock(),
+        get_item_handler=MagicMock(),
         create_item_interaction_handler=MagicMock(),
         delete_item_interaction_handler=MagicMock(),
     )

@@ -6,12 +6,16 @@ from fastapi import APIRouter, Depends, Response
 
 from linkurator_core.application.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.delete_item_interaction_handler import DeleteItemInteractionHandler
+from linkurator_core.application.exceptions import ItemNotFoundError
+from linkurator_core.application.get_item_handler import GetItemHandler
 from linkurator_core.domain.interaction import InteractionType, Interaction
 from linkurator_core.domain.session import Session
+from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 
 
 def get_router(
         get_session: Callable,
+        get_item_handler: GetItemHandler,
         create_item_interaction_handler: CreateItemInteractionHandler,
         delete_item_interaction_handler: DeleteItemInteractionHandler,
 ) -> APIRouter:
@@ -50,5 +54,23 @@ def get_router(
         delete_item_interaction_handler.handle(session.user_id, item_id, interaction_type)
 
         return Response(status_code=http.HTTPStatus.NO_CONTENT)
+
+    @router.get("/{item_id}", response_model=ItemSchema,
+                responses={200: {"model": ItemSchema}, 404: {"model": None}})
+    async def get_item(
+            item_id: UUID,
+            session: Optional[Session] = Depends(get_session)
+    ) -> Any:
+        """
+        Get an item
+        """
+        if session is None:
+            return Response(status_code=http.HTTPStatus.UNAUTHORIZED)
+
+        try:
+            item_detail = get_item_handler.handle(user_id=session.user_id, item_id=item_id)
+            return ItemSchema.from_domain_item(item_detail.item, item_detail.interactions)
+        except ItemNotFoundError:
+            return Response(status_code=http.HTTPStatus.NOT_FOUND)
 
     return router

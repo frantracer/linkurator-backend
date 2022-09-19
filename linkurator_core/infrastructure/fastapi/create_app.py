@@ -13,6 +13,7 @@ from linkurator_core.application.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.application.get_item_handler import GetItemHandler
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.get_topic_handler import GetTopicHandler
 from linkurator_core.application.get_topic_items_handler import GetTopicItemsHandler
@@ -44,6 +45,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_topic_items_handler: GetTopicItemsHandler
     delete_topic_handler: DeleteUserTopicHandler
     update_topic_handler: UpdateTopicHandler
+    get_item_handler: GetItemHandler
     create_item_interaction_handler: CreateItemInteractionHandler
     delete_item_interaction_handler: DeleteItemInteractionHandler
 
@@ -99,6 +101,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
     app.include_router(
         items.get_router(
             get_session=get_current_session,
+            get_item_handler=handlers.get_item_handler,
             create_item_interaction_handler=handlers.create_item_interaction_handler,
             delete_item_interaction_handler=handlers.delete_item_interaction_handler),
         prefix="/items")

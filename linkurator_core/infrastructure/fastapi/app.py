@@ -12,6 +12,7 @@ from linkurator_core.application.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.application.get_item_handler import GetItemHandler
 from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.get_topic_handler import GetTopicHandler
 from linkurator_core.application.get_topic_items_handler import GetTopicItemsHandler
@@ -73,9 +74,10 @@ def app_handlers() -> Handlers:
         get_user_profile_handler=GetUserProfileHandler(user_repository),
         get_user_topics_handler=GetUserTopicsHandler(topic_repo=topic_repository, user_repo=user_repository),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
-        get_topic_items_handler=GetTopicItemsHandler(topic_repository=topic_repository,
-                                                     item_repository=item_repository,
-                                                     interaction_repository=interaction_repository),
+        get_topic_items_handler=GetTopicItemsHandler(
+            topic_repository=topic_repository,
+            item_repository=item_repository,
+            interaction_repository=interaction_repository),
         assign_subscription_to_topic_handler=AssignSubscriptionToTopicHandler(
             subscription_repository=subscription_repository,
             topic_repository=topic_repository,
@@ -87,6 +89,9 @@ def app_handlers() -> Handlers:
         get_topic_handler=GetTopicHandler(topic_repository=topic_repository),
         unassign_subscription_from_topic_handler=UnassignSubscriptionFromUserTopicHandler(
             topic_repository=topic_repository),
+        get_item_handler=GetItemHandler(
+            item_repository=item_repository,
+            interaction_repository=interaction_repository),
         create_item_interaction_handler=CreateItemInteractionHandler(
             item_repository=item_repository,
             interaction_repository=interaction_repository),
