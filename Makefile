@@ -136,7 +136,7 @@ docker-test: docker-run-external-services
 
 docker-lint:
 	docker rm -f $(DOCKER_CONTAINER_LINTING)
-	docker run --name $(DOCKER_CONTAINER_LINTING) --pull never --network host $(DOCKER_IMAGE) make check-linting
+	docker run --name $(DOCKER_CONTAINER_LINTING) --pull never --network host $(DOCKER_IMAGE) make lint
 
 docker-run-external-services:
 	docker-compose up -d
