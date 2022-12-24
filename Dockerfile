@@ -15,7 +15,7 @@ COPY ./mypy.ini ./mypy.ini
 COPY ./Makefile ./Makefile
 COPY ./config ./config
 
-RUN make setup
+RUN make install
 
 EXPOSE 9000
 

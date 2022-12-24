@@ -11,7 +11,7 @@ jobs:
       - name: Build Image
         run: make docker-build
       - name: Check linting
-        run: make docker-check-linting
+        run: make docker-lint
       - name: Run tests
         run: make docker-test
       # Only deploy main branch
