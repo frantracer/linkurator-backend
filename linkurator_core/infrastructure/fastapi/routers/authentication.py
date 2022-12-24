@@ -14,7 +14,7 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 def get_router(validate_token_handler: ValidateTokenHandler, google_client: GoogleAccountService) -> APIRouter:
     router = APIRouter()
 
-    @router.route("/login", methods=["GET", "POST"])
+    @router.get("/login")
     async def login(request: Request) -> Any:
         """
         Login endpoint
