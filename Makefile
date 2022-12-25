@@ -51,9 +51,6 @@ check-vault-pass-is-defined:
 
 encrypt-secrets: create-vault-pass
 	cp secrets/client_secret.json config/client_secret.json.enc
-	cp secrets/cert.pem config/cert.pem.enc
-	cp secrets/chain.pem config/chain.pem.enc
-	cp secrets/privkey.pem config/privkey.pem.enc
 	cp secrets/app_config_production.ini config/app_config_production.ini.enc
 	cp secrets/docker_token.txt config/docker_token.txt.enc
 	cp secrets/google_api_key.txt config/google_api_key.txt.enc
@@ -65,9 +62,6 @@ decrypt-secrets: create-vault-pass
 	ansible-vault decrypt --vault-password-file=secrets/vault_password.txt secrets/*.enc
 
 	mv -f secrets/client_secret.json.enc secrets/client_secret.json
-	mv -f secrets/cert.pem.enc secrets/cert.pem
-	mv -f secrets/chain.pem.enc secrets/chain.pem
-	mv -f secrets/privkey.pem.enc secrets/privkey.pem
 	mv -f secrets/app_config_production.ini.enc secrets/app_config_production.ini
 	mv -f secrets/docker_token.txt.enc secrets/docker_token.txt
 	mv -f secrets/google_api_key.txt.enc secrets/google_api_key.txt
@@ -155,23 +149,13 @@ check-ssh-connection:
 	@if [ -z "${SSH_IP_ADDRESS}" ]; then echo "SSH_IP_ADDRESS environment variable is not set"; exit 1; fi
 	@ssh root@$(SSH_IP_ADDRESS) "echo Connection OK"
 
-run-remote-certbot: check-ssh-connection
-	@echo "Running certbot"
-	@ssh root@$(SSH_IP_ADDRESS) "certbot certonly --standalone -d $(DOMAIN)"
-	@echo "Certbot finished"
-
-copy-remote-certs: check-ssh-connection
-	@echo "Copying certs"
-	@scp root@$(SSH_IP_ADDRESS):/etc/letsencrypt/live/$(DOMAIN)/chain.pem secrets/chain.pem
-	@scp root@$(SSH_IP_ADDRESS):/etc/letsencrypt/live/$(DOMAIN)/privkey.pem secrets/privkey.pem
-	@scp root@$(SSH_IP_ADDRESS):/etc/letsencrypt/live/$(DOMAIN)/cert.pem secrets/cert.pem
-	@echo "Certs copied"
-
-renew-certs: run-remote-certbot copy-remote-certs
-
 provision: check-ssh-connection
 	@echo "Provisioning"
-	@ssh root@$(SSH_IP_ADDRESS) "apt update && apt install -y docker.io"
+	@ssh root@$(SSH_IP_ADDRESS) "apt update && apt install -y docker.io nginx certbot python3-certbot-nginx"
+	@ssh root@$(SSH_IP_ADDRESS) "rm -rf /etc/nginx/sites-enabled/default"
+	@scp config/linkurator-api.conf root@$(SSH_IP_ADDRESS):/etc/nginx/sites-enabled/linkurator-api.conf
+	@ssh root@$(SSH_IP_ADDRESS) "certbot --nginx -d $(SSH_IP_ADDRESS)"
+	@ssh root@$(SSH_IP_ADDRESS) "systemctl restart nginx"
 
 ####################
 # Deploy

@@ -78,10 +78,7 @@ class ApiServer:
                  '--workers', f"{self.workers}",
                  '--worker-class', 'uvicorn.workers.UvicornWorker',
                  '--bind', f"0.0.0.0:{self.port}",
-                 '--access-logfile', '-',
-                 '--keyfile', 'secrets/privkey.pem',
-                 '--certfile', 'secrets/cert.pem',
-                 '--ca-certs', 'secrets/chain.pem']))
+                 '--access-logfile', '-']))
 
             await task.wait()
         else:

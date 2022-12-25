@@ -2,7 +2,7 @@
 
 Linkurator API allows you to explore and categorise your YouTube subscriptions.
 
-The API is currently available at https://api.linkurator.com:9000/docs
+The API is currently available at https://api.linkurator.com/docs
 
 # Setup
 
