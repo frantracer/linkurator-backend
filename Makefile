@@ -154,7 +154,7 @@ provision: check-ssh-connection
 	@ssh root@$(SSH_IP_ADDRESS) "apt update && apt install -y docker.io nginx certbot python3-certbot-nginx"
 	@ssh root@$(SSH_IP_ADDRESS) "rm -rf /etc/nginx/sites-enabled/default"
 	@scp config/linkurator-api.conf root@$(SSH_IP_ADDRESS):/etc/nginx/sites-enabled/linkurator-api.conf
-	@ssh root@$(SSH_IP_ADDRESS) "certbot --nginx -d $(SSH_IP_ADDRESS)"
+	@ssh root@$(SSH_IP_ADDRESS) "certbot --nginx -d $(SSH_IP_ADDRESS) -n --redirect"
 	@ssh root@$(SSH_IP_ADDRESS) "systemctl restart nginx"
 
 ####################
