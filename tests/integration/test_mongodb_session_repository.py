@@ -5,8 +5,8 @@ import uuid
 from math import floor
 import pytest
 
-from linkurator_core.domain.session import Session
-from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository, TokenAlreadyExists
+from linkurator_core.common.domain.session import Session
+from linkurator_core.users.infrastructure.session_repository import MongoDBSessionRepository, TokenAlreadyExists
 
 
 @pytest.fixture(name="session_repo", scope="session")

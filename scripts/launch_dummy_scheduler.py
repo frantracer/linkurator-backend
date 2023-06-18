@@ -1,8 +1,7 @@
 import asyncio
-
 from time import gmtime, strftime
 
-from linkurator_core.infrastructure.asyncio.scheduler import TaskScheduler
+from linkurator_core.common.infrastructure.asyncio_scheduler import TaskScheduler
 
 
 async def main():

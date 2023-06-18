@@ -1,19 +1,20 @@
+import uuid
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
-import uuid
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
-from linkurator_core.application.exceptions import SubscriptionNotFoundError, TopicNotFoundError
-from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
-from linkurator_core.application.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.app import create_app_from_handlers
+from linkurator_core.app_handlers import Handlers
 from linkurator_core.common import utils
-from linkurator_core.domain.item import Item
-from linkurator_core.domain.session import Session
-from linkurator_core.domain.topic import Topic
-from linkurator_core.domain.user import User
-from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
+from linkurator_core.common.domain.exceptions import SubscriptionNotFoundError, TopicNotFoundError
+from linkurator_core.common.domain.item import Item
+from linkurator_core.common.domain.session import Session
+from linkurator_core.interactions.application.get_subscription_items_handler import GetSubscriptionItemsHandler
+from linkurator_core.topics.application.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.topics.domain.topic import Topic
+from linkurator_core.users.domain.user import User
 
 
 @pytest.fixture(name="handlers")

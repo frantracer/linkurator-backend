@@ -3,11 +3,11 @@ import logging
 import sys
 from datetime import datetime, timezone
 
-from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
-from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
-from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
-from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
-from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
+from linkurator_core.common.infrastructure.mongodb_settings import MongoDBSettings
+from linkurator_core.subscriptions.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
+from linkurator_core.subscriptions.infrastructure.item_repository import MongoDBItemRepository
+from linkurator_core.subscriptions.infrastructure.subscription_repository import MongoDBSubscriptionRepository
+from linkurator_core.users.infrastructure.user_repository import MongoDBUserRepository
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 

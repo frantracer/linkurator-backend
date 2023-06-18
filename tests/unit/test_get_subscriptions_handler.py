@@ -3,9 +3,9 @@ from unittest.mock import MagicMock
 import uuid
 
 from linkurator_core.common import utils
-from linkurator_core.domain.subscription import Subscription
-from linkurator_core.domain.user import User
-from linkurator_core.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
+from linkurator_core.subscriptions.domain.subscription import Subscription
+from linkurator_core.users.domain.user import User
+from linkurator_core.subscriptions.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 
 
 def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_creation_date():

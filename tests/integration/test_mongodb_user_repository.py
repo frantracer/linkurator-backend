@@ -1,17 +1,17 @@
+import uuid
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
+from math import floor
 from unittest import mock
 from unittest.mock import MagicMock
-import uuid
 
-from math import floor
 import pytest
 
 from linkurator_core.common import utils
-from linkurator_core.domain.user import User
-from linkurator_core.domain.user_repository import EmailAlreadyInUse
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
-from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUser, MongoDBUserRepository
+from linkurator_core.common.infrastructure.mongodb_utils import CollectionIsNotInitialized
+from linkurator_core.users.domain.user import User
+from linkurator_core.users.domain.user_repository import EmailAlreadyInUse
+from linkurator_core.users.infrastructure.user_repository import MongoDBUser, MongoDBUserRepository
 
 
 @pytest.fixture(name="user_repo", scope="session")

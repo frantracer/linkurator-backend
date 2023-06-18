@@ -5,8 +5,8 @@ from dataclasses import dataclass
 
 import uvicorn.server  # type: ignore
 
-from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
-from linkurator_core.infrastructure.mongodb.repositories import run_mongodb_migrations
+from linkurator_core.common.infrastructure.mongodb_settings import MongoDBSettings
+from linkurator_core.common.infrastructure.mongodb_utils import run_mongodb_migrations
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -37,7 +37,7 @@ async def main():
                            settings.db.password)
 
     # API
-    api_server = ApiServer(app_path='linkurator_core.infrastructure.fastapi.app:create_app',
+    api_server = ApiServer(app_path='linkurator_core.app:create_app',
                            port=settings.api.port, workers=settings.api.workers, debug=settings.api.debug,
                            reload=settings.api.reload, with_gunicorn=settings.api.with_gunicorn)
 

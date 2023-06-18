@@ -7,14 +7,14 @@ from unittest.mock import AsyncMock, MagicMock, call
 
 import pytest
 
-from linkurator_core.application.subscription_service import SubscriptionService
-from linkurator_core.application.update_subscription_items_handler import UpdateSubscriptionItemsHandler
+from linkurator_core.common.domain.item import Item
+from linkurator_core.common.domain.item_repository import ItemRepository
+from linkurator_core.common.infrastructure.asyncio_utils import run_parallel
 from linkurator_core.common.utils import parse_url
-from linkurator_core.domain.item import Item
-from linkurator_core.domain.item_repository import ItemRepository
-from linkurator_core.domain.subscription import Subscription
-from linkurator_core.domain.subscription_repository import SubscriptionRepository
-from linkurator_core.infrastructure.asyncio.utils import run_parallel
+from linkurator_core.subscriptions.application.update_subscription_items_handler import UpdateSubscriptionItemsHandler
+from linkurator_core.subscriptions.domain.subscription import Subscription
+from linkurator_core.subscriptions.domain.subscription_repository import SubscriptionRepository
+from linkurator_core.subscriptions.domain.subscription_service import SubscriptionService
 
 
 @pytest.mark.asyncio

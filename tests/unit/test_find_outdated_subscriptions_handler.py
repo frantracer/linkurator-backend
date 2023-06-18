@@ -1,10 +1,11 @@
-from unittest.mock import MagicMock
 import uuid
+from unittest.mock import MagicMock
 
-from linkurator_core.application.find_outdated_subscriptions_handler import FindOutdatedSubscriptionsHandler
 from linkurator_core.common import utils
-from linkurator_core.domain.event import SubscriptionBecameOutdatedEvent
-from linkurator_core.domain.subscription import Subscription
+from linkurator_core.common.domain.event import SubscriptionBecameOutdatedEvent
+from linkurator_core.subscriptions.application.find_outdated_subscriptions_handler import \
+    FindOutdatedSubscriptionsHandler
+from linkurator_core.subscriptions.domain.subscription import Subscription
 
 
 def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions():

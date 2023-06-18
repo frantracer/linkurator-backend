@@ -1,16 +1,16 @@
+import uuid
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
+from math import floor
 from unittest import mock
 from unittest.mock import MagicMock
-import uuid
 
-from math import floor
 import pytest
 
 from linkurator_core.common import utils
-from linkurator_core.domain.subscription import Subscription
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
-from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscription, \
+from linkurator_core.common.infrastructure.mongodb_utils import CollectionIsNotInitialized
+from linkurator_core.subscriptions.domain.subscription import Subscription
+from linkurator_core.subscriptions.infrastructure.subscription_repository import MongoDBSubscription, \
     MongoDBSubscriptionRepository
 
 

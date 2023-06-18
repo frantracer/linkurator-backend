@@ -1,11 +1,10 @@
 import argparse
 import asyncio
-
 import sys
 
-from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
-from linkurator_core.infrastructure.google.account_service import GoogleAccountService
-from linkurator_core.infrastructure.google.youtube_service import YoutubeService
+from linkurator_core.common.infrastructure.google_secrets import GoogleClientSecrets
+from linkurator_core.subscriptions.infrastructure.youtube_service import YoutubeService
+from linkurator_core.users.infrastructure.account_service import GoogleAccountService
 
 
 async def main():

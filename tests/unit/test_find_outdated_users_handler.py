@@ -1,10 +1,10 @@
-from unittest.mock import MagicMock
 import uuid
+from unittest.mock import MagicMock
 
-from linkurator_core.application.find_outdated_users_handler import FindOutdatedUsersHandler
 from linkurator_core.common import utils
-from linkurator_core.domain.event import UserSubscriptionsBecameOutdatedEvent
-from linkurator_core.domain.user import User
+from linkurator_core.common.domain.event import UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.users.application.find_outdated_users_handler import FindOutdatedUsersHandler
+from linkurator_core.users.domain.user import User
 
 
 def test_handler_sends_two_events_if_there_are_two_outdated_users():

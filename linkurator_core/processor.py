@@ -2,22 +2,23 @@ import asyncio
 import logging
 import os
 
-from linkurator_core.application.event_handler import EventHandler
-from linkurator_core.application.find_outdated_subscriptions_handler import FindOutdatedSubscriptionsHandler
-from linkurator_core.application.find_outdated_users_handler import FindOutdatedUsersHandler
-from linkurator_core.application.update_subscription_items_handler import UpdateSubscriptionItemsHandler
-from linkurator_core.application.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
-from linkurator_core.domain.event import UserSubscriptionsBecameOutdatedEvent, SubscriptionBecameOutdatedEvent
-from linkurator_core.infrastructure.asyncio.event_bus_service import AsyncioEventBusService
-from linkurator_core.infrastructure.asyncio.scheduler import TaskScheduler
-from linkurator_core.infrastructure.asyncio.utils import run_parallel
-from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
-from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
-from linkurator_core.infrastructure.google.account_service import GoogleAccountService
-from linkurator_core.infrastructure.google.youtube_service import YoutubeService
-from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
-from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
-from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
+from linkurator_core.common.domain.event import UserSubscriptionsBecameOutdatedEvent, SubscriptionBecameOutdatedEvent
+from linkurator_core.common.infrastructure.asyncio_event_bus_service import AsyncioEventBusService
+from linkurator_core.common.infrastructure.asyncio_scheduler import TaskScheduler
+from linkurator_core.common.infrastructure.asyncio_utils import run_parallel
+from linkurator_core.common.infrastructure.google_secrets import GoogleClientSecrets
+from linkurator_core.common.infrastructure.mongodb_settings import MongoDBSettings
+from linkurator_core.event_handler import EventHandler
+from linkurator_core.subscriptions.application.find_outdated_subscriptions_handler import \
+    FindOutdatedSubscriptionsHandler
+from linkurator_core.subscriptions.application.update_subscription_items_handler import UpdateSubscriptionItemsHandler
+from linkurator_core.subscriptions.application.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
+from linkurator_core.subscriptions.infrastructure.item_repository import MongoDBItemRepository
+from linkurator_core.subscriptions.infrastructure.subscription_repository import MongoDBSubscriptionRepository
+from linkurator_core.subscriptions.infrastructure.youtube_service import YoutubeService
+from linkurator_core.users.application.find_outdated_users_handler import FindOutdatedUsersHandler
+from linkurator_core.users.infrastructure.account_service import GoogleAccountService
+from linkurator_core.users.infrastructure.user_repository import MongoDBUserRepository
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 

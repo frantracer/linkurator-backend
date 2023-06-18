@@ -1,16 +1,16 @@
+import uuid
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
+from math import floor
 from unittest import mock
 from unittest.mock import MagicMock
-import uuid
 
-from math import floor
 import pytest
 
-from linkurator_core.application.exceptions import DuplicatedKeyError
-from linkurator_core.domain.topic import Topic
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
-from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopic, MongoDBTopicRepository
+from linkurator_core.common.domain.exceptions import DuplicatedKeyError
+from linkurator_core.common.infrastructure.mongodb_utils import CollectionIsNotInitialized
+from linkurator_core.topics.domain.topic import Topic
+from linkurator_core.topics.infrastructure.mongodb_topic_repository import MongoDBTopic, MongoDBTopicRepository
 
 
 @pytest.fixture(name="topic_repo", scope="session")

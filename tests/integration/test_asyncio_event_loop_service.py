@@ -1,11 +1,11 @@
-from unittest.mock import AsyncMock
 import uuid
+from unittest.mock import AsyncMock
 
 import pytest
 
-from linkurator_core.domain.event import UserSubscriptionsBecameOutdatedEvent
-from linkurator_core.infrastructure.asyncio.event_bus_service import AsyncioEventBusService
-from linkurator_core.infrastructure.asyncio.utils import run_parallel, run_sequence, wait_until
+from linkurator_core.common.domain.event import UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.common.infrastructure.asyncio_event_bus_service import AsyncioEventBusService
+from linkurator_core.common.infrastructure.asyncio_utils import run_parallel, run_sequence, wait_until
 
 
 @pytest.mark.asyncio

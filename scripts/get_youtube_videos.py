@@ -2,8 +2,8 @@ import argparse
 import asyncio
 from datetime import datetime
 
-from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
-from linkurator_core.infrastructure.google.youtube_service import YoutubeService
+from linkurator_core.common.infrastructure.google_secrets import GoogleClientSecrets
+from linkurator_core.subscriptions.infrastructure.youtube_service import YoutubeService
 
 
 async def main():

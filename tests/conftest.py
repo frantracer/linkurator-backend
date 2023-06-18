@@ -3,7 +3,7 @@ from ipaddress import IPv4Address
 
 import pytest
 
-from linkurator_core.infrastructure.mongodb.repositories import run_mongodb_migrations
+from linkurator_core.common.infrastructure.mongodb_utils import run_mongodb_migrations
 
 
 @pytest.fixture(name="db_name", scope="session", autouse=True)
