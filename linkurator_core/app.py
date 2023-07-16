@@ -67,7 +67,6 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         subscriptions_routes.get_router(
             get_session=get_current_session,
             get_user_subscriptions_handler=handlers.get_user_subscriptions,
-            get_subscription_items_handler=handlers.get_subscription_items_handler,
             delete_subscription_items_handler=handlers.delete_subscription_items_handler
         ),
     )
@@ -76,7 +75,8 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             get_session=get_current_session,
             get_item_handler=handlers.get_item_handler,
             create_item_interaction_handler=handlers.create_item_interaction_handler,
-            delete_item_interaction_handler=handlers.delete_item_interaction_handler
+            delete_item_interaction_handler=handlers.delete_item_interaction_handler,
+            get_subscription_items_handler=handlers.get_subscription_items_handler,
         ),
     )
 
