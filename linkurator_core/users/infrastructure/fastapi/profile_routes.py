@@ -17,7 +17,7 @@ def get_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.get("/", response_model=ProfileSchema)
+    @router.get("/profile", response_model=ProfileSchema)
     async def get_user_profile(
             session: Optional[Session] = Depends(get_session)
     ) -> Any:

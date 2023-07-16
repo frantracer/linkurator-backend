@@ -45,7 +45,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
 
     router = APIRouter()
 
-    @router.get("/{topic_id}/items",
+    @router.get("/topics/{topic_id}/items",
                 response_model=Page[ItemSchema])
     async def items_by_topic(
             request: Request,
@@ -89,7 +89,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
         except TopicNotFoundError:
             return JSONResponse(status_code=http.HTTPStatus.NOT_FOUND, content={'message': 'Topic not found'})
 
-    @router.get("/",
+    @router.get("/topics",
                 response_model=Page[TopicSchema])
     async def get_all_topics(
             request: Request,
@@ -110,7 +110,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
             page_size=len(topics) + 1,
             current_url=request.url)
 
-    @router.get("/{topic_id}",
+    @router.get("/topics/{topic_id}",
                 response_model=TopicSchema)
     async def get_topic(
             topic_id: UUID,
@@ -128,7 +128,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
         except TopicNotFoundError:
             return JSONResponse(status_code=http.HTTPStatus.NOT_FOUND, content={"message": "Topic not found"})
 
-    @router.post("/",
+    @router.post("/topics",
                  responses={404: {"model": None}})
     async def create_topic(
             new_topic: NewTopicSchema,
@@ -149,7 +149,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
 
         return Response(status_code=http.HTTPStatus.CREATED)
 
-    @router.patch("/{topic_id}",
+    @router.patch("/topics/{topic_id}",
                   responses={204: {"model": None}, 404: {"model": None}})
     async def update_topic(
             topic_id: UUID,
@@ -173,7 +173,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
         except SubscriptionNotFoundError:
             return Response(status_code=http.HTTPStatus.NOT_FOUND)
 
-    @router.delete("/{topic_id}",
+    @router.delete("/topics/{topic_id}",
                    responses={404: {"model": None}})
     async def delete_topic(
             topic_id: UUID,
@@ -192,7 +192,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
 
         return Response(status_code=http.HTTPStatus.NO_CONTENT)
 
-    @router.post("/{topic_id}/subscriptions/{subscription_id}",
+    @router.post("/topics/{topic_id}/subscriptions/{subscription_id}",
                  responses={404: {"model": Message}})
     async def assign_subscription_to_topic(
             topic_id: UUID,
@@ -217,7 +217,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
 
         return Response(status_code=http.HTTPStatus.CREATED)
 
-    @router.delete("/{topic_id}/subscriptions/{subscription_id}",
+    @router.delete("/topics/{topic_id}/subscriptions/{subscription_id}",
                    responses={404: {"model": None}})
     async def remove_subscription_from_topic(
             topic_id: UUID,

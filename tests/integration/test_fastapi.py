@@ -123,7 +123,7 @@ def test_create_user_topic_returns_201(handlers: Handlers) -> None:
     client = TestClient(create_app_from_handlers(handlers))
 
     response = client.post(
-        '/topics/',
+        '/topics',
         json={
             'uuid': 'ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8',
             'name': 'topic1',

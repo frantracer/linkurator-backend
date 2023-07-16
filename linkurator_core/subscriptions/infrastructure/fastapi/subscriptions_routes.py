@@ -27,7 +27,7 @@ def get_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.get("/", response_model=Page[SubscriptionSchema])
+    @router.get("/subscriptions", response_model=Page[SubscriptionSchema])
     async def get_all_subscriptions(
             request: Request,
             page_number: NonNegativeInt = 0,
@@ -60,7 +60,7 @@ def get_router(
             page_size=page_size,
             current_url=current_url)
 
-    @router.get("/{sub_id}/items", response_model=Page[ItemSchema])
+    @router.get("/subscriptions/{sub_id}/items", response_model=Page[ItemSchema])
     async def get_subscription_items(
             request: Request,
             sub_id: UUID,
@@ -107,7 +107,7 @@ def get_router(
             page_size=page_size,
             current_url=current_url)
 
-    @router.delete("/{sub_id}/items", response_model=None,
+    @router.delete("/subscriptions/{sub_id}/items", response_model=None,
                    responses={204: {"model": None}, 403: {"model": None}, 404: {"model": None}})
     async def delete_subscription_items(
             sub_id: UUID,

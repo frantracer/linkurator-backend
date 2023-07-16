@@ -21,7 +21,7 @@ def get_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.post("/{item_id}/interactions/{interaction_type}", response_model=None,
+    @router.post("/items/{item_id}/interactions/{interaction_type}", response_model=None,
                  responses={201: {"model": None}, 401: {"model": None}, 404: {"model": None}})
     async def create_item_interaction(
             item_id: UUID,
@@ -41,7 +41,7 @@ def get_router(
             interaction_type=interaction_type))
         return Response(status_code=http.HTTPStatus.CREATED)
 
-    @router.delete("/{item_id}/interactions/{interaction_type}", response_model=None,
+    @router.delete("/items/{item_id}/interactions/{interaction_type}", response_model=None,
                    responses={204: {"model": None}, 401: {"model": None}, 404: {"model": None}})
     async def delete_interaction(
             item_id: UUID,
@@ -55,7 +55,7 @@ def get_router(
 
         return Response(status_code=http.HTTPStatus.NO_CONTENT)
 
-    @router.get("/{item_id}", response_model=ItemSchema,
+    @router.get("/items/{item_id}", response_model=ItemSchema,
                 responses={200: {"model": ItemSchema}, 404: {"model": None}})
     async def get_item(
             item_id: UUID,
