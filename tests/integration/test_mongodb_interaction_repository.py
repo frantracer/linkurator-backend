@@ -3,7 +3,7 @@ from ipaddress import IPv4Address
 
 import pytest
 
-from linkurator_core.domain.interaction import Interaction, InteractionType
+from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.infrastructure.mongodb.interaction_repository import MongoDBInteractionRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 

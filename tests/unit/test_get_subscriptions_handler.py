@@ -2,10 +2,10 @@ from datetime import datetime
 from unittest.mock import MagicMock
 import uuid
 
-from linkurator_core.common import utils
-from linkurator_core.domain.subscription import Subscription
-from linkurator_core.domain.user import User
-from linkurator_core.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.users.user import User
+from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 
 
 def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_creation_date():

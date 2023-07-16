@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends
 from fastapi.applications import Request
 from fastapi.responses import JSONResponse
 
-from linkurator_core.application.get_user_profile_handler import GetUserProfileHandler
-from linkurator_core.domain.session import Session
+from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
+from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.profile import ProfileSchema
 

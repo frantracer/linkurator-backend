@@ -7,8 +7,8 @@ import uuid
 from math import floor
 import pytest
 
-from linkurator_core.application.exceptions import DuplicatedKeyError
-from linkurator_core.domain.topic import Topic
+from linkurator_core.domain.common.exceptions import DuplicatedKeyError
+from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopic, MongoDBTopicRepository
 

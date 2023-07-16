@@ -9,11 +9,11 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
-from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
-from linkurator_core.application.exceptions import SubscriptionNotFoundError
-from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
-from linkurator_core.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
-from linkurator_core.domain.session import Session
+from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
+from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
+from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
+from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
+from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 from linkurator_core.infrastructure.fastapi.models.page import Page
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema

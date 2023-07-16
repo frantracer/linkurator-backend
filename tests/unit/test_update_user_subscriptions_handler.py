@@ -5,10 +5,10 @@ import uuid
 
 import pytest
 
-from linkurator_core.application.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
-from linkurator_core.common.utils import parse_url
-from linkurator_core.domain.subscription import Subscription
-from linkurator_core.domain.user import User
+from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
+from linkurator_core.domain.common.utils import parse_url
+from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.users.user import User
 
 
 @pytest.mark.asyncio

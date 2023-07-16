@@ -1,9 +1,9 @@
 from unittest.mock import MagicMock, call
 from uuid import UUID
 
-from linkurator_core.application.delete_item_interaction_handler import DeleteItemInteractionHandler
-from linkurator_core.domain.interaction import InteractionType, Interaction
-from linkurator_core.domain.interaction_repository import InteractionRepository
+from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
+from linkurator_core.domain.items.interaction import InteractionType, Interaction
+from linkurator_core.domain.items.interaction_repository import InteractionRepository
 
 
 def test_delete_item_interaction_handler():

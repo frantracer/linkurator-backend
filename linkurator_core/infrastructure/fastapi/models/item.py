@@ -7,8 +7,8 @@ from uuid import UUID
 from pydantic import AnyUrl
 from pydantic.main import BaseModel
 
-from linkurator_core.domain.item import Item
-from linkurator_core.domain.interaction import Interaction, InteractionType
+from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.interaction import Interaction, InteractionType
 
 
 class ItemSchema(BaseModel):

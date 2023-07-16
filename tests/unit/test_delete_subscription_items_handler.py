@@ -4,15 +4,15 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
-from linkurator_core.application.exceptions import SubscriptionNotFoundError
-from linkurator_core.common import utils
-from linkurator_core.domain.item import Item
-from linkurator_core.domain.item_repository import ItemRepository
-from linkurator_core.domain.subscription import Subscription
-from linkurator_core.domain.subscription_repository import SubscriptionRepository
-from linkurator_core.domain.user import User
-from linkurator_core.domain.user_repository import UserRepository
+from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
+from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item_repository import ItemRepository
+from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user_repository import UserRepository
 
 
 def test_delete_subscription_items_handler():

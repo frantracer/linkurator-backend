@@ -11,9 +11,9 @@ from pydantic import BaseModel
 import pymongo  # type: ignore
 from pymongo import MongoClient
 
-from linkurator_core.application.exceptions import DuplicatedKeyError
-from linkurator_core.domain.topic import Topic
-from linkurator_core.domain.topic_repository import TopicRepository
+from linkurator_core.domain.common.exceptions import DuplicatedKeyError
+from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 

@@ -4,12 +4,12 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Response
 
-from linkurator_core.application.create_item_interaction_handler import CreateItemInteractionHandler
-from linkurator_core.application.delete_item_interaction_handler import DeleteItemInteractionHandler
-from linkurator_core.application.exceptions import ItemNotFoundError
-from linkurator_core.application.get_item_handler import GetItemHandler
-from linkurator_core.domain.interaction import InteractionType, Interaction
-from linkurator_core.domain.session import Session
+from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
+from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
+from linkurator_core.domain.common.exceptions import ItemNotFoundError
+from linkurator_core.application.items.get_item_handler import GetItemHandler
+from linkurator_core.domain.items.interaction import InteractionType, Interaction
+from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 
 

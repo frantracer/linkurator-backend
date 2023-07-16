@@ -2,7 +2,7 @@ import asyncio
 import logging
 from typing import Any, Callable, Coroutine, Dict, List, Type
 
-from linkurator_core.application.event_bus_service import Event, EventBusService
+from linkurator_core.domain.common.event_bus_service import Event, EventBusService
 
 SHUTDOWN_MESSAGE = 'shutdown'
 

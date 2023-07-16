@@ -12,9 +12,9 @@ from pydantic import AnyUrl, BaseModel
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError  # type: ignore
 
-from linkurator_core.common import utils
-from linkurator_core.domain.user import User
-from linkurator_core.domain.user_repository import UserRepository, EmailAlreadyInUse
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user_repository import UserRepository, EmailAlreadyInUse
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 

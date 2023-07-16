@@ -4,10 +4,10 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.exceptions import TopicNotFoundError
-from linkurator_core.application.unassign_subscription_from_user_topic_handler \
+from linkurator_core.domain.common.exceptions import TopicNotFoundError
+from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler \
     import UnassignSubscriptionFromUserTopicHandler
-from linkurator_core.domain.topic import Topic
+from linkurator_core.domain.topics.topic import Topic
 
 
 def test_unassign_subscription_from_user_topic_handler():

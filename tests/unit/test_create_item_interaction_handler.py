@@ -4,13 +4,13 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.create_item_interaction_handler import CreateItemInteractionHandler
-from linkurator_core.application.exceptions import ItemNotFoundError
-from linkurator_core.common import utils
-from linkurator_core.domain.interaction import InteractionType, Interaction
-from linkurator_core.domain.interaction_repository import InteractionRepository
-from linkurator_core.domain.item import Item
-from linkurator_core.domain.item_repository import ItemRepository
+from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
+from linkurator_core.domain.common.exceptions import ItemNotFoundError
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.items.interaction import InteractionType, Interaction
+from linkurator_core.domain.items.interaction_repository import InteractionRepository
+from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item_repository import ItemRepository
 
 
 def test_create_item_interaction_handler():

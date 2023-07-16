@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 from math import floor
 import pytest
 
-from linkurator_core.common import utils
-from linkurator_core.domain.item import Item
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.items.item import Item
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItem, MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 

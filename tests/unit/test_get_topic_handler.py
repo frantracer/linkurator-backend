@@ -3,9 +3,9 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.exceptions import TopicNotFoundError
-from linkurator_core.application.get_topic_handler import GetTopicHandler
-from linkurator_core.domain.topic import Topic
+from linkurator_core.domain.common.exceptions import TopicNotFoundError
+from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
+from linkurator_core.domain.topics.topic import Topic
 
 
 def test_get_topic_handler():

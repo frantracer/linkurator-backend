@@ -12,8 +12,8 @@ import pymongo  # type: ignore
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError  # type: ignore
 
-from linkurator_core.domain.session import Session
-from linkurator_core.domain.session_repository import SessionRepository
+from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.users.session_repository import SessionRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 

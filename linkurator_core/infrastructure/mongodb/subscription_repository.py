@@ -12,8 +12,8 @@ from pydantic.main import BaseModel
 import pymongo  # type: ignore
 from pymongo import MongoClient
 
-from linkurator_core.domain.subscription import Subscription
-from linkurator_core.domain.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 

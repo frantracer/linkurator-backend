@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import AnyUrl, BaseModel
 
-from linkurator_core.domain.user import User
+from linkurator_core.domain.users.user import User
 
 
 class ProfileSchema(BaseModel):

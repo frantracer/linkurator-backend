@@ -11,8 +11,8 @@ import pymongo  # type: ignore
 from pydantic import BaseModel
 from pymongo import MongoClient
 
-from linkurator_core.domain.interaction import Interaction, InteractionType
-from linkurator_core.domain.interaction_repository import InteractionRepository
+from linkurator_core.domain.items.interaction import Interaction, InteractionType
+from linkurator_core.domain.items.interaction_repository import InteractionRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 

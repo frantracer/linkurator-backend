@@ -7,7 +7,7 @@ from fastapi.param_functions import Cookie
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.routing import APIRouter
 
-from linkurator_core.application.validate_token_handler import ValidateTokenHandler
+from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 

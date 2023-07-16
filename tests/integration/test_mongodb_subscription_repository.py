@@ -7,8 +7,8 @@ import uuid
 from math import floor
 import pytest
 
-from linkurator_core.common import utils
-from linkurator_core.domain.subscription import Subscription
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscription, \
     MongoDBSubscriptionRepository

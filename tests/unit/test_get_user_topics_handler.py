@@ -3,11 +3,11 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.exceptions import UserNotFoundError
-from linkurator_core.application.get_user_topics_handler import GetUserTopicsHandler
-from linkurator_core.common import utils
-from linkurator_core.domain.topic import Topic
-from linkurator_core.domain.user import User
+from linkurator_core.domain.common.exceptions import UserNotFoundError
+from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.users.user import User
 
 
 def test_get_user_topics_handler():

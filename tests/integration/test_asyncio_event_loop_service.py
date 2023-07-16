@@ -3,7 +3,7 @@ import uuid
 
 import pytest
 
-from linkurator_core.domain.event import UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
 from linkurator_core.infrastructure.asyncio.event_bus_service import AsyncioEventBusService
 from linkurator_core.infrastructure.asyncio.utils import run_parallel, run_sequence, wait_until
 

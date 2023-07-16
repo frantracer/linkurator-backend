@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 import requests
 from requests.auth import HTTPBasicAuth
 
-from linkurator_core.application.account_service import AccountService, UserInfo, CodeValidationResponse
+from linkurator_core.domain.users.account_service import AccountService, UserInfo, CodeValidationResponse
 
 
 class GoogleAccountService(AccountService):

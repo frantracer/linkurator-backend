@@ -4,14 +4,14 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.exceptions import TopicNotFoundError
-from linkurator_core.application.get_topic_items_handler import GetTopicItemsHandler
-from linkurator_core.common import utils
-from linkurator_core.domain.interaction_repository import InteractionRepository
-from linkurator_core.domain.item import Item
-from linkurator_core.domain.item_repository import ItemRepository
-from linkurator_core.domain.topic import Topic
-from linkurator_core.domain.topic_repository import TopicRepository
+from linkurator_core.domain.common.exceptions import TopicNotFoundError
+from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.items.interaction_repository import InteractionRepository
+from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item_repository import ItemRepository
+from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
 def test_get_topic_items_handler():

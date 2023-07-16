@@ -5,13 +5,13 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
-from linkurator_core.application.exceptions import TopicNotFoundError, SubscriptionNotFoundError
-from linkurator_core.application.update_topic_handler import UpdateTopicHandler
-from linkurator_core.common import utils
-from linkurator_core.domain.subscription import Subscription
-from linkurator_core.domain.subscription_repository import SubscriptionRepository
-from linkurator_core.domain.topic import Topic
-from linkurator_core.domain.topic_repository import TopicRepository
+from linkurator_core.domain.common.exceptions import TopicNotFoundError, SubscriptionNotFoundError
+from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
 def test_update_topic_name():

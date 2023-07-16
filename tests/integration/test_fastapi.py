@@ -5,14 +5,14 @@ import uuid
 from fastapi.testclient import TestClient
 import pytest
 
-from linkurator_core.application.exceptions import SubscriptionNotFoundError, TopicNotFoundError
-from linkurator_core.application.get_subscription_items_handler import GetSubscriptionItemsHandler
-from linkurator_core.application.get_topic_items_handler import GetTopicItemsHandler
-from linkurator_core.common import utils
-from linkurator_core.domain.item import Item
-from linkurator_core.domain.session import Session
-from linkurator_core.domain.topic import Topic
-from linkurator_core.domain.user import User
+from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
+from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
+from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.users.user import User
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 
 

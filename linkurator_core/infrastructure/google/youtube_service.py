@@ -8,12 +8,12 @@ import uuid
 import aiohttp
 import backoff
 
-from linkurator_core.application.subscription_service import SubscriptionService
-from linkurator_core.common import utils
-from linkurator_core.domain.item import Item
-from linkurator_core.domain.subscription import Subscription
-from linkurator_core.domain.subscription_repository import SubscriptionRepository
-from linkurator_core.domain.user_repository import UserRepository
+from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 

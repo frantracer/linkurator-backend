@@ -3,9 +3,9 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
-from linkurator_core.application.exceptions import TopicNotFoundError
-from linkurator_core.domain.topic import Topic
+from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.domain.common.exceptions import TopicNotFoundError
+from linkurator_core.domain.topics.topic import Topic
 
 
 def test_delete_user_topic_handler():

@@ -3,8 +3,8 @@ import uuid
 
 import pytest
 
-from linkurator_core.application.event_handler import EventHandler
-from linkurator_core.domain.event import SubscriptionBecameOutdatedEvent, UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.application.common.event_handler import EventHandler
+from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent, UserSubscriptionsBecameOutdatedEvent
 
 
 @pytest.mark.asyncio

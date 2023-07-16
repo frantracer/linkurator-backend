@@ -13,8 +13,8 @@ import pymongo  # type: ignore
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
 
-from linkurator_core.domain.item import Item
-from linkurator_core.domain.item_repository import ItemRepository
+from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item_repository import ItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 

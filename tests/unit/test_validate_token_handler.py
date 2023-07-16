@@ -3,11 +3,11 @@ import unittest
 from unittest.mock import MagicMock
 import uuid
 
-from linkurator_core.application.account_service import UserInfo
-from linkurator_core.application.validate_token_handler import ValidateTokenHandler
-from linkurator_core.common import utils
-from linkurator_core.domain.session import Session
-from linkurator_core.domain.user import User
+from linkurator_core.domain.users.account_service import UserInfo
+from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
+from linkurator_core.domain.common import utils
+from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.users.user import User
 
 
 class TestValidateTokenHandler(unittest.TestCase):

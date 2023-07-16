@@ -5,7 +5,7 @@ import uuid
 from math import floor
 import pytest
 
-from linkurator_core.domain.session import Session
+from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository, TokenAlreadyExists
 
 

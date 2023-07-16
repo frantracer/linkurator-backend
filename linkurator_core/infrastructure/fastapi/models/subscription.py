@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import AnyUrl
 from pydantic.main import BaseModel
 
-from linkurator_core.domain.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription
 
 
 class SubscriptionSchema(BaseModel):

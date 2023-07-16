@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 import http
+from datetime import datetime, timezone
 from typing import Any, Callable, Coroutine, Optional
 from uuid import UUID
 
@@ -9,18 +9,19 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
-from linkurator_core.application.assign_subscription_to_user_topic_handler import AssignSubscriptionToTopicHandler
-from linkurator_core.application.create_topic_handler import CreateTopicHandler
-from linkurator_core.application.delete_user_topic_handler import DeleteUserTopicHandler
-from linkurator_core.application.exceptions import SubscriptionNotFoundError, TopicNotFoundError
-from linkurator_core.application.get_topic_handler import GetTopicHandler
-from linkurator_core.application.get_topic_items_handler import GetTopicItemsHandler
-from linkurator_core.application.get_user_topics_handler import GetUserTopicsHandler
-from linkurator_core.application.unassign_subscription_from_user_topic_handler import \
+from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import \
+    AssignSubscriptionToTopicHandler
+from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
+from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
+from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
+from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
     UnassignSubscriptionFromUserTopicHandler
-from linkurator_core.application.update_topic_handler import UpdateTopicHandler
-from linkurator_core.domain.session import Session
-from linkurator_core.domain.topic import Topic
+from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
+from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
+from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 from linkurator_core.infrastructure.fastapi.models.message import Message
 from linkurator_core.infrastructure.fastapi.models.page import Page
