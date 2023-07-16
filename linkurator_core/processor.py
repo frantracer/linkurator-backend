@@ -17,7 +17,7 @@ from linkurator_core.items.infrastructure.item_repository import MongoDBItemRepo
 from linkurator_core.subscriptions.infrastructure.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.subscriptions.infrastructure.youtube_service import YoutubeService
 from linkurator_core.users.application.find_outdated_users_handler import FindOutdatedUsersHandler
-from linkurator_core.common.infrastructure.account_service import GoogleAccountService
+from linkurator_core.common.infrastructure.google_account_service import GoogleAccountService
 from linkurator_core.users.infrastructure.user_repository import MongoDBUserRepository
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')

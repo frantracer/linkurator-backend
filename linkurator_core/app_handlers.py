@@ -28,7 +28,7 @@ from linkurator_core.topics.application.update_topic_handler import UpdateTopicH
 from linkurator_core.topics.infrastructure.mongodb_topic_repository import MongoDBTopicRepository
 from linkurator_core.users.application.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.users.application.validate_token_handler import ValidateTokenHandler
-from linkurator_core.common.infrastructure.account_service import GoogleAccountService
+from linkurator_core.common.infrastructure.google_account_service import GoogleAccountService
 from linkurator_core.users.infrastructure.session_repository import MongoDBSessionRepository
 from linkurator_core.users.infrastructure.user_repository import MongoDBUserRepository
 

@@ -14,7 +14,7 @@ from linkurator_core.common.domain.item import Item
 from linkurator_core.common.domain.subscription import Subscription
 from linkurator_core.common.domain.subscription_repository import SubscriptionRepository
 from linkurator_core.common.domain.user_repository import UserRepository
-from linkurator_core.common.infrastructure.account_service import GoogleAccountService
+from linkurator_core.common.infrastructure.google_account_service import GoogleAccountService
 
 
 @dataclass
