@@ -4,8 +4,8 @@ from uuid import UUID
 
 from linkurator_core.common.domain.item import Item
 from linkurator_core.common.domain.item_repository import ItemRepository
-from linkurator_core.interactions.domain.interaction import Interaction
-from linkurator_core.interactions.domain.interaction_repository import InteractionRepository
+from linkurator_core.items.domain.interaction import Interaction
+from linkurator_core.items.domain.interaction_repository import InteractionRepository
 
 
 class GetSubscriptionItemsHandler:

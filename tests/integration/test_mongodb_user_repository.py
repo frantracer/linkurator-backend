@@ -7,10 +7,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from linkurator_core.common import utils
+from linkurator_core.common.domain import utils
 from linkurator_core.common.infrastructure.mongodb_utils import CollectionIsNotInitialized
-from linkurator_core.users.domain.user import User
-from linkurator_core.users.domain.user_repository import EmailAlreadyInUse
+from linkurator_core.common.domain.user import User
+from linkurator_core.common.domain.user_repository import EmailAlreadyInUse
 from linkurator_core.users.infrastructure.user_repository import MongoDBUser, MongoDBUserRepository
 
 

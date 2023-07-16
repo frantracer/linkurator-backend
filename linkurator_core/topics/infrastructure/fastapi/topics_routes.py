@@ -13,7 +13,7 @@ from linkurator_core.common.domain.exceptions import SubscriptionNotFoundError, 
 from linkurator_core.common.domain.session import Session
 from linkurator_core.common.infrastructure.fastapi.message import Message
 from linkurator_core.common.infrastructure.fastapi.page import Page
-from linkurator_core.interactions.infrastructure.fastapi.item_schema import ItemSchema
+from linkurator_core.items.infrastructure.fastapi.item_schema import ItemSchema
 from linkurator_core.topics.application.assign_subscription_to_user_topic_handler import \
     AssignSubscriptionToTopicHandler
 from linkurator_core.topics.application.create_topic_handler import CreateTopicHandler

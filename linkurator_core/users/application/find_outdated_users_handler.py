@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from linkurator_core.common.domain.event import UserSubscriptionsBecameOutdatedEvent
 from linkurator_core.common.domain.event_bus_service import EventBusService
-from linkurator_core.users.domain.user_repository import UserRepository
+from linkurator_core.common.domain.user_repository import UserRepository
 
 
 class FindOutdatedUsersHandler:

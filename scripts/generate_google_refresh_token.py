@@ -1,7 +1,7 @@
 from urllib.parse import parse_qs, urlparse
 
 from linkurator_core.common.infrastructure.google_secrets import GoogleClientSecrets
-from linkurator_core.users.infrastructure.account_service import GoogleAccountService
+from linkurator_core.common.infrastructure.account_service import GoogleAccountService
 
 
 def main():

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from linkurator_core.interactions.domain.interaction import Interaction
+from linkurator_core.items.domain.interaction import Interaction
 from linkurator_core.common.domain.item import Item
 
 

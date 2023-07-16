@@ -3,13 +3,13 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.common import utils
+from linkurator_core.common.domain import utils
 from linkurator_core.common.domain.exceptions import SubscriptionNotFoundError, TopicNotFoundError, UserNotFoundError
 from linkurator_core.subscriptions.domain.subscription import Subscription
 from linkurator_core.topics.application.assign_subscription_to_user_topic_handler import \
     AssignSubscriptionToTopicHandler
 from linkurator_core.topics.domain.topic import Topic
-from linkurator_core.users.domain.user import User
+from linkurator_core.common.domain.user import User
 
 
 def test_assign_subscription_to_topic_handler():

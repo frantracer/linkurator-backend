@@ -7,14 +7,14 @@ from fastapi.testclient import TestClient
 
 from linkurator_core.app import create_app_from_handlers
 from linkurator_core.app_handlers import Handlers
-from linkurator_core.common import utils
+from linkurator_core.common.domain import utils
 from linkurator_core.common.domain.exceptions import SubscriptionNotFoundError, TopicNotFoundError
 from linkurator_core.common.domain.item import Item
 from linkurator_core.common.domain.session import Session
-from linkurator_core.interactions.application.get_subscription_items_handler import GetSubscriptionItemsHandler
+from linkurator_core.items.application.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.topics.application.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.topics.domain.topic import Topic
-from linkurator_core.users.domain.user import User
+from linkurator_core.common.domain.user import User
 
 
 @pytest.fixture(name="handlers")

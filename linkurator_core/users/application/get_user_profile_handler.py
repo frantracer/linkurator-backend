@@ -1,8 +1,8 @@
 from typing import Optional
 from uuid import UUID
 
-from linkurator_core.users.domain.user import User
-from linkurator_core.users.domain.user_repository import UserRepository
+from linkurator_core.common.domain.user import User
+from linkurator_core.common.domain.user_repository import UserRepository
 
 
 class GetUserProfileHandler:

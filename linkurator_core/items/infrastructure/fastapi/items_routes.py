@@ -6,11 +6,11 @@ from fastapi import APIRouter, Depends, Response
 
 from linkurator_core.common.domain.exceptions import ItemNotFoundError
 from linkurator_core.common.domain.session import Session
-from linkurator_core.interactions.application.create_item_interaction_handler import CreateItemInteractionHandler
-from linkurator_core.interactions.application.delete_item_interaction_handler import DeleteItemInteractionHandler
-from linkurator_core.interactions.application.get_item_handler import GetItemHandler
-from linkurator_core.interactions.domain.interaction import InteractionType, Interaction
-from linkurator_core.interactions.infrastructure.fastapi.item_schema import ItemSchema
+from linkurator_core.items.application.create_item_interaction_handler import CreateItemInteractionHandler
+from linkurator_core.items.application.delete_item_interaction_handler import DeleteItemInteractionHandler
+from linkurator_core.items.application.get_item_handler import GetItemHandler
+from linkurator_core.items.domain.interaction import InteractionType, Interaction
+from linkurator_core.items.infrastructure.fastapi.item_schema import ItemSchema
 
 
 def get_router(

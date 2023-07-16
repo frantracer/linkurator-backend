@@ -2,7 +2,7 @@ import abc
 from typing import Optional, Dict, List
 from uuid import UUID
 
-from linkurator_core.interactions.domain.interaction import Interaction
+from linkurator_core.items.domain.interaction import Interaction
 
 
 class InteractionRepository(abc.ABC):

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from linkurator_core.common import utils
+from linkurator_core.common.domain import utils
 from linkurator_core.common.infrastructure.mongodb_utils import CollectionIsNotInitialized
 from linkurator_core.subscriptions.domain.subscription import Subscription
 from linkurator_core.subscriptions.infrastructure.subscription_repository import MongoDBSubscription, \

@@ -2,8 +2,8 @@ from uuid import UUID
 
 from linkurator_core.common.domain.exceptions import ItemNotFoundError
 from linkurator_core.common.domain.item_repository import ItemRepository
-from linkurator_core.interactions.domain.interaction_repository import InteractionRepository
-from linkurator_core.interactions.domain.item_with_interactions import ItemWithInteractions
+from linkurator_core.items.domain.interaction_repository import InteractionRepository
+from linkurator_core.items.domain.item_with_interactions import ItemWithInteractions
 
 
 class GetItemHandler:

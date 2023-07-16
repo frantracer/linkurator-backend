@@ -4,7 +4,7 @@ from uuid import UUID
 
 from linkurator_core.subscriptions.domain.subscription import Subscription
 from linkurator_core.subscriptions.domain.subscription_repository import SubscriptionRepository
-from linkurator_core.users.domain.user_repository import UserRepository
+from linkurator_core.common.domain.user_repository import UserRepository
 
 
 class GetUserSubscriptionsHandler:

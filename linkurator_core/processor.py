@@ -13,11 +13,11 @@ from linkurator_core.subscriptions.application.find_outdated_subscriptions_handl
     FindOutdatedSubscriptionsHandler
 from linkurator_core.subscriptions.application.update_subscription_items_handler import UpdateSubscriptionItemsHandler
 from linkurator_core.subscriptions.application.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
-from linkurator_core.subscriptions.infrastructure.item_repository import MongoDBItemRepository
+from linkurator_core.common.infrastructure.item_repository import MongoDBItemRepository
 from linkurator_core.subscriptions.infrastructure.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.subscriptions.infrastructure.youtube_service import YoutubeService
 from linkurator_core.users.application.find_outdated_users_handler import FindOutdatedUsersHandler
-from linkurator_core.users.infrastructure.account_service import GoogleAccountService
+from linkurator_core.common.infrastructure.account_service import GoogleAccountService
 from linkurator_core.users.infrastructure.user_repository import MongoDBUserRepository
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')

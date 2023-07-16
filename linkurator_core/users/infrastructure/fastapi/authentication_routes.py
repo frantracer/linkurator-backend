@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.routing import APIRouter
 
 from linkurator_core.users.application.validate_token_handler import ValidateTokenHandler
-from linkurator_core.users.infrastructure.account_service import GoogleAccountService
+from linkurator_core.common.infrastructure.account_service import GoogleAccountService
 
 
 def get_router(validate_token_handler: ValidateTokenHandler, google_client: GoogleAccountService) -> APIRouter:

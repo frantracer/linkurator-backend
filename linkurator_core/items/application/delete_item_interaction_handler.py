@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from linkurator_core.interactions.domain.interaction import InteractionType
-from linkurator_core.interactions.domain.interaction_repository import InteractionRepository
+from linkurator_core.items.domain.interaction import InteractionType
+from linkurator_core.items.domain.interaction_repository import InteractionRepository
 
 
 class DeleteItemInteractionHandler:

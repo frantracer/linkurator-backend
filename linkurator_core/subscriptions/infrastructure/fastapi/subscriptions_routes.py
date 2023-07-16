@@ -12,8 +12,8 @@ from pydantic.types import NonNegativeInt, PositiveInt
 from linkurator_core.common.domain.exceptions import SubscriptionNotFoundError
 from linkurator_core.common.domain.session import Session
 from linkurator_core.common.infrastructure.fastapi.page import Page
-from linkurator_core.interactions.application.get_subscription_items_handler import GetSubscriptionItemsHandler
-from linkurator_core.interactions.infrastructure.fastapi.item_schema import ItemSchema
+from linkurator_core.items.application.get_subscription_items_handler import GetSubscriptionItemsHandler
+from linkurator_core.items.infrastructure.fastapi.item_schema import ItemSchema
 from linkurator_core.subscriptions.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.subscriptions.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.subscriptions.infrastructure.fastapi.subscription_schema import SubscriptionSchema

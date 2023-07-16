@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from linkurator_core.users.infrastructure.fastapi import profile_routes, authentication_routes
 from linkurator_core.topics.infrastructure.fastapi import topics_routes
 from linkurator_core.subscriptions.infrastructure.fastapi import subscriptions_routes
-from linkurator_core.interactions.infrastructure.fastapi import items_routes
+from linkurator_core.items.infrastructure.fastapi import items_routes
 
 from linkurator_core.app_handlers import app_handlers, Handlers
 from linkurator_core.common.domain.session import Session

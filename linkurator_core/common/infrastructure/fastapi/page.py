@@ -7,7 +7,7 @@ from pydantic import AnyUrl
 from pydantic.generics import GenericModel
 from starlette.datastructures import URL
 
-from linkurator_core.common import utils
+from linkurator_core.common.domain import utils
 
 Element = TypeVar("Element")
 

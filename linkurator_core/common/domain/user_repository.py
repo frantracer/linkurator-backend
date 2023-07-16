@@ -3,7 +3,7 @@ import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from linkurator_core.users.domain.user import User
+from linkurator_core.common.domain.user import User
 
 
 class EmailAlreadyInUse(Exception):

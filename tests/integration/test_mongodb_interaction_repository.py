@@ -4,8 +4,8 @@ from ipaddress import IPv4Address
 import pytest
 
 from linkurator_core.common.infrastructure.mongodb_utils import CollectionIsNotInitialized
-from linkurator_core.interactions.domain.interaction import Interaction, InteractionType
-from linkurator_core.interactions.infrastructure.interaction_repository import MongoDBInteractionRepository
+from linkurator_core.items.domain.interaction import Interaction, InteractionType
+from linkurator_core.items.infrastructure.interaction_repository import MongoDBInteractionRepository
 
 
 @pytest.fixture(name="interaction_repo", scope="session")

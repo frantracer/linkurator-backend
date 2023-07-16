@@ -6,9 +6,9 @@ import uuid
 import pytest
 
 from linkurator_core.subscriptions.application.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
-from linkurator_core.common.utils import parse_url
+from linkurator_core.common.domain.utils import parse_url
 from linkurator_core.subscriptions.domain.subscription import Subscription
-from linkurator_core.users.domain.user import User
+from linkurator_core.common.domain.user import User
 
 
 @pytest.mark.asyncio

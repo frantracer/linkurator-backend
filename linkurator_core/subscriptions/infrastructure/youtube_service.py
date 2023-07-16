@@ -9,12 +9,12 @@ import aiohttp
 import backoff
 
 from linkurator_core.subscriptions.domain.subscription_service import SubscriptionService
-from linkurator_core.common import utils
+from linkurator_core.common.domain import utils
 from linkurator_core.common.domain.item import Item
 from linkurator_core.subscriptions.domain.subscription import Subscription
 from linkurator_core.subscriptions.domain.subscription_repository import SubscriptionRepository
-from linkurator_core.users.domain.user_repository import UserRepository
-from linkurator_core.users.infrastructure.account_service import GoogleAccountService
+from linkurator_core.common.domain.user_repository import UserRepository
+from linkurator_core.common.infrastructure.account_service import GoogleAccountService
 
 
 @dataclass

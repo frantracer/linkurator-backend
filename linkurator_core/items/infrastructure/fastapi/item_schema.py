@@ -8,7 +8,7 @@ from pydantic import AnyUrl
 from pydantic.main import BaseModel
 
 from linkurator_core.common.domain.item import Item
-from linkurator_core.interactions.domain.interaction import Interaction, InteractionType
+from linkurator_core.items.domain.interaction import Interaction, InteractionType
 
 
 class ItemSchema(BaseModel):

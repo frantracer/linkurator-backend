@@ -10,7 +10,7 @@ import pytest
 from linkurator_core.common.domain.item import Item
 from linkurator_core.common.domain.item_repository import ItemRepository
 from linkurator_core.common.infrastructure.asyncio_utils import run_parallel
-from linkurator_core.common.utils import parse_url
+from linkurator_core.common.domain.utils import parse_url
 from linkurator_core.subscriptions.application.update_subscription_items_handler import UpdateSubscriptionItemsHandler
 from linkurator_core.subscriptions.domain.subscription import Subscription
 from linkurator_core.subscriptions.domain.subscription_repository import SubscriptionRepository

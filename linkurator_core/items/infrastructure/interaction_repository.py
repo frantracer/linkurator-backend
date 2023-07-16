@@ -12,8 +12,8 @@ from pydantic import BaseModel
 from pymongo import MongoClient
 
 from linkurator_core.common.infrastructure.mongodb_utils import CollectionIsNotInitialized
-from linkurator_core.interactions.domain.interaction import Interaction, InteractionType
-from linkurator_core.interactions.domain.interaction_repository import InteractionRepository
+from linkurator_core.items.domain.interaction import Interaction, InteractionType
+from linkurator_core.items.domain.interaction_repository import InteractionRepository
 
 
 class MongoDBInteraction(BaseModel):

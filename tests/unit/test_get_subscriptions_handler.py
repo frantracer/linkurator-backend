@@ -2,9 +2,9 @@ from datetime import datetime
 from unittest.mock import MagicMock
 import uuid
 
-from linkurator_core.common import utils
+from linkurator_core.common.domain import utils
 from linkurator_core.subscriptions.domain.subscription import Subscription
-from linkurator_core.users.domain.user import User
+from linkurator_core.common.domain.user import User
 from linkurator_core.subscriptions.application.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 
 

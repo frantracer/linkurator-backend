@@ -1,7 +1,7 @@
 import uuid
 from unittest.mock import MagicMock
 
-from linkurator_core.common import utils
+from linkurator_core.common.domain import utils
 from linkurator_core.common.domain.event import SubscriptionBecameOutdatedEvent
 from linkurator_core.subscriptions.application.find_outdated_subscriptions_handler import \
     FindOutdatedSubscriptionsHandler

@@ -90,7 +90,7 @@ create-vault-pass: check-vault-pass-is-defined
 ####################
 # Test
 ####################
-lint: mypy pylint
+lint: mypy pylint dir-lint-check
 
 mypy:
 	./venv/bin/mypy --config-file mypy.ini linkurator_core tests scripts
@@ -99,6 +99,9 @@ pylint:
 	find ./linkurator_core -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
 	find ./tests -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
 	find ./scripts -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
+
+dir-lint-check:
+	./venv/bin/python3.8 scripts/run_hexagonal_architecture_linter.py --directory ./linkurator_core
 
 test:
 	./venv/bin/pytest -v tests

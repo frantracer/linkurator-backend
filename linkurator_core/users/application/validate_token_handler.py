@@ -2,11 +2,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
 
-from linkurator_core.users.domain.user import User
-from linkurator_core.users.domain.account_service import AccountService
+from linkurator_core.common.domain.user import User
+from linkurator_core.common.domain.account_service import AccountService
 from linkurator_core.common.domain.session import Session
 from linkurator_core.users.domain.session_repository import SessionRepository
-from linkurator_core.users.domain.user_repository import UserRepository
+from linkurator_core.common.domain.user_repository import UserRepository
 
 SESSION_DURATION_IN_DAYS: int = 30
 
