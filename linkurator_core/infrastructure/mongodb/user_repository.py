@@ -120,6 +120,11 @@ class MongoDBUserRepository(UserRepository):
         users = collection.find({'scanned_at': {'$lt': timestamp}})
         return [MongoDBUser(**user).to_domain_user() for user in users]
 
+    def find_users_subscribed_to_subscription(self, subscription_id: UUID) -> List[User]:
+        collection = self._user_collection()
+        users = collection.find({'subscription_uuids': subscription_id})
+        return [MongoDBUser(**user).to_domain_user() for user in users]
+
     def _user_collection(self) -> pymongo.collection.Collection:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
         return self.client.get_database(self.db_name).get_collection(

@@ -37,3 +37,7 @@ class UserRepository(abc.ABC):
     @abc.abstractmethod
     def find_latest_scan_before(self, timestamp: datetime.datetime) -> List[User]:
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def find_users_subscribed_to_subscription(self, subscription_id: UUID) -> List[User]:
+        raise NotImplementedError

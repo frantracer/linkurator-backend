@@ -1,10 +1,10 @@
+import uuid
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
+from math import floor
 from unittest import mock
 from unittest.mock import MagicMock
-import uuid
 
-from math import floor
 import pytest
 
 from linkurator_core.domain.common import utils
@@ -182,3 +182,48 @@ def test_find_latest_scan(user_repo: MongoDBUserRepository):
 
     assert len(users_second_call) - len(users_first_call) == 1
     assert user1.uuid in [user.uuid for user in users_second_call]
+
+
+def test_find_users_by_subscription(user_repo: MongoDBUserRepository):
+    user1 = User.new(first_name="test",
+                     last_name="test",
+                     email="9cca4ef4@email.com",
+                     locale="en",
+                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+                     uuid=uuid.UUID("9cca4ef4-3940-4527-8789-f76673a3842b"),
+                     google_refresh_token="token",
+                     subscription_uuids=[uuid.UUID("902e771b-4ff2-4c0a-ace2-06aab6d27e17")])
+
+    user2 = User.new(first_name="test",
+                     last_name="test",
+                     email="021991aa@email.com",
+                     locale="en",
+                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+                     uuid=uuid.UUID("021991aa-f9da-4935-bf34-7ffc805e1465"),
+                     google_refresh_token="token",
+                     subscription_uuids=[uuid.UUID("7395039e-6816-49fb-a303-706caad02673")])
+
+    user_repo.add(user1)
+    user_repo.add(user2)
+
+    users = user_repo.find_users_subscribed_to_subscription(uuid.UUID("902e771b-4ff2-4c0a-ace2-06aab6d27e17"))
+
+    assert len(users) == 1
+    assert user1.uuid in [user.uuid for user in users]
+
+
+def test_find_users_by_subscription_empty(user_repo: MongoDBUserRepository):
+    user = User.new(first_name="test",
+                    last_name="test",
+                    email="cb7b18dc@email.com",
+                    locale="en",
+                    avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+                    uuid=uuid.UUID("cb7b18dc-15d8-46b4-bce6-7214fa1a988b"),
+                    google_refresh_token="token",
+                    subscription_uuids=[uuid.UUID("9373199d-118d-4493-a6ea-878bf0647ecb")])
+
+    user_repo.add(user)
+
+    users = user_repo.find_users_subscribed_to_subscription(uuid.UUID("225b802f-af94-4c47-870a-f51bbecc5610"))
+
+    assert len(users) == 0
