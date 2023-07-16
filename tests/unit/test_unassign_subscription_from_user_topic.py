@@ -7,7 +7,7 @@ import pytest
 from linkurator_core.common.domain.exceptions import TopicNotFoundError
 from linkurator_core.topics.application.unassign_subscription_from_user_topic_handler \
     import UnassignSubscriptionFromUserTopicHandler
-from linkurator_core.topics.domain.topic import Topic
+from linkurator_core.common.domain.topic import Topic
 
 
 def test_unassign_subscription_from_user_topic_handler():

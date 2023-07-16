@@ -6,7 +6,7 @@ import pytest
 from linkurator_core.common.domain.exceptions import UserNotFoundError
 from linkurator_core.topics.application.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.common.domain import utils
-from linkurator_core.topics.domain.topic import Topic
+from linkurator_core.common.domain.topic import Topic
 from linkurator_core.common.domain.user import User
 
 

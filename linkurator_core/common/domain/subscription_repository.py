@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from linkurator_core.subscriptions.domain.subscription import Subscription
+from linkurator_core.common.domain.subscription import Subscription
 
 
 class SubscriptionRepository(abc.ABC):

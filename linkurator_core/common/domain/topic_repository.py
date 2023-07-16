@@ -2,7 +2,7 @@ import abc
 from typing import List, Optional
 from uuid import UUID
 
-from linkurator_core.topics.domain.topic import Topic
+from linkurator_core.common.domain.topic import Topic
 
 
 class TopicRepository(abc.ABC):

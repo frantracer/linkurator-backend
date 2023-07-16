@@ -1,5 +1,4 @@
 import http
-from datetime import datetime, timezone
 from typing import Any, Callable, Coroutine, Optional
 from uuid import UUID
 
@@ -7,24 +6,21 @@ from fastapi import Depends, Response
 from fastapi.applications import Request
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
-from pydantic.types import NonNegativeInt, PositiveInt
 
 from linkurator_core.common.domain.exceptions import SubscriptionNotFoundError, TopicNotFoundError
 from linkurator_core.common.domain.session import Session
 from linkurator_core.common.infrastructure.fastapi.message import Message
 from linkurator_core.common.infrastructure.fastapi.page import Page
-from linkurator_core.items.infrastructure.fastapi.item_schema import ItemSchema
 from linkurator_core.topics.application.assign_subscription_to_user_topic_handler import \
     AssignSubscriptionToTopicHandler
 from linkurator_core.topics.application.create_topic_handler import CreateTopicHandler
 from linkurator_core.topics.application.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.topics.application.get_topic_handler import GetTopicHandler
-from linkurator_core.topics.application.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.topics.application.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.topics.application.unassign_subscription_from_user_topic_handler import \
     UnassignSubscriptionFromUserTopicHandler
 from linkurator_core.topics.application.update_topic_handler import UpdateTopicHandler
-from linkurator_core.topics.domain.topic import Topic
+from linkurator_core.common.domain.topic import Topic
 from linkurator_core.topics.infrastructure.fastapi.topic_schema import TopicSchema, NewTopicSchema, UpdateTopicSchema
 
 
@@ -33,7 +29,6 @@ def get_router(  # pylint: disable-msg=too-many-locals
         create_topic_handler: CreateTopicHandler,
         get_user_topics_handler: GetUserTopicsHandler,
         get_topic_handler: GetTopicHandler,
-        get_topic_items_handler: GetTopicItemsHandler,
         assign_subscription_to_user_topic_handler: AssignSubscriptionToTopicHandler,
         unassign_subscription_from_user_topic_handler: UnassignSubscriptionFromUserTopicHandler,
         delete_user_topic_handler: DeleteUserTopicHandler,
@@ -44,50 +39,6 @@ def get_router(  # pylint: disable-msg=too-many-locals
     """
 
     router = APIRouter()
-
-    @router.get("/topics/{topic_id}/items",
-                response_model=Page[ItemSchema])
-    async def items_by_topic(
-            request: Request,
-            topic_id: UUID,
-            page_number: NonNegativeInt = 0,
-            page_size: PositiveInt = 50,
-            created_before_ts: Optional[float] = None,
-            session: Optional[Session] = Depends(get_session)
-    ) -> Any:
-        """
-        Get the items from a topic
-        """
-        if session is None:
-            return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
-
-        if created_before_ts is None:
-            created_before_ts = datetime.now(timezone.utc).timestamp()
-
-        try:
-            items_with_interactions, total_items = get_topic_items_handler.handle(
-                user_id=session.user_id,
-                topic_id=topic_id,
-                created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
-                page_number=page_number,
-                page_size=page_size)
-
-            current_url = request.url.include_query_params(
-                page_number=page_number,
-                page_size=page_size,
-                created_before_ts=created_before_ts
-            )
-
-            return Page[ItemSchema].create(
-                elements=[ItemSchema.from_domain_item(item_with_interactions[0], item_with_interactions[1])
-                          for item_with_interactions in items_with_interactions],
-                total_elements=total_items,
-                page_number=page_number,
-                page_size=page_size,
-                current_url=current_url)
-
-        except TopicNotFoundError:
-            return JSONResponse(status_code=http.HTTPStatus.NOT_FOUND, content={'message': 'Topic not found'})
 
     @router.get("/topics",
                 response_model=Page[TopicSchema])

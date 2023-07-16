@@ -4,7 +4,7 @@ import uuid
 from typing import List
 
 from linkurator_core.common.domain.item import Item
-from linkurator_core.subscriptions.domain.subscription import Subscription
+from linkurator_core.common.domain.subscription import Subscription
 
 
 class SubscriptionService(abc.ABC):

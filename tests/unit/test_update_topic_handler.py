@@ -8,10 +8,10 @@ import pytest
 from linkurator_core.common.domain.exceptions import TopicNotFoundError, SubscriptionNotFoundError
 from linkurator_core.topics.application.update_topic_handler import UpdateTopicHandler
 from linkurator_core.common.domain import utils
-from linkurator_core.subscriptions.domain.subscription import Subscription
-from linkurator_core.subscriptions.domain.subscription_repository import SubscriptionRepository
-from linkurator_core.topics.domain.topic import Topic
-from linkurator_core.topics.domain.topic_repository import TopicRepository
+from linkurator_core.common.domain.subscription import Subscription
+from linkurator_core.common.domain.subscription_repository import SubscriptionRepository
+from linkurator_core.common.domain.topic import Topic
+from linkurator_core.common.domain.topic_repository import TopicRepository
 
 
 def test_update_topic_name():

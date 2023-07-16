@@ -3,7 +3,7 @@ import logging
 import sys
 from datetime import datetime, timezone
 
-from linkurator_core.common.infrastructure.item_repository import MongoDBItemRepository
+from linkurator_core.items.infrastructure.item_repository import MongoDBItemRepository
 from linkurator_core.common.infrastructure.mongodb_settings import MongoDBSettings
 from linkurator_core.subscriptions.application.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.subscriptions.infrastructure.subscription_repository import MongoDBSubscriptionRepository

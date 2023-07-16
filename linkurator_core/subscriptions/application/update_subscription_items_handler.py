@@ -6,7 +6,7 @@ from typing import List, Dict
 from linkurator_core.subscriptions.domain.subscription_service import SubscriptionService
 from linkurator_core.common.domain.item import Item
 from linkurator_core.common.domain.item_repository import ItemRepository
-from linkurator_core.subscriptions.domain.subscription_repository import SubscriptionRepository
+from linkurator_core.common.domain.subscription_repository import SubscriptionRepository
 
 
 class UpdateSubscriptionItemsHandler:

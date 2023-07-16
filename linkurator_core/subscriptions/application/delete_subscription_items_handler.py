@@ -4,7 +4,7 @@ from uuid import UUID
 
 from linkurator_core.common.domain.exceptions import SubscriptionNotFoundError
 from linkurator_core.common.domain.item_repository import ItemRepository
-from linkurator_core.subscriptions.domain.subscription_repository import SubscriptionRepository
+from linkurator_core.common.domain.subscription_repository import SubscriptionRepository
 from linkurator_core.common.domain.user_repository import UserRepository
 
 

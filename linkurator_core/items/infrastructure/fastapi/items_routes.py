@@ -8,7 +8,7 @@ from fastapi.applications import Request
 from fastapi.responses import JSONResponse
 from pydantic import NonNegativeInt, PositiveInt
 
-from linkurator_core.common.domain.exceptions import ItemNotFoundError
+from linkurator_core.common.domain.exceptions import ItemNotFoundError, TopicNotFoundError
 from linkurator_core.common.domain.session import Session
 from linkurator_core.common.infrastructure.fastapi.page import Page
 from linkurator_core.items.application.create_item_interaction_handler import CreateItemInteractionHandler
@@ -17,6 +17,7 @@ from linkurator_core.items.application.get_item_handler import GetItemHandler
 from linkurator_core.items.application.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.items.domain.interaction import InteractionType, Interaction
 from linkurator_core.items.infrastructure.fastapi.item_schema import ItemSchema
+from linkurator_core.items.application.get_topic_items_handler import GetTopicItemsHandler
 
 
 def get_router(
@@ -24,6 +25,7 @@ def get_router(
         get_item_handler: GetItemHandler,
         create_item_interaction_handler: CreateItemInteractionHandler,
         delete_item_interaction_handler: DeleteItemInteractionHandler,
+        get_topic_items_handler: GetTopicItemsHandler,
         get_subscription_items_handler: GetSubscriptionItemsHandler,
 ) -> APIRouter:
     router = APIRouter()
@@ -79,6 +81,50 @@ def get_router(
             return ItemSchema.from_domain_item(item_detail.item, item_detail.interactions)
         except ItemNotFoundError:
             return Response(status_code=http.HTTPStatus.NOT_FOUND)
+
+    @router.get("/topics/{topic_id}/items",
+                response_model=Page[ItemSchema])
+    async def items_by_topic(
+            request: Request,
+            topic_id: UUID,
+            page_number: NonNegativeInt = 0,
+            page_size: PositiveInt = 50,
+            created_before_ts: Optional[float] = None,
+            session: Optional[Session] = Depends(get_session)
+    ) -> Any:
+        """
+        Get the items from a topic
+        """
+        if session is None:
+            return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
+
+        if created_before_ts is None:
+            created_before_ts = datetime.now(timezone.utc).timestamp()
+
+        try:
+            items_with_interactions, total_items = get_topic_items_handler.handle(
+                user_id=session.user_id,
+                topic_id=topic_id,
+                created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
+                page_number=page_number,
+                page_size=page_size)
+
+            current_url = request.url.include_query_params(
+                page_number=page_number,
+                page_size=page_size,
+                created_before_ts=created_before_ts
+            )
+
+            return Page[ItemSchema].create(
+                elements=[ItemSchema.from_domain_item(item_with_interactions[0], item_with_interactions[1])
+                          for item_with_interactions in items_with_interactions],
+                total_elements=total_items,
+                page_number=page_number,
+                page_size=page_size,
+                current_url=current_url)
+
+        except TopicNotFoundError:
+            return JSONResponse(status_code=http.HTTPStatus.NOT_FOUND, content={'message': 'Topic not found'})
 
     @router.get("/subscriptions/{sub_id}/items", response_model=Page[ItemSchema])
     async def get_subscription_items(

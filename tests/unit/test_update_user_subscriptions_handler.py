@@ -7,7 +7,7 @@ import pytest
 
 from linkurator_core.subscriptions.application.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.common.domain.utils import parse_url
-from linkurator_core.subscriptions.domain.subscription import Subscription
+from linkurator_core.common.domain.subscription import Subscription
 from linkurator_core.common.domain.user import User
 
 

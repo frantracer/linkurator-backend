@@ -12,8 +12,8 @@ from linkurator_core.common.domain.exceptions import SubscriptionNotFoundError, 
 from linkurator_core.common.domain.item import Item
 from linkurator_core.common.domain.session import Session
 from linkurator_core.items.application.get_subscription_items_handler import GetSubscriptionItemsHandler
-from linkurator_core.topics.application.get_topic_items_handler import GetTopicItemsHandler
-from linkurator_core.topics.domain.topic import Topic
+from linkurator_core.items.application.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.common.domain.topic import Topic
 from linkurator_core.common.domain.user import User
 
 

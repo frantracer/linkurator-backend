@@ -2,8 +2,8 @@ from typing import List
 from uuid import UUID
 
 from linkurator_core.common.domain.exceptions import UserNotFoundError
-from linkurator_core.topics.domain.topic import Topic
-from linkurator_core.topics.domain.topic_repository import TopicRepository
+from linkurator_core.common.domain.topic import Topic
+from linkurator_core.common.domain.topic_repository import TopicRepository
 from linkurator_core.common.domain.user_repository import UserRepository
 
 

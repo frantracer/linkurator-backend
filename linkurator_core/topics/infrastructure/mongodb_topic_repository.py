@@ -13,8 +13,8 @@ from pymongo import MongoClient
 
 from linkurator_core.common.domain.exceptions import DuplicatedKeyError
 from linkurator_core.common.infrastructure.mongodb_utils import CollectionIsNotInitialized
-from linkurator_core.topics.domain.topic import Topic
-from linkurator_core.topics.domain.topic_repository import TopicRepository
+from linkurator_core.common.domain.topic import Topic
+from linkurator_core.common.domain.topic_repository import TopicRepository
 
 
 class MongoDBTopic(BaseModel):

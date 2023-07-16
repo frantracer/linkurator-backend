@@ -3,8 +3,8 @@ from typing import Optional, List
 from uuid import UUID
 
 from linkurator_core.common.domain.exceptions import TopicNotFoundError, SubscriptionNotFoundError
-from linkurator_core.subscriptions.domain.subscription_repository import SubscriptionRepository
-from linkurator_core.topics.domain.topic_repository import TopicRepository
+from linkurator_core.common.domain.subscription_repository import SubscriptionRepository
+from linkurator_core.common.domain.topic_repository import TopicRepository
 
 
 class UpdateTopicHandler:

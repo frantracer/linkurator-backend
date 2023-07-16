@@ -5,7 +5,7 @@ import pytest
 
 from linkurator_core.topics.application.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.common.domain.exceptions import TopicNotFoundError
-from linkurator_core.topics.domain.topic import Topic
+from linkurator_core.common.domain.topic import Topic
 
 
 def test_delete_user_topic_handler():

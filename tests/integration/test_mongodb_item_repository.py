@@ -10,7 +10,7 @@ import pytest
 from linkurator_core.common.domain import utils
 from linkurator_core.common.domain.item import Item
 from linkurator_core.common.infrastructure.mongodb_utils import CollectionIsNotInitialized
-from linkurator_core.common.infrastructure.item_repository import MongoDBItem, MongoDBItemRepository
+from linkurator_core.items.infrastructure.item_repository import MongoDBItem, MongoDBItemRepository
 
 
 @pytest.fixture(name="item_repo", scope="session")

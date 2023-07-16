@@ -13,8 +13,8 @@ from pydantic.main import BaseModel
 from pymongo import MongoClient
 
 from linkurator_core.common.infrastructure.mongodb_utils import CollectionIsNotInitialized
-from linkurator_core.subscriptions.domain.subscription import Subscription
-from linkurator_core.subscriptions.domain.subscription_repository import SubscriptionRepository
+from linkurator_core.common.domain.subscription import Subscription
+from linkurator_core.common.domain.subscription_repository import SubscriptionRepository
 
 
 class MongoDBSubscription(BaseModel):

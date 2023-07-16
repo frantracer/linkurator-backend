@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic.main import BaseModel
 
-from linkurator_core.topics.domain.topic import Topic
+from linkurator_core.common.domain.topic import Topic
 
 
 class NewTopicSchema(BaseModel):

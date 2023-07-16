@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import List, Tuple
 from uuid import UUID
 
-from linkurator_core.subscriptions.domain.subscription import Subscription
-from linkurator_core.subscriptions.domain.subscription_repository import SubscriptionRepository
+from linkurator_core.common.domain.subscription import Subscription
+from linkurator_core.common.domain.subscription_repository import SubscriptionRepository
 from linkurator_core.common.domain.user_repository import UserRepository
 
 
