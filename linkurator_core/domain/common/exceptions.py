@@ -16,3 +16,7 @@ class ItemNotFoundError(Exception):
 
 class DuplicatedKeyError(Exception):
     pass
+
+
+class InvalidCredentialsError(Exception):
+    pass
