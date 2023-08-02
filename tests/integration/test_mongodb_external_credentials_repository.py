@@ -55,12 +55,13 @@ async def test_create_credentials(credentials_repo: MongodDBExternalCredentialRe
 
 @pytest.mark.asyncio
 async def test_update_credentials(credentials_repo: MongodDBExternalCredentialRepository):
+    updated_at = datetime(2022, 1, 1, 4, 4, 4, tzinfo=timezone.utc)
     credential = ExternalServiceCredential(
         user_id=UUID('f8587b92-b872-4d19-80e6-db7d1132693e'),
         credential_type=ExternalServiceType.YOUTUBE_API_KEY,
         credential_value="test_api_key",
         created_at=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
-        updated_at=datetime(2022, 1, 1, 4, 4, 4, tzinfo=timezone.utc)
+        updated_at=updated_at
     )
 
     await credentials_repo.add(credential)
@@ -77,7 +78,7 @@ async def test_update_credentials(credentials_repo: MongodDBExternalCredentialRe
     assert stored_credential.credential_type == credential.credential_type
     assert stored_credential.credential_value == credential.credential_value
     assert stored_credential.created_at == credential.created_at
-    assert stored_credential.updated_at.timestamp() > credential.updated_at.timestamp()
+    assert stored_credential.updated_at.timestamp() > updated_at.timestamp()
 
 
 @pytest.mark.asyncio
