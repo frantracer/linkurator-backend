@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
@@ -33,4 +33,12 @@ class ExternalCredentialRepository(ABC):
             user_ids: List[UUID],
             credential_type: ExternalServiceType
     ) -> List[ExternalServiceCredential]:
+        pass
+
+    @abstractmethod
+    async def get_by_value_and_type(
+            self,
+            credential_type: ExternalServiceType,
+            credential_value: str
+    ) -> Optional[ExternalServiceCredential]:
         pass

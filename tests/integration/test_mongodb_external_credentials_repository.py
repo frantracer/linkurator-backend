@@ -5,9 +5,9 @@ from uuid import UUID, uuid4
 import pytest
 
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import \
     MongodDBExternalCredentialRepository
+from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 
 @pytest.fixture(name="credentials_repo", scope="session")
@@ -138,3 +138,32 @@ async def test_find_credentials_by_user_id(credentials_repo: MongodDBExternalCre
     credentials_values = [stored_credential.credential_value for stored_credential in stored_credentials]
     assert credential_1.credential_value in credentials_values
     assert credential_3.credential_value in credentials_values
+
+
+@pytest.mark.asyncio
+async def test_find_credential_by_value_and_type(credentials_repo: MongodDBExternalCredentialRepository):
+    credential = ExternalServiceCredential(
+        user_id=UUID('821d0154-368e-4468-9ed0-8996e2505b73'),
+        credential_type=ExternalServiceType.YOUTUBE_API_KEY,
+        credential_value="c6114e65-1671-4c75-8b7c-0338ec965f53",
+        created_at=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
+        updated_at=datetime(2022, 1, 1, 4, 4, 4, tzinfo=timezone.utc)
+    )
+
+    await credentials_repo.add(credential)
+
+    stored_credential = await credentials_repo.get_by_value_and_type(
+        credential.credential_type, credential.credential_value)
+
+    assert stored_credential is not None
+    assert stored_credential.user_id == credential.user_id
+    assert stored_credential.credential_type == credential.credential_type
+    assert stored_credential.credential_value == credential.credential_value
+
+
+@pytest.mark.asyncio
+async def test_find_non_existing_credentials_returns_none(credentials_repo: MongodDBExternalCredentialRepository):
+    stored_credential = await credentials_repo.get_by_value_and_type(
+        ExternalServiceType.YOUTUBE_API_KEY, "9c71c4bb-d429-48d3-9e19-2e1e29a5d1a0")
+
+    assert stored_credential is None

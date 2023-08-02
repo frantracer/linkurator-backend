@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Any, List
+from typing import Any, List, Optional
 from uuid import UUID
 
 from bson.binary import UuidRepresentation
@@ -90,5 +90,17 @@ class MongodDBExternalCredentialRepository(ExternalCredentialRepository):
     ) -> List[ExternalServiceCredential]:
         return [MongoDBExternalCredentials(**credential).to_domain_credentials()
                 for credential in await self._collection().find(
-                    {'user_id': {'$in': user_ids}, 'credential_type': str(credential_type.value)}
-                ).to_list(length=None)]
+                {'user_id': {'$in': user_ids}, 'credential_type': str(credential_type.value)}
+            ).to_list(length=None)]
+
+    async def get_by_value_and_type(
+            self,
+            credential_type: ExternalServiceType,
+            credential_value: str
+    ) -> Optional[ExternalServiceCredential]:
+        credential = await self._collection().find_one(
+            {'credential_type': str(credential_type.value), 'value': credential_value}
+        )
+        if credential is None:
+            return None
+        return MongoDBExternalCredentials(**credential).to_domain_credentials()
