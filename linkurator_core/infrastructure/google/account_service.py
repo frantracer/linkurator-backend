@@ -77,7 +77,7 @@ class GoogleAccountService(AccountService):
         user_info = dict(user_info_response.json())
         return UserInfo(
             given_name=user_info['given_name'],
-            family_name=user_info['family_name'],
+            family_name=user_info.get('family_name', ''),
             email=user_info['email'],
             picture=user_info['picture'],
             locale=user_info['locale']
