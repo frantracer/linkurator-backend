@@ -22,12 +22,17 @@ from linkurator_core.application.topics.get_user_topics_handler import GetUserTo
 from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
     UnassignSubscriptionFromUserTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
+from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
+from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
+from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
+from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.interaction_repository import MongoDBInteractionRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
@@ -62,6 +67,10 @@ def app_handlers() -> Handlers:
     interaction_repository = MongoDBInteractionRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
+    credentials_repository = MongodDBExternalCredentialRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password)
+    credentials_checker = YoutubeApiKeyChecker()
 
     return Handlers(
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
@@ -97,7 +106,14 @@ def app_handlers() -> Handlers:
             item_repository=item_repository,
             interaction_repository=interaction_repository),
         delete_item_interaction_handler=DeleteItemInteractionHandler(
-            interaction_repository=interaction_repository)
+            interaction_repository=interaction_repository),
+        add_external_credentials_handler=AddExternalCredentialsHandler(
+            credentials_repository=credentials_repository,
+            credential_checker=credentials_checker),
+        get_user_external_credentials_handler=GetUserExternalCredentialsHandler(
+            credentials_repository=credentials_repository),
+        delete_external_credential_handler=DeleteExternalCredentialHandler(
+            credentials_repository=credentials_repository),
     )
 
 

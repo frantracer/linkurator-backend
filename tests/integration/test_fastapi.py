@@ -42,6 +42,9 @@ def dummy_handlers() -> Handlers:
         get_item_handler=MagicMock(),
         create_item_interaction_handler=MagicMock(),
         delete_item_interaction_handler=MagicMock(),
+        get_user_external_credentials_handler=MagicMock(),
+        add_external_credentials_handler=MagicMock(),
+        delete_external_credential_handler=MagicMock(),
     )
 
 

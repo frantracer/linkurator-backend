@@ -23,10 +23,14 @@ from linkurator_core.application.topics.get_user_topics_handler import GetUserTo
 from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
     UnassignSubscriptionFromUserTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
+from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
+from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
+from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.users.session import Session
-from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items
+from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items, \
+    credentials
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
@@ -49,6 +53,9 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_item_handler: GetItemHandler
     create_item_interaction_handler: CreateItemInteractionHandler
     delete_item_interaction_handler: DeleteItemInteractionHandler
+    add_external_credentials_handler: AddExternalCredentialsHandler
+    get_user_external_credentials_handler: GetUserExternalCredentialsHandler
+    delete_external_credential_handler: DeleteExternalCredentialHandler
 
 
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
@@ -106,6 +113,14 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             create_item_interaction_handler=handlers.create_item_interaction_handler,
             delete_item_interaction_handler=handlers.delete_item_interaction_handler),
         prefix="/items")
+    app.include_router(
+        credentials.get_router(
+            get_session=get_current_session,
+            get_user_external_credentials_handler=handlers.get_user_external_credentials_handler,
+            add_external_credential_handler=handlers.add_external_credentials_handler,
+            delete_external_credential_handler=handlers.delete_external_credential_handler),
+        prefix="/credentials"
+    )
 
     app.add_middleware(
         CORSMiddleware,
