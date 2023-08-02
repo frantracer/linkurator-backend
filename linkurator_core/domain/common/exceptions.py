@@ -20,3 +20,7 @@ class DuplicatedKeyError(Exception):
 
 class InvalidCredentialsError(Exception):
     pass
+
+
+class CredentialsAlreadyExistsError(Exception):
+    pass

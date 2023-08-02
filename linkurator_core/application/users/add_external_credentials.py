@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from linkurator_core.domain.common.exceptions import InvalidCredentialsError
+from linkurator_core.domain.common.exceptions import InvalidCredentialsError, CredentialsAlreadyExistsError
 from linkurator_core.domain.users.external_credentials_checker_service import ExternalCredentialsCheckerService
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
@@ -23,6 +23,10 @@ class AddExternalCredentialsHandler:
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
+
+        credential = await self.credentials_repository.get_by_value_and_type(credential_type, credential_value)
+        if credential is not None:
+            raise CredentialsAlreadyExistsError(f'Credential for service {credential_type} already exists')
 
         if not await self.credential_checker.check(new_credential):
             raise InvalidCredentialsError(f'Invalid credential for service {credential_type}')
