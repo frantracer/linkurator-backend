@@ -30,6 +30,7 @@ def dummy_handlers() -> Handlers:
         get_user_subscriptions=MagicMock(),
         get_subscription_items_handler=MagicMock(),
         delete_subscription_items_handler=MagicMock(),
+        refresh_subscrition_handler=MagicMock(),
         get_user_profile_handler=MagicMock(),
         get_topic_handler=MagicMock(),
         get_topic_items_handler=MagicMock(),

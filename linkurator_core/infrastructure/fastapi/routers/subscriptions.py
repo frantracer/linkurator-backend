@@ -10,6 +10,7 @@ from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
+from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
@@ -24,6 +25,7 @@ def get_router(
         get_user_subscriptions_handler: GetUserSubscriptionsHandler,
         get_subscription_items_handler: GetSubscriptionItemsHandler,
         delete_subscription_items_handler: DeleteSubscriptionItemsHandler,
+        refresh_subscription_handler: RefreshSubscriptionHandler
 ) -> APIRouter:
     router = APIRouter()
 
@@ -108,7 +110,7 @@ def get_router(
             current_url=current_url)
 
     @router.delete("/{sub_id}/items", response_model=None,
-                   responses={204: {"model": None}, 403: {"model": None}, 404: {"model": None}})
+                   responses={204: {"model": None}, 401: {"model": None}, 403: {"model": None}, 404: {"model": None}})
     async def delete_subscription_items(
             sub_id: UUID,
             session: Optional[Session] = Depends(get_session)
@@ -125,6 +127,30 @@ def get_router(
 
         try:
             delete_subscription_items_handler.handle(user_id=session.user_id, subscription_id=sub_id)
+            return Response(status_code=http.HTTPStatus.NO_CONTENT)
+        except PermissionError:
+            return Response(status_code=http.HTTPStatus.FORBIDDEN)
+        except SubscriptionNotFoundError:
+            return Response(status_code=http.HTTPStatus.NOT_FOUND)
+
+    @router.post("/{sub_id}/refresh", response_model=None,
+                responses={204: {"model": None}, 403: {"model": None}, 404: {"model": None}})
+    async def refresh_subscription_information(
+            sub_id: UUID,
+            session: Optional[Session] = Depends(get_session)
+    ) -> Any:
+        """
+        Refresh the subscription information
+        :param sub_id: UUID of the subscripton included in the url
+        :param session: The session of the logged user
+        :return: UNAUTHORIZED status code if the session is invalid.
+        """
+
+        if session is None:
+            return Response(status_code=http.HTTPStatus.UNAUTHORIZED)
+
+        try:
+            await refresh_subscription_handler.handle(user_id=session.user_id, subscription_id=sub_id)
             return Response(status_code=http.HTTPStatus.NO_CONTENT)
         except PermissionError:
             return Response(status_code=http.HTTPStatus.FORBIDDEN)

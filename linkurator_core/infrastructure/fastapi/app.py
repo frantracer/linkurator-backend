@@ -13,6 +13,7 @@ from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
+from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import \
     AssignSubscriptionToTopicHandler
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
@@ -32,6 +33,7 @@ from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
+from linkurator_core.infrastructure.google.youtube_service import YoutubeService, YoutubeApiClient
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.interaction_repository import MongoDBInteractionRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
@@ -72,6 +74,13 @@ def app_handlers() -> Handlers:
         username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
 
+    youtube_service = YoutubeService(
+        google_account_service=account_service,
+        subscription_repository=subscription_repository,
+        user_repository=user_repository,
+        youtube_client=YoutubeApiClient(),
+        api_key=google_secrets.api_key)
+
     return Handlers(
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
         google_client=account_service,
@@ -81,6 +90,10 @@ def app_handlers() -> Handlers:
             item_repository=item_repository,
             subscription_repository=subscription_repository,
             user_repository=user_repository),
+        refresh_subscrition_handler=RefreshSubscriptionHandler(
+            user_repository=user_repository,
+            subscription_repository=subscription_repository,
+            subscription_service=youtube_service),
         get_user_profile_handler=GetUserProfileHandler(user_repository),
         get_user_topics_handler=GetUserTopicsHandler(topic_repo=topic_repository, user_repo=user_repository),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
