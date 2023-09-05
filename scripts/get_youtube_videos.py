@@ -3,7 +3,7 @@ import asyncio
 from datetime import datetime
 
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
-from linkurator_core.infrastructure.google.youtube_service import YoutubeService
+from linkurator_core.infrastructure.google.youtube_service import YoutubeApiClient
 
 
 async def main():
@@ -17,7 +17,8 @@ async def main():
 
     secrets = GoogleClientSecrets()
 
-    videos = await YoutubeService.get_youtube_videos(
+    client = YoutubeApiClient()
+    videos = await client.get_youtube_videos(
         api_key=secrets.api_key,
         playlist_id=playlist_id,
         from_date=from_date)

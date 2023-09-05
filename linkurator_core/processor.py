@@ -15,7 +15,7 @@ from linkurator_core.infrastructure.asyncio.utils import run_parallel
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
-from linkurator_core.infrastructure.google.youtube_service import YoutubeService
+from linkurator_core.infrastructure.google.youtube_service import YoutubeService, YoutubeApiClient
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
@@ -40,6 +40,7 @@ async def main():  # pylint: disable=too-many-locals
     # Services
     google_client_secret_path = os.environ.get('LINKURATOR_GOOGLE_SECRET_PATH', "secrets/client_secret.json")
     google_secrets = GoogleClientSecrets(google_client_secret_path)
+    youtube_client = YoutubeApiClient()
     account_service = GoogleAccountService(
         client_id=google_secrets.client_id,
         client_secret=google_secrets.client_secret)
@@ -47,7 +48,8 @@ async def main():  # pylint: disable=too-many-locals
         google_account_service=account_service,
         user_repository=user_repository,
         subscription_repository=subscription_repository,
-        api_key=google_secrets.api_key)
+        api_key=google_secrets.api_key,
+        youtube_client=youtube_client)
 
     # Event bus
     event_bus = AsyncioEventBusService()
