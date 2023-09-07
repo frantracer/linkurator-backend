@@ -8,7 +8,7 @@ import pytest
 from linkurator_core.domain.common.exceptions import TopicNotFoundError, SubscriptionNotFoundError
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
@@ -55,7 +55,7 @@ def test_update_topic_subscriptions():
     subscription_repository.get = MagicMock(return_value=Subscription.new(
         uuid=uuid.UUID("e7c9773b-9569-42c1-ab6c-43296756c534"),
         name="subscription1",
-        provider="provider1",
+        provider=SubscriptionProvider.YOUTUBE,
         thumbnail=utils.parse_url("https://example.com/thumbnail.png"),
         external_data={},
         url=utils.parse_url("https://url.com")

@@ -12,7 +12,7 @@ from linkurator_core.application.subscriptions.update_subscription_items_handler
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.infrastructure.asyncio.utils import run_parallel
 
@@ -22,7 +22,7 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered():
     sub1 = Subscription(
         uuid=uuid.UUID("b6cae596-4526-4ab7-b5da-bd803f04980b"),
         name="sub1",
-        provider="myprovider",
+        provider=SubscriptionProvider.YOUTUBE,
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
@@ -71,7 +71,7 @@ async def test_update_subscriptions_items_with_a_items_that_are_already_register
     sub1 = Subscription(
         uuid=uuid.UUID("b6cae596-4526-4ab7-b5da-bd803f04980b"),
         name="sub1",
-        provider="myprovider",
+        provider=SubscriptionProvider.YOUTUBE,
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
@@ -129,7 +129,7 @@ async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription():
     sub1 = Subscription(
         uuid=uuid.UUID("547d692c-d2a2-49ef-bfd6-97cb02fb03d1"),
         name="sub1",
-        provider="myprovider",
+        provider=SubscriptionProvider.YOUTUBE,
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"),
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),

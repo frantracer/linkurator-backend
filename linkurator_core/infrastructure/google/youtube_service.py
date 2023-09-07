@@ -10,7 +10,7 @@ import backoff
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.user_repository import UserRepository
@@ -311,7 +311,7 @@ class YoutubeService(SubscriptionService):
             return Subscription.new(
                 uuid=uuid.uuid4(),
                 name=channel.title,
-                provider="youtube",
+                provider=SubscriptionProvider.YOUTUBE,
                 external_data={
                     "channel_id": channel.channel_id,
                     "playlist_id": channel.playlist_id
@@ -333,7 +333,7 @@ class YoutubeService(SubscriptionService):
 
     async def get_subscription(self, sub_id: uuid.UUID) -> Optional[Subscription]:
         subscription = self.subscription_repository.get(sub_id)
-        if subscription is None or subscription.provider != "youtube":
+        if subscription is None or subscription.provider != SubscriptionProvider.YOUTUBE:
             return None
 
         channel_id = subscription.external_data["channel_id"]
@@ -348,7 +348,7 @@ class YoutubeService(SubscriptionService):
 
     async def get_items(self, sub_id: uuid.UUID, from_date: datetime) -> List[Item]:
         subscription = self.subscription_repository.get(sub_id)
-        if subscription is None or subscription.provider != "youtube":
+        if subscription is None or subscription.provider != SubscriptionProvider.YOUTUBE:
             return []
 
         def map_video_to_item(video: YoutubeVideo) -> Item:

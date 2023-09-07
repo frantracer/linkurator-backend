@@ -5,14 +5,14 @@ from linkurator_core.application.subscriptions.find_outdated_subscriptions_handl
     FindOutdatedSubscriptionsHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 
 
 def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions():
     sub_repo_mock = MagicMock()
     sub1 = Subscription.new(
         uuid=uuid.uuid4(),
-        provider='youtube',
+        provider=SubscriptionProvider.YOUTUBE,
         name='Test',
         url=utils.parse_url('https://www.youtube.com/channel/test1'),
         thumbnail=utils.parse_url('https://www.youtube.com/channel/test/thumbnail1'),
@@ -20,7 +20,7 @@ def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions():
     )
     sub2 = Subscription.new(
         uuid=uuid.uuid4(),
-        provider='youtube',
+        provider=SubscriptionProvider.YOUTUBE,
         name='Test',
         url=utils.parse_url('https://www.youtube.com/channel/test2'),
         thumbnail=utils.parse_url('https://www.youtube.com/channel/test/thumbnail2'),

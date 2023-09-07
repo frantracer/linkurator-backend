@@ -9,7 +9,7 @@ from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
@@ -32,7 +32,7 @@ def test_delete_subscription_items_handler():
     subscription_repo_mock.get.return_value = Subscription.new(
         uuid=UUID('0a46b804-a370-480b-b64e-c2079aaaa64b'),
         name='Subscription 1',
-        provider='rss',
+        provider=SubscriptionProvider.YOUTUBE,
         url=utils.parse_url('https://www.example.com/rss.xml'),
         thumbnail=utils.parse_url('https://www.example.com/thumbnail.png'),
         external_data=None)

@@ -7,7 +7,7 @@ import pytest
 
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.common.utils import parse_url
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.users.user import User
 
 
@@ -17,7 +17,7 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
     sub1 = Subscription.new(
         uuid=uuid.UUID("db051fbc-3f2e-47bc-a03a-8a567e4604c9"),
         name="sub1",
-        provider="myprovider",
+        provider=SubscriptionProvider.YOUTUBE,
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"))
     subscription_service.get_subscriptions.return_value = [sub1]
@@ -66,13 +66,13 @@ async def test_update_user_subscription_with_subscription_that_is_already_regist
     sub1 = Subscription.new(
         uuid=uuid.UUID("8c9879ec-35d1-44d5-84c1-ef1939330033"),
         name="sub1",
-        provider="myprovider",
+        provider=SubscriptionProvider.YOUTUBE,
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"))
     sub2 = Subscription.new(
         uuid=uuid.UUID("001db850-7edc-4fab-9e1c-6c148edfafab"),
         name="sub1",
-        provider="myprovider",
+        provider=SubscriptionProvider.YOUTUBE,
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"))
     subscription_service.get_subscriptions.return_value = [sub1]

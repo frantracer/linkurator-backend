@@ -12,7 +12,7 @@ from pydantic.main import BaseModel
 import pymongo  # type: ignore
 from pymongo import MongoClient
 
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
@@ -33,7 +33,7 @@ class MongoDBSubscription(BaseModel):
         return MongoDBSubscription(
             uuid=subscription.uuid,
             name=subscription.name,
-            provider=subscription.provider,
+            provider=subscription.provider.value,
             external_data=subscription.external_data,
             url=subscription.url,
             thumbnail=subscription.thumbnail,
@@ -46,7 +46,7 @@ class MongoDBSubscription(BaseModel):
         return Subscription(
             uuid=self.uuid,
             name=self.name,
-            provider=self.provider,
+            provider=SubscriptionProvider(self.provider),
             external_data=self.external_data,
             url=self.url,
             thumbnail=self.thumbnail,

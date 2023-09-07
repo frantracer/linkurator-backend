@@ -7,7 +7,7 @@ from linkurator_core.application.topics.assign_subscription_to_user_topic_handle
     AssignSubscriptionToTopicHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError, UserNotFoundError
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.user import User
 
@@ -32,7 +32,7 @@ def test_assign_subscription_to_topic_handler():
     subs_repo_mock.get.return_value = Subscription.new(
         uuid=subscription_id,
         name='Subscription 1',
-        provider='provider',
+        provider=SubscriptionProvider.YOUTUBE,
         url=utils.parse_url('https://example.com'),
         thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
         external_data={}
@@ -122,7 +122,7 @@ def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subscriptio
     subs_repo_mock.get.return_value = Subscription.new(
         uuid=subscription_id,
         name='Subscription 1',
-        provider='provider',
+        provider=SubscriptionProvider.YOUTUBE,
         url=utils.parse_url('https://example.com'),
         thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
         external_data={}
@@ -156,7 +156,7 @@ def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_error():
     subs_repo_mock.get.return_value = Subscription.new(
         uuid=subscription_id,
         name='Subscription 1',
-        provider='provider',
+        provider=SubscriptionProvider.YOUTUBE,
         url=utils.parse_url('https://example.com'),
         thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
         external_data={}
@@ -192,7 +192,7 @@ def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_user_rais
     subs_repo_mock.get.return_value = Subscription.new(
         uuid=subscription_id,
         name='Subscription 1',
-        provider='provider',
+        provider=SubscriptionProvider.YOUTUBE,
         url=utils.parse_url('https://example.com'),
         thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
         external_data={}

@@ -5,7 +5,7 @@ from uuid import UUID
 import pytest
 
 from linkurator_core.domain.common.utils import parse_url
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
@@ -68,7 +68,7 @@ async def test_youtube_service_returns_a_single_subscription():
         created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         updated_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         name="channel_title",
-        provider="youtube",
+        provider=SubscriptionProvider.YOUTUBE,
         url=parse_url("https://channel_url.com/channel_id"),
         thumbnail=parse_url("https://thumbnail.com/image"),
         external_data={
@@ -107,7 +107,7 @@ async def test_youtube_service_returns_subscription_items():
         created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         updated_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         name="channel_title",
-        provider="youtube",
+        provider=SubscriptionProvider.YOUTUBE,
         url=parse_url("https://channel_url.com/channel_id"),
         thumbnail=parse_url("https://thumbnail.com/image"),
         external_data={

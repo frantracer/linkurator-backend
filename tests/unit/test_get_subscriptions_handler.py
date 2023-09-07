@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import uuid
 
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.users.user import User
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 
@@ -13,7 +13,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         uuid=uuid.UUID("6473ad5b-75ad-4384-a48d-924e026dd988"),
         name="Test1",
         url=utils.parse_url("https://url.com"),
-        provider='test',
+        provider=SubscriptionProvider.YOUTUBE,
         external_data={},
         thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
         created_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
@@ -24,7 +24,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         uuid=uuid.UUID("79a636a4-6d4b-41e2-be73-4cff46110e28"),
         name="Test2",
         url=utils.parse_url("https://url.com"),
-        provider='test',
+        provider=SubscriptionProvider.YOUTUBE,
         external_data={},
         thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
         created_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
@@ -35,7 +35,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         uuid=uuid.UUID("c497fecf-425c-4bb3-b597-5a3dc7ad2fe5"),
         name="Test3",
         url=utils.parse_url("https://url.com"),
-        provider='test',
+        provider=SubscriptionProvider.YOUTUBE,
         external_data={},
         thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
         created_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
@@ -46,7 +46,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
         uuid=uuid.UUID("c66b1e29-79af-49d8-85f4-17d3b5d0bf76"),
         name="Test4",
         url=utils.parse_url("https://url.com"),
-        provider='test',
+        provider=SubscriptionProvider.YOUTUBE,
         external_data={},
         thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
         created_at=datetime.fromisoformat("2050-01-01T00:00:00+00:00"),
