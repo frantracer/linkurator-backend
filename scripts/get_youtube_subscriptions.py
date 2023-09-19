@@ -26,19 +26,7 @@ async def main():
         print("Refresh token is not valid")
         sys.exit(1)
 
-    channel = await client.get_youtube_user_channel(access_token=access_token)
-    if channel is None:
-        print("No channel found")
-        sys.exit(1)
-
-    user_channel = await client.get_youtube_channel(api_key=api_key, channel_id=channel.channel_id)
-    if user_channel is None:
-        print("No channel found")
-        sys.exit(1)
-
-    print(f'User channel: {user_channel.title} -> {user_channel.playlist_id} ({user_channel.url})')
-
-    subscriptions = await client.get_youtube_subscriptions(api_key=api_key, channel_id=user_channel.channel_id)
+    subscriptions = await client.get_youtube_subscriptions(access_token=access_token, api_key=api_key)
     subscriptions.sort(key=lambda s: s.title)
     print(f'\nSubscriptions ({len(subscriptions)}):')
     for subscription in subscriptions:

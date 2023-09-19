@@ -36,16 +36,6 @@ async def test_youtube_service_returns_subscriptions_from_user():
     google_service_mock.generate_access_token_from_refresh_token.return_value = "access_token"
 
     client_mock = AsyncMock(spec=YoutubeApiClient)
-    client_mock.get_youtube_user_channel.return_value = YoutubeChannel(
-        channel_id="channel_id",
-        title="channel_title",
-        description="channel_description",
-        thumbnail_url="https://thumbnail.com/image",
-        published_at="2020-01-01T00:00:00Z",
-        playlist_id="playlist_id",
-        channel_title="channel_title",
-        country="country",
-        url="https://channel_url.com/channel_id")
     client_mock.get_youtube_subscriptions.return_value = [
         YoutubeChannel(
             channel_id="channel_id",
@@ -63,10 +53,8 @@ async def test_youtube_service_returns_subscriptions_from_user():
 
     subscriptions = await service.get_subscriptions(UUID("8fed9938-d8f3-4d8d-adc2-8ef0683dbdce"))
 
-    assert client_mock.get_youtube_user_channel.call_count == 1
-    client_mock.get_youtube_user_channel.assert_called_with("access_token")
-
     assert client_mock.get_youtube_subscriptions.call_count == 1
+    client_mock.get_youtube_subscriptions.assert_called_with(access_token="access_token", api_key="api_key")
     assert len(subscriptions) == 1
     assert subscriptions[0].name == "channel_title"
 

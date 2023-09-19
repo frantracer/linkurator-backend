@@ -86,13 +86,13 @@ class YoutubeApiClient:
 
         return YoutubeChannel.from_dict(items[0])
 
-    async def get_youtube_subscriptions(self, api_key: str, channel_id: str) -> List[YoutubeChannel]:
+    async def get_youtube_subscriptions(self, access_token: str, api_key: str) -> List[YoutubeChannel]:
         next_page_token = None
         subscriptions: List[YoutubeChannel] = []
 
         while True:
             subs_response_json, subs_status_code = await self._request_youtube_subscriptions(
-                api_key, channel_id, next_page_token)
+                access_token, next_page_token)
             if subs_status_code != 200:
                 raise Exception(f"Error getting youtube subscriptions: {subs_response_json}")
 
@@ -196,22 +196,21 @@ class YoutubeApiClient:
                           max_time=60,
                           jitter=None)
     async def _request_youtube_subscriptions(
-            self, api_key: str, channel_id: str, next_page_token: Optional[str]
+            self, access_token: str, next_page_token: Optional[str]
     ) -> Tuple[Dict[str, Any], int]:
         youtube_api_url = f"{self.base_url}/subscriptions"
 
         subs_query_params: Dict[str, Any] = {
             "part": "snippet",
             "maxResults": 50,
-            "channelId": channel_id,
-            "key": api_key
+            "mine": "true",
         }
         if next_page_token is not None:
             subs_query_params["pageToken"] = next_page_token
 
         url = f"{youtube_api_url}?{urlencode(subs_query_params)}"
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {access_token}"}) as session:
             async with session.get(url) as resp:
                 resp_body = await resp.json()
                 resp_status = resp.status
@@ -326,12 +325,9 @@ class YoutubeService(SubscriptionService):
                 user.google_refresh_token)
 
             if access_token is not None:
-                user_channel = await self.youtube_client.get_youtube_user_channel(access_token)
-
-                if user_channel is not None:
-                    channels = await self.youtube_client.get_youtube_subscriptions(self.api_key,
-                                                                                   user_channel.channel_id)
-                    youtube_channels = [map_channel_to_subscription(c) for c in channels]
+                channels = await self.youtube_client.get_youtube_subscriptions(access_token=access_token,
+                                                                               api_key=self.api_key)
+                youtube_channels = [map_channel_to_subscription(c) for c in channels]
 
         return youtube_channels
 
