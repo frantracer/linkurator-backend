@@ -16,6 +16,7 @@ from linkurator_core.infrastructure.config.google_secrets import GoogleClientSec
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService, YoutubeApiClient
+from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
@@ -36,6 +37,9 @@ async def main():  # pylint: disable=too-many-locals
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password
     )
+    credentials_repository = MongodDBExternalCredentialRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password)
 
     # Services
     google_client_secret_path = os.environ.get('LINKURATOR_GOOGLE_SECRET_PATH', "secrets/client_secret.json")
@@ -48,6 +52,7 @@ async def main():  # pylint: disable=too-many-locals
         google_account_service=account_service,
         user_repository=user_repository,
         subscription_repository=subscription_repository,
+        credentials_repository=credentials_repository,
         api_key=google_secrets.api_key,
         youtube_client=youtube_client)
 

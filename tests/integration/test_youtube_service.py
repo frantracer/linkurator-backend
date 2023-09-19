@@ -49,7 +49,8 @@ async def test_youtube_service_returns_subscriptions_from_user():
             url="https://channel_url.com/channel_id")
     ]
     service = YoutubeService(youtube_client=client_mock, api_key="api_key", google_account_service=google_service_mock,
-                             user_repository=MagicMock(), subscription_repository=MagicMock())
+                             user_repository=MagicMock(), subscription_repository=MagicMock(),
+                             credentials_repository=AsyncMock())
 
     subscriptions = await service.get_subscriptions(UUID("8fed9938-d8f3-4d8d-adc2-8ef0683dbdce"))
 
@@ -88,7 +89,8 @@ async def test_youtube_service_returns_a_single_subscription():
         country="country",
         url="https://channel_url.com/channel_id")
     service = YoutubeService(youtube_client=client_mock, api_key="api_key", google_account_service=MagicMock(),
-                             user_repository=MagicMock(), subscription_repository=subs_repo_mock)
+                             user_repository=MagicMock(), subscription_repository=subs_repo_mock,
+                             credentials_repository=AsyncMock())
 
     subscription = await service.get_subscription(UUID("321cbb52-1398-406e-b278-0a81e85d3274"))
 
@@ -131,7 +133,8 @@ async def test_youtube_service_returns_subscription_items():
         )
     ]
     service = YoutubeService(youtube_client=client_mock, api_key="api_key", google_account_service=MagicMock(),
-                             user_repository=MagicMock(), subscription_repository=subs_repo_mock)
+                             user_repository=MagicMock(), subscription_repository=subs_repo_mock,
+                             credentials_repository=AsyncMock())
 
     from_date = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     items = await service.get_items(

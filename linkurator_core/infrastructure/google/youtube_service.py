@@ -2,6 +2,7 @@ import logging
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
+from random import randint
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
@@ -13,6 +14,8 @@ from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
+from linkurator_core.domain.users.external_service_credential import ExternalServiceType
+from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
@@ -294,12 +297,16 @@ class YoutubeApiClient:
 
 
 class YoutubeService(SubscriptionService):
-    def __init__(self, google_account_service: GoogleAccountService, user_repository: UserRepository,
-                 subscription_repository: SubscriptionRepository, youtube_client: YoutubeApiClient,
+    def __init__(self, google_account_service: GoogleAccountService,
+                 user_repository: UserRepository,
+                 subscription_repository: SubscriptionRepository,
+                 credentials_repository: ExternalCredentialRepository,
+                 youtube_client: YoutubeApiClient,
                  api_key: str):
         self.google_account_service = google_account_service
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
+        self.credentials_repository = credentials_repository
         self.youtube_client = youtube_client
         self.api_key = api_key
 
@@ -338,7 +345,9 @@ class YoutubeService(SubscriptionService):
 
         channel_id = subscription.external_data["channel_id"]
 
-        channel = await self.youtube_client.get_youtube_channel(api_key=self.api_key, channel_id=channel_id)
+        api_key = await self._get_api_key_for_sub(sub_id)
+
+        channel = await self.youtube_client.get_youtube_channel(api_key=api_key, channel_id=channel_id)
         if channel is not None:
             subscription.name = channel.title
             subscription.url = utils.parse_url(channel.url)
@@ -362,9 +371,26 @@ class YoutubeService(SubscriptionService):
                 published_at=video.published_at
             )
 
+        api_key = await self._get_api_key_for_sub(sub_id)
+
         videos = await self.youtube_client.get_youtube_videos(
-            api_key=self.api_key,
+            api_key=api_key,
             playlist_id=subscription.external_data["playlist_id"],
             from_date=from_date)
 
         return [map_video_to_item(v) for v in videos]
+
+    async def _get_api_key_for_sub(self, sub_id: uuid.UUID) -> str:
+        subscribed_users = self.user_repository.find_users_subscribed_to_subscription(sub_id)
+        if len(subscribed_users) == 0:
+            return self.api_key
+
+        credentials = await self.credentials_repository.find_by_users_and_type(
+            user_ids=[u.uuid for u in subscribed_users],
+            credential_type=ExternalServiceType.YOUTUBE_API_KEY
+        )
+
+        if len(credentials) == 0:
+            return self.api_key
+
+        return credentials[randint(0, len(credentials) - 1)].credential_value
