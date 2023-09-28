@@ -1,17 +1,18 @@
 import asyncio
+import sys
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Callable, List
-import uuid
+from typing import Callable, List, Awaitable
 
-import sys
+TaskCallback = Callable[[], Awaitable[None]]
 
 
 @dataclass
 class Task:
     id: uuid.UUID
     interval_seconds: int
-    callback: Callable
+    callback: TaskCallback
     latest_executed: datetime = datetime.fromtimestamp(0)
 
 
@@ -20,13 +21,16 @@ class TaskScheduler:
         self.tasks: List[Task] = []
         self.is_running = False
 
-    def schedule_recurring_task(self, task: Callable, interval_seconds: int, skip_first: bool = False):
+    def schedule_recurring_task(self, task: TaskCallback, interval_seconds: int, skip_first: bool = False):
         latest_executed = datetime.fromtimestamp(0)
         if skip_first:
             latest_executed = datetime.now()
 
-        self.tasks.append(Task(id=uuid.uuid4(), interval_seconds=interval_seconds, callback=task,
-                               latest_executed=latest_executed))
+        new_task = Task(id=uuid.uuid4(),
+                        interval_seconds=interval_seconds,
+                        callback=task,
+                        latest_executed=latest_executed)
+        self.tasks.append(new_task)
 
     async def start(self):
         self.is_running = True
@@ -34,10 +38,11 @@ class TaskScheduler:
             waiting_seconds = sys.maxsize
             start_time = datetime.now()
             for task in self.tasks:
-                if task.latest_executed + timedelta(seconds=task.interval_seconds) < start_time:
+                remaining_time = task.latest_executed + timedelta(seconds=task.interval_seconds) - start_time
+                if task.latest_executed + timedelta(seconds=task.interval_seconds) <= start_time:
                     task.latest_executed = datetime.now()
-                    task.callback()
-                waiting_seconds = min(waiting_seconds, task.interval_seconds)
+                    await task.callback()
+                waiting_seconds = min(waiting_seconds, int(remaining_time.total_seconds()))
 
             await asyncio.sleep(waiting_seconds)
 

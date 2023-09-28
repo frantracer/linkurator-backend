@@ -1,37 +1,34 @@
-import uuid
 from unittest.mock import MagicMock
+
+import pytest
 
 from linkurator_core.application.subscriptions.find_outdated_subscriptions_handler import \
     FindOutdatedSubscriptionsHandler
-from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.common.event_bus_service import EventBusService
+from linkurator_core.domain.common.mock_factory import mock_user, mock_sub, mock_credential
+from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
+from linkurator_core.domain.users.user_repository import UserRepository
 
 
-def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions():
-    sub_repo_mock = MagicMock()
-    sub1 = Subscription.new(
-        uuid=uuid.uuid4(),
-        provider=SubscriptionProvider.YOUTUBE,
-        name='Test',
-        url=utils.parse_url('https://www.youtube.com/channel/test1'),
-        thumbnail=utils.parse_url('https://www.youtube.com/channel/test/thumbnail1'),
-        external_data={},
-    )
-    sub2 = Subscription.new(
-        uuid=uuid.uuid4(),
-        provider=SubscriptionProvider.YOUTUBE,
-        name='Test',
-        url=utils.parse_url('https://www.youtube.com/channel/test2'),
-        thumbnail=utils.parse_url('https://www.youtube.com/channel/test/thumbnail2'),
-        external_data={},
-    )
+@pytest.mark.asyncio
+async def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions():
+    sub_repo_mock = MagicMock(spec=SubscriptionRepository)
+    sub1 = mock_sub()
+    sub2 = mock_sub()
     sub_repo_mock.find_latest_scan_before.return_value = [sub1, sub2]
 
-    event_bus_mock = MagicMock()
-    handler = FindOutdatedSubscriptionsHandler(sub_repo_mock, event_bus_mock)
-
-    handler.handle()
+    event_bus_mock = MagicMock(spec=EventBusService)
+    user_repository_mock = MagicMock(spec=UserRepository)
+    user1 = mock_user(subscribed_to=[sub1.uuid, sub2.uuid])
+    user_repository_mock.find_users_subscribed_to_subscription.return_value = [user1]
+    credentials_repository_mock = MagicMock(spec=ExternalCredentialRepository)
+    handler = FindOutdatedSubscriptionsHandler(subscription_repository=sub_repo_mock,
+                                               event_bus=event_bus_mock,
+                                               user_repository=user_repository_mock,
+                                               external_credentials_repository=credentials_repository_mock)
+    await handler.handle()
 
     assert event_bus_mock.publish.call_count == 2
     arg1 = event_bus_mock.publish.call_args_list[0][0][0]
@@ -41,3 +38,84 @@ def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions():
     assert isinstance(arg2, SubscriptionBecameOutdatedEvent)
 
     assert {sub1.uuid, sub2.uuid}.issubset({arg1.subscription_id, arg2.subscription_id})
+
+
+@pytest.mark.asyncio
+async def test_calculate_subscription_refresh_period_is_2_hours_if_there_is_one_user_with_no_credentials():
+    sub = mock_sub()
+    user = mock_user(subscribed_to=[sub.uuid])
+
+    sub_repo_mock = MagicMock(spec=SubscriptionRepository)
+    event_bus_mock = MagicMock(spec=EventBusService)
+    user_repository_mock = MagicMock(spec=UserRepository)
+    user_repository_mock.find_users_subscribed_to_subscription.return_value = [user]
+    credentials_repository_mock = MagicMock(spec=ExternalCredentialRepository)
+    credentials_repository_mock.find_by_users_and_type.return_value = []
+
+    handler = FindOutdatedSubscriptionsHandler(subscription_repository=sub_repo_mock,
+                                               event_bus=event_bus_mock,
+                                               user_repository=user_repository_mock,
+                                               external_credentials_repository=credentials_repository_mock)
+
+    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 60 * 2
+
+
+@pytest.mark.asyncio
+async def test_calculate_subscription_refresh_period_is_60_minutes_if_there_is_one_user_and_one_credential():
+    sub = mock_sub()
+    user = mock_user(subscribed_to=[sub.uuid])
+    credential = mock_credential(user.uuid)
+
+    sub_repo_mock = MagicMock(spec=SubscriptionRepository)
+    event_bus_mock = MagicMock(spec=EventBusService)
+    user_repository_mock = MagicMock(spec=UserRepository)
+    user_repository_mock.find_users_subscribed_to_subscription.return_value = [user]
+    credentials_repository_mock = MagicMock(spec=ExternalCredentialRepository)
+    credentials_repository_mock.find_by_users_and_type.return_value = [credential]
+
+    handler = FindOutdatedSubscriptionsHandler(subscription_repository=sub_repo_mock,
+                                               event_bus=event_bus_mock,
+                                               user_repository=user_repository_mock,
+                                               external_credentials_repository=credentials_repository_mock)
+
+    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 60
+
+
+@pytest.mark.asyncio
+async def test_calculate_subscription_refresh_period_is_30_minutes_if_there_is_one_user_and_two_credentials():
+    sub = mock_sub()
+    user = mock_user(subscribed_to=[sub.uuid])
+    credential1 = mock_credential(user.uuid)
+    credential2 = mock_credential(user.uuid)
+
+    sub_repo_mock = MagicMock(spec=SubscriptionRepository)
+    event_bus_mock = MagicMock(spec=EventBusService)
+    user_repository_mock = MagicMock(spec=UserRepository)
+    user_repository_mock.find_users_subscribed_to_subscription.return_value = [user]
+    credentials_repository_mock = MagicMock(spec=ExternalCredentialRepository)
+    credentials_repository_mock.find_by_users_and_type.return_value = [credential1, credential2]
+
+    handler = FindOutdatedSubscriptionsHandler(subscription_repository=sub_repo_mock,
+                                               event_bus=event_bus_mock,
+                                               user_repository=user_repository_mock,
+                                               external_credentials_repository=credentials_repository_mock)
+
+    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 30
+
+
+@pytest.mark.asyncio
+async def test_calculate_subscription_refresh_period_is_24_hours_if_there_is_no_user_subscribed():
+    sub = mock_sub()
+
+    sub_repo_mock = MagicMock(spec=SubscriptionRepository)
+    event_bus_mock = MagicMock(spec=EventBusService)
+    user_repository_mock = MagicMock(spec=UserRepository)
+    user_repository_mock.find_users_subscribed_to_subscription.return_value = []
+    credentials_repository_mock = MagicMock(spec=ExternalCredentialRepository)
+
+    handler = FindOutdatedSubscriptionsHandler(subscription_repository=sub_repo_mock,
+                                               event_bus=event_bus_mock,
+                                               user_repository=user_repository_mock,
+                                               external_credentials_repository=credentials_repository_mock)
+
+    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 60 * 24

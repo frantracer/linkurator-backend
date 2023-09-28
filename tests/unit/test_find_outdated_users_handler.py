@@ -1,5 +1,7 @@
-from unittest.mock import MagicMock
 import uuid
+from unittest.mock import MagicMock
+
+import pytest
 
 from linkurator_core.application.users.find_outdated_users_handler import FindOutdatedUsersHandler
 from linkurator_core.domain.common import utils
@@ -7,7 +9,8 @@ from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedE
 from linkurator_core.domain.users.user import User
 
 
-def test_handler_sends_two_events_if_there_are_two_outdated_users():
+@pytest.mark.asyncio
+async def test_handler_sends_two_events_if_there_are_two_outdated_users():
     user_repo_mock = MagicMock()
     user1 = User.new(uuid=uuid.UUID("844f3bfb-ddab-4280-a3e6-fabc53a2984b"),
                      first_name='user1',
@@ -28,7 +31,7 @@ def test_handler_sends_two_events_if_there_are_two_outdated_users():
     event_bus_mock = MagicMock()
     handler = FindOutdatedUsersHandler(user_repo_mock, event_bus_mock)
 
-    handler.handle()
+    await handler.handle()
 
     assert event_bus_mock.publish.call_count == 2
     arg1 = event_bus_mock.publish.call_args_list[0][0][0]

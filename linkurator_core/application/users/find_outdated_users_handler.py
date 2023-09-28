@@ -11,7 +11,7 @@ class FindOutdatedUsersHandler:
         self.user_repository = user_repository
         self.event_bus = event_bus
 
-    def handle(self):
+    async def handle(self):
         datetime_limit = datetime.now(tz=timezone.utc) - timedelta(days=1)
         outdated_users = self.user_repository.find_latest_scan_before(datetime_limit)
 
