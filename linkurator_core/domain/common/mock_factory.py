@@ -32,11 +32,14 @@ def mock_sub(uuid: Optional[UUID] = None) -> Subscription:
     )
 
 
-def mock_credential(user_id: Optional[UUID] = None) -> ExternalServiceCredential:
+def mock_credential(
+        user_id: Optional[UUID] = None,
+        credential_type: ExternalServiceType = ExternalServiceType.YOUTUBE_API_KEY
+) -> ExternalServiceCredential:
     user_id = user_id or uuid4()
     return ExternalServiceCredential(
         user_id=user_id,
-        credential_type=ExternalServiceType.YOUTUBE_API_KEY,
+        credential_type=credential_type,
         credential_value="test-api-key",
         created_at=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
         updated_at=datetime(2022, 1, 1, 4, 4, 4, tzinfo=timezone.utc)

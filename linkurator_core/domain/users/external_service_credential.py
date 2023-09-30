@@ -6,6 +6,7 @@ from uuid import UUID
 
 class ExternalServiceType(Enum):
     YOUTUBE_API_KEY = 'youtube_api_key'
+    OPENAI_API_KEY = 'openai_api_key'
 
 
 @dataclass
