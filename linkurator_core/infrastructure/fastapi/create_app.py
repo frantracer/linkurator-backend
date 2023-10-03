@@ -61,7 +61,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
 
 
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
-    app = FastAPI()
+    app = FastAPI(title="Linkurator API", version="0.1.0")
 
     async def get_current_session(request: Request) -> Optional[Session]:
         token = request.cookies.get("token")
@@ -70,7 +70,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         session = handlers.validate_token.handle(access_token=token, refresh_token=None)
         return session
 
-    @app.get("/health")
+    @app.get("/health", tags=["API Status"])
     async def health() -> str:
         """
         Health endpoint returns a 200 if the service is alive
@@ -78,18 +78,21 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         return "OK"
 
     app.include_router(
-        authentication.get_router(
+        tags=["Authentication"],
+        router=authentication.get_router(
             validate_token_handler=handlers.validate_token,
             google_client=handlers.google_client))
     app.include_router(
-        profile.get_router(
+        tags=["Profile"],
+        router=profile.get_router(
             get_session=get_current_session,
             get_user_profile_handler=handlers.get_user_profile_handler
         ),
         prefix="/profile"
     )
     app.include_router(
-        topics.get_router(
+        tags=["Topics"],
+        router=topics.get_router(
             get_session=get_current_session,
             create_topic_handler=handlers.create_topic_handler,
             get_topic_items_handler=handlers.get_topic_items_handler,
@@ -102,7 +105,8 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         ),
         prefix="/topics")
     app.include_router(
-        subscriptions.get_router(
+        tags=["Subscriptions"],
+        router=subscriptions.get_router(
             get_session=get_current_session,
             get_user_subscriptions_handler=handlers.get_user_subscriptions,
             get_subscription_items_handler=handlers.get_subscription_items_handler,
@@ -110,14 +114,16 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             refresh_subscription_handler=handlers.refresh_subscrition_handler),
         prefix="/subscriptions")
     app.include_router(
-        items.get_router(
+        tags=["Items"],
+        router=items.get_router(
             get_session=get_current_session,
             get_item_handler=handlers.get_item_handler,
             create_item_interaction_handler=handlers.create_item_interaction_handler,
             delete_item_interaction_handler=handlers.delete_item_interaction_handler),
         prefix="/items")
     app.include_router(
-        credentials.get_router(
+        tags=["Credentials"],
+        router=credentials.get_router(
             get_session=get_current_session,
             get_user_external_credentials_handler=handlers.get_user_external_credentials_handler,
             add_external_credential_handler=handlers.add_external_credentials_handler,
