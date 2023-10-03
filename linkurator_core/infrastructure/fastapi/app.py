@@ -94,7 +94,8 @@ def app_handlers() -> Handlers:
         refresh_subscrition_handler=RefreshSubscriptionHandler(
             user_repository=user_repository,
             subscription_repository=subscription_repository,
-            subscription_service=youtube_service),
+            subscription_service=youtube_service,
+            credentials_repository=credentials_repository),
         get_user_profile_handler=GetUserProfileHandler(user_repository),
         get_user_topics_handler=GetUserTopicsHandler(topic_repo=topic_repository, user_repo=user_repository),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
