@@ -22,12 +22,12 @@ install-requirements:
 	sudo apt-get remove docker docker-engine docker.io containerd runc
 	sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-	sudo apt install -y python3.8-venv python3-pip
+	sudo apt install -y python3.10-venv python3-pip
 
 install:
-	python3.8 -m pip install virtualenv
+	python3.10 -m pip install virtualenv
 	rm -rf venv
-	python3.8 -m venv venv
+	python3.10 -m venv venv
 	./venv/bin/pip3 install -r requirements.txt
 	@echo
 	@echo "Run 'source venv/bin/activate' to activate the virtual environment."
@@ -35,13 +35,13 @@ install:
 
 run-api: link-config
 	@if [ "${LINKURATOR_ENVIRONMENT}" = "DEVELOPMENT" ]; then \
-    	./venv/bin/python3.8 -m linkurator_core --reload --workers 1 --debug --without-gunicorn; \
+    	./venv/bin/python3.10 -m linkurator_core --reload --workers 1 --debug --without-gunicorn; \
 	else \
-		./venv/bin/python3.8 -m linkurator_core; \
+		./venv/bin/python3.10 -m linkurator_core; \
 	fi
 
 run-processor: link-config
-	PYTHONPATH='.' ./venv/bin/python3.8 ./linkurator_core/processor.py
+	PYTHONPATH='.' ./venv/bin/python3.10 ./linkurator_core/processor.py
 
 ####################
 # Setup configuration
