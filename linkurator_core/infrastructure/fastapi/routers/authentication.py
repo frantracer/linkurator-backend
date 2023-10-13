@@ -10,6 +10,8 @@ from fastapi.routing import APIRouter
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
+COOKIE_EXPIRATION_IN_SECONDS = 3600 * 24 * 30
+
 
 def get_router(validate_token_handler: ValidateTokenHandler, google_client: GoogleAccountService) -> APIRouter:
     router = APIRouter()
@@ -60,7 +62,7 @@ def get_router(validate_token_handler: ValidateTokenHandler, google_client: Goog
                 return JSONResponse(content={"message": "Invalid token"}, status_code=http.HTTPStatus.UNAUTHORIZED)
 
             response = RedirectResponse(url=urljoin(str(request.base_url), "/login"))
-            response.set_cookie(key="token", value=token)
+            response.set_cookie(key="token", value=token, expires=COOKIE_EXPIRATION_IN_SECONDS)
             return response
         return JSONResponse(content={"error": "Authentication failed"}, status_code=http.HTTPStatus.UNAUTHORIZED)
 
