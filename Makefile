@@ -43,6 +43,14 @@ run-api: link-config
 run-processor: link-config
 	PYTHONPATH='.' ./venv/bin/python3.10 ./linkurator_core/processor.py
 
+local-run-api: docker-run-external-services
+	LINKURATOR_VAULT_PASSWORD=$(cat ./secrets/vault_password.txt) LINKURATOR_ENVIRONMENT=DEVELOPMENT \
+		./venv/bin/python3.10 -m linkurator_core --reload --workers 1 --debug --without-gunicorn
+
+local-run-processor: docker-run-external-services
+	PYTHONPATH='.' LINKURATOR_VAULT_PASSWORD=$(cat ./secrets/vault_password.txt) LINKURATOR_ENVIRONMENT=DEVELOPMENT \
+		./venv/bin/python3.10 ./linkurator_core/processor.py
+
 ####################
 # Setup configuration
 ####################
