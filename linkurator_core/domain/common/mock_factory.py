@@ -2,7 +2,9 @@ from datetime import datetime, timezone
 from typing import Optional, List
 from uuid import uuid4, UUID
 
+from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.utils import parse_url
+from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider, Subscription
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.domain.users.user import User
@@ -43,4 +45,34 @@ def mock_credential(
         credential_value="test-api-key",
         created_at=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
         updated_at=datetime(2022, 1, 1, 4, 4, 4, tzinfo=timezone.utc)
+    )
+
+
+def mock_item(
+        item_uuid: Optional[UUID] = None,
+        sub_uuid: Optional[UUID] = None,
+        created_at: Optional[datetime] = None,
+        published_at: Optional[datetime] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+) -> Item:
+    random_uuid = item_uuid if item_uuid is not None else uuid4()
+    random_name = f"some name {random_uuid}" if name is None else name
+    random_description = f"some description with emojis {random_uuid} 🙂" if description is None else description
+    random_subscription_uuid = sub_uuid if sub_uuid is not None else uuid4()
+    random_url = utils.parse_url(f'https://{random_uuid}.com')
+    random_thumbnail = utils.parse_url(f'https://{random_uuid}.com/thumbnail.png')
+    random_published_at = published_at if published_at is not None else datetime.now(timezone.utc)
+    random_created_at = created_at if created_at is not None else datetime.now(timezone.utc)
+
+    return Item(
+        name=random_name,
+        description=random_description,
+        uuid=random_uuid,
+        subscription_uuid=random_subscription_uuid,
+        url=random_url,
+        thumbnail=random_thumbnail,
+        published_at=random_published_at,
+        created_at=random_created_at,
+        updated_at=random_created_at
     )

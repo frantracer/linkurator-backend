@@ -1,13 +1,15 @@
 import uuid
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
+from math import floor
 from unittest import mock
 from unittest.mock import MagicMock
 
-from math import floor
 import pytest
 
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.mock_factory import mock_item
+from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
 from linkurator_core.domain.items.item import Item
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItem, MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
@@ -314,3 +316,88 @@ def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepositor
 
     found_items = item_repo.get_items_created_before(date=datetime(2000, 1, 1, 0, 0, 11, tzinfo=timezone.utc), limit=0)
     assert len(found_items) == 0
+
+
+def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: MongoDBItemRepository):
+    sub1_uuid = uuid.UUID("b76f981e-083f-4cee-9e5c-9f46f010546f")
+    item1 = mock_item(
+        name="Football is cool and it is almost free!",
+        description="Let's discover where you can play football and how to get a new ball",
+        item_uuid=uuid.UUID("412ec7ea-b5ba-48aa-b370-771352858795"),
+        sub_uuid=sub1_uuid,
+        created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        published_at=datetime(2020, 1, 1, 0, 0, 10, tzinfo=timezone.utc),
+    )
+    item2 = mock_item(
+        name="Videogames are cool",
+        item_uuid=uuid.UUID("1f63bdf9-5cf5-43e1-a5b1-6e4d97842005"),
+        sub_uuid=sub1_uuid,
+        created_at=datetime(2020, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+        published_at=datetime(2020, 1, 1, 0, 0, 20, tzinfo=timezone.utc),
+    )
+    item3 = mock_item(
+        name="What you should do in your free time?",
+        description="Videogames is the answer",
+        item_uuid=uuid.UUID("0183fd38-501d-442c-ac90-d2baad84f6eb"),
+        sub_uuid=sub1_uuid,
+        created_at=datetime(2020, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+        published_at=datetime(2020, 1, 1, 0, 0, 30, tzinfo=timezone.utc),
+    )
+    item4 = mock_item(
+        name="Are videogames culture?",
+        description="Let's find out!",
+        item_uuid=uuid.UUID("88ec8038-45ec-4d45-bd4b-f1ab01d33fd8"),
+        sub_uuid=sub1_uuid,
+        created_at=datetime(2020, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+        published_at=datetime(2020, 1, 1, 0, 0, 40, tzinfo=timezone.utc),
+    )
+
+    item_repo.add_bulk([item1, item2, item3, item4])
+
+    found_items, total_items = item_repo.find_sorted_by_publish_date(
+        sub_ids=[sub1_uuid],
+        created_before=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
+        published_after=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        max_results=4,
+        page_number=0,
+        criteria=FilterItemCriteria(text="videogames")
+    )
+    assert len(found_items) == 2
+    assert total_items == 2
+    assert found_items[0].uuid == item4.uuid
+    assert found_items[1].uuid == item2.uuid
+
+    found_items, total_items = item_repo.find_sorted_by_publish_date(
+        sub_ids=[sub1_uuid],
+        created_before=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
+        published_after=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        max_results=4,
+        page_number=0,
+        criteria=FilterItemCriteria(text="cool -videogames")
+    )
+    assert len(found_items) == 1
+    assert total_items == 1
+    assert found_items[0].uuid == item1.uuid
+
+    found_items, total_items = item_repo.find_sorted_by_publish_date(
+        sub_ids=[sub1_uuid],
+        created_before=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
+        published_after=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        max_results=4,
+        page_number=0,
+        criteria=FilterItemCriteria(text="\"free time\"")
+    )
+    assert len(found_items) == 1
+    assert total_items == 1
+    assert found_items[0].uuid == item3.uuid
+
+    found_items, total_items = item_repo.find_sorted_by_publish_date(
+        sub_ids=[sub1_uuid],
+        created_before=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
+        published_after=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        max_results=4,
+        page_number=0,
+        criteria=FilterItemCriteria(text="swim")
+    )
+    assert len(found_items) == 0
+    assert total_items == 0

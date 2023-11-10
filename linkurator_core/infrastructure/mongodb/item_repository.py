@@ -13,6 +13,7 @@ import pymongo  # type: ignore
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
 
+from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
@@ -118,20 +119,23 @@ class MongoDBItemRepository(ItemRepository):
             published_after: datetime,
             created_before: datetime,
             max_results: int,
-            page_number: int
+            page_number: int,
+            criteria: FilterItemCriteria = FilterItemCriteria()
     ) -> Tuple[List[Item], int]:
         collection = self._item_collection()
 
-        total_items: int = collection.count_documents({
+        filter_query = {
             'subscription_uuid': {'$in': sub_ids},
             'published_at': {'$gt': published_after},
-            'created_at': {'$lt': created_before}})
+            'created_at': {'$lt': created_before},
+        }
 
-        items: Cursor[Any] = collection.find({
-            'subscription_uuid': {'$in': sub_ids},
-            'published_at': {'$gt': published_after},
-            'created_at': {'$lt': created_before}
-        }).sort(
+        if criteria.text:
+            filter_query['$text'] = {'$search': criteria.text}
+
+        total_items: int = collection.count_documents(filter_query)
+
+        items: Cursor[Any] = collection.find(filter_query).sort(
             'published_at', pymongo.DESCENDING
         ).skip(
             page_number * max_results

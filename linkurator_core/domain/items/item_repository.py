@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID
 
+from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
 from linkurator_core.domain.items.item import Item
 
 
@@ -45,6 +46,7 @@ class ItemRepository(abc.ABC):
             published_after: datetime,
             created_before: datetime,
             max_results: int,
-            page_number: int
+            page_number: int,
+            criteria: FilterItemCriteria = FilterItemCriteria()
     ) -> Tuple[List[Item], int]:
         raise NotImplementedError
