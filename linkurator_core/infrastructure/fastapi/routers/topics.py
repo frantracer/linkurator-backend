@@ -53,6 +53,7 @@ def get_router(  # pylint: disable-msg=too-many-locals
             page_number: NonNegativeInt = 0,
             page_size: PositiveInt = 50,
             created_before_ts: Optional[float] = None,
+            search: Optional[str] = None,
             session: Optional[Session] = Depends(get_session)
     ) -> Any:
         """
@@ -70,7 +71,9 @@ def get_router(  # pylint: disable-msg=too-many-locals
                 topic_id=topic_id,
                 created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
                 page_number=page_number,
-                page_size=page_size)
+                page_size=page_size,
+                text_filter=search
+            )
 
             current_url = request.url.include_query_params(
                 page_number=page_number,

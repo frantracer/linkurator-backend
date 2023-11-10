@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from uuid import UUID
 
 from linkurator_core.domain.common.exceptions import TopicNotFoundError
+from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
 from linkurator_core.domain.items.interaction import Interaction
 from linkurator_core.domain.items.interaction_repository import InteractionRepository
 from linkurator_core.domain.items.item import Item
@@ -24,7 +25,8 @@ class GetTopicItemsHandler:
                topic_id: UUID,
                created_before: datetime,
                page_number: int,
-               page_size: int
+               page_size: int,
+               text_filter: Optional[str] = None
                ) -> Tuple[List[Tuple[Item, List[Interaction]]], int]:
         topic = self.topic_repository.get(topic_id)
         if topic is None:
@@ -35,7 +37,8 @@ class GetTopicItemsHandler:
             created_before=created_before,
             published_after=datetime.fromtimestamp(0, tz=timezone.utc),
             page_number=page_number,
-            max_results=page_size
+            max_results=page_size,
+            criteria=FilterItemCriteria() if text_filter is None else FilterItemCriteria(text=text_filter)
         )
 
         interactions_by_item = self.interaction_repository.get_user_interactions_by_item_id(

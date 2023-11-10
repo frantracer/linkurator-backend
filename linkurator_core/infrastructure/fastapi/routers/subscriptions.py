@@ -69,15 +69,17 @@ def get_router(
             page_number: NonNegativeInt = 0,
             page_size: PositiveInt = 50,
             created_before_ts: Optional[float] = None,
+            search: Optional[str] = None,
             session: Optional[Session] = Depends(get_session)
     ) -> Any:
         """
         Get the list of subscription items sorted by published date. Newer items the first ones.
         :param request: HTTP request
-        :param sub_id: UUID of the subscripton included in the url
+        :param sub_id: UUID of the subscription included in the url
         :param page_number: Number of the page to retrieve starting at 0 (query parameters)
-        :param page_size: Number of elements per page (query paramenter)
-        :param created_before_ts: Filter elements created before the timestamp (query paramenter)
+        :param page_size: Number of elements per page (query parameter)
+        :param created_before_ts: Filter elements created before the timestamp (query parameter)
+        :param search: Filter elements by text (query parameter)
         :param session: The session of the logged user
         :return: A page with the items. UNAUTHORIZED status code if the session is invalid.
         """
@@ -93,7 +95,9 @@ def get_router(
             subscription_id=sub_id,
             created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
             page_number=page_number,
-            page_size=page_size)
+            page_size=page_size,
+            text_filter=search
+        )
 
         current_url = request.url.include_query_params(
             page_number=page_number,

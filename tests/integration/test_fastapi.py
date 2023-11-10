@@ -1,26 +1,28 @@
+import uuid
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
-import uuid
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
-from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.users.session import Session
 from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.users.session import Session
 from linkurator_core.domain.users.user import User
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
+
+USER_UUID = uuid.UUID("8efe1fe3-906d-4aa4-8fbe-b47810c197d8")
 
 
 @pytest.fixture(name="handlers")
 def dummy_handlers() -> Handlers:
     dummy_validate_token_handler = MagicMock()
     dummy_validate_token_handler.handle.return_value = Session(
-        user_id=uuid.uuid4(),
+        user_id=USER_UUID,
         expires_at=datetime.fromisoformat('3000-01-01T00:00:00+00:00'),
         token='token')
 
@@ -120,6 +122,26 @@ def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
     assert len(response.json()['elements']) == 1
     assert response.json()['next_page'] is None
     assert response.json()['previous_page'] is None
+
+
+def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> None:
+    dummy_get_subscription_items_handler = MagicMock(spec=GetSubscriptionItemsHandler)
+    dummy_get_subscription_items_handler.handle.return_value = ([], 0)
+    handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
+
+    client = TestClient(create_app_from_handlers(handlers))
+
+    client.get(
+        '/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
+        'page_number=0&page_size=1&search=test&created_before_ts=0',
+        cookies={'token': 'token'})
+    dummy_get_subscription_items_handler.handle.assert_called_once_with(
+        user_id=USER_UUID,
+        subscription_id=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
+        created_before=datetime.fromtimestamp(0, tz=timezone.utc),
+        page_number=0,
+        page_size=1,
+        text_filter='test')
 
 
 def test_create_user_topic_returns_201(handlers: Handlers) -> None:
@@ -244,6 +266,26 @@ def test_get_topic_items_for_non_existing_topic_returns_404(handlers: Handlers) 
         '/topics/925df229-e3cf-4435-88f0-9153b7ff37d6/items?page_number=0&page_size=1',
         cookies={'token': 'token'})
     assert response.status_code == 404
+
+
+def test_get_topic_items_parses_query_parameters(handlers: Handlers) -> None:
+    dummy_get_topic_items_handler = MagicMock(spec=GetTopicItemsHandler)
+    dummy_get_topic_items_handler.handle.return_value = ([], 0)
+    handlers.get_topic_items_handler = dummy_get_topic_items_handler
+
+    client = TestClient(create_app_from_handlers(handlers))
+
+    client.get(
+        '/topics/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
+        'page_number=0&page_size=1&search=test&created_before_ts=0',
+        cookies={'token': 'token'})
+    dummy_get_topic_items_handler.handle.assert_called_once_with(
+        user_id=USER_UUID,
+        topic_id=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
+        created_before=datetime.fromtimestamp(0, tz=timezone.utc),
+        page_number=0,
+        page_size=1,
+        text_filter='test')
 
 
 def test_assign_subscription_to_topic_returns_200(handlers: Handlers) -> None:
