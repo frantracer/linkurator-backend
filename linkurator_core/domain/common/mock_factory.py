@@ -4,7 +4,7 @@ from uuid import uuid4, UUID
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.utils import parse_url
-from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider, Subscription
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.domain.users.user import User
@@ -55,15 +55,18 @@ def mock_item(
         published_at: Optional[datetime] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,
+        url: Optional[str] = None,
+        version: Optional[int] = None,
 ) -> Item:
     random_uuid = item_uuid if item_uuid is not None else uuid4()
     random_name = f"some name {random_uuid}" if name is None else name
     random_description = f"some description with emojis {random_uuid} 🙂" if description is None else description
     random_subscription_uuid = sub_uuid if sub_uuid is not None else uuid4()
-    random_url = utils.parse_url(f'https://{random_uuid}.com')
+    random_url = utils.parse_url(url) if url is not None else utils.parse_url(f'https://{random_uuid}.com')
     random_thumbnail = utils.parse_url(f'https://{random_uuid}.com/thumbnail.png')
-    random_published_at = published_at if published_at is not None else datetime.now(timezone.utc)
-    random_created_at = created_at if created_at is not None else datetime.now(timezone.utc)
+    random_published_at = published_at if published_at is not None else datetime.now(tz=timezone.utc)
+    random_created_at = created_at if created_at is not None else datetime.now(tz=timezone.utc)
+    version = version if version is not None else 1
 
     return Item(
         name=random_name,
@@ -74,5 +77,8 @@ def mock_item(
         thumbnail=random_thumbnail,
         published_at=random_published_at,
         created_at=random_created_at,
-        updated_at=random_created_at
+        updated_at=random_created_at,
+        version=version,
+        duration=600,
+        provider=ItemProvider.YOUTUBE
     )

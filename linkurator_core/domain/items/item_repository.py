@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 from uuid import UUID
 
 from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
-from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item import Item, ItemProvider
 
 
 class ItemRepository(abc.ABC):
@@ -49,4 +49,12 @@ class ItemRepository(abc.ABC):
             page_number: int,
             criteria: FilterItemCriteria = FilterItemCriteria()
     ) -> Tuple[List[Item], int]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def find_deprecated_items(self, last_version: int, provider: ItemProvider, limit: int) -> List[Item]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def delete_all_items(self):
         raise NotImplementedError

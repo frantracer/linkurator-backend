@@ -1,13 +1,14 @@
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from random import randint
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
 import aiohttp
 import backoff
+import isodate  # type: ignore
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
@@ -19,6 +20,9 @@ from linkurator_core.domain.users.external_service_credential import ExternalSer
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+
+
+LATEST_YOUTUBE_VIDEO_ITEM_VERSION = 1
 
 
 @dataclass
@@ -47,6 +51,19 @@ class YoutubeChannel:
             country=channel['snippet'].get('country', '')
         )
 
+    def to_subscription(self, sub_id: uuid.UUID) -> Subscription:
+        return Subscription.new(
+            uuid=sub_id,
+            name=self.title,
+            provider=SubscriptionProvider.YOUTUBE,
+            external_data={
+                "channel_id": self.channel_id,
+                "playlist_id": self.playlist_id
+            },
+            url=utils.parse_url(self.url),
+            thumbnail=utils.parse_url(self.thumbnail_url)
+        )
+
 
 @dataclass
 class YoutubeVideo:
@@ -59,19 +76,36 @@ class YoutubeVideo:
     channel_id: str
     channel_url: str
     country: str
+    duration: str
 
     @staticmethod
     def from_dict(video: dict):
+        published_at = datetime.strptime(video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ")
+
         return YoutubeVideo(
             title=video["snippet"]["title"],
             description=video["snippet"]["description"],
             video_id=video["id"],
-            published_at=datetime.strptime(video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ"),
+            published_at=published_at.replace(tzinfo=timezone.utc),
             thumbnail_url=video["snippet"]["thumbnails"]["medium"]["url"],
             url=f'https://www.youtube.com/watch?v={video["id"]}',
             channel_id=video["snippet"]["channelId"],
             channel_url=f'https://www.youtube.com/channel/{video["snippet"]["channelId"]}',
-            country=video['snippet'].get('country', '')
+            country=video['snippet'].get('country', ''),
+            duration=video['contentDetails']['duration']
+        )
+
+    def to_item(self, item_id: uuid.UUID, sub_id: uuid.UUID) -> Item:
+        return Item.new(
+            uuid=item_id,
+            subscription_uuid=sub_id,
+            name=self.title,
+            description=self.description,
+            url=utils.parse_url(self.url),
+            thumbnail=utils.parse_url(self.thumbnail_url),
+            published_at=self.published_at,
+            duration=isodate.parse_duration(self.duration).total_seconds(),
+            version=LATEST_YOUTUBE_VIDEO_ITEM_VERSION
         )
 
 
@@ -319,19 +353,6 @@ class YoutubeService(SubscriptionService):
         user = self.user_repository.get(user_id)
         youtube_channels = []
 
-        def map_channel_to_subscription(channel: YoutubeChannel) -> Subscription:
-            return Subscription.new(
-                uuid=uuid.uuid4(),
-                name=channel.title,
-                provider=SubscriptionProvider.YOUTUBE,
-                external_data={
-                    "channel_id": channel.channel_id,
-                    "playlist_id": channel.playlist_id
-                },
-                url=utils.parse_url(channel.url),
-                thumbnail=utils.parse_url(channel.thumbnail_url)
-            )
-
         api_key = self.api_key
         if credential is not None:
             if not credential.credential_type == ExternalServiceType.YOUTUBE_API_KEY:
@@ -345,7 +366,7 @@ class YoutubeService(SubscriptionService):
             if access_token is not None:
                 channels = await self.youtube_client.get_youtube_subscriptions(access_token=access_token,
                                                                                api_key=api_key)
-                youtube_channels = [map_channel_to_subscription(c) for c in channels]
+                youtube_channels = [c.to_subscription(sub_id=uuid.uuid4()) for c in channels]
 
         return youtube_channels
 
@@ -386,17 +407,6 @@ class YoutubeService(SubscriptionService):
         if subscription is None or subscription.provider != SubscriptionProvider.YOUTUBE:
             return []
 
-        def map_video_to_item(video: YoutubeVideo) -> Item:
-            return Item.new(
-                uuid=uuid.uuid4(),
-                subscription_uuid=sub_id,
-                name=video.title,
-                description=video.description,
-                url=utils.parse_url(video.url),
-                thumbnail=utils.parse_url(video.thumbnail_url),
-                published_at=video.published_at
-            )
-
         if credential is not None:
             if not credential.credential_type == ExternalServiceType.YOUTUBE_API_KEY:
                 raise InvalidCredentialTypeError("Invalid credential type")
@@ -409,7 +419,7 @@ class YoutubeService(SubscriptionService):
             playlist_id=subscription.external_data["playlist_id"],
             from_date=from_date)
 
-        return [map_video_to_item(v) for v in videos]
+        return [v.to_item(item_id=uuid.uuid4(), sub_id=sub_id) for v in videos]
 
     async def _get_api_key_for_sub(self, sub_id: uuid.UUID) -> str:
         subscribed_users = self.user_repository.find_users_subscribed_to_subscription(sub_id)

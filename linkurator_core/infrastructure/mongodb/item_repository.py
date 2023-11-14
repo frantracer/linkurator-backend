@@ -5,16 +5,17 @@ from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
+import pymongo  # type: ignore
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
 from pydantic import AnyUrl
 from pydantic.main import BaseModel
-import pymongo  # type: ignore
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
 
+from linkurator_core.domain.common.units import Seconds
 from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
-from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
@@ -29,6 +30,9 @@ class MongoDBItem(BaseModel):
     created_at: datetime
     updated_at: datetime
     published_at: datetime
+    duration: Optional[Seconds] = None
+    version: int = 0
+    provider: str = ItemProvider.YOUTUBE.value
 
     @staticmethod
     def from_domain_item(item: Item) -> MongoDBItem:
@@ -39,9 +43,12 @@ class MongoDBItem(BaseModel):
             description=item.description,
             url=item.url,
             thumbnail=item.thumbnail,
+            duration=item.duration,
+            version=item.version,
             created_at=item.created_at,
             updated_at=item.updated_at,
-            published_at=item.published_at
+            published_at=item.published_at,
+            provider=item.provider.value
         )
 
     def to_domain_item(self) -> Item:
@@ -52,9 +59,12 @@ class MongoDBItem(BaseModel):
             description=self.description,
             url=self.url,
             thumbnail=self.thumbnail,
+            duration=self.duration,
+            version=self.version,
             created_at=self.created_at,
             updated_at=self.updated_at,
-            published_at=self.published_at
+            published_at=self.published_at,
+            provider=ItemProvider(self.provider)
         )
 
 
@@ -143,6 +153,18 @@ class MongoDBItemRepository(ItemRepository):
             max_results)
 
         return [MongoDBItem(**item).to_domain_item() for item in items], total_items
+
+    def find_deprecated_items(self, last_version: int, provider: ItemProvider, limit: int) -> List[Item]:
+        collection = self._item_collection()
+        items: Cursor[Any] = collection.find({
+            'version': {'$lt': last_version},
+            'provider': provider.value
+        }).limit(limit)
+        return [MongoDBItem(**item).to_domain_item() for item in items]
+
+    def delete_all_items(self):
+        collection = self._item_collection()
+        collection.drop()
 
     def _item_collection(self) -> pymongo.collection.Collection:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore

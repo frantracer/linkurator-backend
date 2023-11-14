@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
-from math import floor
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -10,7 +9,7 @@ import pytest
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.mock_factory import mock_item
 from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
-from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItem, MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
@@ -35,19 +34,15 @@ def test_get_item(item_repo: MongoDBItemRepository):
                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
                 created_at=datetime.now(tz=timezone.utc),
                 updated_at=datetime.now(tz=timezone.utc),
-                published_at=datetime.now(tz=timezone.utc))
+                published_at=datetime.now(tz=timezone.utc),
+                version=2,
+                duration=10,
+                provider=ItemProvider.YOUTUBE)
     item_repo.add(item)
     the_item = item_repo.get(item.uuid)
 
     assert the_item is not None
-    assert the_item.name == item.name
-    assert the_item.description == item.description
-    assert the_item.uuid == item.uuid
-    assert the_item.url == item.url
-    assert the_item.thumbnail == item.thumbnail
-    assert int(the_item.created_at.timestamp() * 100) == floor(item.created_at.timestamp() * 100)
-    assert int(the_item.updated_at.timestamp() * 100) == floor(item.updated_at.timestamp() * 100)
-    assert int(the_item.published_at.timestamp() * 100) == floor(item.published_at.timestamp() * 100)
+    assert the_item == item
 
 
 def test_get_item_that_does_not_exist(item_repo: MongoDBItemRepository):
@@ -77,15 +72,8 @@ def test_get_item_with_invalid_format_raises_an_exception(item_repo: MongoDBItem
 
 
 def test_delete_item(item_repo: MongoDBItemRepository):
-    item = Item(name="test",
-                description="",
-                uuid=uuid.UUID("4bf64498-239e-4bcb-a5a1-b84a7708ad01"),
-                subscription_uuid=uuid.UUID("d1dc868b-598c-4547-92d6-011e9b7e38e6"),
-                url=utils.parse_url('https://test.com'),
-                thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                created_at=datetime.now(tz=timezone.utc),
-                updated_at=datetime.now(tz=timezone.utc),
-                published_at=datetime.fromtimestamp(0, tz=timezone.utc))
+    item = mock_item(item_uuid=uuid.UUID("4bf64498-239e-4bcb-a5a1-b84a7708ad01"))
+
     item_repo.add(item)
     the_item = item_repo.get(item.uuid)
     assert the_item is not None
@@ -100,33 +88,10 @@ def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
     subscription_uuid_2 = uuid.UUID("d3e22c40-c767-468b-8a61-cc61bcfd55ec")
     subscription_uuid_3 = uuid.UUID("9753d304-3a43-414e-a5cd-496672b27c34")
 
-    item1 = Item(name="item1",
-                 description="",
-                 uuid=uuid.UUID("6469596f-5128-4c12-87f1-9b7b462517f3"),
-                 subscription_uuid=subscription_uuid_1,
-                 url=utils.parse_url('https://test.com'),
-                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 created_at=datetime.now(tz=timezone.utc),
-                 updated_at=datetime.now(tz=timezone.utc),
-                 published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    item2 = Item(name="item2",
-                 description="",
-                 uuid=uuid.UUID("2dcc5c6b-3d95-421d-a9cf-81ac475cee4c"),
-                 subscription_uuid=subscription_uuid_1,
-                 url=utils.parse_url('https://test.com'),
-                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 created_at=datetime.now(tz=timezone.utc),
-                 updated_at=datetime.now(tz=timezone.utc),
-                 published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    item3 = Item(name="item3",
-                 description="",
-                 uuid=uuid.UUID("2f7fa436-e1db-4ac7-bcce-6299c246e39f"),
-                 subscription_uuid=subscription_uuid_2,
-                 url=utils.parse_url('https://test.com'),
-                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 created_at=datetime.now(tz=timezone.utc),
-                 updated_at=datetime.now(tz=timezone.utc),
-                 published_at=datetime.fromtimestamp(0, tz=timezone.utc))
+    item1 = mock_item(item_uuid=uuid.UUID("6469596f-5128-4c12-87f1-9b7b462517f3"), sub_uuid=subscription_uuid_1)
+    item2 = mock_item(item_uuid=uuid.UUID("2dcc5c6b-3d95-421d-a9cf-81ac475cee4c"), sub_uuid=subscription_uuid_1)
+    item3 = mock_item(item_uuid=uuid.UUID("199f25cc-ff99-4a5c-9329-edebc3fdc0e5"), sub_uuid=subscription_uuid_2)
+
     item_repo.add(item1)
     item_repo.add(item2)
     item_repo.add(item3)
@@ -141,20 +106,11 @@ def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
 
 
 def test_find_item_with_same_url(item_repo: MongoDBItemRepository):
-    item1 = Item.new(name="item1",
-                     description="",
-                     uuid=uuid.UUID("8fc4fbca-439c-4c0e-937d-4147ef3b299c"),
-                     subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
-                     url=utils.parse_url('https://item-with-same-url.com'),
-                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                     published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    item2 = Item.new(name="item2",
-                     description="",
-                     uuid=uuid.UUID("fe5542fa-276e-461f-aa20-d52b1b3ce4e1"),
-                     subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
-                     url=utils.parse_url('https://item-with-same-url.com'),
-                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                     published_at=datetime.fromtimestamp(0, tz=timezone.utc))
+    item1 = mock_item(item_uuid=uuid.UUID("8fc4fbca-439c-4c0e-937d-4147ef3b299c"),
+                      url='https://item-with-same-url.com')
+    item2 = mock_item(item_uuid=uuid.UUID("642a0749-4d7e-4aa3-bf04-cd3d07d9225d"),
+                      url='https://item-with-same-url.com')
+
     item_repo.add(item1)
 
     found_item = item_repo.find(item2)
@@ -163,20 +119,11 @@ def test_find_item_with_same_url(item_repo: MongoDBItemRepository):
 
 
 def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemRepository):
-    item1 = Item.new(name="item1",
-                     description="",
-                     uuid=uuid.UUID("40f3edbf-66a4-4074-9f26-53a7a9832fe7"),
-                     subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
-                     url=utils.parse_url('https://40f3edbf.com'),
-                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                     published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    item2 = Item.new(name="item2",
-                     description="",
-                     uuid=uuid.UUID("b996a1fb-91db-44de-9c4f-c111c056d299"),
-                     subscription_uuid=uuid.UUID("5113d45e-04a5-4f82-9eba-5b7ebb87ab79"),
-                     url=utils.parse_url('https://b996a1fb.com'),
-                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                     published_at=datetime.fromtimestamp(0, tz=timezone.utc))
+    item1 = mock_item(item_uuid=uuid.UUID("00fbe982-1c90-4e7a-bf73-4716fa565b3c"),
+                      url='https://item-with-same-url.com')
+    item2 = mock_item(item_uuid=uuid.UUID("8c2e6dbc-af35-47ad-a0ae-aa21ad0cbebb"),
+                      url='https://item-with-different-url.com')
+
     item_repo.add(item1)
 
     found_item = item_repo.find(item2)
@@ -185,49 +132,31 @@ def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemReposit
 
 def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publish_date(
         item_repo: MongoDBItemRepository):
-    item1 = Item(name="item1",
-                 description="",
-                 uuid=uuid.UUID("72e47bdc-793e-4420-b6b6-f6a415cb1e3c"),
-                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
-                 url=utils.parse_url('https://72e47bdc.com'),
-                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 published_at=datetime(2020, 1, 1, 8, 8, 8, tzinfo=timezone.utc),
-                 created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-                 updated_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    item2 = Item(name="item2",
-                 description="",
-                 uuid=uuid.UUID("1db7ac48-4388-49a6-94c2-1a28657ec2f9"),
-                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
-                 url=utils.parse_url('https://1db7ac48.com'),
-                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 published_at=datetime(2021, 1, 1, 6, 6, 6, tzinfo=timezone.utc),
-                 created_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
-                 updated_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    item3 = Item(name="item3",
-                 description="",
-                 uuid=uuid.UUID("a45500be-967a-47fc-93f9-9b7642f51a52"),
-                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
-                 url=utils.parse_url('https://a45500be.com'),
-                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 published_at=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
-                 created_at=datetime(2023, 2, 2, 0, 0, 0, tzinfo=timezone.utc),
-                 updated_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    item4 = Item(name="item4",
-                 description="",
-                 uuid=uuid.UUID("0a4c8807-0876-4ee0-82b6-333133bb66ee"),
-                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
-                 url=utils.parse_url('https://0a4c8807.com'),
-                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 published_at=datetime(2020, 1, 1, 8, 8, 9, tzinfo=timezone.utc),
-                 created_at=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-                 updated_at=datetime.fromtimestamp(0, tz=timezone.utc))
+    sub_uuid = uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10")
+    item1 = mock_item(item_uuid=uuid.UUID("72e47bdc-793e-4420-b6b6-f6a415cb1e3c"),
+                      sub_uuid=sub_uuid,
+                      published_at=datetime(2020, 1, 1, 8, 8, 8, tzinfo=timezone.utc),
+                      created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc))
+    item2 = mock_item(item_uuid=uuid.UUID("1db7ac48-4388-49a6-94c2-1a28657ec2f9"),
+                      sub_uuid=sub_uuid,
+                      published_at=datetime(2021, 1, 1, 6, 6, 6, tzinfo=timezone.utc),
+                      created_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc))
+    item3 = mock_item(item_uuid=uuid.UUID("a45500be-967a-47fc-93f9-9b7642f51a52"),
+                      sub_uuid=sub_uuid,
+                      published_at=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
+                      created_at=datetime(2023, 2, 2, 0, 0, 0, tzinfo=timezone.utc))
+    item4 = mock_item(item_uuid=uuid.UUID("0a4c8807-0876-4ee0-82b6-333133bb66ee"),
+                      sub_uuid=sub_uuid,
+                      published_at=datetime(2020, 1, 1, 8, 8, 9, tzinfo=timezone.utc),
+                      created_at=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc))
+
     item_repo.add(item1)
     item_repo.add(item2)
     item_repo.add(item3)
     item_repo.add(item4)
 
     found_items, total_items = item_repo.find_sorted_by_publish_date(
-        sub_ids=[uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10")],
+        sub_ids=[sub_uuid],
         published_after=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
         created_before=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
         page_number=0,
@@ -260,24 +189,8 @@ def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publ
 
 
 def test_add_two_items_in_bulk(item_repo: MongoDBItemRepository):
-    item1 = Item(name="item1",
-                 description="",
-                 uuid=uuid.UUID("1875c0e6-5ad4-40c4-b68a-b5b47c05d675"),
-                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
-                 url=utils.parse_url('https://72e47bdc.com'),
-                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 published_at=datetime(2020, 1, 1, 8, 8, 8, tzinfo=timezone.utc),
-                 created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-                 updated_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    item2 = Item(name="item2",
-                 description="",
-                 uuid=uuid.UUID("765a121c-8e67-45da-b5e4-1ced03af68c4"),
-                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
-                 url=utils.parse_url('https://1db7ac48.com'),
-                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 published_at=datetime(2021, 1, 1, 6, 6, 6, tzinfo=timezone.utc),
-                 created_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
-                 updated_at=datetime.fromtimestamp(0, tz=timezone.utc))
+    item1 = mock_item()
+    item2 = mock_item()
 
     item_repo.add_bulk([item1, item2])
 
@@ -293,15 +206,9 @@ def test_add_empty_list_of_items_raises_no_error(item_repo: MongoDBItemRepositor
 
 
 def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepository):
-    item1 = Item(name="item1",
-                 description="",
-                 uuid=uuid.UUID("e1f898c2-bcfb-435a-97c0-9f462f73e95b"),
-                 subscription_uuid=uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10"),
-                 url=utils.parse_url('https://72e47bdc.com'),
-                 thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
-                 published_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc),
-                 created_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc),
-                 updated_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc))
+    item1 = mock_item(item_uuid=uuid.UUID("e1f898c2-bcfb-435a-97c0-9f462f73e95b"),
+                      created_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc),
+                      published_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc))
 
     item_repo.add(item1)
 
@@ -401,3 +308,21 @@ def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: Mong
     )
     assert len(found_items) == 0
     assert total_items == 0
+
+
+def test_find_deprecated_items(item_repo: MongoDBItemRepository) -> None:
+    item_repo.delete_all_items()
+
+    item1 = mock_item(item_uuid=uuid.UUID("656fbb48-7897-4528-ae8b-cc4abc81aec7"), version=1)
+    item2 = mock_item(item_uuid=uuid.UUID("ecb31594-491d-4fa4-b216-e198ab3d5ca2"), version=2)
+    item3 = mock_item(item_uuid=uuid.UUID("0e829ca3-4e4c-42f6-960d-0f79b815587d"), version=3)
+    item4 = mock_item(item_uuid=uuid.UUID("6f9f5f02-eb83-4358-8794-ef452dea2f2f"), version=1)
+
+    item_repo.add_bulk([item1, item2, item3, item4])
+
+    found_items = item_repo.find_deprecated_items(last_version=2, provider=ItemProvider.YOUTUBE, limit=4)
+    assert len(found_items) == 2
+    assert {item.uuid for item in found_items} == {item1.uuid, item4.uuid}
+
+    found_items = item_repo.find_deprecated_items(last_version=3, provider=ItemProvider.YOUTUBE, limit=2)
+    assert len(found_items) == 2
