@@ -3,11 +3,10 @@ from typing import List, Tuple, Optional
 from uuid import UUID
 
 from linkurator_core.domain.common.exceptions import TopicNotFoundError
-from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
 from linkurator_core.domain.items.interaction import Interaction
 from linkurator_core.domain.items.interaction_repository import InteractionRepository
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.items.item_repository import ItemRepository
+from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
@@ -32,13 +31,14 @@ class GetTopicItemsHandler:
         if topic is None:
             raise TopicNotFoundError(topic_id)
 
-        items, total_items = self.item_repository.find_sorted_by_publish_date(
-            sub_ids=topic.subscriptions_ids,
-            created_before=created_before,
-            published_after=datetime.fromtimestamp(0, tz=timezone.utc),
+        items, total_items = self.item_repository.find_items(
+            criteria=ItemFilterCriteria(
+                subscription_ids=topic.subscriptions_ids,
+                published_after=datetime.fromtimestamp(0, tz=timezone.utc),
+                created_before=created_before,
+                text=text_filter),
             page_number=page_number,
-            max_results=page_size,
-            criteria=FilterItemCriteria() if text_filter is None else FilterItemCriteria(text=text_filter)
+            limit=page_size,
         )
 
         interactions_by_item = self.interaction_repository.get_user_interactions_by_item_id(

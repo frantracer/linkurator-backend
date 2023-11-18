@@ -1,10 +1,26 @@
 import abc
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID
 
-from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
+from pydantic.networks import AnyUrl
+
 from linkurator_core.domain.items.item import Item, ItemProvider
+
+TotalItems = int
+FindResult = Tuple[List[Item], TotalItems]
+
+
+@dataclass
+class ItemFilterCriteria:
+    subscription_ids: Optional[List[UUID]] = None
+    published_after: Optional[datetime] = None
+    created_before: Optional[datetime] = None
+    url: Optional[AnyUrl] = None
+    last_version: Optional[int] = None
+    provider: Optional[ItemProvider] = None
+    text: Optional[str] = None
 
 
 class ItemRepository(abc.ABC):
@@ -28,31 +44,7 @@ class ItemRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_by_subscription_id(self, subscription_id: UUID) -> List[Item]:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_items_created_before(self, date: datetime, limit: int) -> List[Item]:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def find(self, item: Item) -> Optional[Item]:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def find_sorted_by_publish_date(
-            self,
-            sub_ids: List[UUID],
-            published_after: datetime,
-            created_before: datetime,
-            max_results: int,
-            page_number: int,
-            criteria: FilterItemCriteria = FilterItemCriteria()
-    ) -> Tuple[List[Item], int]:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def find_deprecated_items(self, last_version: int, provider: ItemProvider, limit: int) -> List[Item]:
+    def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> FindResult:
         raise NotImplementedError
 
     @abc.abstractmethod

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import pymongo  # type: ignore
@@ -14,9 +14,8 @@ from pymongo import MongoClient
 from pymongo.cursor import Cursor
 
 from linkurator_core.domain.common.units import Seconds
-from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
 from linkurator_core.domain.items.item import Item, ItemProvider
-from linkurator_core.domain.items.item_repository import ItemRepository
+from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria, FindResult
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 
@@ -103,68 +102,39 @@ class MongoDBItemRepository(ItemRepository):
         collection = self._item_collection()
         collection.delete_one({'uuid': item_id})
 
-    def get_by_subscription_id(self, subscription_id: UUID) -> List[Item]:
-        collection = self._item_collection()
-        items: Cursor[Any] = collection.find({'subscription_uuid': subscription_id}) \
-            .sort('created_at', pymongo.DESCENDING)
-        return [MongoDBItem(**item).to_domain_item() for item in items]
-
-    def get_items_created_before(self, date: datetime, limit: int) -> List[Item]:
-        if limit <= 0:
-            return []
-        collection = self._item_collection()
-        items: Cursor[Any] = collection.find({'created_at': {'$lt': date}}).limit(limit)
-        return [MongoDBItem(**item).to_domain_item() for item in items]
-
-    def find(self, item: Item) -> Optional[Item]:
-        collection = self._item_collection()
-        db_item: Optional[Dict] = collection.find_one({'url': item.url})
-        if db_item is None:
-            return None
-        return MongoDBItem(**db_item).to_domain_item()
-
-    def find_sorted_by_publish_date(
-            self,
-            sub_ids: List[UUID],
-            published_after: datetime,
-            created_before: datetime,
-            max_results: int,
-            page_number: int,
-            criteria: FilterItemCriteria = FilterItemCriteria()
-    ) -> Tuple[List[Item], int]:
-        collection = self._item_collection()
-
-        filter_query = {
-            'subscription_uuid': {'$in': sub_ids},
-            'published_at': {'$gt': published_after},
-            'created_at': {'$lt': created_before},
-        }
-
+    def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> FindResult:
+        filter_query: Dict[str, Any] = {}
+        if criteria.subscription_ids:
+            filter_query['subscription_uuid'] = {'$in': criteria.subscription_ids}
+        if criteria.published_after:
+            filter_query['published_at'] = {'$gt': criteria.published_after}
+        if criteria.created_before:
+            filter_query['created_at'] = {'$lt': criteria.created_before}
+        if criteria.url:
+            filter_query['url'] = criteria.url
+        if criteria.last_version:
+            filter_query['version'] = {'$lt': criteria.last_version}
+        if criteria.provider:
+            filter_query['provider'] = criteria.provider.value
         if criteria.text:
             filter_query['$text'] = {'$search': criteria.text}
 
+        collection = self._item_collection()
         total_items: int = collection.count_documents(filter_query)
 
         items: Cursor[Any] = collection.find(filter_query).sort(
             'published_at', pymongo.DESCENDING
         ).skip(
-            page_number * max_results
+            page_number * limit
         ).limit(
-            max_results)
+            limit
+        )
 
         return [MongoDBItem(**item).to_domain_item() for item in items], total_items
 
-    def find_deprecated_items(self, last_version: int, provider: ItemProvider, limit: int) -> List[Item]:
-        collection = self._item_collection()
-        items: Cursor[Any] = collection.find({
-            'version': {'$lt': last_version},
-            'provider': provider.value
-        }).limit(limit)
-        return [MongoDBItem(**item).to_domain_item() for item in items]
-
     def delete_all_items(self):
         collection = self._item_collection()
-        collection.drop()
+        collection.delete_many({})
 
     def _item_collection(self) -> pymongo.collection.Collection:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore

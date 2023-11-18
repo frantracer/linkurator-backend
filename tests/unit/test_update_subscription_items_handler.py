@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock, MagicMock, call
 
 import pytest
 
-from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.application.subscriptions.update_subscription_items_handler import UpdateSubscriptionItemsHandler
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.items.item_repository import ItemRepository
+from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.infrastructure.asyncio.utils import run_parallel
 
 
@@ -46,7 +46,7 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered():
     subscription_repository.get.return_value = copy(sub1)
 
     item_repository = MagicMock(spec=ItemRepository)
-    item_repository.find.return_value = None
+    item_repository.find_items.return_value = ([], 0)
 
     handler = UpdateSubscriptionItemsHandler(subscription_service=subscription_service,
                                              subscription_repository=subscription_repository,
@@ -58,7 +58,7 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered():
     assert subscription_service.get_items.call_args == call(sub_id=sub1.uuid, from_date=sub1.scanned_at)
     assert subscription_repository.get.call_count == 1
     assert subscription_repository.get.call_args == call(sub1.uuid)
-    assert item_repository.find.call_count == 1
+    assert item_repository.find_items.call_count == 1
     assert item_repository.add_bulk.call_count == 1
     assert item_repository.add_bulk.call_args == call([item1])
     assert subscription_repository.update.call_count == 1
@@ -97,14 +97,14 @@ async def test_update_subscriptions_items_with_a_items_that_are_already_register
         subscription_uuid=sub1.uuid,
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
 
-    subscription_service = AsyncMock()
+    subscription_service = AsyncMock(spec=SubscriptionService)
     subscription_service.get_items.return_value = [item1]
 
-    subscription_repository = MagicMock()
+    subscription_repository = MagicMock(spec=SubscriptionRepository)
     subscription_repository.get.return_value = copy(sub1)
 
-    item_repository = MagicMock()
-    item_repository.find.return_value = item2
+    item_repository = MagicMock(spec=ItemRepository)
+    item_repository.find_items.return_value = ([item2], 1)
 
     handler = UpdateSubscriptionItemsHandler(subscription_service=subscription_service,
                                              subscription_repository=subscription_repository,
@@ -116,8 +116,11 @@ async def test_update_subscriptions_items_with_a_items_that_are_already_register
     assert subscription_service.get_items.call_args == call(sub_id=sub1.uuid, from_date=sub1.scanned_at)
     assert subscription_repository.get.call_count == 1
     assert subscription_repository.get.call_args == call(sub1.uuid)
-    assert item_repository.find.call_count == 1
-    assert item_repository.find.call_args == call(item1)
+    assert item_repository.find_items.call_count == 1
+    assert item_repository.find_items.call_args == call(
+        criteria=ItemFilterCriteria(url=item1.url),
+        page_number=0,
+        limit=1)
     assert item_repository.add.call_count == 0
     assert subscription_repository.update.call_count == 1
     updated_sub = subscription_repository.update.call_args[0][0]

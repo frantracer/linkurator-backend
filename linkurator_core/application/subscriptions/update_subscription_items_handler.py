@@ -3,10 +3,10 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Dict
 
-from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.items.item_repository import ItemRepository
+from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 
 
 class UpdateSubscriptionItemsHandler:
@@ -50,8 +50,9 @@ class UpdateSubscriptionItemsHandler:
                     logging.debug("%s items processed", item_count)
                 item_count += 1
 
-                found_item = self.item_repository.find(item)
-                if found_item is None:
+                items, _ = self.item_repository.find_items(criteria=ItemFilterCriteria(url=item.url),
+                                                           page_number=0, limit=1)
+                if len(items) == 0:
                     new_filtered_items.append(item)
 
             self.item_repository.add_bulk(new_filtered_items)

@@ -26,7 +26,7 @@ def test_get_topic_items_handler():
     )
 
     item_repo_mock = MagicMock(spec=ItemRepository)
-    item_repo_mock.find_sorted_by_publish_date.return_value = ([item1], 1)
+    item_repo_mock.find_items.return_value = ([item1], 1)
 
     interaction_repo_mock = MagicMock(spec=InteractionRepository)
     interaction_repo_mock.get_user_interactions_by_item_id.return_value = {}
@@ -55,7 +55,7 @@ def test_get_topic_items_handler():
 
 def test_get_topic_items_handler_not_found_topic_raises_exception():
     item_repo_mock = MagicMock(spec=ItemRepository)
-    item_repo_mock.find_sorted_by_publish_date.return_value = ([], 0)
+    item_repo_mock.find_items.return_value = ([], 0)
 
     topic_repo_mock = MagicMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = None

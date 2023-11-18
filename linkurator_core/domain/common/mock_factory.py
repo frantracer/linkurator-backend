@@ -10,7 +10,7 @@ from linkurator_core.domain.users.external_service_credential import ExternalSer
 from linkurator_core.domain.users.user import User
 
 
-def mock_user(uuid: Optional[UUID] = None, subscribed_to: Optional[List[UUID]] = None) -> User:
+def mock_user(uuid: Optional[UUID] = None, subscribed_to: Optional[List[UUID]] = None, is_admin: bool = False) -> User:
     uuid = uuid or uuid4()
     return User.new(uuid=uuid,
                     last_name="name",
@@ -19,7 +19,8 @@ def mock_user(uuid: Optional[UUID] = None, subscribed_to: Optional[List[UUID]] =
                     locale="en",
                     avatar_url=parse_url(f"https://avatar.com/{uuid}.png"),
                     google_refresh_token=str(uuid),
-                    subscription_uuids=subscribed_to)
+                    subscription_uuids=subscribed_to,
+                    is_admin=is_admin)
 
 
 def mock_sub(uuid: Optional[UUID] = None) -> Subscription:

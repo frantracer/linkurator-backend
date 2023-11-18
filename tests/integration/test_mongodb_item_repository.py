@@ -8,8 +8,8 @@ import pytest
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.mock_factory import mock_item
-from linkurator_core.domain.items.filter_item_criteria import FilterItemCriteria
 from linkurator_core.domain.items.item import Item, ItemProvider
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItem, MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
@@ -92,42 +92,47 @@ def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
     item2 = mock_item(item_uuid=uuid.UUID("2dcc5c6b-3d95-421d-a9cf-81ac475cee4c"), sub_uuid=subscription_uuid_1)
     item3 = mock_item(item_uuid=uuid.UUID("199f25cc-ff99-4a5c-9329-edebc3fdc0e5"), sub_uuid=subscription_uuid_2)
 
-    item_repo.add(item1)
-    item_repo.add(item2)
-    item_repo.add(item3)
+    item_repo.add_bulk([item1, item2, item3])
 
-    items_from_sub1 = item_repo.get_by_subscription_id(subscription_uuid_1)
-    items_from_sub2 = item_repo.get_by_subscription_id(subscription_uuid_2)
-    items_from_sub3 = item_repo.get_by_subscription_id(subscription_uuid_3)
+    items_from_sub1 = item_repo.find_items(
+        criteria=ItemFilterCriteria(subscription_ids=[subscription_uuid_1]), page_number=0, limit=10)
+    items_from_sub2 = item_repo.find_items(
+        criteria=ItemFilterCriteria(subscription_ids=[subscription_uuid_2]), page_number=0, limit=10)
+    items_from_sub3 = item_repo.find_items(
+        criteria=ItemFilterCriteria(subscription_ids=[subscription_uuid_3]), page_number=0, limit=10)
 
-    assert len(items_from_sub1) == 2
-    assert len(items_from_sub2) == 1
-    assert len(items_from_sub3) == 0
+    assert len(items_from_sub1[0]) == 2
+    assert len(items_from_sub2[0]) == 1
+    assert len(items_from_sub3[0]) == 0
 
 
 def test_find_item_with_same_url(item_repo: MongoDBItemRepository):
     item1 = mock_item(item_uuid=uuid.UUID("8fc4fbca-439c-4c0e-937d-4147ef3b299c"),
                       url='https://item-with-same-url.com')
-    item2 = mock_item(item_uuid=uuid.UUID("642a0749-4d7e-4aa3-bf04-cd3d07d9225d"),
-                      url='https://item-with-same-url.com')
 
-    item_repo.add(item1)
+    item_repo.add_bulk([item1])
 
-    found_item = item_repo.find(item2)
-    assert found_item is not None
-    assert found_item.uuid == item1.uuid
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(url=utils.parse_url('https://item-with-same-url.com')),
+        page_number=0, limit=10)
+
+    assert len(found_items) == 1
+    assert total_items == 1
+    assert found_items[0].uuid == item1.uuid
 
 
 def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemRepository):
     item1 = mock_item(item_uuid=uuid.UUID("00fbe982-1c90-4e7a-bf73-4716fa565b3c"),
                       url='https://item-with-same-url.com')
-    item2 = mock_item(item_uuid=uuid.UUID("8c2e6dbc-af35-47ad-a0ae-aa21ad0cbebb"),
-                      url='https://item-with-different-url.com')
 
-    item_repo.add(item1)
+    item_repo.add_bulk([item1])
 
-    found_item = item_repo.find(item2)
-    assert found_item is None
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(url=utils.parse_url('https://item-with-different-url.com')),
+        page_number=0, limit=10)
+
+    assert len(found_items) == 0
+    assert total_items == 0
 
 
 def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publish_date(
@@ -150,39 +155,39 @@ def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publ
                       published_at=datetime(2020, 1, 1, 8, 8, 9, tzinfo=timezone.utc),
                       created_at=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc))
 
-    item_repo.add(item1)
-    item_repo.add(item2)
-    item_repo.add(item3)
-    item_repo.add(item4)
+    item_repo.add_bulk([item1, item2, item3, item4])
 
-    found_items, total_items = item_repo.find_sorted_by_publish_date(
-        sub_ids=[sub_uuid],
-        published_after=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
-        created_before=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub_uuid],
+            published_after=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
+            created_before=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc)),
         page_number=0,
-        max_results=1)
+        limit=1)
 
     assert len(found_items) == 1
     assert total_items == 2
     assert found_items[0].uuid == item4.uuid
 
-    found_items, total_items = item_repo.find_sorted_by_publish_date(
-        sub_ids=[uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10")],
-        published_after=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
-        created_before=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub_uuid],
+            published_after=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
+            created_before=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc)),
         page_number=1,
-        max_results=1)
+        limit=1)
 
     assert len(found_items) == 1
     assert total_items == 2
     assert found_items[0].uuid == item1.uuid
 
-    found_items, total_items = item_repo.find_sorted_by_publish_date(
-        sub_ids=[uuid.UUID("480e5b4d-c193-4548-a987-c125d1699d10")],
-        published_after=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
-        created_before=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub_uuid],
+            published_after=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
+            created_before=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc)),
         page_number=2,
-        max_results=1)
+        limit=1)
 
     assert len(found_items) == 0
     assert total_items == 2
@@ -206,23 +211,31 @@ def test_add_empty_list_of_items_raises_no_error(item_repo: MongoDBItemRepositor
 
 
 def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepository):
+    item_repo.delete_all_items()
+
     item1 = mock_item(item_uuid=uuid.UUID("e1f898c2-bcfb-435a-97c0-9f462f73e95b"),
                       created_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc),
                       published_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc))
 
     item_repo.add(item1)
 
-    found_items = item_repo.get_items_created_before(date=datetime(2000, 1, 1, 0, 0, 11, tzinfo=timezone.utc), limit=1)
+    found_items, _ = item_repo.find_items(
+        criteria=ItemFilterCriteria(created_before=datetime(2000, 1, 1, 0, 0, 11, tzinfo=timezone.utc)),
+        page_number=0,
+        limit=1)
     assert item1.uuid in [item.uuid for item in found_items]
 
-    found_items = item_repo.get_items_created_before(date=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc), limit=1)
+    found_items, _ = item_repo.find_items(
+        criteria=ItemFilterCriteria(created_before=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc)),
+        page_number=0,
+        limit=1)
     assert item1.uuid not in [item.uuid for item in found_items]
 
-    found_items = item_repo.get_items_created_before(date=datetime(2000, 1, 1, 0, 0, 9, tzinfo=timezone.utc), limit=1)
+    found_items, _ = item_repo.find_items(
+        criteria=ItemFilterCriteria(created_before=datetime(2000, 1, 1, 0, 0, 9, tzinfo=timezone.utc)),
+        page_number=0,
+        limit=1)
     assert item1.uuid not in [item.uuid for item in found_items]
-
-    found_items = item_repo.get_items_created_before(date=datetime(2000, 1, 1, 0, 0, 11, tzinfo=timezone.utc), limit=0)
-    assert len(found_items) == 0
 
 
 def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: MongoDBItemRepository):
@@ -232,79 +245,68 @@ def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: Mong
         description="Let's discover where you can play football and how to get a new ball",
         item_uuid=uuid.UUID("412ec7ea-b5ba-48aa-b370-771352858795"),
         sub_uuid=sub1_uuid,
-        created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        published_at=datetime(2020, 1, 1, 0, 0, 10, tzinfo=timezone.utc),
     )
     item2 = mock_item(
         name="Videogames are cool",
         item_uuid=uuid.UUID("1f63bdf9-5cf5-43e1-a5b1-6e4d97842005"),
         sub_uuid=sub1_uuid,
-        created_at=datetime(2020, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
-        published_at=datetime(2020, 1, 1, 0, 0, 20, tzinfo=timezone.utc),
     )
     item3 = mock_item(
         name="What you should do in your free time?",
         description="Videogames is the answer",
         item_uuid=uuid.UUID("0183fd38-501d-442c-ac90-d2baad84f6eb"),
         sub_uuid=sub1_uuid,
-        created_at=datetime(2020, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
-        published_at=datetime(2020, 1, 1, 0, 0, 30, tzinfo=timezone.utc),
     )
     item4 = mock_item(
         name="Are videogames culture?",
         description="Let's find out!",
         item_uuid=uuid.UUID("88ec8038-45ec-4d45-bd4b-f1ab01d33fd8"),
         sub_uuid=sub1_uuid,
-        created_at=datetime(2020, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
-        published_at=datetime(2020, 1, 1, 0, 0, 40, tzinfo=timezone.utc),
     )
 
+    item_repo.delete_all_items()
     item_repo.add_bulk([item1, item2, item3, item4])
 
-    found_items, total_items = item_repo.find_sorted_by_publish_date(
-        sub_ids=[sub1_uuid],
-        created_before=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
-        published_after=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        max_results=4,
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub1_uuid],
+            text="videogames"),
         page_number=0,
-        criteria=FilterItemCriteria(text="videogames")
+        limit=4
     )
     assert len(found_items) == 2
     assert total_items == 2
     assert found_items[0].uuid == item4.uuid
     assert found_items[1].uuid == item2.uuid
 
-    found_items, total_items = item_repo.find_sorted_by_publish_date(
-        sub_ids=[sub1_uuid],
-        created_before=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
-        published_after=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        max_results=4,
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub1_uuid],
+            text="cool -videogames"),
+        limit=4,
         page_number=0,
-        criteria=FilterItemCriteria(text="cool -videogames")
     )
     assert len(found_items) == 1
     assert total_items == 1
     assert found_items[0].uuid == item1.uuid
 
-    found_items, total_items = item_repo.find_sorted_by_publish_date(
-        sub_ids=[sub1_uuid],
-        created_before=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
-        published_after=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        max_results=4,
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub1_uuid],
+            text="\"free time\""),
+        limit=4,
         page_number=0,
-        criteria=FilterItemCriteria(text="\"free time\"")
     )
     assert len(found_items) == 1
     assert total_items == 1
     assert found_items[0].uuid == item3.uuid
 
-    found_items, total_items = item_repo.find_sorted_by_publish_date(
-        sub_ids=[sub1_uuid],
-        created_before=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
-        published_after=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        max_results=4,
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub1_uuid],
+            text="swim"),
+        limit=4,
         page_number=0,
-        criteria=FilterItemCriteria(text="swim")
     )
     assert len(found_items) == 0
     assert total_items == 0
@@ -313,16 +315,35 @@ def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: Mong
 def test_find_deprecated_items(item_repo: MongoDBItemRepository) -> None:
     item_repo.delete_all_items()
 
-    item1 = mock_item(item_uuid=uuid.UUID("656fbb48-7897-4528-ae8b-cc4abc81aec7"), version=1)
-    item2 = mock_item(item_uuid=uuid.UUID("ecb31594-491d-4fa4-b216-e198ab3d5ca2"), version=2)
-    item3 = mock_item(item_uuid=uuid.UUID("0e829ca3-4e4c-42f6-960d-0f79b815587d"), version=3)
-    item4 = mock_item(item_uuid=uuid.UUID("6f9f5f02-eb83-4358-8794-ef452dea2f2f"), version=1)
+    item1 = mock_item(item_uuid=uuid.UUID("656fbb48-7897-4528-ae8b-cc4abc81aec7"), version=1,
+                      published_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc))
+    item2 = mock_item(item_uuid=uuid.UUID("ecb31594-491d-4fa4-b216-e198ab3d5ca2"), version=2,
+                      published_at=datetime(2020, 1, 2, 0, 0, 0, tzinfo=timezone.utc))
+    item3 = mock_item(item_uuid=uuid.UUID("0e829ca3-4e4c-42f6-960d-0f79b815587d"), version=3,
+                      published_at=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc))
+    item4 = mock_item(item_uuid=uuid.UUID("6f9f5f02-eb83-4358-8794-ef452dea2f2f"), version=1,
+                      published_at=datetime(2020, 1, 4, 0, 0, 0, tzinfo=timezone.utc))
 
     item_repo.add_bulk([item1, item2, item3, item4])
 
-    found_items = item_repo.find_deprecated_items(last_version=2, provider=ItemProvider.YOUTUBE, limit=4)
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            last_version=2,
+            provider=ItemProvider.YOUTUBE,
+        ),
+        limit=4,
+        page_number=0)
     assert len(found_items) == 2
+    assert total_items == 2
     assert {item.uuid for item in found_items} == {item1.uuid, item4.uuid}
 
-    found_items = item_repo.find_deprecated_items(last_version=3, provider=ItemProvider.YOUTUBE, limit=2)
-    assert len(found_items) == 2
+    found_items, total_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            last_version=3,
+            provider=ItemProvider.YOUTUBE,
+        ),
+        limit=1,
+        page_number=0)
+    assert len(found_items) == 1
+    assert total_items == 3
+    assert found_items[0].uuid == item4.uuid

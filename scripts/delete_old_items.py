@@ -4,6 +4,7 @@ import sys
 from datetime import datetime, timezone
 
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
@@ -43,7 +44,9 @@ def main():
         sys.exit(1)
 
     while is_there_and_outdated_subscription:
-        items = item_repository.get_items_created_before(datetime.now(tz=timezone.utc), 1)
+        items, _ = item_repository.find_items(
+            criteria=ItemFilterCriteria(created_before=datetime.now(tz=timezone.utc)),
+            page_number=0, limit=1)
 
         subscriptions_uuids = set()
         for item in items:
