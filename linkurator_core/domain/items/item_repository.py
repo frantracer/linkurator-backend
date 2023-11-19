@@ -28,11 +28,7 @@ class ItemRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def add(self, item: Item):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def add_bulk(self, items: List[Item]):
+    def upsert_bulk(self, items: List[Item]):
         raise NotImplementedError
 
     @abc.abstractmethod

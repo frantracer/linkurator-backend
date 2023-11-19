@@ -59,15 +59,15 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered():
     assert subscription_repository.get.call_count == 1
     assert subscription_repository.get.call_args == call(sub1.uuid)
     assert item_repository.find_items.call_count == 1
-    assert item_repository.add_bulk.call_count == 1
-    assert item_repository.add_bulk.call_args == call([item1])
+    assert item_repository.upsert_bulk.call_count == 1
+    assert item_repository.upsert_bulk.call_args == call([item1])
     assert subscription_repository.update.call_count == 1
     updated_sub = subscription_repository.update.call_args[0][0]
     assert updated_sub.scanned_at > sub1.scanned_at
 
 
 @pytest.mark.asyncio
-async def test_update_subscriptions_items_with_a_items_that_are_already_registered():
+async def test_update_subscriptions_items_with_items_that_are_already_registered():
     sub1 = Subscription(
         uuid=uuid.UUID("b6cae596-4526-4ab7-b5da-bd803f04980b"),
         name="sub1",
@@ -121,7 +121,8 @@ async def test_update_subscriptions_items_with_a_items_that_are_already_register
         criteria=ItemFilterCriteria(url=item1.url),
         page_number=0,
         limit=1)
-    assert item_repository.add.call_count == 0
+    assert item_repository.upsert_bulk.call_count == 1
+    assert item_repository.upsert_bulk.call_args == call([])
     assert subscription_repository.update.call_count == 1
     updated_sub = subscription_repository.update.call_args[0][0]
     assert updated_sub.scanned_at > sub1.scanned_at

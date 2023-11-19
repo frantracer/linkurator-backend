@@ -38,7 +38,7 @@ def test_get_item(item_repo: MongoDBItemRepository):
                 version=2,
                 duration=10,
                 provider=ItemProvider.YOUTUBE)
-    item_repo.add(item)
+    item_repo.upsert_bulk([item])
     the_item = item_repo.get(item.uuid)
 
     assert the_item is not None
@@ -74,13 +74,68 @@ def test_get_item_with_invalid_format_raises_an_exception(item_repo: MongoDBItem
 def test_delete_item(item_repo: MongoDBItemRepository):
     item = mock_item(item_uuid=uuid.UUID("4bf64498-239e-4bcb-a5a1-b84a7708ad01"))
 
-    item_repo.add(item)
+    item_repo.upsert_bulk([item])
     the_item = item_repo.get(item.uuid)
     assert the_item is not None
 
     item_repo.delete(item.uuid)
     deleted_item = item_repo.get(item.uuid)
     assert deleted_item is None
+
+
+def test_create_and_update_items(item_repo: MongoDBItemRepository):
+    item1 = mock_item(item_uuid=uuid.UUID("72ab4421-f2b6-499a-bbf1-5105f2ed549b"))
+    item2 = mock_item(item_uuid=uuid.UUID("a5a908e6-aa2c-4240-9a6d-d4340d38b8fc"))
+
+    item_repo.upsert_bulk([item1, item2])
+
+    item1_found = item_repo.get(item1.uuid)
+    item2_found = item_repo.get(item2.uuid)
+
+    assert item1_found == item1
+    assert item2_found == item2
+
+    item1_updated = Item(
+        uuid=item1.uuid,
+        subscription_uuid=item1.subscription_uuid,
+        name="updated name",
+        description="updated description",
+        url=utils.parse_url('https://updated.com'),
+        thumbnail=utils.parse_url('https://updated.com/thumbnail.png'),
+        created_at=item1.created_at,
+        updated_at=datetime.now(tz=timezone.utc),
+        published_at=item1.published_at,
+        version=2,
+        duration=10,
+        provider=ItemProvider.YOUTUBE
+    )
+    item2_updated = Item(
+        uuid=item2.uuid,
+        subscription_uuid=item2.subscription_uuid,
+        name="updated name",
+        description="updated description",
+        url=utils.parse_url('https://updated.com'),
+        thumbnail=utils.parse_url('https://updated.com/thumbnail.png'),
+        created_at=item2.created_at,
+        updated_at=datetime.now(tz=timezone.utc),
+        published_at=item2.published_at,
+        version=2,
+        duration=10,
+        provider=ItemProvider.YOUTUBE
+    )
+
+    item_repo.upsert_bulk([item1_updated, item2_updated])
+
+    item1_found = item_repo.get(item1.uuid)
+    item2_found = item_repo.get(item2.uuid)
+
+    assert item1_found == item1_updated
+    assert item2_found == item2_updated
+
+
+def test_create_and_update_items_with_no_items(item_repo: MongoDBItemRepository):
+    item_repo.upsert_bulk([])
+    assert True
 
 
 def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
@@ -92,7 +147,7 @@ def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
     item2 = mock_item(item_uuid=uuid.UUID("2dcc5c6b-3d95-421d-a9cf-81ac475cee4c"), sub_uuid=subscription_uuid_1)
     item3 = mock_item(item_uuid=uuid.UUID("199f25cc-ff99-4a5c-9329-edebc3fdc0e5"), sub_uuid=subscription_uuid_2)
 
-    item_repo.add_bulk([item1, item2, item3])
+    item_repo.upsert_bulk([item1, item2, item3])
 
     items_from_sub1 = item_repo.find_items(
         criteria=ItemFilterCriteria(subscription_ids=[subscription_uuid_1]), page_number=0, limit=10)
@@ -110,7 +165,7 @@ def test_find_item_with_same_url(item_repo: MongoDBItemRepository):
     item1 = mock_item(item_uuid=uuid.UUID("8fc4fbca-439c-4c0e-937d-4147ef3b299c"),
                       url='https://item-with-same-url.com')
 
-    item_repo.add_bulk([item1])
+    item_repo.upsert_bulk([item1])
 
     found_items, total_items = item_repo.find_items(
         criteria=ItemFilterCriteria(url=utils.parse_url('https://item-with-same-url.com')),
@@ -125,7 +180,7 @@ def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemReposit
     item1 = mock_item(item_uuid=uuid.UUID("00fbe982-1c90-4e7a-bf73-4716fa565b3c"),
                       url='https://item-with-same-url.com')
 
-    item_repo.add_bulk([item1])
+    item_repo.upsert_bulk([item1])
 
     found_items, total_items = item_repo.find_items(
         criteria=ItemFilterCriteria(url=utils.parse_url('https://item-with-different-url.com')),
@@ -155,7 +210,7 @@ def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publ
                       published_at=datetime(2020, 1, 1, 8, 8, 9, tzinfo=timezone.utc),
                       created_at=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc))
 
-    item_repo.add_bulk([item1, item2, item3, item4])
+    item_repo.upsert_bulk([item1, item2, item3, item4])
 
     found_items, total_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
@@ -193,23 +248,6 @@ def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publ
     assert total_items == 2
 
 
-def test_add_two_items_in_bulk(item_repo: MongoDBItemRepository):
-    item1 = mock_item()
-    item2 = mock_item()
-
-    item_repo.add_bulk([item1, item2])
-
-    item1_found = item_repo.get(item1.uuid)
-    item2_found = item_repo.get(item2.uuid)
-
-    assert item1_found == item1
-    assert item2_found == item2
-
-
-def test_add_empty_list_of_items_raises_no_error(item_repo: MongoDBItemRepository):
-    item_repo.add_bulk([])
-
-
 def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepository):
     item_repo.delete_all_items()
 
@@ -217,7 +255,7 @@ def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepositor
                       created_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc),
                       published_at=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc))
 
-    item_repo.add(item1)
+    item_repo.upsert_bulk([item1])
 
     found_items, _ = item_repo.find_items(
         criteria=ItemFilterCriteria(created_before=datetime(2000, 1, 1, 0, 0, 11, tzinfo=timezone.utc)),
@@ -265,7 +303,7 @@ def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: Mong
     )
 
     item_repo.delete_all_items()
-    item_repo.add_bulk([item1, item2, item3, item4])
+    item_repo.upsert_bulk([item1, item2, item3, item4])
 
     found_items, total_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
@@ -324,7 +362,7 @@ def test_find_deprecated_items(item_repo: MongoDBItemRepository) -> None:
     item4 = mock_item(item_uuid=uuid.UUID("6f9f5f02-eb83-4358-8794-ef452dea2f2f"), version=1,
                       published_at=datetime(2020, 1, 4, 0, 0, 0, tzinfo=timezone.utc))
 
-    item_repo.add_bulk([item1, item2, item3, item4])
+    item_repo.upsert_bulk([item1, item2, item3, item4])
 
     found_items, total_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
