@@ -7,8 +7,9 @@ from uuid import UUID
 from pydantic import AnyUrl
 from pydantic.main import BaseModel
 
-from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.common.units import Seconds
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
+from linkurator_core.domain.items.item import Item
 
 
 class ItemSchema(BaseModel):
@@ -23,6 +24,7 @@ class ItemSchema(BaseModel):
     thumbnail: AnyUrl
     created_at: datetime
     published_at: datetime
+    duration: Optional[Seconds]
 
     recommended: bool
     discouraged: bool
@@ -30,7 +32,7 @@ class ItemSchema(BaseModel):
     hidden: bool
 
     def __init__(self, uuid: UUID, subscription_uuid: UUID, name: str, description: str, url: AnyUrl,
-                 thumbnail: AnyUrl, created_at: datetime, published_at: datetime,
+                 thumbnail: AnyUrl, created_at: datetime, published_at: datetime, duration: Optional[Seconds],
                  recommended: bool = False, discouraged: bool = False,
                  viewed: bool = False, hidden: bool = False):
         super().__init__(uuid=uuid, subscription_uuid=subscription_uuid, name=name, description=description,
@@ -38,7 +40,8 @@ class ItemSchema(BaseModel):
                          recommended=recommended,
                          discouraged=discouraged,
                          viewed=viewed,
-                         hidden=hidden)
+                         hidden=hidden,
+                         duration=duration)
 
     @classmethod
     def from_domain_item(cls, item: Item, interactions: Optional[List[Interaction]] = None) -> ItemSchema:
@@ -63,4 +66,5 @@ class ItemSchema(BaseModel):
                    recommended=recommended,
                    discouraged=discouraged,
                    viewed=viewed,
-                   hidden=hidden)
+                   hidden=hidden,
+                   duration=item.duration)
