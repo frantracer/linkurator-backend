@@ -13,6 +13,7 @@ import isodate  # type: ignore
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
 from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
@@ -20,7 +21,6 @@ from linkurator_core.domain.users.external_service_credential import ExternalSer
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
-
 
 LATEST_YOUTUBE_VIDEO_ITEM_VERSION = 1
 
@@ -164,7 +164,18 @@ class YoutubeApiClient:
 
         return YoutubeChannel.from_dict(channel_response_json["items"][0])
 
-    async def get_youtube_videos(self, api_key: str, playlist_id: str, from_date: datetime) -> List[YoutubeVideo]:
+    async def get_youtube_videos(self, api_key: str, video_ids: List[str]) -> List[YoutubeVideo]:
+        videos_response_json, videos_status_code = await self._request_youtube_videos(
+            api_key, video_ids)
+
+        if videos_status_code != 200:
+            raise Exception(f"Error getting youtube videos: {videos_response_json}")
+
+        return [YoutubeVideo.from_dict(v) for v in videos_response_json["items"]]
+
+    async def get_youtube_videos_from_playlist(
+            self, api_key: str, playlist_id: str, from_date: datetime
+    ) -> List[YoutubeVideo]:
         next_page_token = None
         videos: List[YoutubeVideo] = []
 
@@ -335,12 +346,14 @@ class YoutubeService(SubscriptionService):
     def __init__(self, google_account_service: GoogleAccountService,
                  user_repository: UserRepository,
                  subscription_repository: SubscriptionRepository,
+                 item_repository: ItemRepository,
                  credentials_repository: ExternalCredentialRepository,
                  youtube_client: YoutubeApiClient,
                  api_key: str):
         self.google_account_service = google_account_service
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
+        self.item_repository = item_repository
         self.credentials_repository = credentials_repository
         self.youtube_client = youtube_client
         self.api_key = api_key
@@ -396,7 +409,7 @@ class YoutubeService(SubscriptionService):
             return subscription
         return None
 
-    async def get_items(
+    async def get_subscription_items(
             self,
             sub_id: uuid.UUID,
             from_date: datetime,
@@ -414,12 +427,37 @@ class YoutubeService(SubscriptionService):
         else:
             api_key = await self._get_api_key_for_sub(sub_id)
 
-        videos = await self.youtube_client.get_youtube_videos(
+        videos = await self.youtube_client.get_youtube_videos_from_playlist(
             api_key=api_key,
             playlist_id=subscription.external_data["playlist_id"],
             from_date=from_date)
 
         return [v.to_item(item_id=uuid.uuid4(), sub_id=sub_id) for v in videos]
+
+    async def get_items(
+            self,
+            item_ids: set[uuid.UUID],
+            credential: Optional[ExternalServiceCredential] = None
+    ) -> set[Item]:
+        def link_to_video_id(link: str) -> str:
+            return link.rsplit('/', maxsplit=1)[-1]
+
+        items, _ = self.item_repository.find_items(
+            criteria=ItemFilterCriteria(item_ids=item_ids),
+            page_number=0,
+            limit=len(item_ids))
+
+        video_id_to_item: Dict[str, Item] = {link_to_video_id(str(item.url)): item for item in items}
+
+        updated_videos = await self.youtube_client.get_youtube_videos(
+            api_key=self.api_key if credential is None else credential.credential_value,
+            video_ids=[link_to_video_id(str(item.url)) for item in items])
+
+        updated_items = {v.to_item(item_id=video_id_to_item[v.video_id].uuid,
+                                   sub_id=video_id_to_item[v.video_id].subscription_uuid)
+                         for v in updated_videos}
+
+        return updated_items
 
     async def _get_api_key_for_sub(self, sub_id: uuid.UUID) -> str:
         subscribed_users = self.user_repository.find_users_subscribed_to_subscription(sub_id)

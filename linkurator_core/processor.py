@@ -52,6 +52,7 @@ async def main():  # pylint: disable=too-many-locals
         google_account_service=account_service,
         user_repository=user_repository,
         subscription_repository=subscription_repository,
+        item_repository=item_repository,
         credentials_repository=credentials_repository,
         api_key=google_secrets.api_key,
         youtube_client=youtube_client)

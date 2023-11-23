@@ -13,7 +13,7 @@ class YoutubeApiKeyChecker(ExternalCredentialsCheckerService):
 
         try:
             client = YoutubeApiClient()
-            videos = await client.get_youtube_videos(
+            videos = await client.get_youtube_videos_from_playlist(
                 api_key=credential.credential_value,
                 playlist_id='UUYVFW8d1p41UM-ZGzzYYB2w',
                 from_date=datetime(2020, 1, 1)

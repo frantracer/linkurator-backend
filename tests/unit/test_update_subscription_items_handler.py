@@ -40,7 +40,7 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered():
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
 
     subscription_service = AsyncMock(spec=SubscriptionService)
-    subscription_service.get_items.return_value = [item1]
+    subscription_service.get_subscription_items.return_value = [item1]
 
     subscription_repository = MagicMock(spec=SubscriptionRepository)
     subscription_repository.get.return_value = copy(sub1)
@@ -54,8 +54,8 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered():
 
     await handler.handle(sub1.uuid)
 
-    assert subscription_service.get_items.call_count == 1
-    assert subscription_service.get_items.call_args == call(sub_id=sub1.uuid, from_date=sub1.scanned_at)
+    assert subscription_service.get_subscription_items.call_count == 1
+    assert subscription_service.get_subscription_items.call_args == call(sub_id=sub1.uuid, from_date=sub1.scanned_at)
     assert subscription_repository.get.call_count == 1
     assert subscription_repository.get.call_args == call(sub1.uuid)
     assert item_repository.find_items.call_count == 1
@@ -98,7 +98,7 @@ async def test_update_subscriptions_items_with_items_that_are_already_registered
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
 
     subscription_service = AsyncMock(spec=SubscriptionService)
-    subscription_service.get_items.return_value = [item1]
+    subscription_service.get_subscription_items.return_value = [item1]
 
     subscription_repository = MagicMock(spec=SubscriptionRepository)
     subscription_repository.get.return_value = copy(sub1)
@@ -112,8 +112,8 @@ async def test_update_subscriptions_items_with_items_that_are_already_registered
 
     await handler.handle(sub1.uuid)
 
-    assert subscription_service.get_items.call_count == 1
-    assert subscription_service.get_items.call_args == call(sub_id=sub1.uuid, from_date=sub1.scanned_at)
+    assert subscription_service.get_subscription_items.call_count == 1
+    assert subscription_service.get_subscription_items.call_args == call(sub_id=sub1.uuid, from_date=sub1.scanned_at)
     assert subscription_repository.get.call_count == 1
     assert subscription_repository.get.call_args == call(sub1.uuid)
     assert item_repository.find_items.call_count == 1
@@ -147,7 +147,7 @@ async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription():
         return []
 
     subscription_service = AsyncMock(spec=SubscriptionService)
-    subscription_service.get_items.side_effect = wait_1_second_and_return_no_items
+    subscription_service.get_subscription_items.side_effect = wait_1_second_and_return_no_items
 
     subscription_repository = MagicMock(spec=SubscriptionRepository)
     subscription_repository.get.return_value = copy(sub1)

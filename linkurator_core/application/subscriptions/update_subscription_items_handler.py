@@ -40,7 +40,7 @@ class UpdateSubscriptionItemsHandler:
         logging.info("Updating items for subscription %s - %s", subscription_id, subscription.name)
 
         try:
-            new_items = await self.subscription_service.get_items(
+            new_items = await self.subscription_service.get_subscription_items(
                 sub_id=subscription_id,
                 from_date=subscription.scanned_at)
             item_count = 0

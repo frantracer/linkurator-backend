@@ -18,7 +18,7 @@ async def main():
     secrets = GoogleClientSecrets()
 
     client = YoutubeApiClient()
-    videos = await client.get_youtube_videos(
+    videos = await client.get_youtube_videos_from_playlist(
         api_key=secrets.api_key,
         playlist_id=playlist_id,
         from_date=from_date)

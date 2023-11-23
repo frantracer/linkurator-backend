@@ -28,6 +28,14 @@ class SubscriptionService(abc.ABC):
     @abc.abstractmethod
     async def get_items(
             self,
+            item_ids: set[uuid.UUID],
+            credential: Optional[ExternalServiceCredential] = None
+    ) -> set[Item]:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def get_subscription_items(
+            self,
             sub_id: uuid.UUID,
             from_date: datetime,
             credential: Optional[ExternalServiceCredential] = None

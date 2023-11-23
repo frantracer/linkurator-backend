@@ -78,6 +78,7 @@ def app_handlers() -> Handlers:
         google_account_service=account_service,
         subscription_repository=subscription_repository,
         user_repository=user_repository,
+        item_repository=item_repository,
         credentials_repository=credentials_repository,
         youtube_client=YoutubeApiClient(),
         api_key=google_secrets.api_key)

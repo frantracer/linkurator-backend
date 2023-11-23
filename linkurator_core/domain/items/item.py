@@ -74,3 +74,6 @@ class Item:
             int(self.created_at.timestamp() * 100) == floor(other.created_at.timestamp() * 100) and \
             int(self.updated_at.timestamp() * 100) == floor(other.updated_at.timestamp() * 100) and \
             int(self.published_at.timestamp() * 100) == floor(other.published_at.timestamp() * 100)
+
+    def __hash__(self):
+        return hash(self.uuid)
