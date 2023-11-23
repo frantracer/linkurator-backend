@@ -14,6 +14,7 @@ FindResult = Tuple[List[Item], TotalItems]
 
 @dataclass
 class ItemFilterCriteria:
+    item_ids: Optional[set[UUID]] = None
     subscription_ids: Optional[List[UUID]] = None
     published_after: Optional[datetime] = None
     created_before: Optional[datetime] = None

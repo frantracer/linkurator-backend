@@ -106,7 +106,9 @@ class MongoDBItemRepository(ItemRepository):
 
     def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> FindResult:
         filter_query: Dict[str, Any] = {}
-        if criteria.subscription_ids:
+        if criteria.item_ids is not None:
+            filter_query['uuid'] = {'$in': list(criteria.item_ids)}
+        if criteria.subscription_ids is not None:
             filter_query['subscription_uuid'] = {'$in': criteria.subscription_ids}
         if criteria.published_after:
             filter_query['published_at'] = {'$gt': criteria.published_after}
