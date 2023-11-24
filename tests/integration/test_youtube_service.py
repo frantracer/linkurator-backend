@@ -46,7 +46,7 @@ def mock_youtube_video(video_id: Optional[str] = None, channel_id: Optional[str]
         thumbnail_url=f"https://thumbnail.com/{video_id}",
         description=f"Description for {video_id}",
         published_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        url=f"https://video_url.com/{video_id}",
+        url=f"https://www.youtube.com/watch?v={video_id}",
         duration="PT1H1M1S",
     )
 
