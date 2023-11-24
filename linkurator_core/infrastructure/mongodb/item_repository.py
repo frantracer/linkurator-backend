@@ -29,6 +29,7 @@ class MongoDBItem(BaseModel):
     created_at: datetime
     updated_at: datetime
     published_at: datetime
+    deleted_at: Optional[datetime] = None
     duration: Optional[Seconds] = None
     version: int = 0
     provider: str = ItemProvider.YOUTUBE.value
@@ -98,14 +99,22 @@ class MongoDBItemRepository(ItemRepository):
         item: Optional[Dict] = collection.find_one({'uuid': item_id})
         if item is None:
             return None
-        return MongoDBItem(**item).to_domain_item()
+        mongo_item = MongoDBItem(**item)
+        if mongo_item.deleted_at is not None:
+            return None
+        return mongo_item.to_domain_item()
 
     def delete(self, item_id: UUID):
         collection = self._item_collection()
-        collection.delete_one({'uuid': item_id})
+        collection.update_one(
+            {'uuid': item_id},
+            {'$set': {'deleted_at': datetime.utcnow()}}
+        )
 
     def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> FindResult:
-        filter_query: Dict[str, Any] = {}
+        filter_query: Dict[str, Any] = {
+            'deleted_at': None
+        }
         if criteria.item_ids is not None:
             filter_query['uuid'] = {'$in': list(criteria.item_ids)}
         if criteria.subscription_ids is not None:
@@ -138,7 +147,10 @@ class MongoDBItemRepository(ItemRepository):
 
     def delete_all_items(self):
         collection = self._item_collection()
-        collection.delete_many({})
+        collection.update_many(
+            {},
+            {'$set': {'deleted_at': datetime.utcnow()}}
+        )
 
     def _item_collection(self) -> pymongo.collection.Collection:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
