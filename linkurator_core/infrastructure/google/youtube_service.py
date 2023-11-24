@@ -445,7 +445,7 @@ class YoutubeService(SubscriptionService):
             credential: Optional[ExternalServiceCredential] = None
     ) -> set[Item]:
         def link_to_video_id(link: str) -> str:
-            return link.rsplit('/', maxsplit=1)[-1]
+            return link.rsplit('/watch?v=', maxsplit=1)[-1]
 
         items, _ = self.item_repository.find_items(
             criteria=ItemFilterCriteria(item_ids=item_ids),
