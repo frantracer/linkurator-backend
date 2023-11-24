@@ -3,12 +3,15 @@ import logging
 import os
 
 from linkurator_core.application.common.event_handler import EventHandler
+from linkurator_core.application.items.find_deprecated_items_handler import FindDeprecatedItemsHandler
+from linkurator_core.application.items.refresh_items_handler import RefreshItemsHandler
 from linkurator_core.application.subscriptions.find_outdated_subscriptions_handler import \
     FindOutdatedSubscriptionsHandler
 from linkurator_core.application.subscriptions.update_subscription_items_handler import UpdateSubscriptionItemsHandler
 from linkurator_core.application.users.find_outdated_users_handler import FindOutdatedUsersHandler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
-from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent, SubscriptionBecameOutdatedEvent
+from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent, SubscriptionBecameOutdatedEvent, \
+    ItemsBecameOutdatedEvent
 from linkurator_core.infrastructure.asyncio.event_bus_service import AsyncioEventBusService
 from linkurator_core.infrastructure.asyncio.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio.utils import run_parallel
@@ -67,23 +70,32 @@ async def main():  # pylint: disable=too-many-locals
         subscription_repository=subscription_repository,
         item_repository=item_repository,
         subscription_service=youtube_service)
+    refresh_items_handler = RefreshItemsHandler(
+        item_repository=item_repository,
+        subscription_service=youtube_service)
     find_outdated_users = FindOutdatedUsersHandler(user_repository, event_bus)
     find_outdated_subscriptions = FindOutdatedSubscriptionsHandler(
         subscription_repository=subscription_repository,
         event_bus=event_bus,
         user_repository=user_repository,
         external_credentials_repository=credentials_repository)
+    find_deprecated_items = FindDeprecatedItemsHandler(
+        item_repository=item_repository,
+        event_bus=event_bus)
     event_handler = EventHandler(
         update_user_subscriptions_handler=update_user_subscriptions,
-        update_subscription_items_handler=update_subscriptions_items)
+        update_subscription_items_handler=update_subscriptions_items,
+        refresh_items_handler=refresh_items_handler)
 
     event_bus.subscribe(UserSubscriptionsBecameOutdatedEvent, event_handler.handle)
     event_bus.subscribe(SubscriptionBecameOutdatedEvent, event_handler.handle)
+    event_bus.subscribe(ItemsBecameOutdatedEvent, event_handler.handle)
 
     # Task scheduler
     scheduler = TaskScheduler()
     scheduler.schedule_recurring_task(task=find_outdated_users.handle, interval_seconds=60 * 5)
     scheduler.schedule_recurring_task(task=find_outdated_subscriptions.handle, interval_seconds=60)
+    scheduler.schedule_recurring_task(task=find_deprecated_items.handle, interval_seconds=60 * 5)
 
     await run_parallel(
         event_bus.start(),

@@ -9,6 +9,7 @@ import pytest
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
 from linkurator_core.domain.common.mock_factory import mock_user, mock_credential, mock_sub
 from linkurator_core.domain.common.utils import parse_url
+from linkurator_core.domain.items.item import YOUTUBE_ITEM_VERSION
 from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -17,7 +18,7 @@ from linkurator_core.domain.users.external_service_credential_repository import 
 from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService, YoutubeApiClient, YoutubeChannel, \
-    YoutubeVideo, LATEST_YOUTUBE_VIDEO_ITEM_VERSION
+    YoutubeVideo
 
 
 def mock_youtube_channel(channel_id: str = "channel_id") -> YoutubeChannel:
@@ -492,7 +493,7 @@ def test_youtube_video_parsing() -> None:
     assert item.thumbnail == parse_url("https://i.ytimg.com/vi/Ks-_Mh1QhMc/mqdefault.jpg")
     assert item.url == parse_url("https://www.youtube.com/watch?v=Ks-_Mh1QhMc")
     assert item.duration == 1263
-    assert item.version == LATEST_YOUTUBE_VIDEO_ITEM_VERSION
+    assert item.version == YOUTUBE_ITEM_VERSION
     assert item.published_at == datetime(2012, 10, 1, 15, 27, 35, tzinfo=timezone.utc)
 
 

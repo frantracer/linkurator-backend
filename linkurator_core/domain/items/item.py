@@ -12,6 +12,7 @@ from pydantic.networks import AnyUrl
 from linkurator_core.domain.common.units import Seconds
 
 DEFAULT_ITEM_VERSION = 0
+YOUTUBE_ITEM_VERSION = 1
 
 
 class ItemProvider(str, Enum):

@@ -13,7 +13,8 @@ async def test_user_became_obsolete_event_triggers_update_user_subscriptions_han
     update_user_subscriptions_handler.handle.return_value = None
     event_handler = EventHandler(
         update_user_subscriptions_handler=update_user_subscriptions_handler,
-        update_subscription_items_handler=MagicMock())
+        update_subscription_items_handler=MagicMock(),
+        refresh_items_handler=MagicMock())
 
     await event_handler.handle(UserSubscriptionsBecameOutdatedEvent(
         event_id=uuid.UUID("416db0f0-d66f-4f47-9924-25c234615cc7"),
@@ -30,7 +31,8 @@ async def test_subscription_became_obsolete_event_triggers_update_subscriptions_
     update_subscription_items_handler.handle.return_value = None
     event_handler = EventHandler(
         update_user_subscriptions_handler=MagicMock(),
-        update_subscription_items_handler=update_subscription_items_handler)
+        update_subscription_items_handler=update_subscription_items_handler,
+        refresh_items_handler=MagicMock())
 
     await event_handler.handle(SubscriptionBecameOutdatedEvent(
         event_id=uuid.UUID("f71fcaa6-0baf-43f3-863d-292bea2989e9"),

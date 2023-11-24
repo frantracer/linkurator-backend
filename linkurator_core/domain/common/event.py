@@ -29,3 +29,16 @@ class SubscriptionBecameOutdatedEvent(Event):
     def __init__(self, event_id: uuid.UUID, subscription_id: uuid.UUID):
         super().__init__(event_id)
         self.subscription_id = subscription_id
+
+
+class ItemsBecameOutdatedEvent(Event):
+    item_ids: set[uuid.UUID]
+
+    def __init__(self, event_id: uuid.UUID, item_ids: set[uuid.UUID]):
+        super().__init__(event_id)
+        self.item_ids = item_ids
+
+    def __eq__(self, other):
+        if not isinstance(other, ItemsBecameOutdatedEvent):
+            return False
+        return self.item_ids == other.item_ids

@@ -1,12 +1,26 @@
-from typing import List
+import logging
+from uuid import UUID
 
-from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.items.item_repository import ItemRepository
+from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 
 
 class RefreshItemsHandler:
-    def __init__(self, item_repository: ItemRepository):
+    def __init__(self, item_repository: ItemRepository, subscription_service: SubscriptionService):
         self.item_repository = item_repository
+        self.subscription_service = subscription_service
 
-    def handle(self, items: List[Item]) -> None:
-        pass
+    async def handle(self, item_uuids: set[UUID]) -> None:
+        logging.info("Refreshing information for %s items", len(item_uuids))
+
+        items, _ = self.item_repository.find_items(criteria=ItemFilterCriteria(item_ids=item_uuids),
+                                                   page_number=0, limit=len(item_uuids))
+
+        updated_items = await self.subscription_service.get_items(set(item.uuid for item in items))
+
+        self.item_repository.upsert_bulk(list(updated_items))
+
+        updated_item_uuids = set(item.uuid for item in updated_items)
+        for item in items:
+            if item.uuid not in updated_item_uuids:
+                self.item_repository.delete(item.uuid)

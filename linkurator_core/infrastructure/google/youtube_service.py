@@ -12,7 +12,7 @@ import isodate  # type: ignore
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
-from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item import Item, YOUTUBE_ITEM_VERSION
 from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -22,7 +22,7 @@ from linkurator_core.domain.users.external_service_credential_repository import 
 from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
-LATEST_YOUTUBE_VIDEO_ITEM_VERSION = 1
+MAX_VIDEOS_PER_QUERY = 50
 
 
 @dataclass
@@ -105,7 +105,7 @@ class YoutubeVideo:
             thumbnail=utils.parse_url(self.thumbnail_url),
             published_at=self.published_at,
             duration=isodate.parse_duration(self.duration).total_seconds(),
-            version=LATEST_YOUTUBE_VIDEO_ITEM_VERSION
+            version=YOUTUBE_ITEM_VERSION
         )
 
 
@@ -165,13 +165,18 @@ class YoutubeApiClient:
         return YoutubeChannel.from_dict(channel_response_json["items"][0])
 
     async def get_youtube_videos(self, api_key: str, video_ids: List[str]) -> List[YoutubeVideo]:
-        videos_response_json, videos_status_code = await self._request_youtube_videos(
-            api_key, video_ids)
+        youtube_videos: List[YoutubeVideo] = []
 
-        if videos_status_code != 200:
-            raise Exception(f"Error getting youtube videos: {videos_response_json}")
+        for i in range(0, len(video_ids), MAX_VIDEOS_PER_QUERY):
+            videos_response_json, videos_status_code = await self._request_youtube_videos(
+                api_key, video_ids[i:i + MAX_VIDEOS_PER_QUERY])
 
-        return [YoutubeVideo.from_dict(v) for v in videos_response_json["items"]]
+            if videos_status_code != 200:
+                raise Exception(f"Error getting youtube videos: {videos_response_json}")
+
+            youtube_videos = youtube_videos + [YoutubeVideo.from_dict(v) for v in videos_response_json["items"]]
+
+        return youtube_videos
 
     async def get_youtube_videos_from_playlist(
             self, api_key: str, playlist_id: str, from_date: datetime
@@ -301,7 +306,7 @@ class YoutubeApiClient:
         playlist_items_query_params: Dict[str, Any] = {
             "part": "snippet",
             "playlistId": playlist_id,
-            "maxResults": 50,
+            "maxResults": MAX_VIDEOS_PER_QUERY,
             "key": api_key
         }
         if next_page_token is not None:
@@ -328,7 +333,7 @@ class YoutubeApiClient:
         videos_query_params: Dict[str, Any] = {
             "part": "snippet,contentDetails",
             "id": ",".join(video_ids),
-            "maxResults": 50,
+            "maxResults": MAX_VIDEOS_PER_QUERY,
             "key": api_key
         }
 
