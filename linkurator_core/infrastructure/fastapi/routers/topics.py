@@ -1,9 +1,8 @@
 from datetime import datetime, timezone
-from http import HTTPStatus
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any, Callable, Coroutine, Optional, Annotated
 from uuid import UUID
 
-from fastapi import Depends, Request, Response
+from fastapi import Depends, Request, Response, Query, status
 from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
@@ -21,7 +20,7 @@ from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, 
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
-from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
+from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, InteractionFilterSchema, VALID_INTERACTIONS
 from linkurator_core.infrastructure.fastapi.models.page import Page
 from linkurator_core.infrastructure.fastapi.models.topic import NewTopicSchema, TopicSchema, UpdateTopicSchema
 
@@ -45,8 +44,8 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
 
     @router.get("/{topic_id}/items",
                 responses={
-                    HTTPStatus.UNAUTHORIZED.value: {'model': None},
-                    HTTPStatus.NOT_FOUND.value: {'model': None}
+                    status.HTTP_401_UNAUTHORIZED: {'model': None},
+                    status.HTTP_404_NOT_FOUND: {'model': None}
                 })
     async def items_by_topic(
             request: Request,
@@ -55,6 +54,8 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             page_size: PositiveInt = 50,
             created_before_ts: Optional[float] = None,
             search: Optional[str] = None,
+            include_interactions: Annotated[str | None, Query(
+                description=f"Comma separated values. Valid values: {VALID_INTERACTIONS}")] = None,
             session: Optional[Session] = Depends(get_session)
     ) -> Page[ItemSchema]:
         """
@@ -67,13 +68,28 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             created_before_ts = datetime.now(timezone.utc).timestamp()
 
         try:
+            interactions = None
+            if include_interactions is not None:
+                interactions = [InteractionFilterSchema(interaction) for interaction in include_interactions.split(',')]
+        except ValueError as error:
+            raise default_responses.bad_request('Invalid interaction filter') from error
+
+        def _include_interaction(interaction: InteractionFilterSchema) -> bool:
+            return interactions is None or interaction in interactions
+
+        try:
             items_with_interactions, total_items = get_topic_items_handler.handle(
                 user_id=session.user_id,
                 topic_id=topic_id,
                 created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
                 page_number=page_number,
                 page_size=page_size,
-                text_filter=search
+                text_filter=search,
+                include_items_without_interactions=_include_interaction(InteractionFilterSchema.WITHOUT_INTERACTIONS),
+                include_recommended_items=_include_interaction(InteractionFilterSchema.RECOMMENDED),
+                include_discouraged_items=_include_interaction(InteractionFilterSchema.DISCOURAGED),
+                include_viewed_items=_include_interaction(InteractionFilterSchema.VIEWED),
+                include_hidden_items=_include_interaction(InteractionFilterSchema.HIDDEN),
             )
 
             current_url = request.url.include_query_params(
@@ -95,7 +111,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
 
     @router.get("/",
                 responses={
-                    HTTPStatus.UNAUTHORIZED: {'model': None}
+                    status.HTTP_401_UNAUTHORIZED: {'model': None}
                 })
     async def get_all_topics(
             request: Request,
@@ -118,8 +134,8 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
 
     @router.get("/{topic_id}",
                 responses={
-                    HTTPStatus.UNAUTHORIZED: {'model': None},
-                    HTTPStatus.NOT_FOUND: {'model': None}
+                    status.HTTP_401_UNAUTHORIZED: {'model': None},
+                    status.HTTP_404_NOT_FOUND: {'model': None}
                 })
     async def get_topic(
             topic_id: UUID,
@@ -138,11 +154,11 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             raise default_responses.not_found('Topic not found') from error
 
     @router.post("/",
-                 status_code=HTTPStatus.CREATED,
+                 status_code=status.HTTP_201_CREATED,
                  response_class=Response,
                  responses={
-                     HTTPStatus.NOT_FOUND: {"model": None},
-                     HTTPStatus.UNAUTHORIZED: {"model": None},
+                     status.HTTP_401_UNAUTHORIZED: {'model': None},
+                     status.HTTP_404_NOT_FOUND: {'model': None}
                  })
     async def create_topic(
             new_topic: NewTopicSchema,
@@ -160,13 +176,13 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             user_id=session.user_id,
             subscription_ids=new_topic.subscriptions_ids
         ))
+        return
 
     @router.patch("/{topic_id}",
-                  status_code=HTTPStatus.NO_CONTENT,
-                  response_class=Response,
+                  status_code=status.HTTP_204_NO_CONTENT,
                   responses={
-                      HTTPStatus.UNAUTHORIZED: {"model": None},
-                      HTTPStatus.NOT_FOUND: {"model": None}
+                      status.HTTP_401_UNAUTHORIZED: {'model': None},
+                      status.HTTP_404_NOT_FOUND: {'model': None}
                   })
     async def update_topic(
             topic_id: UUID,
@@ -190,11 +206,10 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             raise default_responses.not_found('Subscription not found') from error
 
     @router.delete("/{topic_id}",
-                   status_code=HTTPStatus.NO_CONTENT,
-                   response_class=Response,
+                   status_code=status.HTTP_204_NO_CONTENT,
                    responses={
-                       HTTPStatus.NOT_FOUND: {"model": None},
-                       HTTPStatus.UNAUTHORIZED: {"model": None},
+                       status.HTTP_401_UNAUTHORIZED: {'model': None},
+                       status.HTTP_404_NOT_FOUND: {'model': None}
                    })
     async def delete_topic(
             topic_id: UUID,
@@ -212,11 +227,11 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             raise default_responses.not_found('Topic not found') from error
 
     @router.post("/{topic_id}/subscriptions/{subscription_id}",
-                 status_code=HTTPStatus.CREATED,
+                 status_code=status.HTTP_201_CREATED,
                  response_class=Response,
                  responses={
-                     HTTPStatus.UNAUTHORIZED: {"model": None},
-                     HTTPStatus.NOT_FOUND: {"model": None}
+                     status.HTTP_401_UNAUTHORIZED: {'model': None},
+                     status.HTTP_404_NOT_FOUND: {'model': None}
                  })
     async def assign_subscription_to_topic(
             topic_id: UUID,
@@ -240,11 +255,11 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             raise default_responses.not_found('Topic not found') from error
 
     @router.delete("/{topic_id}/subscriptions/{subscription_id}",
-                   status_code=HTTPStatus.NO_CONTENT,
+                   status_code=status.HTTP_204_NO_CONTENT,
                    response_class=Response,
                    responses={
-                       HTTPStatus.UNAUTHORIZED: {"model": None},
-                       HTTPStatus.NOT_FOUND: {"model": None}
+                       status.HTTP_401_UNAUTHORIZED: {'model': None},
+                       status.HTTP_404_NOT_FOUND: {'model': None}
                    })
     async def remove_subscription_from_topic(
             topic_id: UUID,

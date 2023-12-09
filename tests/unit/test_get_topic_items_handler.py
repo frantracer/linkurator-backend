@@ -7,7 +7,6 @@ import pytest
 from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.items.interaction_repository import InteractionRepository
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemRepository
 from linkurator_core.domain.topics.topic import Topic
@@ -27,9 +26,7 @@ def test_get_topic_items_handler() -> None:
 
     item_repo_mock = MagicMock(spec=ItemRepository)
     item_repo_mock.find_items.return_value = ([item1], 1)
-
-    interaction_repo_mock = MagicMock(spec=InteractionRepository)
-    interaction_repo_mock.get_user_interactions_by_item_id.return_value = {}
+    item_repo_mock.get_user_interactions_by_item_id.return_value = {}
 
     topic1 = Topic.new(
         uuid=UUID('04d6483c-f24d-4077-a722-a6d6e3dc3d65'),
@@ -40,7 +37,7 @@ def test_get_topic_items_handler() -> None:
     topic_repo_mock = MagicMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = topic1
 
-    handler = GetTopicItemsHandler(topic_repo_mock, item_repo_mock, interaction_repo_mock)
+    handler = GetTopicItemsHandler(topic_repo_mock, item_repo_mock)
     items, total_items = handler.handle(
         user_id=UUID('98028b50-86c2-4d2f-8787-414f0f470d15'),
         topic_id=UUID('04d6483c-f24d-4077-a722-a6d6e3dc3d65'),
@@ -56,14 +53,12 @@ def test_get_topic_items_handler() -> None:
 def test_get_topic_items_handler_not_found_topic_raises_exception() -> None:
     item_repo_mock = MagicMock(spec=ItemRepository)
     item_repo_mock.find_items.return_value = ([], 0)
+    item_repo_mock.get_user_interactions_by_item_id.return_value = {}
 
     topic_repo_mock = MagicMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = None
 
-    interaction_repo_mock = MagicMock(spec=InteractionRepository)
-    interaction_repo_mock.get_user_interactions_by_item_id.return_value = {}
-
-    handler = GetTopicItemsHandler(topic_repo_mock, item_repo_mock, interaction_repo_mock)
+    handler = GetTopicItemsHandler(topic_repo_mock, item_repo_mock)
     with pytest.raises(TopicNotFoundError):
         handler.handle(
             user_id=UUID('98028b50-86c2-4d2f-8787-414f0f470d15'),

@@ -9,6 +9,12 @@ def not_authenticated() -> HTTPException:
         detail="Not authenticated")
 
 
+def forbidden(message: str) -> HTTPException:
+    return HTTPException(
+        status_code=http.HTTPStatus.FORBIDDEN,
+        detail=message)
+
+
 def bad_request(message: str) -> HTTPException:
     return HTTPException(
         status_code=http.HTTPStatus.BAD_REQUEST,

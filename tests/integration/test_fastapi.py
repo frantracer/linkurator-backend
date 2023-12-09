@@ -132,14 +132,45 @@ def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> N
 
     client.get(
         '/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
-        'page_number=0&page_size=1&search=test&created_before_ts=0')
+        'page_number=0&page_size=1&search=test&created_before_ts=0&'
+        'include_interactions=without_interactions,recommended,viewed,hidden,discouraged')
     dummy_get_subscription_items_handler.handle.assert_called_once_with(
         user_id=USER_UUID,
         subscription_id=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
         created_before=datetime.fromtimestamp(0, tz=timezone.utc),
         page_number=0,
         page_size=1,
-        text_filter='test')
+        text_filter='test',
+        include_items_without_interactions=True,
+        include_recommended_items=True,
+        include_discouraged_items=True,
+        include_viewed_items=True,
+        include_hidden_items=True)
+
+
+def test_get_subscription_items_recommended_and_without_interactions(handlers: Handlers) -> None:
+    dummy_get_subscription_items_handler = MagicMock(spec=GetSubscriptionItemsHandler)
+    dummy_get_subscription_items_handler.handle.return_value = ([], 0)
+    handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
+
+    client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
+
+    client.get(
+        '/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
+        'page_number=0&page_size=1&search=test&created_before_ts=0&'
+        'include_interactions=without_interactions,recommended')
+    dummy_get_subscription_items_handler.handle.assert_called_once_with(
+        user_id=USER_UUID,
+        subscription_id=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
+        created_before=datetime.fromtimestamp(0, tz=timezone.utc),
+        page_number=0,
+        page_size=1,
+        text_filter='test',
+        include_items_without_interactions=True,
+        include_recommended_items=True,
+        include_discouraged_items=False,
+        include_viewed_items=False,
+        include_hidden_items=False)
 
 
 def test_create_user_topic_returns_201(handlers: Handlers) -> None:
@@ -266,14 +297,45 @@ def test_get_topic_items_parses_query_parameters(handlers: Handlers) -> None:
 
     client.get(
         '/topics/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
-        'page_number=0&page_size=1&search=test&created_before_ts=0')
+        'page_number=0&page_size=1&search=test&created_before_ts=0&'
+        'include_interactions=without_interactions,recommended,viewed,hidden,discouraged')
     dummy_get_topic_items_handler.handle.assert_called_once_with(
         user_id=USER_UUID,
         topic_id=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
         created_before=datetime.fromtimestamp(0, tz=timezone.utc),
         page_number=0,
         page_size=1,
-        text_filter='test')
+        text_filter='test',
+        include_items_without_interactions=True,
+        include_recommended_items=True,
+        include_discouraged_items=True,
+        include_viewed_items=True,
+        include_hidden_items=True)
+
+
+def test_get_topic_items_recommended_and_without_interactions(handlers: Handlers) -> None:
+    dummy_get_topic_items_handler = MagicMock(spec=GetTopicItemsHandler)
+    dummy_get_topic_items_handler.handle.return_value = ([], 0)
+    handlers.get_topic_items_handler = dummy_get_topic_items_handler
+
+    client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
+
+    client.get(
+        '/topics/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
+        'page_number=0&page_size=1&search=test&created_before_ts=0&'
+        'include_interactions=without_interactions,recommended')
+    dummy_get_topic_items_handler.handle.assert_called_once_with(
+        user_id=USER_UUID,
+        topic_id=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
+        created_before=datetime.fromtimestamp(0, tz=timezone.utc),
+        page_number=0,
+        page_size=1,
+        text_filter='test',
+        include_items_without_interactions=True,
+        include_recommended_items=True,
+        include_discouraged_items=False,
+        include_viewed_items=False,
+        include_hidden_items=False)
 
 
 def test_assign_subscription_to_topic_returns_200(handlers: Handlers) -> None:
@@ -336,3 +398,25 @@ def test_unassign_subscription_from_non_existing_topic_returns_404(handlers: Han
     response = client.delete(
         '/topics/f22b92da-5b90-455f-8141-fb4a37f07805/subscriptions/ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8')
     assert response.status_code == 404
+
+
+def test_get_subscriptions_items_returns_200(handlers: Handlers) -> None:
+    dummy_handler = MagicMock(spec=GetSubscriptionItemsHandler)
+    item1 = Item.new(
+        uuid=uuid.UUID("1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac"),
+        name="item1",
+        description="",
+        subscription_uuid=uuid.UUID("df836d19-1e78-4880-bf5f-af1c18e4d57d"),
+        url=utils.parse_url('https://ae1b82ee.com'),
+        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        published_at=datetime.fromtimestamp(0, tz=timezone.utc))
+    dummy_handler.handle.return_value = ([(item1, [])], 1)
+    handlers.get_subscription_items_handler = dummy_handler
+
+    client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
+
+    response = client.get('/subscriptions/df836d19-1e78-4880-bf5f-af1c18e4d57d/items?page_number=0&page_size=1')
+    assert response.status_code == 200
+    assert len(response.json()['elements']) == 1
+    assert response.json()['next_page'] is None
+    assert response.json()['previous_page'] is None

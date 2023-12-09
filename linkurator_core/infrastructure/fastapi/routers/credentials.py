@@ -1,7 +1,7 @@
 import http
 from typing import Any, Callable, Coroutine, Optional, List
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
@@ -21,7 +21,10 @@ def get_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.get("/", responses={401: {'model': None}})
+    @router.get("/",
+                responses={
+                    status.HTTP_401_UNAUTHORIZED: {'model': None}
+                })
     async def get_user_external_credentials(
             session: Optional[Session] = Depends(get_session)
     ) -> List[ExternalCredentialSchema]:
@@ -52,7 +55,11 @@ def get_router(
 
         return
 
-    @router.delete("/{credential_id}", responses={400: {'model': None}}, status_code=http.HTTPStatus.NO_CONTENT)
+    @router.delete("/{credential_id}",
+                   responses={
+                       status.HTTP_401_UNAUTHORIZED: {'model': None}
+                   },
+                   status_code=status.HTTP_204_NO_CONTENT)
     async def delete_external_credential(
             credential_value: str,
             credential_type: ExternalServiceType,

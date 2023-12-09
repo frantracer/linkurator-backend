@@ -46,8 +46,8 @@ def test_delete_subscription_items_handler() -> None:
     assert user_repo_mock.get.call_count == 1
     assert subscription_repo_mock.get.call_count == 1
     assert item_repo_mock.find_items.call_count == 2
-    assert item_repo_mock.delete.call_count == 2
-    assert item_repo_mock.delete.call_args_list == [call(item1.uuid), call(item2.uuid)]
+    assert item_repo_mock.delete_item.call_count == 2
+    assert item_repo_mock.delete_item.call_args_list == [call(item1.uuid), call(item2.uuid)]
     assert subscription_repo_mock.update.call_count == 1
 
 

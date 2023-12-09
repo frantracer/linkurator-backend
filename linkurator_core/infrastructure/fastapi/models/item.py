@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
@@ -55,3 +56,17 @@ class ItemSchema(BaseModel):
                    viewed=viewed,
                    hidden=hidden,
                    duration=item.duration)
+
+
+class InteractionFilterSchema(Enum):
+    """
+    Filter items by interaction type
+    """
+    WITHOUT_INTERACTIONS = "without_interactions"
+    RECOMMENDED = "recommended"
+    DISCOURAGED = "discouraged"
+    VIEWED = "viewed"
+    HIDDEN = "hidden"
+
+
+VALID_INTERACTIONS = ', '.join([value.value for value in InteractionFilterSchema])

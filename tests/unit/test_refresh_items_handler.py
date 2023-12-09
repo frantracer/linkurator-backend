@@ -23,8 +23,9 @@ async def test_refresh_items_handler_updates_items_with_latest_info() -> None:
 
     await refresh_items_handler.handle({items[0].uuid, items[1].uuid})
 
-    item_repository.upsert_bulk.assert_called_once_with(items)
+    item_repository.upsert_items.assert_called_once_with(items)
     subscription_service.get_items.assert_called_once_with({items[0].uuid, items[1].uuid})
+
 
 @pytest.mark.asyncio
 async def test_refresh_items_handler_deletes_items_that_are_not_returned_by_subscription_service() -> None:
@@ -40,6 +41,6 @@ async def test_refresh_items_handler_deletes_items_that_are_not_returned_by_subs
 
     await refresh_items_handler.handle({items[0].uuid, items[1].uuid})
 
-    item_repository.upsert_bulk.assert_called_once_with([items[0]])
+    item_repository.upsert_items.assert_called_once_with([items[0]])
     subscription_service.get_items.assert_called_once_with({items[0].uuid, items[1].uuid})
-    item_repository.delete.assert_called_once_with(items[1].uuid)
+    item_repository.delete_item.assert_called_once_with(items[1].uuid)

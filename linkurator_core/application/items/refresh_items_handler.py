@@ -18,9 +18,9 @@ class RefreshItemsHandler:
 
         updated_items = await self.subscription_service.get_items(set(item.uuid for item in items))
 
-        self.item_repository.upsert_bulk(list(updated_items))
+        self.item_repository.upsert_items(list(updated_items))
 
         updated_item_uuids = set(item.uuid for item in updated_items)
         for item in items:
             if item.uuid not in updated_item_uuids:
-                self.item_repository.delete(item.uuid)
+                self.item_repository.delete_item(item.uuid)

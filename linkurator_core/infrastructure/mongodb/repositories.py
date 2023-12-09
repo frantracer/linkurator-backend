@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import pathlib
 from datetime import datetime
 from ipaddress import IPv4Address
-import pathlib
 
 from mongodb_migrations.cli import MigrationManager  # type: ignore
 from mongodb_migrations.config import Configuration, Execution  # type: ignore

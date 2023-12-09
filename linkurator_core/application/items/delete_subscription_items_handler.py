@@ -37,7 +37,7 @@ class DeleteSubscriptionItemsHandler:
             items_uuids.extend([item.uuid for item in items])
 
         for item_uuid in items_uuids:
-            self.item_repository.delete(item_uuid)
+            self.item_repository.delete_item(item_uuid)
 
         subscription.scanned_at = datetime.fromtimestamp(0, tz=timezone.utc)
         self.subscription_repository.update(subscription)

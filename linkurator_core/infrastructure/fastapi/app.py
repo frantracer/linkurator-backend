@@ -35,7 +35,6 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService, YoutubeApiClient
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
-from linkurator_core.infrastructure.mongodb.interaction_repository import MongoDBInteractionRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
@@ -66,9 +65,6 @@ def app_handlers() -> Handlers:
     topic_repository = MongoDBTopicRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
-    interaction_repository = MongoDBInteractionRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
-        username=db_settings.user, password=db_settings.password)
     credentials_repository = MongodDBExternalCredentialRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
@@ -87,7 +83,7 @@ def app_handlers() -> Handlers:
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
         google_client=account_service,
         get_user_subscriptions=GetUserSubscriptionsHandler(subscription_repository, user_repository),
-        get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository, interaction_repository),
+        get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository),
         delete_subscription_items_handler=DeleteSubscriptionItemsHandler(
             item_repository=item_repository,
             subscription_repository=subscription_repository,
@@ -102,8 +98,7 @@ def app_handlers() -> Handlers:
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
         get_topic_items_handler=GetTopicItemsHandler(
             topic_repository=topic_repository,
-            item_repository=item_repository,
-            interaction_repository=interaction_repository),
+            item_repository=item_repository),
         assign_subscription_to_topic_handler=AssignSubscriptionToTopicHandler(
             subscription_repository=subscription_repository,
             topic_repository=topic_repository,
@@ -116,13 +111,11 @@ def app_handlers() -> Handlers:
         unassign_subscription_from_topic_handler=UnassignSubscriptionFromUserTopicHandler(
             topic_repository=topic_repository),
         get_item_handler=GetItemHandler(
-            item_repository=item_repository,
-            interaction_repository=interaction_repository),
+            item_repository=item_repository),
         create_item_interaction_handler=CreateItemInteractionHandler(
-            item_repository=item_repository,
-            interaction_repository=interaction_repository),
+            item_repository=item_repository),
         delete_item_interaction_handler=DeleteItemInteractionHandler(
-            interaction_repository=interaction_repository),
+            item_repository=item_repository),
         add_external_credentials_handler=AddExternalCredentialsHandler(
             credentials_repository=credentials_repository,
             credential_checker=credentials_checker),

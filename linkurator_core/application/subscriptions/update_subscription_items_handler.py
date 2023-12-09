@@ -55,7 +55,7 @@ class UpdateSubscriptionItemsHandler:
                 if len(items) == 0:
                     new_filtered_items.append(item)
 
-            self.item_repository.upsert_bulk(new_filtered_items)
+            self.item_repository.upsert_items(new_filtered_items)
 
             subscription.scanned_at = now
             self.subscription_repository.update(subscription)

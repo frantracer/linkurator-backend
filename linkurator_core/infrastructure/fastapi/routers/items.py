@@ -1,8 +1,7 @@
-import http
 from typing import Callable, Optional, Any, Coroutine
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Response, Request
+from fastapi import APIRouter, Depends, Request, status
 
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
@@ -10,6 +9,7 @@ from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.domain.common.exceptions import ItemNotFoundError
 from linkurator_core.domain.items.interaction import InteractionType, Interaction
 from linkurator_core.domain.users.session import Session
+from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 
 
@@ -21,56 +21,67 @@ def get_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.post("/{item_id}/interactions/{interaction_type}", response_model=None,
-                 responses={201: {"model": None}, 401: {"model": None}, 404: {"model": None}})
+    @router.post("/{item_id}/interactions/{interaction_type}",
+                 status_code=status.HTTP_201_CREATED,
+                 responses={
+                     status.HTTP_401_UNAUTHORIZED: {"model": None},
+                     status.HTTP_404_NOT_FOUND: {"model": None}
+                 })
     async def create_item_interaction(
             item_id: UUID,
             interaction_type: InteractionType,
             session: Optional[Session] = Depends(get_session)
-    ) -> Any:
+    ) -> None:
         """
         Create an interaction for an item
         """
         if session is None:
-            return Response(status_code=http.HTTPStatus.UNAUTHORIZED)
+            raise default_responses.not_authenticated()
 
         create_item_interaction_handler.handle(Interaction.new(
             uuid=uuid4(),
             user_uuid=session.user_id,
             item_uuid=item_id,
             interaction_type=interaction_type))
-        return Response(status_code=http.HTTPStatus.CREATED)
+        return
 
-    @router.delete("/{item_id}/interactions/{interaction_type}", response_model=None,
-                   responses={204: {"model": None}, 401: {"model": None}, 404: {"model": None}})
+    @router.delete("/{item_id}/interactions/{interaction_type}",
+                   status_code=status.HTTP_204_NO_CONTENT,
+                   responses={
+                       status.HTTP_401_UNAUTHORIZED: {"model": None},
+                       status.HTTP_404_NOT_FOUND: {"model": None}
+                   })
     async def delete_interaction(
             item_id: UUID,
             interaction_type: InteractionType,
             session: Optional[Session] = Depends(get_session)
-    ) -> Any:
+    ) -> None:
         if session is None:
-            return Response(status_code=http.HTTPStatus.UNAUTHORIZED)
+            raise default_responses.not_authenticated()
 
         delete_item_interaction_handler.handle(session.user_id, item_id, interaction_type)
 
-        return Response(status_code=http.HTTPStatus.NO_CONTENT)
+        return
 
-    @router.get("/{item_id}", response_model=ItemSchema,
-                responses={200: {"model": ItemSchema}, 404: {"model": None}})
+    @router.get("/{item_id}",
+                status_code=status.HTTP_200_OK,
+                responses={
+                    status.HTTP_404_NOT_FOUND: {"model": None}
+                })
     async def get_item(
             item_id: UUID,
             session: Optional[Session] = Depends(get_session)
-    ) -> Any:
+    ) -> ItemSchema:
         """
         Get an item
         """
         if session is None:
-            return Response(status_code=http.HTTPStatus.UNAUTHORIZED)
+            raise default_responses.not_authenticated()
 
         try:
             item_detail = get_item_handler.handle(user_id=session.user_id, item_id=item_id)
             return ItemSchema.from_domain_item(item_detail.item, item_detail.interactions)
-        except ItemNotFoundError:
-            return Response(status_code=http.HTTPStatus.NOT_FOUND)
+        except ItemNotFoundError as error:
+            raise default_responses.not_found("Item not found") from error
 
     return router

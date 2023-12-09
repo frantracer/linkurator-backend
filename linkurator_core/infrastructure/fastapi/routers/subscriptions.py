@@ -1,9 +1,8 @@
-import http
 from datetime import datetime, timezone
-from typing import Any, Callable, Optional, Coroutine
+from typing import Any, Callable, Optional, Coroutine, Annotated
 from uuid import UUID
 
-from fastapi import Depends, Response, Request
+from fastapi import Depends, Request, status, Query
 from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
@@ -14,7 +13,7 @@ from linkurator_core.application.subscriptions.refresh_subscription_handler impo
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
-from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
+from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, InteractionFilterSchema, VALID_INTERACTIONS
 from linkurator_core.infrastructure.fastapi.models.page import Page
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 
@@ -30,7 +29,7 @@ def get_router(
 
     @router.get("/",
                 responses={
-
+                    status.HTTP_401_UNAUTHORIZED: {'model': None}
                 })
     async def get_all_subscriptions(
             request: Request,
@@ -64,7 +63,12 @@ def get_router(
             page_size=page_size,
             current_url=current_url)
 
-    @router.get("/{sub_id}/items", response_model=Page[ItemSchema])
+    @router.get("/{sub_id}/items",
+                status_code=status.HTTP_200_OK,
+                responses={
+                    status.HTTP_401_UNAUTHORIZED: {"model": None},
+                    status.HTTP_404_NOT_FOUND: {"model": None}
+                })
     async def get_subscription_items(
             request: Request,
             sub_id: UUID,
@@ -72,8 +76,10 @@ def get_router(
             page_size: PositiveInt = 50,
             created_before_ts: Optional[float] = None,
             search: Optional[str] = None,
+            include_interactions: Annotated[str | None, Query(
+                description=f"Comma separated values. Valid values: {VALID_INTERACTIONS}")] = None,
             session: Optional[Session] = Depends(get_session)
-    ) -> Any:
+    ) -> Page[ItemSchema]:
         """
         Get the list of subscription items sorted by published date. Newer items the first ones.
         :param request: HTTP request
@@ -92,13 +98,28 @@ def get_router(
         if created_before_ts is None:
             created_before_ts = datetime.now(tz=timezone.utc).timestamp()
 
+        try:
+            interactions = None
+            if include_interactions is not None:
+                interactions = [InteractionFilterSchema(interaction) for interaction in include_interactions.split(',')]
+        except ValueError as error:
+            raise default_responses.bad_request('Invalid interaction filter') from error
+
+        def _include_interaction(interaction: InteractionFilterSchema) -> bool:
+            return interactions is None or interaction in interactions
+
         items_with_interactions, total_items = get_subscription_items_handler.handle(
             user_id=session.user_id,
             subscription_id=sub_id,
             created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
             page_number=page_number,
             page_size=page_size,
-            text_filter=search
+            text_filter=search,
+            include_items_without_interactions=_include_interaction(InteractionFilterSchema.WITHOUT_INTERACTIONS),
+            include_recommended_items=_include_interaction(InteractionFilterSchema.RECOMMENDED),
+            include_discouraged_items=_include_interaction(InteractionFilterSchema.DISCOURAGED),
+            include_viewed_items=_include_interaction(InteractionFilterSchema.VIEWED),
+            include_hidden_items=_include_interaction(InteractionFilterSchema.HIDDEN)
         )
 
         current_url = request.url.include_query_params(
@@ -115,36 +136,45 @@ def get_router(
             page_size=page_size,
             current_url=current_url)
 
-    @router.delete("/{sub_id}/items", response_model=None,
-                   responses={204: {"model": None}, 401: {"model": None}, 403: {"model": None}, 404: {"model": None}})
+    @router.delete("/{sub_id}/items",
+                   status_code=status.HTTP_204_NO_CONTENT,
+                   responses={
+                       status.HTTP_401_UNAUTHORIZED: {"model": None},
+                       status.HTTP_403_FORBIDDEN: {"model": None},
+                       status.HTTP_404_NOT_FOUND: {"model": None}
+                   })
     async def delete_subscription_items(
             sub_id: UUID,
             session: Optional[Session] = Depends(get_session)
-    ) -> Any:
+    ) -> None:
         """
         Delete all the items of a subscription
-        :param sub_id: UUID of the subscripton included in the url
+        :param sub_id: UUID of the subscription included in the url
         :param session: The session of the logged user
         :return: UNAUTHORIZED status code if the session is invalid.
         """
 
         if session is None:
-            return Response(status_code=http.HTTPStatus.UNAUTHORIZED)
+            raise default_responses.not_authenticated()
 
         try:
             delete_subscription_items_handler.handle(user_id=session.user_id, subscription_id=sub_id)
-            return Response(status_code=http.HTTPStatus.NO_CONTENT)
-        except PermissionError:
-            return Response(status_code=http.HTTPStatus.FORBIDDEN)
-        except SubscriptionNotFoundError:
-            return Response(status_code=http.HTTPStatus.NOT_FOUND)
+            return
+        except PermissionError as error:
+            raise default_responses.forbidden("You don't have permissions to delete this subscription") from error
+        except SubscriptionNotFoundError as error:
+            raise default_responses.not_found("Subscription not found") from error
 
-    @router.post("/{sub_id}/refresh", response_model=None,
-                 responses={204: {"model": None}, 403: {"model": None}, 404: {"model": None}})
+    @router.post("/{sub_id}/refresh",
+                 status_code=status.HTTP_204_NO_CONTENT,
+                 responses={
+                     status.HTTP_403_FORBIDDEN: {"model": None},
+                     status.HTTP_404_NOT_FOUND: {"model": None}
+                 })
     async def refresh_subscription_information(
             sub_id: UUID,
             session: Optional[Session] = Depends(get_session)
-    ) -> Any:
+    ) -> None:
         """
         Refresh the subscription information
         :param sub_id: UUID of the subscripton included in the url
@@ -153,14 +183,14 @@ def get_router(
         """
 
         if session is None:
-            return Response(status_code=http.HTTPStatus.UNAUTHORIZED)
+            raise default_responses.not_authenticated()
 
         try:
             await refresh_subscription_handler.handle(user_id=session.user_id, subscription_id=sub_id)
-            return Response(status_code=http.HTTPStatus.NO_CONTENT)
-        except PermissionError:
-            return Response(status_code=http.HTTPStatus.FORBIDDEN)
-        except SubscriptionNotFoundError:
-            return Response(status_code=http.HTTPStatus.NOT_FOUND)
+            return
+        except PermissionError as error:
+            raise default_responses.forbidden("You don't have permissions to refresh this subscription") from error
+        except SubscriptionNotFoundError as error:
+            raise default_responses.not_found("Subscription not found") from error
 
     return router
