@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import uuid
 from dataclasses import dataclass
@@ -38,7 +40,7 @@ class YoutubeChannel:
     country: str
 
     @staticmethod
-    def from_dict(channel: dict):
+    def from_dict(channel: dict[str, Any]):
         return YoutubeChannel(
             title=channel["snippet"]["title"],
             channel_id=channel["id"],
@@ -79,7 +81,7 @@ class YoutubeVideo:
     duration: str
 
     @staticmethod
-    def from_dict(video: dict):
+    def from_dict(video: dict[str, Any]) -> YoutubeVideo:
         published_at = datetime.strptime(video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ")
 
         return YoutubeVideo(

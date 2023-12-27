@@ -3,8 +3,7 @@ from __future__ import annotations
 import math
 from typing import Generic, List, Optional, TypeVar
 
-from pydantic import AnyUrl
-from pydantic.generics import GenericModel
+from pydantic import AnyUrl, BaseModel
 from starlette.datastructures import URL
 
 from linkurator_core.domain.common import utils
@@ -12,7 +11,7 @@ from linkurator_core.domain.common import utils
 Element = TypeVar("Element")
 
 
-class Page(GenericModel, Generic[Element]):
+class Page(BaseModel, Generic[Element]):
     """
     Page model
     """

@@ -1,10 +1,10 @@
+import uuid
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
+from math import floor
 from unittest import mock
 from unittest.mock import MagicMock
-import uuid
 
-from math import floor
 import pytest
 
 from linkurator_core.domain.common import utils
@@ -134,16 +134,17 @@ def test_get_subscription_that_does_not_exist(subscription_repo: MongoDBSubscrip
 
 
 def test_get_subscription_with_invalid_format_raises_an_exception(subscription_repo: MongoDBSubscriptionRepository):
-    subscription_dict = dict(MongoDBSubscription(
+    subscription_dict = MongoDBSubscription(
         uuid=uuid.UUID("3ab7068b-1412-46ed-bc1f-46d5f03542e7"),
         provider="test",
         external_data={},
         name="test",
-        url=utils.parse_url('https://test.com'),
-        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        url='https://test.com',
+        thumbnail='https://test.com/thumbnail.png',
         created_at=datetime.now(tz=timezone.utc),
         updated_at=datetime.now(tz=timezone.utc),
-        scanned_at=datetime(1970, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc)))
+        scanned_at=datetime(1970, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc)
+    ).model_dump()
     subscription_dict['uuid'] = 'invalid_uuid'
     subscription_collection_mock = MagicMock()
     subscription_collection_mock.find_one = MagicMock(return_value=subscription_dict)

@@ -2,15 +2,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Dict, Optional
+from typing import Optional, Any
 from uuid import UUID
 
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
 from pydantic.main import BaseModel
-import pymongo  # type: ignore
 from pymongo import MongoClient
-from pymongo.errors import DuplicateKeyError  # type: ignore
+from pymongo.errors import DuplicateKeyError
 
 from linkurator_core.domain.users.session import Session
 from linkurator_core.domain.users.session_repository import SessionRepository
@@ -43,11 +42,11 @@ class MongoDBSession(BaseModel):
 
 
 class MongoDBSessionRepository(SessionRepository):
-    client: MongoClient
+    client: MongoClient[Any]
     db_name: str
     _collection_name: str = 'sessions'
 
-    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str):
+    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
         self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
@@ -56,25 +55,25 @@ class MongoDBSessionRepository(SessionRepository):
             raise CollectionIsNotInitialized(
                 f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
 
-    def add(self, session: Session):
+    def add(self, session: Session) -> None:
         collection = self._session_collection()
         try:
-            collection.insert_one(dict(MongoDBSession.from_domain_session(session)))
+            collection.insert_one(MongoDBSession.from_domain_session(session).model_dump())
         except DuplicateKeyError as error:
             raise TokenAlreadyExists(f"Token '{session.token}' already exists") from error
 
     def get(self, token: str) -> Optional[Session]:
         collection = self._session_collection()
-        session: Optional[Dict] = collection.find_one({'token': token})
+        session: Optional[dict[str, Any]] = collection.find_one({'token': token})
         if session is None:
             return None
         return MongoDBSession(**session).to_domain_session()
 
-    def delete(self, token: str):
+    def delete(self, token: str) -> None:
         collection = self._session_collection()
         collection.delete_one({'token': token})
 
-    def _session_collection(self) -> pymongo.collection.Collection:
+    def _session_collection(self) -> Any:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
         return self.client.get_database(self.db_name).get_collection(
             self._collection_name,

@@ -1,10 +1,10 @@
+import uuid
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
+from math import floor
 from unittest import mock
 from unittest.mock import MagicMock
-import uuid
 
-from math import floor
 import pytest
 
 from linkurator_core.domain.common.exceptions import DuplicatedKeyError
@@ -51,13 +51,13 @@ def test_get_topic_that_does_not_exist(topic_repo: MongoDBTopicRepository):
 
 
 def test_get_topic_with_invalid_format_raises_an_exception(topic_repo: MongoDBTopicRepository):
-    topic_dict = dict(MongoDBTopic(uuid=uuid.UUID("3ab7068b-1412-46ed-bc1f-46d5f03542e7"),
-                                   user_id=uuid.UUID("a23ba1fc-bccb-4e70-a535-7eeca00dbac0"),
-                                   subscriptions_ids=[],
-                                   name="test",
-                                   email="test@email.com",
-                                   created_at=datetime.now(tz=timezone.utc),
-                                   updated_at=datetime.now(tz=timezone.utc)))
+    topic_dict = MongoDBTopic(uuid=uuid.UUID("3ab7068b-1412-46ed-bc1f-46d5f03542e7"),
+                              user_id=uuid.UUID("a23ba1fc-bccb-4e70-a535-7eeca00dbac0"),
+                              subscriptions_ids=[],
+                              name="test",
+                              created_at=datetime.now(tz=timezone.utc),
+                              updated_at=datetime.now(tz=timezone.utc)
+                              ).model_dump()
     topic_dict['uuid'] = 'invalid_uuid'
     topic_collection_mock = MagicMock()
     topic_collection_mock.find_one = MagicMock(return_value=topic_dict)

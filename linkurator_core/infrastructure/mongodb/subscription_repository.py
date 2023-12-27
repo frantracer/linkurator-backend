@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from uuid import UUID
 
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
-from pydantic import AnyUrl
 from pydantic.main import BaseModel
-import pymongo  # type: ignore
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING
 
+from linkurator_core.domain.common import utils
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
@@ -22,8 +21,8 @@ class MongoDBSubscription(BaseModel):
     name: str
     provider: str
     external_data: Dict[str, str]
-    url: AnyUrl
-    thumbnail: AnyUrl
+    url: str
+    thumbnail: str
     created_at: datetime
     updated_at: datetime
     scanned_at: datetime
@@ -35,8 +34,8 @@ class MongoDBSubscription(BaseModel):
             name=subscription.name,
             provider=subscription.provider.value,
             external_data=subscription.external_data,
-            url=subscription.url,
-            thumbnail=subscription.thumbnail,
+            url=str(subscription.url),
+            thumbnail=str(subscription.thumbnail),
             created_at=subscription.created_at,
             updated_at=subscription.updated_at,
             scanned_at=subscription.scanned_at
@@ -48,8 +47,8 @@ class MongoDBSubscription(BaseModel):
             name=self.name,
             provider=SubscriptionProvider(self.provider),
             external_data=self.external_data,
-            url=self.url,
-            thumbnail=self.thumbnail,
+            url=utils.parse_url(self.url),
+            thumbnail=utils.parse_url(self.thumbnail),
             created_at=self.created_at,
             updated_at=self.updated_at,
             scanned_at=self.scanned_at
@@ -57,11 +56,11 @@ class MongoDBSubscription(BaseModel):
 
 
 class MongoDBSubscriptionRepository(SubscriptionRepository):
-    client: MongoClient
+    client: MongoClient[Any]
     db_name: str
     _collection_name: str = 'subscriptions'
 
-    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str):
+    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
         self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
@@ -70,48 +69,48 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
             raise CollectionIsNotInitialized(
                 f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
 
-    def add(self, subscription: Subscription):
+    def add(self, subscription: Subscription) -> None:
         collection = self._subscription_collection()
-        collection.insert_one(dict(MongoDBSubscription.from_domain_subscription(subscription)))
+        collection.insert_one(MongoDBSubscription.from_domain_subscription(subscription).model_dump())
 
     def get(self, subscription_id: UUID) -> Optional[Subscription]:
         collection = self._subscription_collection()
-        subscription: Optional[Dict] = collection.find_one({'uuid': subscription_id})
+        subscription: Optional[dict[str, Any]] = collection.find_one({'uuid': subscription_id})
         if subscription is None:
             return None
         return MongoDBSubscription(**subscription).to_domain_subscription()
 
     def get_list(self, subscription_ids: List[UUID]) -> List[Subscription]:
         collection = self._subscription_collection()
-        subscriptions: List[Dict] = list(collection.
-                                         find({'uuid': {'$in': subscription_ids}}).
-                                         sort('created_at', pymongo.DESCENDING))
+        subscriptions: List[dict[str, Any]] = list(collection.
+                                                   find({'uuid': {'$in': subscription_ids}}).
+                                                   sort('created_at', DESCENDING))
         return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
 
-    def delete(self, subscription_id: UUID):
+    def delete(self, subscription_id: UUID) -> None:
         collection = self._subscription_collection()
         collection.delete_one({'uuid': subscription_id})
 
-    def update(self, subscription: Subscription):
+    def update(self, subscription: Subscription) -> None:
         collection = self._subscription_collection()
         collection.update_one({'uuid': subscription.uuid},
-                              {'$set': dict(MongoDBSubscription.from_domain_subscription(subscription))})
+                              {'$set': MongoDBSubscription.from_domain_subscription(subscription).model_dump()})
 
     def find(self, subscription: Subscription) -> Optional[Subscription]:
         collection = self._subscription_collection()
-        found_subscription: Optional[Dict] = collection.find_one({'url': subscription.url})
+        found_subscription: Optional[dict[str, Any]] = collection.find_one({'url': str(subscription.url)})
         if found_subscription is None:
             return None
         return MongoDBSubscription(**found_subscription).to_domain_subscription()
 
     def find_latest_scan_before(self, datetime_limit: datetime) -> List[Subscription]:
         collection = self._subscription_collection()
-        subscriptions: List[Dict] = list(collection.
-                                         find({'scanned_at': {'$lt': datetime_limit}}).
-                                         sort('scanned_at', pymongo.DESCENDING))
+        subscriptions: List[dict[str, Any]] = list(collection.
+                                                   find({'scanned_at': {'$lt': datetime_limit}}).
+                                                   sort('scanned_at', DESCENDING))
         return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
 
-    def _subscription_collection(self) -> pymongo.collection.Collection:
+    def _subscription_collection(self) -> Any:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
         return self.client.get_database(self.db_name).get_collection(
             self._collection_name,

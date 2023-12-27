@@ -60,16 +60,17 @@ def test_get_user_that_does_not_exist(user_repo: MongoDBUserRepository):
 
 
 def test_get_user_with_invalid_format_raises_an_exception(user_repo: MongoDBUserRepository):
-    user_dict = dict(MongoDBUser(uuid=uuid.UUID("449e3bee-6f9b-4cbc-8a09-64a6fcface96"),
-                                 first_name="test",
-                                 last_name="test",
-                                 email="test@email.com",
-                                 locale="en",
-                                 avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
-                                 created_at=datetime.now(timezone.utc),
-                                 updated_at=datetime.now(timezone.utc),
-                                 last_login_at=datetime.now(timezone.utc),
-                                 google_refresh_token="token"))
+    user_dict = MongoDBUser(uuid=uuid.UUID("449e3bee-6f9b-4cbc-8a09-64a6fcface96"),
+                            first_name="test",
+                            last_name="test",
+                            email="test@email.com",
+                            locale="en",
+                            avatar_url="https://avatars.com/avatar.png",
+                            created_at=datetime.now(timezone.utc),
+                            updated_at=datetime.now(timezone.utc),
+                            last_login_at=datetime.now(timezone.utc),
+                            google_refresh_token="token"
+                            ).model_dump()
     user_dict['uuid'] = 'invalid_uuid'
     user_collection_mock = MagicMock()
     user_collection_mock.find_one = MagicMock(return_value=user_dict)

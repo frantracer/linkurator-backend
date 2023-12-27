@@ -65,12 +65,12 @@ class MongodDBExternalCredentialRepository(ExternalCredentialRepository):
 
     async def add(self, credentials: ExternalServiceCredential) -> None:
         await self._collection().insert_one(
-            MongoDBExternalCredentials.from_domain_credentials(credentials).dict())
+            MongoDBExternalCredentials.from_domain_credentials(credentials).model_dump())
 
     async def update(self, credentials: ExternalServiceCredential) -> None:
         await self._collection().update_one(
             {'user_id': credentials.user_id},
-            {'$set': MongoDBExternalCredentials.from_domain_credentials(credentials).dict()}
+            {'$set': MongoDBExternalCredentials.from_domain_credentials(credentials).model_dump()}
         )
 
     async def delete(

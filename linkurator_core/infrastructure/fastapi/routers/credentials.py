@@ -1,7 +1,7 @@
 import http
 from typing import Any, Callable, Coroutine, Optional, List
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends
 from fastapi.applications import Request
 
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
@@ -22,12 +22,12 @@ def get_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.get("/", response_model=List[ExternalCredentialSchema])
+    @router.get("/", responses={401: {'model': None}})
     async def get_user_external_credentials(
             session: Optional[Session] = Depends(get_session)
-    ) -> Any:
+    ) -> List[ExternalCredentialSchema]:
         if session is None:
-            return default_responses.not_authenticated()
+            raise default_responses.not_authenticated()
 
         credentials = await get_user_external_credentials_handler.handle(session.user_id)
         return [ExternalCredentialSchema.from_domain_credential(credential) for credential in credentials]
@@ -37,36 +37,36 @@ def get_router(
             credential_type: ExternalServiceType,
             credential_value: str,
             session: Optional[Session] = Depends(get_session),
-    ) -> Any:
+    ) -> None:
         if session is None:
-            return default_responses.not_authenticated()
+            raise default_responses.not_authenticated()
 
         try:
             await add_external_credential_handler.handle(
                 user_uuid=session.user_id,
                 credential_value=credential_value,
                 credential_type=credential_type)
-        except InvalidCredentialsError:
-            return Response(status_code=http.HTTPStatus.BAD_REQUEST, content="Invalid credentials")
-        except CredentialsAlreadyExistsError:
-            return Response(status_code=http.HTTPStatus.BAD_REQUEST, content="Credentials already exists")
+        except InvalidCredentialsError as error:
+            raise default_responses.bad_request("Invalid credentials") from error
+        except CredentialsAlreadyExistsError as error:
+            raise default_responses.bad_request("Credentials already exists") from error
 
-        return Response(status_code=http.HTTPStatus.NO_CONTENT)
+        return
 
     @router.delete("/{credential_id}", responses={400: {'model': None}}, status_code=http.HTTPStatus.NO_CONTENT)
     async def delete_external_credential(
             credential_value: str,
             credential_type: ExternalServiceType,
             session: Optional[Session] = Depends(get_session),
-    ) -> Any:
+    ) -> None:
         if session is None:
-            return default_responses.not_authenticated()
+            raise default_responses.not_authenticated()
 
         await delete_external_credential_handler.handle(
             user_uuid=session.user_id,
             credential_value=credential_value,
             credential_type=credential_type)
 
-        return Response(status_code=http.HTTPStatus.NO_CONTENT)
+        return
 
     return router

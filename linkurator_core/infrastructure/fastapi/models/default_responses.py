@@ -1,9 +1,21 @@
 import http
 
-from fastapi.responses import JSONResponse
+from fastapi import HTTPException
 
 
-def not_authenticated() -> JSONResponse:
-    return JSONResponse(
+def not_authenticated() -> HTTPException:
+    return HTTPException(
         status_code=http.HTTPStatus.UNAUTHORIZED,
-        content={"detail": "Not authenticated"})
+        detail="Not authenticated")
+
+
+def bad_request(message: str) -> HTTPException:
+    return HTTPException(
+        status_code=http.HTTPStatus.BAD_REQUEST,
+        detail=message)
+
+
+def not_found(message: str) -> HTTPException:
+    return HTTPException(
+        status_code=http.HTTPStatus.NOT_FOUND,
+        detail=message)

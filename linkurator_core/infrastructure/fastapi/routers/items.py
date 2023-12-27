@@ -1,20 +1,20 @@
 import http
-from typing import Callable, Optional, Any
+from typing import Callable, Optional, Any, Coroutine
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, Request
 
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
-from linkurator_core.domain.common.exceptions import ItemNotFoundError
 from linkurator_core.application.items.get_item_handler import GetItemHandler
+from linkurator_core.domain.common.exceptions import ItemNotFoundError
 from linkurator_core.domain.items.interaction import InteractionType, Interaction
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 
 
 def get_router(
-        get_session: Callable,
+        get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
         get_item_handler: GetItemHandler,
         create_item_interaction_handler: CreateItemInteractionHandler,
         delete_item_interaction_handler: DeleteItemInteractionHandler,

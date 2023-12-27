@@ -8,8 +8,8 @@ SHUTDOWN_MESSAGE = 'shutdown'
 
 
 class AsyncioEventBusService(EventBusService):
-    def __init__(self):
-        self._queue: asyncio.Queue = asyncio.Queue()
+    def __init__(self) -> None:
+        self._queue: asyncio.Queue[Event] = asyncio.Queue()
         self._callbacks: Dict[Type[Event], List[Callable[[Event], Coroutine[Any, Any, None]]]] = {}
         self._is_running = False
 

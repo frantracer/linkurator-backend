@@ -8,11 +8,11 @@ from uuid import UUID
 import pymongo  # type: ignore
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
-from pydantic import AnyUrl
 from pydantic.main import BaseModel
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
 
+from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.units import Seconds
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria, FindResult
@@ -24,8 +24,8 @@ class MongoDBItem(BaseModel):
     subscription_uuid: UUID
     name: str
     description: str
-    url: AnyUrl
-    thumbnail: AnyUrl
+    url: str
+    thumbnail: str
     created_at: datetime
     updated_at: datetime
     published_at: datetime
@@ -41,8 +41,8 @@ class MongoDBItem(BaseModel):
             subscription_uuid=item.subscription_uuid,
             name=item.name,
             description=item.description,
-            url=item.url,
-            thumbnail=item.thumbnail,
+            url=str(item.url),
+            thumbnail=str(item.thumbnail),
             duration=item.duration,
             version=item.version,
             created_at=item.created_at,
@@ -57,8 +57,8 @@ class MongoDBItem(BaseModel):
             subscription_uuid=self.subscription_uuid,
             name=self.name,
             description=self.description,
-            url=self.url,
-            thumbnail=self.thumbnail,
+            url=utils.parse_url(self.url),
+            thumbnail=utils.parse_url(self.thumbnail),
             duration=self.duration,
             version=self.version,
             created_at=self.created_at,
@@ -69,7 +69,7 @@ class MongoDBItem(BaseModel):
 
 
 class MongoDBItemRepository(ItemRepository):
-    client: MongoClient
+    client: MongoClient[Any]
     db_name: str
     _collection_name: str = 'items'
 
@@ -89,14 +89,14 @@ class MongoDBItemRepository(ItemRepository):
         collection.bulk_write([
             pymongo.ReplaceOne(
                 {'uuid': item.uuid},
-                dict(MongoDBItem.from_domain_item(item)),
+                MongoDBItem.from_domain_item(item).model_dump(),
                 upsert=True
             ) for item in items
         ])
 
     def get(self, item_id: UUID) -> Optional[Item]:
         collection = self._item_collection()
-        item: Optional[Dict] = collection.find_one({'uuid': item_id})
+        item: Optional[dict[str, Any]] = collection.find_one({'uuid': item_id})
         if item is None:
             return None
         mongo_item = MongoDBItem(**item)
@@ -104,7 +104,7 @@ class MongoDBItemRepository(ItemRepository):
             return None
         return mongo_item.to_domain_item()
 
-    def delete(self, item_id: UUID):
+    def delete(self, item_id: UUID) -> None:
         collection = self._item_collection()
         collection.update_one(
             {'uuid': item_id},
@@ -124,7 +124,7 @@ class MongoDBItemRepository(ItemRepository):
         if criteria.created_before:
             filter_query['created_at'] = {'$lt': criteria.created_before}
         if criteria.url:
-            filter_query['url'] = criteria.url
+            filter_query['url'] = str(criteria.url)
         if criteria.last_version:
             filter_query['version'] = {'$lt': criteria.last_version}
         if criteria.provider:
@@ -145,14 +145,14 @@ class MongoDBItemRepository(ItemRepository):
 
         return [MongoDBItem(**item).to_domain_item() for item in items], total_items
 
-    def delete_all_items(self):
+    def delete_all_items(self) -> None:
         collection = self._item_collection()
         collection.update_many(
             {},
             {'$set': {'deleted_at': datetime.utcnow()}}
         )
 
-    def _item_collection(self) -> pymongo.collection.Collection:
+    def _item_collection(self) -> Any:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
         return self.client.get_database(self.db_name).get_collection(
             self._collection_name,

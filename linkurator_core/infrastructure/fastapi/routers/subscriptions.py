@@ -1,27 +1,27 @@
 import http
 from datetime import datetime, timezone
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Coroutine
 from uuid import UUID
 
 from fastapi import Depends, Response
 from fastapi.applications import Request
-from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
-from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
-from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
+from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
+from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
 from linkurator_core.domain.users.session import Session
+from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 from linkurator_core.infrastructure.fastapi.models.page import Page
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 
 
 def get_router(
-        get_session: Callable,
+        get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
         get_user_subscriptions_handler: GetUserSubscriptionsHandler,
         get_subscription_items_handler: GetSubscriptionItemsHandler,
         delete_subscription_items_handler: DeleteSubscriptionItemsHandler,
@@ -29,19 +29,22 @@ def get_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.get("/", response_model=Page[SubscriptionSchema])
+    @router.get("/",
+                responses={
+
+                })
     async def get_all_subscriptions(
             request: Request,
             page_number: NonNegativeInt = 0,
             page_size: PositiveInt = 50,
             created_before_ts: Optional[float] = None,
             session: Optional[Session] = Depends(get_session)
-    ) -> Any:
+    ) -> Page[SubscriptionSchema]:
         """
         Get the list of the user subscriptions
         """
         if session is None:
-            return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
+            raise default_responses.not_authenticated()
 
         if created_before_ts is None:
             created_before_ts = datetime.now(tz=timezone.utc).timestamp()
@@ -85,7 +88,7 @@ def get_router(
         """
 
         if session is None:
-            return JSONResponse(status_code=http.HTTPStatus.UNAUTHORIZED)
+            raise default_responses.not_authenticated()
 
         if created_before_ts is None:
             created_before_ts = datetime.now(tz=timezone.utc).timestamp()
@@ -138,7 +141,7 @@ def get_router(
             return Response(status_code=http.HTTPStatus.NOT_FOUND)
 
     @router.post("/{sub_id}/refresh", response_model=None,
-                responses={204: {"model": None}, 403: {"model": None}, 404: {"model": None}})
+                 responses={204: {"model": None}, 403: {"model": None}, 404: {"model": None}})
     async def refresh_subscription_information(
             sub_id: UUID,
             session: Optional[Session] = Depends(get_session)

@@ -1,9 +1,7 @@
-import http
 from typing import Any, Callable, Coroutine, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from fastapi.applications import Request
-from fastapi.responses import JSONResponse
 
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.domain.users.session import Session
@@ -17,16 +15,20 @@ def get_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.get("/", response_model=ProfileSchema)
+    @router.get("/",
+                responses={
+                    status.HTTP_401_UNAUTHORIZED: {'model': None},
+                    status.HTTP_404_NOT_FOUND: {'model': None}
+                })
     async def get_user_profile(
             session: Optional[Session] = Depends(get_session)
-    ) -> Any:
+    ) -> ProfileSchema:
         if session is None:
-            return default_responses.not_authenticated()
+            raise default_responses.not_authenticated()
 
         user = get_user_profile_handler.handle(session.user_id)
         if user is None:
-            return JSONResponse(status_code=http.HTTPStatus.NOT_FOUND)
+            raise default_responses.not_found("User not found")
         return ProfileSchema.from_domain_user(user)
 
     return router

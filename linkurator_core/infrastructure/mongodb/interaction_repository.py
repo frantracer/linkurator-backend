@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from uuid import UUID
 
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
-import pymongo  # type: ignore
 from pydantic import BaseModel
 from pymongo import MongoClient
 
@@ -44,11 +43,11 @@ class MongoDBInteraction(BaseModel):
 
 
 class MongoDBInteractionRepository(InteractionRepository):
-    client: MongoClient
+    client: MongoClient[Any]
     db_name: str
     _collection_name: str = 'interactions'
 
-    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str):
+    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
         self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
@@ -59,7 +58,7 @@ class MongoDBInteractionRepository(InteractionRepository):
 
     def add(self, interaction: Interaction):
         collection = self._interaction_collection()
-        collection.insert_one(dict(MongoDBInteraction.from_domain_interaction(interaction)))
+        collection.insert_one(MongoDBInteraction.from_domain_interaction(interaction).model_dump())
 
     def delete(self, interaction_id: UUID):
         collection = self._interaction_collection()
@@ -85,7 +84,7 @@ class MongoDBInteractionRepository(InteractionRepository):
                 result[item_id] = []
         return result
 
-    def _interaction_collection(self) -> pymongo.collection.Collection:
+    def _interaction_collection(self) -> Any:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
         return self.client.get_database(self.db_name).get_collection(
             self._collection_name,

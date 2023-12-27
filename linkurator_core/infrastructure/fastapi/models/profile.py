@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime
 from uuid import UUID
 
 from pydantic import AnyUrl, BaseModel
 
 from linkurator_core.domain.users.user import User
+from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
 
 
 class ProfileSchema(BaseModel):
@@ -17,9 +17,9 @@ class ProfileSchema(BaseModel):
     last_name: str
     email: str
     avatar_url: AnyUrl
-    created_at: datetime
-    last_scanned_at: datetime
-    last_login_at: datetime
+    created_at: Iso8601Datetime
+    last_scanned_at: Iso8601Datetime
+    last_login_at: Iso8601Datetime
 
     @classmethod
     def from_domain_user(cls, user: User) -> ProfileSchema:

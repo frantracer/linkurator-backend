@@ -1,10 +1,9 @@
-from datetime import datetime
 from uuid import UUID
 
-from pydantic import AnyUrl
-from pydantic.main import BaseModel
+from pydantic import AnyUrl, BaseModel
 
 from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
 
 
 class SubscriptionSchema(BaseModel):
@@ -15,13 +14,8 @@ class SubscriptionSchema(BaseModel):
     name: str
     url: AnyUrl
     thumbnail: AnyUrl
-    created_at: datetime
-    scanned_at: datetime
-
-    def __init__(self, uuid: UUID, name: str, url: AnyUrl, thumbnail: AnyUrl,
-                 created_at: datetime, scanned_at: datetime):
-        super().__init__(uuid=uuid, name=name, url=url, thumbnail=thumbnail,
-                         created_at=created_at, scanned_at=scanned_at)
+    created_at: Iso8601Datetime
+    scanned_at: Iso8601Datetime
 
     @classmethod
     def from_domain_subscription(cls, subscription: Subscription):

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from pydantic import BaseModel
 
 from linkurator_core.domain.users.external_service_credential import ExternalServiceType, ExternalServiceCredential
+from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
 
 
 class ExternalCredentialSchema(BaseModel):
@@ -13,7 +12,7 @@ class ExternalCredentialSchema(BaseModel):
     """
     credential_type: ExternalServiceType
     credential_value: str
-    created_at: datetime
+    created_at: Iso8601Datetime
 
     @classmethod
     def from_domain_credential(cls, credential: ExternalServiceCredential) -> ExternalCredentialSchema:

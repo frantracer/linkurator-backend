@@ -52,16 +52,17 @@ def test_get_item_that_does_not_exist(item_repo: MongoDBItemRepository):
 
 
 def test_get_item_with_invalid_format_raises_an_exception(item_repo: MongoDBItemRepository):
-    item_dict = dict(MongoDBItem(
+    item_dict = MongoDBItem(
         uuid=UUID("67a06616-e127-4bf0-bcc0-faa221d554c5"),
         subscription_uuid=UUID("9753d304-3a43-414e-a5cd-496672b27c34"),
         name="test",
         description="",
-        url=utils.parse_url('https://test.com'),
-        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        url='https://test.com',
+        thumbnail='https://test.com/thumbnail.png',
         created_at=datetime.now(tz=timezone.utc),
         updated_at=datetime.now(tz=timezone.utc),
-        published_at=datetime.fromtimestamp(0, tz=timezone.utc)))
+        published_at=datetime.fromtimestamp(0, tz=timezone.utc)
+    ).model_dump()
     item_dict['uuid'] = 'invalid_uuid'
     item_collection_mock = MagicMock()
     item_collection_mock.find_one = MagicMock(return_value=item_dict)

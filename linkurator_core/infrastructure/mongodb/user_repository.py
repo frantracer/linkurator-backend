@@ -2,15 +2,14 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
-from typing import List, Optional
+from typing import List, Optional, Any
 from uuid import UUID
 
-from bson.codec_options import CodecOptions
 from bson.binary import UuidRepresentation
-import pymongo  # type: ignore
-from pydantic import AnyUrl, BaseModel
+from bson.codec_options import CodecOptions
+from pydantic import BaseModel
 from pymongo import MongoClient
-from pymongo.errors import DuplicateKeyError  # type: ignore
+from pymongo.errors import DuplicateKeyError
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.users.user import User
@@ -24,7 +23,7 @@ class MongoDBUser(BaseModel):
     last_name: str
     email: str
     locale: str = "en"
-    avatar_url: AnyUrl = utils.parse_url('https://www.linkurator.com/favicon.ico')
+    avatar_url: str = 'https://www.linkurator.com/favicon.ico'
     created_at: datetime
     updated_at: datetime
     scanned_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
@@ -41,7 +40,7 @@ class MongoDBUser(BaseModel):
             last_name=user.last_name,
             email=user.email,
             locale=user.locale,
-            avatar_url=user.avatar_url,
+            avatar_url=str(user.avatar_url),
             created_at=user.created_at,
             updated_at=user.updated_at,
             scanned_at=user.scanned_at,
@@ -58,7 +57,7 @@ class MongoDBUser(BaseModel):
             last_name=self.last_name,
             email=self.email,
             locale=self.locale,
-            avatar_url=self.avatar_url,
+            avatar_url=utils.parse_url(self.avatar_url),
             created_at=self.created_at,
             updated_at=self.updated_at,
             scanned_at=self.scanned_at,
@@ -70,11 +69,11 @@ class MongoDBUser(BaseModel):
 
 
 class MongoDBUserRepository(UserRepository):
-    client: MongoClient
+    client: MongoClient[Any]
     db_name: str
     _collection_name: str = 'users'
 
-    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str):
+    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
         self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
@@ -83,10 +82,10 @@ class MongoDBUserRepository(UserRepository):
             raise CollectionIsNotInitialized(
                 f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
 
-    def add(self, user: User):
+    def add(self, user: User) -> None:
         collection = self._user_collection()
         try:
-            collection.insert_one(dict(MongoDBUser.from_domain_user(user)))
+            collection.insert_one(MongoDBUser.from_domain_user(user).model_dump())
         except DuplicateKeyError as error:
             if error.details is not None and 'email_unique' in error.details.get('errmsg', ''):
                 raise EmailAlreadyInUse(f"Email '{user.email}' is already in use") from error
@@ -107,13 +106,13 @@ class MongoDBUserRepository(UserRepository):
         user.pop('_id', None)
         return MongoDBUser(**user).to_domain_user()
 
-    def delete(self, user_id: UUID):
+    def delete(self, user_id: UUID) -> None:
         collection = self._user_collection()
         collection.delete_one({'uuid': user_id})
 
-    def update(self, user: User):
+    def update(self, user: User) -> None:
         collection = self._user_collection()
-        collection.update_one({'uuid': user.uuid}, {'$set': dict(MongoDBUser.from_domain_user(user))})
+        collection.update_one({'uuid': user.uuid}, {'$set': MongoDBUser.from_domain_user(user).model_dump()})
 
     def find_latest_scan_before(self, timestamp: datetime) -> List[User]:
         collection = self._user_collection()
@@ -125,7 +124,7 @@ class MongoDBUserRepository(UserRepository):
         users = collection.find({'subscription_uuids': subscription_id})
         return [MongoDBUser(**user).to_domain_user() for user in users]
 
-    def _user_collection(self) -> pymongo.collection.Collection:
+    def _user_collection(self) -> Any:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
         return self.client.get_database(self.db_name).get_collection(
             self._collection_name,

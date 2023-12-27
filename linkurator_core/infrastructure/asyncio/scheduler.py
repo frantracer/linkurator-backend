@@ -17,7 +17,7 @@ class Task:
 
 
 class TaskScheduler:
-    def __init__(self):
+    def __init__(self) -> None:
         self.tasks: List[Task] = []
         self.is_running = False
 
