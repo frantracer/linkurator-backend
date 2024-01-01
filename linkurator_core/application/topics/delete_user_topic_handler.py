@@ -5,7 +5,7 @@ from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
 class DeleteUserTopicHandler:
-    def __init__(self, topic_repository: TopicRepository):
+    def __init__(self, topic_repository: TopicRepository) -> None:
         self.topic_repository = topic_repository
 
     def handle(self, user_id: UUID, topic_id: UUID) -> None:

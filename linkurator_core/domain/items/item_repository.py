@@ -25,11 +25,11 @@ class ItemFilterCriteria:
 
 
 class ItemRepository(abc.ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @abc.abstractmethod
-    def upsert_bulk(self, items: List[Item]):
+    def upsert_bulk(self, items: List[Item]) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -37,7 +37,7 @@ class ItemRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, item_id: UUID):
+    def delete(self, item_id: UUID) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -45,5 +45,5 @@ class ItemRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete_all_items(self):
+    def delete_all_items(self) -> None:
         raise NotImplementedError

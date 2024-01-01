@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
+from typing import Any
 from uuid import UUID
 
 
@@ -20,7 +23,7 @@ class Interaction:
     created_at: datetime
 
     @classmethod
-    def new(cls, uuid: UUID, item_uuid: UUID, user_uuid: UUID, interaction_type: InteractionType):
+    def new(cls, uuid: UUID, item_uuid: UUID, user_uuid: UUID, interaction_type: InteractionType) -> Interaction:
         now = datetime.now(tz=timezone.utc)
         return cls(
             uuid=uuid,
@@ -29,8 +32,10 @@ class Interaction:
             type=interaction_type,
             created_at=now)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Interaction):
+            return False
         return self.uuid == other.uuid
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.uuid)

@@ -4,7 +4,7 @@ from linkurator_core.infrastructure.config.google_secrets import GoogleClientSec
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
-def main():
+def main() -> None:
     google_secrets = GoogleClientSecrets()
     google_account_service = GoogleAccountService(client_id=google_secrets.client_id,
                                                   client_secret=google_secrets.client_secret)

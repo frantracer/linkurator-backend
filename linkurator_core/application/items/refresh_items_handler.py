@@ -6,7 +6,7 @@ from linkurator_core.domain.subscriptions.subscription_service import Subscripti
 
 
 class RefreshItemsHandler:
-    def __init__(self, item_repository: ItemRepository, subscription_service: SubscriptionService):
+    def __init__(self, item_repository: ItemRepository, subscription_service: SubscriptionService) -> None:
         self.item_repository = item_repository
         self.subscription_service = subscription_service
 

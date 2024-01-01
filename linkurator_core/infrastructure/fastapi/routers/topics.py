@@ -3,11 +3,9 @@ from http import HTTPStatus
 from typing import Any, Callable, Coroutine, Optional
 from uuid import UUID
 
-from fastapi import Depends
-from fastapi.applications import Request
+from fastapi import Depends, Request, Response
 from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
-from starlette.responses import Response
 
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import \

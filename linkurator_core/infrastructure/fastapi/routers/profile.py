@@ -1,7 +1,6 @@
 from typing import Any, Callable, Coroutine, Optional
 
-from fastapi import APIRouter, Depends, status
-from fastapi.applications import Request
+from fastapi import APIRouter, Depends, status, Request
 
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.domain.users.session import Session

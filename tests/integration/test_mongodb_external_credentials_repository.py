@@ -11,7 +11,7 @@ from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotI
 
 
 @pytest.fixture(name="credentials_repo", scope="session")
-def fixture_item_repo(db_name) -> MongodDBExternalCredentialRepository:
+def fixture_item_repo(db_name: str) -> MongodDBExternalCredentialRepository:
     repo = MongodDBExternalCredentialRepository(
         IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
@@ -19,7 +19,7 @@ def fixture_item_repo(db_name) -> MongodDBExternalCredentialRepository:
 
 
 @pytest.mark.asyncio
-async def test_exception_is_raised_if_items_collection_is_not_created():
+async def test_exception_is_raised_if_items_collection_is_not_created() -> None:
     non_existent_db_name = f"test-{uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
         repo = MongodDBExternalCredentialRepository(
@@ -28,7 +28,7 @@ async def test_exception_is_raised_if_items_collection_is_not_created():
 
 
 @pytest.mark.asyncio
-async def test_create_credentials(credentials_repo: MongodDBExternalCredentialRepository):
+async def test_create_credentials(credentials_repo: MongodDBExternalCredentialRepository) -> None:
     credential = ExternalServiceCredential(
         user_id=UUID('83a1ea55-d469-4f03-8d21-1d3c0096d33f'),
         credential_type=ExternalServiceType.YOUTUBE_API_KEY,
@@ -54,7 +54,7 @@ async def test_create_credentials(credentials_repo: MongodDBExternalCredentialRe
 
 
 @pytest.mark.asyncio
-async def test_update_credentials(credentials_repo: MongodDBExternalCredentialRepository):
+async def test_update_credentials(credentials_repo: MongodDBExternalCredentialRepository) -> None:
     updated_at = datetime(2022, 1, 1, 4, 4, 4, tzinfo=timezone.utc)
     credential = ExternalServiceCredential(
         user_id=UUID('f8587b92-b872-4d19-80e6-db7d1132693e'),
@@ -82,7 +82,7 @@ async def test_update_credentials(credentials_repo: MongodDBExternalCredentialRe
 
 
 @pytest.mark.asyncio
-async def test_delete_credentials(credentials_repo: MongodDBExternalCredentialRepository):
+async def test_delete_credentials(credentials_repo: MongodDBExternalCredentialRepository) -> None:
     credential = ExternalServiceCredential(
         user_id=UUID('821d0154-368e-4468-9ed0-8996e2505b73'),
         credential_type=ExternalServiceType.YOUTUBE_API_KEY,
@@ -101,7 +101,7 @@ async def test_delete_credentials(credentials_repo: MongodDBExternalCredentialRe
 
 
 @pytest.mark.asyncio
-async def test_find_credentials_by_user_id(credentials_repo: MongodDBExternalCredentialRepository):
+async def test_find_credentials_by_user_id(credentials_repo: MongodDBExternalCredentialRepository) -> None:
     credential_1 = ExternalServiceCredential(
         user_id=UUID('821d0154-368e-4468-9ed0-8996e2505b73'),
         credential_type=ExternalServiceType.YOUTUBE_API_KEY,
@@ -142,7 +142,7 @@ async def test_find_credentials_by_user_id(credentials_repo: MongodDBExternalCre
 
 
 @pytest.mark.asyncio
-async def test_find_credential_by_value_and_type(credentials_repo: MongodDBExternalCredentialRepository):
+async def test_find_credential_by_value_and_type(credentials_repo: MongodDBExternalCredentialRepository) -> None:
     credential = ExternalServiceCredential(
         user_id=UUID('821d0154-368e-4468-9ed0-8996e2505b73'),
         credential_type=ExternalServiceType.YOUTUBE_API_KEY,
@@ -163,7 +163,8 @@ async def test_find_credential_by_value_and_type(credentials_repo: MongodDBExter
 
 
 @pytest.mark.asyncio
-async def test_find_non_existing_credentials_returns_none(credentials_repo: MongodDBExternalCredentialRepository):
+async def test_find_non_existing_credentials_returns_none(
+        credentials_repo: MongodDBExternalCredentialRepository) -> None:
     stored_credential = await credentials_repo.get_by_value_and_type(
         ExternalServiceType.YOUTUBE_API_KEY, "9c71c4bb-d429-48d3-9e19-2e1e29a5d1a0")
 

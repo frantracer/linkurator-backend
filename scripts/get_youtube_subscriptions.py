@@ -7,7 +7,7 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 from linkurator_core.infrastructure.google.youtube_service import YoutubeApiClient
 
 
-async def main():
+async def main() -> None:
     args = argparse.ArgumentParser()
     args.add_argument("--refresh-token", required=True, help="Refresh token of the google account")
     args.add_argument("--api-key", required=True, help="API key to access the Youtube API")

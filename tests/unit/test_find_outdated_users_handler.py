@@ -10,7 +10,7 @@ from linkurator_core.domain.users.user import User
 
 
 @pytest.mark.asyncio
-async def test_handler_sends_two_events_if_there_are_two_outdated_users():
+async def test_handler_sends_two_events_if_there_are_two_outdated_users() -> None:
     user_repo_mock = MagicMock()
     user1 = User.new(uuid=uuid.UUID("844f3bfb-ddab-4280-a3e6-fabc53a2984b"),
                      first_name='user1',

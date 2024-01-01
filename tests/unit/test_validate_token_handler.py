@@ -11,7 +11,7 @@ from linkurator_core.domain.users.user import User
 
 
 class TestValidateTokenHandler(unittest.TestCase):
-    def test_an_existing_session_returns_a_session(self):
+    def test_an_existing_session_returns_a_session(self) -> None:
         session_repo_mock = MagicMock()
         user_id: uuid.UUID = uuid.UUID("15537505-3cc9-441a-9eb7-36045042fb4d")
         dummy_session = Session("mytoken", user_id, datetime.now(tz=timezone.utc) + timedelta(days=1))
@@ -34,7 +34,7 @@ class TestValidateTokenHandler(unittest.TestCase):
         the_session = handler.handle(access_token="mytoken", refresh_token=None)
         self.assertEqual(dummy_session, the_session)
 
-    def test_a_non_existing_session_updates_user_information(self):
+    def test_a_non_existing_session_updates_user_information(self) -> None:
         session_repo_mock = MagicMock()
         session_repo_mock.get.return_value = None
 
@@ -79,7 +79,7 @@ class TestValidateTokenHandler(unittest.TestCase):
         self.assertGreater(input_user.last_login_at, datetime.fromtimestamp(0, tz=timezone.utc))
 
 
-    def test_a_invalid_session_returns_none(self):
+    def test_a_invalid_session_returns_none(self) -> None:
         session_repo_mock = MagicMock()
         session_repo_mock.get.return_value = None
 
@@ -94,7 +94,7 @@ class TestValidateTokenHandler(unittest.TestCase):
         the_session = handler.handle(access_token="mytoken", refresh_token=None)
         self.assertIsNone(the_session)
 
-    def test_an_expired_session_returns_none(self):
+    def test_an_expired_session_returns_none(self) -> None:
         session_repo_mock = MagicMock()
 
         session_repo_mock.get.return_value = Session(
@@ -112,7 +112,7 @@ class TestValidateTokenHandler(unittest.TestCase):
         the_session = handler.handle(access_token="mytoken", refresh_token=None)
         self.assertIsNone(the_session)
 
-    def test_valid_credentials_registers_a_user(self):
+    def test_valid_credentials_registers_a_user(self) -> None:
         session_repo_mock = MagicMock()
         session_repo_mock.get.return_value = None
 
@@ -140,7 +140,7 @@ class TestValidateTokenHandler(unittest.TestCase):
         self.assertEqual(created_user.email, "john@email.com")
         self.assertEqual(created_user.google_refresh_token, "myrefreshtoken")
 
-    def test_non_null_refresh_token_updates_user_refresh_token(self):
+    def test_non_null_refresh_token_updates_user_refresh_token(self) -> None:
         session_repo_mock = MagicMock()
         session_repo_mock.get.return_value = None
 
@@ -173,7 +173,7 @@ class TestValidateTokenHandler(unittest.TestCase):
         created_user: User = user_repo_mock.update.call_args[0][0]
         self.assertEqual(created_user.google_refresh_token, "myrefreshtoken")
 
-    def test_null_refresh_token_does_not_update_user_refresh_token(self):
+    def test_null_refresh_token_does_not_update_user_refresh_token(self) -> None:
         session_repo_mock = MagicMock()
         session_repo_mock.get.return_value = None
 

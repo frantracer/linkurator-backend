@@ -8,7 +8,7 @@ from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent,
 
 
 @pytest.mark.asyncio
-async def test_user_became_obsolete_event_triggers_update_user_subscriptions_handler():
+async def test_user_became_obsolete_event_triggers_update_user_subscriptions_handler() -> None:
     update_user_subscriptions_handler = AsyncMock()
     update_user_subscriptions_handler.handle.return_value = None
     event_handler = EventHandler(
@@ -26,7 +26,7 @@ async def test_user_became_obsolete_event_triggers_update_user_subscriptions_han
 
 
 @pytest.mark.asyncio
-async def test_subscription_became_obsolete_event_triggers_update_subscriptions_items_handler():
+async def test_subscription_became_obsolete_event_triggers_update_subscriptions_items_handler() -> None:
     update_subscription_items_handler = AsyncMock()
     update_subscription_items_handler.handle.return_value = None
     event_handler = EventHandler(

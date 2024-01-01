@@ -14,7 +14,7 @@ from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
-def test_get_topic_items_handler():
+def test_get_topic_items_handler() -> None:
     item1 = Item.new(
         uuid=UUID('4c6d9062-613a-4a94-a369-158975883a00'),
         name='Item 1',
@@ -53,7 +53,7 @@ def test_get_topic_items_handler():
     assert total_items == 1
 
 
-def test_get_topic_items_handler_not_found_topic_raises_exception():
+def test_get_topic_items_handler_not_found_topic_raises_exception() -> None:
     item_repo_mock = MagicMock(spec=ItemRepository)
     item_repo_mock.find_items.return_value = ([], 0)
 

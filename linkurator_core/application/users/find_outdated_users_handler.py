@@ -7,11 +7,11 @@ from linkurator_core.domain.users.user_repository import UserRepository
 
 
 class FindOutdatedUsersHandler:
-    def __init__(self, user_repository: UserRepository, event_bus: EventBusService):
+    def __init__(self, user_repository: UserRepository, event_bus: EventBusService) -> None:
         self.user_repository = user_repository
         self.event_bus = event_bus
 
-    async def handle(self):
+    async def handle(self) -> None:
         datetime_limit = datetime.now(tz=timezone.utc) - timedelta(days=1)
         outdated_users = self.user_repository.find_latest_scan_before(datetime_limit)
 

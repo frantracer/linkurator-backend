@@ -7,10 +7,10 @@ from linkurator_core.domain.items.interaction_repository import InteractionRepos
 class DeleteItemInteractionHandler:
     interaction_repository: InteractionRepository
 
-    def __init__(self, interaction_repository: InteractionRepository):
+    def __init__(self, interaction_repository: InteractionRepository) -> None:
         self.interaction_repository = interaction_repository
 
-    def handle(self, user_id: UUID, item_id: UUID, interaction_type: InteractionType):
+    def handle(self, user_id: UUID, item_id: UUID, interaction_type: InteractionType) -> None:
         current_interactions = self.interaction_repository.get_user_interactions_by_item_id(
             user_id=user_id, item_ids=[item_id])
 

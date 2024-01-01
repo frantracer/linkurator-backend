@@ -8,7 +8,7 @@ from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.domain.topics.topic import Topic
 
 
-def test_delete_user_topic_handler():
+def test_delete_user_topic_handler() -> None:
     user_id = UUID('b5a1e8af-f6e8-493d-a21a-d736d248d1d3')
     topic = Topic.new(
         uuid=UUID('54171165-d162-4372-9ff2-ec778063d531'),
@@ -28,7 +28,7 @@ def test_delete_user_topic_handler():
     assert topic_repo_mock.delete.call_args == ((topic.uuid,),)
 
 
-def test_delete_non_existent_topic_raises_exception():
+def test_delete_non_existent_topic_raises_exception() -> None:
     topic_repo_mock = MagicMock()
     topic_repo_mock.get.return_value = None
 
@@ -39,7 +39,7 @@ def test_delete_non_existent_topic_raises_exception():
                        topic_id=UUID('755f0161-2d16-4989-949d-e4c0cd2b40af'))
 
 
-def test_delete_topic_with_different_user_raises_exception():
+def test_delete_topic_with_different_user_raises_exception() -> None:
     user_id = UUID('1d4f1e32-e2ec-4895-a99e-a102fecb19d8')
     topic = Topic.new(
         uuid=UUID('c104e3d2-ce40-4d34-b434-f044f0bd3c86'),

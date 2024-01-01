@@ -2,7 +2,7 @@ import http
 from typing import Any, Optional
 from urllib.parse import urljoin
 
-from fastapi.applications import Request
+from fastapi import Request
 from fastapi.param_functions import Cookie
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.routing import APIRouter

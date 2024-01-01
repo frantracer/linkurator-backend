@@ -6,7 +6,7 @@ from linkurator_core.domain.users.external_service_credential_repository import 
 
 
 class GetUserExternalCredentialsHandler:
-    def __init__(self, credentials_repository: ExternalCredentialRepository):
+    def __init__(self, credentials_repository: ExternalCredentialRepository) -> None:
         self.credentials_repository = credentials_repository
 
     async def handle(self, user_uuid: UUID) -> List[ExternalServiceCredential]:

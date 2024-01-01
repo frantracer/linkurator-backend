@@ -10,7 +10,7 @@ from linkurator_core.application.topics.unassign_subscription_from_user_topic_ha
 from linkurator_core.domain.topics.topic import Topic
 
 
-def test_unassign_subscription_from_user_topic_handler():
+def test_unassign_subscription_from_user_topic_handler() -> None:
     user_id = UUID('ba591aa7-b216-4874-8742-e83768192d05')
     subscription_id = UUID('2f84755f-58fb-4dfa-9246-b0567fa95bd4')
     topic_id = UUID('b1ae60e2-5cb3-4914-8b8a-5127e22611f0')
@@ -38,7 +38,7 @@ def test_unassign_subscription_from_user_topic_handler():
     assert subscription_id not in updated_topic.subscriptions_ids
 
 
-def test_unassign_subscription_from_non_existent_topic_raises_an_exception():
+def test_unassign_subscription_from_non_existent_topic_raises_an_exception() -> None:
     user_id = UUID('97d12652-241c-4b23-9382-21053f66d2b2')
     subscription_id = UUID('5543fc75-2c64-43b6-8dc1-22d68fffee94')
     topic_id = UUID('2642a2b7-0d9d-4b68-8b13-c7dc8370d33e')
@@ -54,7 +54,7 @@ def test_unassign_subscription_from_non_existent_topic_raises_an_exception():
         handler.handle(user_id=user_id, subscription_id=subscription_id, topic_id=topic_id)
 
 
-def test_unassign_subscription_from_a_different_user_topic_raises_an_exception():
+def test_unassign_subscription_from_a_different_user_topic_raises_an_exception() -> None:
     user_id = UUID('fab3941a-7ea3-467b-9038-a92a6f2455ec')
     subscription_id = UUID('61d53cfe-cae2-429e-8bb2-a2d676e24eba')
     topic_id = UUID('136105fc-f2ac-486f-bc9f-784092275f93')
@@ -78,7 +78,7 @@ def test_unassign_subscription_from_a_different_user_topic_raises_an_exception()
         handler.handle(user_id=user_id, subscription_id=subscription_id, topic_id=topic_id)
 
 
-def test_unassign_non_existent_subscription_from_user_topic_does_nothing():
+def test_unassign_non_existent_subscription_from_user_topic_does_nothing() -> None:
     user_id = UUID('1165fd68-8172-4c1b-9d07-1de26d5f20dc')
     subscription_id = UUID('3b8bb357-c56a-4fae-bd64-74d32b3e1d37')
     topic_id = UUID('417ae6ca-df0b-4342-a855-dd3f65df2da1')

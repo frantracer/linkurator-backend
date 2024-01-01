@@ -15,17 +15,17 @@ from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUser, 
 
 
 @pytest.fixture(name="user_repo", scope="session")
-def fixture_user_repo(db_name) -> MongoDBUserRepository:
+def fixture_user_repo(db_name: str) -> MongoDBUserRepository:
     return MongoDBUserRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
-def test_exception_is_raised_if_users_collection_is_not_created():
+def test_exception_is_raised_if_users_collection_is_not_created() -> None:
     non_existent_db_name = f"test-{uuid.uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
         MongoDBUserRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name, "develop", "develop")
 
 
-def test_add_user_to_mongodb(user_repo: MongoDBUserRepository):
+def test_add_user_to_mongodb(user_repo: MongoDBUserRepository) -> None:
     user = User.new(
         first_name="test",
         last_name="test",
@@ -53,13 +53,13 @@ def test_add_user_to_mongodb(user_repo: MongoDBUserRepository):
     assert the_user.is_admin
 
 
-def test_get_user_that_does_not_exist(user_repo: MongoDBUserRepository):
+def test_get_user_that_does_not_exist(user_repo: MongoDBUserRepository) -> None:
     the_user = user_repo.get(uuid.UUID("c04c2880-6376-4fe1-a0bf-eac1ae0801ad"))
 
     assert the_user is None
 
 
-def test_get_user_with_invalid_format_raises_an_exception(user_repo: MongoDBUserRepository):
+def test_get_user_with_invalid_format_raises_an_exception(user_repo: MongoDBUserRepository) -> None:
     user_dict = MongoDBUser(uuid=uuid.UUID("449e3bee-6f9b-4cbc-8a09-64a6fcface96"),
                             first_name="test",
                             last_name="test",
@@ -79,7 +79,7 @@ def test_get_user_with_invalid_format_raises_an_exception(user_repo: MongoDBUser
             user_repo.get(uuid.UUID("c0d59790-bb68-415b-9be5-79c3088aada0"))
 
 
-def test_delete_user(user_repo: MongoDBUserRepository):
+def test_delete_user(user_repo: MongoDBUserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
                     email="test_1@test.com",
@@ -97,7 +97,7 @@ def test_delete_user(user_repo: MongoDBUserRepository):
     assert deleted_user is None
 
 
-def test_update_user(user_repo: MongoDBUserRepository):
+def test_update_user(user_repo: MongoDBUserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
                     email="update_1@email.com",
@@ -117,7 +117,7 @@ def test_update_user(user_repo: MongoDBUserRepository):
     assert updated_user.first_name == user.first_name
 
 
-def test_get_user_by_email(user_repo: MongoDBUserRepository):
+def test_get_user_by_email(user_repo: MongoDBUserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
                     email="sample_1@test.com",
@@ -133,7 +133,7 @@ def test_get_user_by_email(user_repo: MongoDBUserRepository):
     assert the_user.uuid == user.uuid
 
 
-def test_the_email_is_unique(user_repo: MongoDBUserRepository):
+def test_the_email_is_unique(user_repo: MongoDBUserRepository) -> None:
     user_1 = User.new(first_name="test",
                       last_name="test",
                       email="sample_2@test.com",
@@ -155,7 +155,7 @@ def test_the_email_is_unique(user_repo: MongoDBUserRepository):
         user_repo.add(user_2)
 
 
-def test_find_latest_scan(user_repo: MongoDBUserRepository):
+def test_find_latest_scan(user_repo: MongoDBUserRepository) -> None:
     user1 = User.new(first_name="test",
                      last_name="test",
                      email="c2d73a23@email.com",
@@ -185,7 +185,7 @@ def test_find_latest_scan(user_repo: MongoDBUserRepository):
     assert user1.uuid in [user.uuid for user in users_second_call]
 
 
-def test_find_users_by_subscription(user_repo: MongoDBUserRepository):
+def test_find_users_by_subscription(user_repo: MongoDBUserRepository) -> None:
     user1 = User.new(first_name="test",
                      last_name="test",
                      email="9cca4ef4@email.com",
@@ -213,7 +213,7 @@ def test_find_users_by_subscription(user_repo: MongoDBUserRepository):
     assert user1.uuid in [user.uuid for user in users]
 
 
-def test_find_users_by_subscription_empty(user_repo: MongoDBUserRepository):
+def test_find_users_by_subscription_empty(user_repo: MongoDBUserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
                     email="cb7b18dc@email.com",

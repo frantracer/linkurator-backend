@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Optional
 from uuid import UUID
 
@@ -35,7 +37,7 @@ class TopicSchema(BaseModel):
     created_at: Iso8601Datetime
 
     @classmethod
-    def from_domain_topic(cls, topic: Topic):
+    def from_domain_topic(cls, topic: Topic) -> TopicSchema:
         return cls(uuid=topic.uuid,
                    user_id=topic.user_id,
                    name=topic.name,

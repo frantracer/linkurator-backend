@@ -8,7 +8,7 @@ from linkurator_core.domain.users.user_repository import UserRepository
 
 
 class GetUserTopicsHandler:
-    def __init__(self, user_repo: UserRepository, topic_repo: TopicRepository):
+    def __init__(self, user_repo: UserRepository, topic_repo: TopicRepository) -> None:
         self.user_repo = user_repo
         self.topic_repo = topic_repo
 

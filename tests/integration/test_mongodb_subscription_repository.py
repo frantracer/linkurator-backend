@@ -15,17 +15,17 @@ from linkurator_core.infrastructure.mongodb.subscription_repository import Mongo
 
 
 @pytest.fixture(name="subscription_repo", scope="session")
-def fixture_subscription_repo(db_name) -> MongoDBSubscriptionRepository:
+def fixture_subscription_repo(db_name: str) -> MongoDBSubscriptionRepository:
     return MongoDBSubscriptionRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
-def test_exception_is_raised_if_subscriptions_collection_is_not_created():
+def test_exception_is_raised_if_subscriptions_collection_is_not_created() -> None:
     non_existent_db_name = f"test-{uuid.uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
         MongoDBSubscriptionRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name, "develop", "develop")
 
 
-def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository):
+def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository) -> None:
     subscription = Subscription.new(
         name="test",
         uuid=uuid.UUID("8d9e9e1f-c9b4-4b8f-b8c4-c8f1e7b7d9a1"),
@@ -48,7 +48,7 @@ def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository):
     assert int(the_subscription.scanned_at.timestamp() * 100) == floor(subscription.scanned_at.timestamp() * 100)
 
 
-def test_add_subscriptions_stores_any_external_data(subscription_repo: MongoDBSubscriptionRepository):
+def test_add_subscriptions_stores_any_external_data(subscription_repo: MongoDBSubscriptionRepository) -> None:
     subscription = Subscription.new(
         name="test",
         uuid=uuid.UUID("31a2ba8e-e3a5-405a-ae41-43eaaab56fdf"),
@@ -64,7 +64,7 @@ def test_add_subscriptions_stores_any_external_data(subscription_repo: MongoDBSu
     assert the_subscription.external_data == {"test": "test"}
 
 
-def test_find_a_subscription_that_already_exist(subscription_repo: MongoDBSubscriptionRepository):
+def test_find_a_subscription_that_already_exist(subscription_repo: MongoDBSubscriptionRepository) -> None:
     sub1 = Subscription.new(name="test",
                             uuid=uuid.UUID("e329b931-9bf0-410f-9789-d48ea4eb816b"),
                             url=utils.parse_url('https://the-same-url.com'),
@@ -82,7 +82,7 @@ def test_find_a_subscription_that_already_exist(subscription_repo: MongoDBSubscr
     assert found_subscription.uuid == sub1.uuid
 
 
-def test_find_a_subscription_that_does_not_exist(subscription_repo: MongoDBSubscriptionRepository):
+def test_find_a_subscription_that_does_not_exist(subscription_repo: MongoDBSubscriptionRepository) -> None:
     sub1 = Subscription.new(name="test",
                             uuid=uuid.UUID("391f6292-b677-494f-b60d-791e51d22f08"),
                             url=utils.parse_url('https://391f6292-b677-494f-b60d-791e51d22f08.com'),
@@ -93,7 +93,7 @@ def test_find_a_subscription_that_does_not_exist(subscription_repo: MongoDBSubsc
     assert found_subscription is None
 
 
-def test_find_subscriptions_scanned_before_a_date(subscription_repo: MongoDBSubscriptionRepository):
+def test_find_subscriptions_scanned_before_a_date(subscription_repo: MongoDBSubscriptionRepository) -> None:
     sub1 = Subscription(
         name="test",
         uuid=uuid.UUID("2e17788f-0411-4383-a3f6-69c2c1a07901"),
@@ -127,13 +127,14 @@ def test_find_subscriptions_scanned_before_a_date(subscription_repo: MongoDBSubs
     assert len(updated_subscriptions) - len(current_subscriptions) == 1
 
 
-def test_get_subscription_that_does_not_exist(subscription_repo: MongoDBSubscriptionRepository):
+def test_get_subscription_that_does_not_exist(subscription_repo: MongoDBSubscriptionRepository) -> None:
     the_subscription = subscription_repo.get(uuid.UUID("0af092ed-e3f9-4919-8202-c19bfd0627a9"))
 
     assert the_subscription is None
 
 
-def test_get_subscription_with_invalid_format_raises_an_exception(subscription_repo: MongoDBSubscriptionRepository):
+def test_get_subscription_with_invalid_format_raises_an_exception(
+        subscription_repo: MongoDBSubscriptionRepository) -> None:
     subscription_dict = MongoDBSubscription(
         uuid=uuid.UUID("3ab7068b-1412-46ed-bc1f-46d5f03542e7"),
         provider="test",
@@ -154,7 +155,7 @@ def test_get_subscription_with_invalid_format_raises_an_exception(subscription_r
             subscription_repo.get(uuid.UUID("81f7d26c-4a7f-4a27-a081-bb77e034fb30"))
 
 
-def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: MongoDBSubscriptionRepository):
+def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: MongoDBSubscriptionRepository) -> None:
     sub1 = Subscription(
         name="test",
         uuid=uuid.UUID("83ea331c-fa87-4654-89d0-055972a64e5b"),
@@ -197,7 +198,7 @@ def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: Mong
     assert subscriptions[2].uuid == sub3.uuid
 
 
-def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository):
+def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository) -> None:
     sub = Subscription(
         name="test",
         uuid=uuid.UUID("1515c810-e22a-4b13-bf34-329f8ebe2491"),
@@ -232,7 +233,7 @@ def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository):
     assert updated_subscription.scanned_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
 
 
-def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository):
+def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository) -> None:
     subscription = Subscription.new(name="test",
                                     uuid=uuid.UUID("5f0430b3-6044-4cca-b739-d63c75794b3c"),
                                     url=utils.parse_url('https://test.com'),

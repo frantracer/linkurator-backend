@@ -11,7 +11,7 @@ class UpdateTopicHandler:
     topic_repository: TopicRepository
     subscription_repository: SubscriptionRepository
 
-    def __init__(self, topic_repository: TopicRepository, subscription_repository: SubscriptionRepository):
+    def __init__(self, topic_repository: TopicRepository, subscription_repository: SubscriptionRepository) -> None:
         self.topic_repository = topic_repository
         self.subscription_repository = subscription_repository
 

@@ -14,17 +14,17 @@ from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopic
 
 
 @pytest.fixture(name="topic_repo", scope="session")
-def fixture_topic_repo(db_name) -> MongoDBTopicRepository:
+def fixture_topic_repo(db_name: str) -> MongoDBTopicRepository:
     return MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
-def test_exception_is_raised_if_topics_collection_is_not_created():
+def test_exception_is_raised_if_topics_collection_is_not_created() -> None:
     non_existent_db_name = f"test-{uuid.uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
         MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name, "develop", "develop")
 
 
-def test_add_topic(topic_repo: MongoDBTopicRepository):
+def test_add_topic(topic_repo: MongoDBTopicRepository) -> None:
     topic = Topic(name="test",
                   uuid=uuid.UUID("0cc1102a-11e9-4e14-baa7-4a12e958a987"),
                   user_id=uuid.UUID("f29e5cec-f7c9-410e-a508-1c618612fecb"),
@@ -44,13 +44,13 @@ def test_add_topic(topic_repo: MongoDBTopicRepository):
     assert int(the_topic.updated_at.timestamp() * 100) == floor(topic.updated_at.timestamp() * 100)
 
 
-def test_get_topic_that_does_not_exist(topic_repo: MongoDBTopicRepository):
+def test_get_topic_that_does_not_exist(topic_repo: MongoDBTopicRepository) -> None:
     the_topic = topic_repo.get(uuid.UUID("b613c205-f99d-43b9-9d63-4b7ebe4119a3"))
 
     assert the_topic is None
 
 
-def test_get_topic_with_invalid_format_raises_an_exception(topic_repo: MongoDBTopicRepository):
+def test_get_topic_with_invalid_format_raises_an_exception(topic_repo: MongoDBTopicRepository) -> None:
     topic_dict = MongoDBTopic(uuid=uuid.UUID("3ab7068b-1412-46ed-bc1f-46d5f03542e7"),
                               user_id=uuid.UUID("a23ba1fc-bccb-4e70-a535-7eeca00dbac0"),
                               subscriptions_ids=[],
@@ -66,7 +66,7 @@ def test_get_topic_with_invalid_format_raises_an_exception(topic_repo: MongoDBTo
             topic_repo.get(uuid.UUID("c0d59790-bb68-415b-9be5-79c3088aada0"))
 
 
-def test_get_topics_by_user_id(topic_repo: MongoDBTopicRepository):
+def test_get_topics_by_user_id(topic_repo: MongoDBTopicRepository) -> None:
     user_uuid = uuid.UUID("fb0b5160-7704-4310-9bea-d7045574290b")
     topic1 = Topic(name="test_topic_1",
                    uuid=uuid.UUID("33d0aa86-9c70-40d1-8eb2-b402249d2511"),
@@ -89,7 +89,7 @@ def test_get_topics_by_user_id(topic_repo: MongoDBTopicRepository):
     assert the_topics[1].uuid in [topic1.uuid, topic2.uuid]
 
 
-def test_update_topic_parameters(topic_repo: MongoDBTopicRepository):
+def test_update_topic_parameters(topic_repo: MongoDBTopicRepository) -> None:
     topic = Topic(name="test",
                   uuid=uuid.UUID("634b81ca-9dde-4bb9-b573-0c6b2cb958df"),
                   user_id=uuid.UUID("0362d52f-6e05-48f9-8144-e3483bbd2517"),
@@ -116,7 +116,7 @@ def test_update_topic_parameters(topic_repo: MongoDBTopicRepository):
     assert int(the_topic.updated_at.timestamp() * 100) == floor(topic.updated_at.timestamp() * 100)
 
 
-def test_delete_topic(topic_repo: MongoDBTopicRepository):
+def test_delete_topic(topic_repo: MongoDBTopicRepository) -> None:
     topic = Topic(name="test",
                   uuid=uuid.UUID("abc2130f-5a83-499f-a3dc-3115b483f6ba"),
                   user_id=uuid.UUID("1ba6cf89-adc3-4841-9f05-7f3d5dcbf79d"),
@@ -133,7 +133,7 @@ def test_delete_topic(topic_repo: MongoDBTopicRepository):
     assert deleted_topic is None
 
 
-def test_create_topic_with_same_raises_duplicated_key_exception(topic_repo: MongoDBTopicRepository):
+def test_create_topic_with_same_raises_duplicated_key_exception(topic_repo: MongoDBTopicRepository) -> None:
     topic = Topic.new(
         name="test",
         uuid=uuid.UUID("a0825ffa-9671-4114-b801-c1df2e71df13"),

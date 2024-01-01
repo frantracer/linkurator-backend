@@ -13,7 +13,7 @@ from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
-def test_delete_subscription_items_handler():
+def test_delete_subscription_items_handler() -> None:
     user_repo_mock = MagicMock(spec=UserRepository)
     user = mock_user(uuid=UUID('1ae708ad-0cf8-4212-9bb7-a7aeb6440546'), is_admin=True)
     user_repo_mock.get.return_value = user
@@ -51,7 +51,7 @@ def test_delete_subscription_items_handler():
     assert subscription_repo_mock.update.call_count == 1
 
 
-def test_user_requires_to_be_admin_to_delete_subscription_items():
+def test_user_requires_to_be_admin_to_delete_subscription_items() -> None:
     user_repo_mock = MagicMock(spec=UserRepository)
     user_repo_mock.get.return_value = User.new(
         uuid=UUID('f12c465f-4aa3-4e1f-ba04-389791080c6a'),
@@ -77,7 +77,7 @@ def test_user_requires_to_be_admin_to_delete_subscription_items():
             subscription_id=UUID('0a46b804-a370-480b-b64e-c2079aaaa64b'))
 
 
-def test_delete_items_handler_raises_exception_if_subscription_does_not_exist():
+def test_delete_items_handler_raises_exception_if_subscription_does_not_exist() -> None:
     user_repo_mock = MagicMock(spec=UserRepository)
     user_repo_mock.get.return_value = User.new(
         uuid=UUID('1ae708ad-0cf8-4212-9bb7-a7aeb6440546'),

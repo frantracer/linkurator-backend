@@ -5,7 +5,7 @@ from linkurator_core.application.topics.create_topic_handler import CreateTopicH
 from linkurator_core.domain.topics.topic import Topic
 
 
-def test_create_topic_handler():
+def test_create_topic_handler() -> None:
     topic_repo_mock = MagicMock()
     topic_repo_mock.add.return_value = None
     handler = CreateTopicHandler(topic_repository=topic_repo_mock)

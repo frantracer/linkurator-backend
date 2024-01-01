@@ -40,7 +40,7 @@ class YoutubeChannel:
     country: str
 
     @staticmethod
-    def from_dict(channel: dict[str, Any]):
+    def from_dict(channel: dict[str, Any]) -> YoutubeChannel:
         return YoutubeChannel(
             title=channel["snippet"]["title"],
             channel_id=channel["id"],
@@ -112,7 +112,7 @@ class YoutubeVideo:
 
 
 class YoutubeApiClient:
-    def __init__(self):
+    def __init__(self) -> None:
         self.base_url = "https://youtube.googleapis.com/youtube/v3"
 
     async def get_youtube_user_channel(self, access_token: str) -> Optional[YoutubeChannel]:

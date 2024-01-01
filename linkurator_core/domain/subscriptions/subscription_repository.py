@@ -7,11 +7,11 @@ from linkurator_core.domain.subscriptions.subscription import Subscription
 
 
 class SubscriptionRepository(abc.ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @abc.abstractmethod
-    def add(self, subscription: Subscription):
+    def add(self, subscription: Subscription) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -23,11 +23,11 @@ class SubscriptionRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, subscription_id: UUID):
+    def delete(self, subscription_id: UUID) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update(self, subscription: Subscription):
+    def update(self, subscription: Subscription) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod

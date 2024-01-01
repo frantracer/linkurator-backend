@@ -10,7 +10,7 @@ class EventBusService(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def subscribe(self, event_type: Type[Event], callback: Callable[[Event], Coroutine[Any, Any, None]]):
+    def subscribe(self, event_type: Type[Event], callback: Callable[[Event], Coroutine[Any, Any, None]]) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod

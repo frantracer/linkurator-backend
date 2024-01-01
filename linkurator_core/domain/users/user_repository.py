@@ -11,11 +11,11 @@ class EmailAlreadyInUse(Exception):
 
 
 class UserRepository(abc.ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @abc.abstractmethod
-    def add(self, user: User):
+    def add(self, user: User) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -27,11 +27,11 @@ class UserRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, user_id: UUID):
+    def delete(self, user_id: UUID) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update(self, user: User):
+    def update(self, user: User) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod

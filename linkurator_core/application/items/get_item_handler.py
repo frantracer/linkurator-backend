@@ -7,7 +7,7 @@ from linkurator_core.domain.items.item_with_interactions import ItemWithInteract
 
 
 class GetItemHandler:
-    def __init__(self, item_repository: ItemRepository, interaction_repository: InteractionRepository):
+    def __init__(self, item_repository: ItemRepository, interaction_repository: InteractionRepository) -> None:
         self.item_repository = item_repository
         self.interaction_repository = interaction_repository
 

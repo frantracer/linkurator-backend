@@ -52,7 +52,7 @@ def mock_youtube_video(video_id: Optional[str] = None, channel_id: Optional[str]
 
 
 @pytest.mark.asyncio
-async def test_youtube_service_returns_subscriptions_from_user():
+async def test_youtube_service_returns_subscriptions_from_user() -> None:
     sub = mock_sub()
     sub_repo_mock = MagicMock(spec=SubscriptionRepository)
     sub_repo_mock.get.return_value = [sub]
@@ -97,7 +97,7 @@ async def test_youtube_service_returns_subscriptions_from_user():
 
 
 @pytest.mark.asyncio
-async def test_youtube_service_returns_a_single_subscription_using_the_key_from_a_subscribed_user():
+async def test_youtube_service_returns_a_single_subscription_using_the_key_from_a_subscribed_user() -> None:
     youtube_channel = mock_youtube_channel()
 
     subs_repo_mock = MagicMock(spec=SubscriptionRepository)
@@ -142,7 +142,7 @@ async def test_youtube_service_returns_a_single_subscription_using_the_key_from_
 
 
 @pytest.mark.asyncio
-async def test_youtube_service_returns_subscription_items():
+async def test_youtube_service_returns_subscription_items() -> None:
     subs_repo_mock = MagicMock(spec=SubscriptionRepository)
     subs_repo_mock.get.return_value = Subscription(
         uuid=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
@@ -196,7 +196,7 @@ async def test_youtube_service_returns_subscription_items():
 
 
 @pytest.mark.asyncio
-async def test_get_youtube_subscriptions_uses_provided_credentials():
+async def test_get_youtube_subscriptions_uses_provided_credentials() -> None:
     user_repo_mock = MagicMock(spec=UserRepository)
     user = mock_user()
     user_repo_mock.get.return_value = user
@@ -223,7 +223,7 @@ async def test_get_youtube_subscriptions_uses_provided_credentials():
 
 
 @pytest.mark.asyncio
-async def test_get_youtube_subscriptions_raise_error_if_credential_is_not_a_youtube_api_key():
+async def test_get_youtube_subscriptions_raise_error_if_credential_is_not_a_youtube_api_key() -> None:
     user_repo_mock = MagicMock(spec=UserRepository)
     user = mock_user()
     user_repo_mock.get.return_value = user
@@ -249,7 +249,7 @@ async def test_get_youtube_subscriptions_raise_error_if_credential_is_not_a_yout
 
 
 @pytest.mark.asyncio
-async def test_get_youtube_channel_uses_provided_credentials():
+async def test_get_youtube_channel_uses_provided_credentials() -> None:
     youtube_channel = mock_youtube_channel()
 
     sub = mock_sub()
@@ -279,7 +279,7 @@ async def test_get_youtube_channel_uses_provided_credentials():
 
 
 @pytest.mark.asyncio
-async def test_get_youtube_channel_raise_error_if_credential_is_not_a_youtube_api_key():
+async def test_get_youtube_channel_raise_error_if_credential_is_not_a_youtube_api_key() -> None:
     youtube_channel = mock_youtube_channel()
 
     sub = mock_sub()
@@ -307,7 +307,7 @@ async def test_get_youtube_channel_raise_error_if_credential_is_not_a_youtube_ap
 
 
 @pytest.mark.asyncio
-async def test_get_youtube_videos_from_playlist_uses_provided_credential():
+async def test_get_youtube_videos_from_playlist_uses_provided_credential() -> None:
     youtube_channel = mock_youtube_channel()
 
     sub = mock_sub()
@@ -337,7 +337,7 @@ async def test_get_youtube_videos_from_playlist_uses_provided_credential():
 
 
 @pytest.mark.asyncio
-async def test_get_youtube_videos_raise_error_if_credential_is_not_a_youtube_api_key():
+async def test_get_youtube_videos_raise_error_if_credential_is_not_a_youtube_api_key() -> None:
     youtube_channel = mock_youtube_channel()
 
     sub = mock_sub()
@@ -497,7 +497,7 @@ def test_youtube_video_parsing() -> None:
     assert item.published_at == datetime(2012, 10, 1, 15, 27, 35, tzinfo=timezone.utc)
 
 
-def test_youtube_channel_parsing():
+def test_youtube_channel_parsing() -> None:
     channel_json = '''
    {
       "kind": "youtube#channel",

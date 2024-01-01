@@ -13,7 +13,7 @@ from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemRepository
 
 
-def test_create_item_interaction_handler():
+def test_create_item_interaction_handler() -> None:
     item_repo_mock = MagicMock(spec=ItemRepository)
     dummy_item = Item.new(
         uuid=UUID('76095094-994f-40f0-a1cb-b0bf438f3fd6'),
@@ -47,7 +47,7 @@ def test_create_item_interaction_handler():
     assert interaction_repo_mock.add.call_args == call(new_interaction)
 
 
-def test_create_item_interaction_handler_with_existing_interaction_does_nothing():
+def test_create_item_interaction_handler_with_existing_interaction_does_nothing() -> None:
     item_repo_mock = MagicMock(spec=ItemRepository)
     dummy_item = Item.new(
         uuid=UUID('9d0b1abf-4fb8-469a-80a3-6df4ae84cd96'),
@@ -87,7 +87,7 @@ def test_create_item_interaction_handler_with_existing_interaction_does_nothing(
     assert interaction_repo_mock.add.call_count == 0
 
 
-def test_create_item_interaction_handler_with_non_existing_item_raises_an_error():
+def test_create_item_interaction_handler_with_non_existing_item_raises_an_error() -> None:
     item_repo_mock = MagicMock(spec=ItemRepository)
     item_repo_mock.get = MagicMock(return_value=None)
 

@@ -12,7 +12,7 @@ from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.user import User
 
 
-def test_assign_subscription_to_topic_handler():
+def test_assign_subscription_to_topic_handler() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
@@ -59,7 +59,7 @@ def test_assign_subscription_to_topic_handler():
     assert subscription_id in updated_topic.subscriptions_ids
 
 
-def test_assign_subscription_to_topic_handler_user_not_found_raises_an_error():
+def test_assign_subscription_to_topic_handler_user_not_found_raises_an_error() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
@@ -75,7 +75,7 @@ def test_assign_subscription_to_topic_handler_user_not_found_raises_an_error():
         handler.handle(user_id, subscription_id, topic_id)
 
 
-def test_assign_subscription_to_topic_handler_subscription_not_found_raises_an_error():
+def test_assign_subscription_to_topic_handler_subscription_not_found_raises_an_error() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
@@ -102,7 +102,7 @@ def test_assign_subscription_to_topic_handler_subscription_not_found_raises_an_e
         handler.handle(user_id, subscription_id, topic_id)
 
 
-def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subscription_raises_an_error():
+def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subscription_raises_an_error() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
@@ -136,7 +136,7 @@ def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subscriptio
         handler.handle(user_id, subscription_id, topic_id)
 
 
-def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_error():
+def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_error() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
@@ -172,7 +172,7 @@ def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_error():
         handler.handle(user_id, subscription_id, topic_id)
 
 
-def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_user_raises_an_error():
+def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_user_raises_an_error() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')

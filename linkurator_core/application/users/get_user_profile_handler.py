@@ -8,7 +8,7 @@ from linkurator_core.domain.users.user_repository import UserRepository
 class GetUserProfileHandler:
     user_repository: UserRepository
 
-    def __init__(self, user_repository: UserRepository):
+    def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
 
     def handle(self, user_id: UUID) -> Optional[User]:

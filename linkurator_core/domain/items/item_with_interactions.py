@@ -10,6 +10,6 @@ class ItemWithInteractions:
     item: Item
     interactions: List[Interaction]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if any(i.item_uuid != self.item.uuid for i in self.interactions):
             raise ValueError("All interactions must be for the same item")

@@ -5,7 +5,7 @@ from linkurator_core.domain.users.external_service_credential_repository import 
 
 
 class DeleteExternalCredentialHandler:
-    def __init__(self, credentials_repository: ExternalCredentialRepository):
+    def __init__(self, credentials_repository: ExternalCredentialRepository) -> None:
         self.credentials_repository = credentials_repository
 
     async def handle(self, user_uuid: UUID, credential_type: ExternalServiceType, credential_value: str) -> None:

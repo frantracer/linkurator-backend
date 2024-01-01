@@ -26,7 +26,7 @@ class Settings:
     db: MongoDBSettings  # pylint: disable=invalid-name
 
 
-async def main():
+async def main() -> None:
     settings = Settings(
         api=parse_args(),
         db=MongoDBSettings()
@@ -63,7 +63,7 @@ def parse_args() -> ApiArguments:
 
 
 class ApiServer:
-    def __init__(self, app_path: str, port: int, workers: int, debug: bool, reload: bool, with_gunicorn: bool):
+    def __init__(self, app_path: str, port: int, workers: int, debug: bool, reload: bool, with_gunicorn: bool) -> None:
         self.app_path = app_path
         self.port = port
         self.workers = workers
@@ -71,7 +71,7 @@ class ApiServer:
         self.reload = reload
         self.with_gunicorn = with_gunicorn
 
-    async def start(self):
+    async def start(self) -> None:
         if self.with_gunicorn:
             task = await asyncio.create_subprocess_shell(" ".join(
                 ['./venv/bin/gunicorn', self.app_path,
@@ -82,7 +82,7 @@ class ApiServer:
 
             await task.wait()
         else:
-            async def run_uvicorn():
+            async def run_uvicorn() -> None:
                 return uvicorn.run(
                     self.app_path,
                     host="127.0.0.1",

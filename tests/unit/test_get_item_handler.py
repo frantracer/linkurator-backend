@@ -14,7 +14,7 @@ from linkurator_core.domain.items.item_repository import ItemRepository
 from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
 
 
-def test_get_item_with_interaction():
+def test_get_item_with_interaction() -> None:
     item1 = Item.new(
         uuid=UUID("e730d42d-a5e6-4705-9850-22b91df95429"),
         subscription_uuid=UUID("cec49f90-444c-477b-9fa8-96a5f772f2f5"),
@@ -46,7 +46,7 @@ def test_get_item_with_interaction():
     assert result == ItemWithInteractions(item1, [interaction1])
 
 
-def test_get_not_existing_item_returns_error():
+def test_get_not_existing_item_returns_error() -> None:
     mock_item_repository = MagicMock(spec=ItemRepository)
     mock_item_repository.get.return_value = None
     mock_interaction_repository = MagicMock(spec=InteractionRepository)

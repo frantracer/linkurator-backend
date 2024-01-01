@@ -13,7 +13,7 @@ from linkurator_core.domain.users.user_repository import UserRepository
 
 
 @pytest.mark.asyncio
-async def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions():
+async def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions() -> None:
     sub_repo_mock = MagicMock(spec=SubscriptionRepository)
     sub1 = mock_sub()
     sub2 = mock_sub()
@@ -41,7 +41,7 @@ async def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions(
 
 
 @pytest.mark.asyncio
-async def test_calculate_subscription_refresh_period_is_2_hours_if_there_is_one_user_with_no_credentials():
+async def test_calculate_subscription_refresh_period_is_2_hours_if_there_is_one_user_with_no_credentials() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
 
@@ -61,7 +61,7 @@ async def test_calculate_subscription_refresh_period_is_2_hours_if_there_is_one_
 
 
 @pytest.mark.asyncio
-async def test_calculate_subscription_refresh_period_is_60_minutes_if_there_is_one_user_and_one_credential():
+async def test_calculate_subscription_refresh_period_is_60_minutes_if_there_is_one_user_and_one_credential() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
     credential = mock_credential(user.uuid)
@@ -82,7 +82,7 @@ async def test_calculate_subscription_refresh_period_is_60_minutes_if_there_is_o
 
 
 @pytest.mark.asyncio
-async def test_calculate_subscription_refresh_period_is_30_minutes_if_there_is_one_user_and_two_credentials():
+async def test_calculate_subscription_refresh_period_is_30_minutes_if_there_is_one_user_and_two_credentials() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
     credential1 = mock_credential(user.uuid)
@@ -104,7 +104,7 @@ async def test_calculate_subscription_refresh_period_is_30_minutes_if_there_is_o
 
 
 @pytest.mark.asyncio
-async def test_calculate_subscription_refresh_period_is_24_hours_if_there_is_no_user_subscribed():
+async def test_calculate_subscription_refresh_period_is_24_hours_if_there_is_no_user_subscribed() -> None:
     sub = mock_sub()
 
     sub_repo_mock = MagicMock(spec=SubscriptionRepository)

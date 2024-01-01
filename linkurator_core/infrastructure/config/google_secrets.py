@@ -7,7 +7,7 @@ class GoogleClientSecrets:
     client_secret: str
     api_key: str
 
-    def __init__(self, file_path: str = '', api_key_path: str = ''):
+    def __init__(self, file_path: str = '', api_key_path: str = '') -> None:
         if file_path == '':
             file_path = f'{pathlib.Path(__file__).parent.absolute()}/../../../secrets/client_secret.json'
         with open(file_path, "r", encoding='UTF-8') as secrets_file:

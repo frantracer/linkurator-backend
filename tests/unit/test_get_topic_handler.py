@@ -8,7 +8,7 @@ from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
 from linkurator_core.domain.topics.topic import Topic
 
 
-def test_get_topic_handler():
+def test_get_topic_handler() -> None:
     topic = Topic.new(
         uuid=UUID('ee7ea21c-9a9a-4c12-ae67-ba9f86a34a9b'),
         user_id=UUID('0e4e5a9d-d2d9-4d04-9707-89301f0d89d4'),
@@ -26,7 +26,7 @@ def test_get_topic_handler():
     assert found_topic == topic
 
 
-def test_get_topic_handler_not_found():
+def test_get_topic_handler_not_found() -> None:
     topic_repo_mock = MagicMock()
     topic_repo_mock.get.return_value = None
 

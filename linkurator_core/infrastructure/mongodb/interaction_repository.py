@@ -56,11 +56,11 @@ class MongoDBInteractionRepository(InteractionRepository):
             raise CollectionIsNotInitialized(
                 f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
 
-    def add(self, interaction: Interaction):
+    def add(self, interaction: Interaction) -> None:
         collection = self._interaction_collection()
         collection.insert_one(MongoDBInteraction.from_domain_interaction(interaction).model_dump())
 
-    def delete(self, interaction_id: UUID):
+    def delete(self, interaction_id: UUID) -> None:
         collection = self._interaction_collection()
         collection.delete_one({'uuid': interaction_id})
 

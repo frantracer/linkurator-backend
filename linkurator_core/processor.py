@@ -27,7 +27,7 @@ from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRe
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 
-async def main():  # pylint: disable=too-many-locals
+async def main() -> None:  # pylint: disable=too-many-locals
     # Repositories
     db_settings = MongoDBSettings()
     user_repository = MongoDBUserRepository(ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,

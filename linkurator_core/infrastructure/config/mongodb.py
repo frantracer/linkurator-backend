@@ -10,7 +10,7 @@ class MongoDBSettings:
     password: str
     db_name: str
 
-    def __init__(self):
+    def __init__(self) -> None:
         config_file_path = './secrets/app_config.ini'
 
         if not os.path.exists(config_file_path):

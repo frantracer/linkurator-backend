@@ -18,7 +18,7 @@ from linkurator_core.infrastructure.asyncio.utils import run_parallel
 
 
 @pytest.mark.asyncio
-async def test_update_subscriptions_items_with_an_item_that_is_not_registered():
+async def test_update_subscriptions_items_with_an_item_that_is_not_registered() -> None:
     sub1 = Subscription(
         uuid=uuid.UUID("b6cae596-4526-4ab7-b5da-bd803f04980b"),
         name="sub1",
@@ -67,7 +67,7 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered():
 
 
 @pytest.mark.asyncio
-async def test_update_subscriptions_items_with_items_that_are_already_registered():
+async def test_update_subscriptions_items_with_items_that_are_already_registered() -> None:
     sub1 = Subscription(
         uuid=uuid.UUID("b6cae596-4526-4ab7-b5da-bd803f04980b"),
         name="sub1",
@@ -129,7 +129,7 @@ async def test_update_subscriptions_items_with_items_that_are_already_registered
 
 
 @pytest.mark.asyncio
-async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription():
+async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription() -> None:
     sub1 = Subscription(
         uuid=uuid.UUID("547d692c-d2a2-49ef-bfd6-97cb02fb03d1"),
         name="sub1",

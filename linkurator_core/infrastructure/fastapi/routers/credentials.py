@@ -1,8 +1,7 @@
 import http
 from typing import Any, Callable, Coroutine, Optional, List
 
-from fastapi import APIRouter, Depends
-from fastapi.applications import Request
+from fastapi import APIRouter, Depends, Request
 
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler

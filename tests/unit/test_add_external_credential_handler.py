@@ -12,7 +12,7 @@ from linkurator_core.domain.users.external_service_credential_repository import 
 
 
 @pytest.mark.asyncio
-async def test_add_external_credentials():
+async def test_add_external_credentials() -> None:
     credentials_checker = AsyncMock(spec=ExternalCredentialsCheckerService)
     credentials_checker.check.return_value = True
     credentials_repository = AsyncMock(spec=ExternalCredentialRepository)
@@ -35,7 +35,7 @@ async def test_add_external_credentials():
 
 
 @pytest.mark.asyncio
-async def test_add_invalid_external_credentials_raises_exception():
+async def test_add_invalid_external_credentials_raises_exception() -> None:
     credentials_checker = AsyncMock(spec=ExternalCredentialsCheckerService)
     credentials_checker.check.return_value = False
     credentials_repository = AsyncMock(spec=ExternalCredentialRepository)
@@ -56,7 +56,7 @@ async def test_add_invalid_external_credentials_raises_exception():
 
 
 @pytest.mark.asyncio
-async def test_add_existing_external_credentials_raises_exception():
+async def test_add_existing_external_credentials_raises_exception() -> None:
     credentials_checker = AsyncMock(spec=ExternalCredentialsCheckerService)
     credentials_checker.check.return_value = True
     credentials_repository = AsyncMock(spec=ExternalCredentialRepository)

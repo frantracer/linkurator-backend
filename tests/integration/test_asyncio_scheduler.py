@@ -6,7 +6,7 @@ from linkurator_core.infrastructure.asyncio.scheduler import TaskScheduler
 
 
 @pytest.mark.asyncio
-async def test_scheduler():
+async def test_scheduler() -> None:
     corroutine_2_seconds_called_times = 0
     corroutine_3_seconds_called_times = 0
 
@@ -28,7 +28,7 @@ async def test_scheduler():
         task=print_coroutine_3_seconds,
         interval_seconds=3)
 
-    async def stop_scheduler():
+    async def stop_scheduler() -> None:
         print(f'{strftime("%Y-%m-%d %H:%M:%S", gmtime())} Stop')
         await scheduler.stop()
 

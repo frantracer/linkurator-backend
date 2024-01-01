@@ -8,7 +8,7 @@ from linkurator_core.domain.users.user import User
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 
 
-def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_creation_date():
+def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_creation_date() -> None:
     sub1 = Subscription(
         uuid=uuid.UUID("6473ad5b-75ad-4384-a48d-924e026dd988"),
         name="Test1",

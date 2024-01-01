@@ -12,7 +12,7 @@ from linkurator_core.domain.users.user import User
 
 
 @pytest.mark.asyncio
-async def test_update_user_subscriptions_with_a_subscription_that_is_not_registered():
+async def test_update_user_subscriptions_with_a_subscription_that_is_not_registered() -> None:
     subscription_service = AsyncMock()
     sub1 = Subscription.new(
         uuid=uuid.UUID("db051fbc-3f2e-47bc-a03a-8a567e4604c9"),
@@ -61,7 +61,7 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
 
 
 @pytest.mark.asyncio
-async def test_update_user_subscription_with_subscription_that_is_already_registered():
+async def test_update_user_subscription_with_subscription_that_is_already_registered() -> None:
     subscription_service = AsyncMock()
     sub1 = Subscription.new(
         uuid=uuid.UUID("8c9879ec-35d1-44d5-84c1-ef1939330033"),

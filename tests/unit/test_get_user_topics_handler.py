@@ -10,7 +10,7 @@ from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.user import User
 
 
-def test_get_user_topics_handler():
+def test_get_user_topics_handler() -> None:
     user_repo_mock = MagicMock()
     user = User.new(
         uuid=UUID('ac32894a-d568-4def-9cfd-08779845018f'),
@@ -38,7 +38,7 @@ def test_get_user_topics_handler():
     assert topics[0] == topic1
 
 
-def test_get_user_topics_handler_user_not_found():
+def test_get_user_topics_handler_user_not_found() -> None:
     user_repo_mock = MagicMock()
     user_repo_mock.get.return_value = None
 

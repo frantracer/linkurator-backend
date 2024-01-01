@@ -8,11 +8,11 @@ class CreateItemInteractionHandler:
     item_repository: ItemRepository
     interaction_repository: InteractionRepository
 
-    def __init__(self, item_repository: ItemRepository, interaction_repository: InteractionRepository):
+    def __init__(self, item_repository: ItemRepository, interaction_repository: InteractionRepository) -> None:
         self.item_repository = item_repository
         self.interaction_repository = interaction_repository
 
-    def handle(self, new_interaction: Interaction):
+    def handle(self, new_interaction: Interaction) -> None:
         if self.item_repository.get(new_interaction.item_uuid) is None:
             raise ItemNotFoundError(f"Item with id '{new_interaction.item_uuid}' not found")
 

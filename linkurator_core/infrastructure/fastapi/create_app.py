@@ -4,7 +4,8 @@ Main file of the application
 from dataclasses import dataclass
 from typing import Optional
 
-from fastapi.applications import FastAPI, Request
+from fastapi import Request
+from fastapi.applications import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler

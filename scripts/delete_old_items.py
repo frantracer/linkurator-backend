@@ -13,7 +13,7 @@ from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRe
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('--admin-email', type=str, required=True)
     args = parser.parse_args()

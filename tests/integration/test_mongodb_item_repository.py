@@ -15,17 +15,17 @@ from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotI
 
 
 @pytest.fixture(name="item_repo", scope="session")
-def fixture_item_repo(db_name) -> MongoDBItemRepository:
+def fixture_item_repo(db_name: str) -> MongoDBItemRepository:
     return MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
-def test_exception_is_raised_if_items_collection_is_not_created():
+def test_exception_is_raised_if_items_collection_is_not_created() -> None:
     non_existent_db_name = f"test-{uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
         MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name, "develop", "develop")
 
 
-def test_get_item(item_repo: MongoDBItemRepository):
+def test_get_item(item_repo: MongoDBItemRepository) -> None:
     item = Item(name="test",
                 description="some description with emojis 🙂",
                 uuid=UUID("9cedfb45-70fb-4283-bfee-993941b05b53"),
@@ -45,13 +45,13 @@ def test_get_item(item_repo: MongoDBItemRepository):
     assert the_item == item
 
 
-def test_get_item_that_does_not_exist(item_repo: MongoDBItemRepository):
+def test_get_item_that_does_not_exist(item_repo: MongoDBItemRepository) -> None:
     the_item = item_repo.get(UUID("88aa425f-28d9-4a25-a87a-8c877cac772d"))
 
     assert the_item is None
 
 
-def test_get_item_with_invalid_format_raises_an_exception(item_repo: MongoDBItemRepository):
+def test_get_item_with_invalid_format_raises_an_exception(item_repo: MongoDBItemRepository) -> None:
     item_dict = MongoDBItem(
         uuid=UUID("67a06616-e127-4bf0-bcc0-faa221d554c5"),
         subscription_uuid=UUID("9753d304-3a43-414e-a5cd-496672b27c34"),
@@ -72,7 +72,7 @@ def test_get_item_with_invalid_format_raises_an_exception(item_repo: MongoDBItem
             item_repo.get(UUID("756b6b0d-5f54-4099-ae7e-c900666f0a0d"))
 
 
-def test_delete_item(item_repo: MongoDBItemRepository):
+def test_delete_item(item_repo: MongoDBItemRepository) -> None:
     item = mock_item(item_uuid=UUID("4bf64498-239e-4bcb-a5a1-b84a7708ad01"))
 
     item_repo.upsert_bulk([item])
@@ -84,7 +84,7 @@ def test_delete_item(item_repo: MongoDBItemRepository):
     assert deleted_item is None
 
 
-def test_create_and_update_items(item_repo: MongoDBItemRepository):
+def test_create_and_update_items(item_repo: MongoDBItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("72ab4421-f2b6-499a-bbf1-5105f2ed549b"))
     item2 = mock_item(item_uuid=UUID("a5a908e6-aa2c-4240-9a6d-d4340d38b8fc"))
 
@@ -134,12 +134,12 @@ def test_create_and_update_items(item_repo: MongoDBItemRepository):
     assert item2_found == item2_updated
 
 
-def test_create_and_update_items_with_no_items(item_repo: MongoDBItemRepository):
+def test_create_and_update_items_with_no_items(item_repo: MongoDBItemRepository) -> None:
     item_repo.upsert_bulk([])
     assert True
 
 
-def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
+def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository) -> None:
     subscription_uuid_1 = UUID("49e16717-3b41-4e1b-a2d8-8fccf1b6c184")
     subscription_uuid_2 = UUID("d3e22c40-c767-468b-8a61-cc61bcfd55ec")
     subscription_uuid_3 = UUID("9753d304-3a43-414e-a5cd-496672b27c34")
@@ -162,7 +162,7 @@ def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository):
     assert len(items_from_sub3[0]) == 0
 
 
-def test_find_items_by_uuid(item_repo: MongoDBItemRepository):
+def test_find_items_by_uuid(item_repo: MongoDBItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("cd79132f-ad0a-4206-b118-2c958bc28506"))
     item2 = mock_item(item_uuid=UUID("8e014a74-ddf9-4ad1-a354-22e1c9dd7acc"))
 
@@ -182,7 +182,7 @@ def test_find_items_by_uuid(item_repo: MongoDBItemRepository):
     assert total_items == 0
 
 
-def test_find_items_by_subscription_uuids(item_repo: MongoDBItemRepository):
+def test_find_items_by_subscription_uuids(item_repo: MongoDBItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("9559fa81-e968-4d0d-8390-070908f66985"),
                       sub_uuid=UUID("e887b865-8aa2-47a5-a133-a6eb7ba0f957"))
     item2 = mock_item(item_uuid=UUID("16f3a929-82a1-4cee-be30-70861d9266f2"),
@@ -204,7 +204,7 @@ def test_find_items_by_subscription_uuids(item_repo: MongoDBItemRepository):
     assert total_items == 0
 
 
-def test_find_item_with_same_url(item_repo: MongoDBItemRepository):
+def test_find_item_with_same_url(item_repo: MongoDBItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("8fc4fbca-439c-4c0e-937d-4147ef3b299c"),
                       url='https://item-with-same-url.com')
 
@@ -219,7 +219,7 @@ def test_find_item_with_same_url(item_repo: MongoDBItemRepository):
     assert found_items[0].uuid == item1.uuid
 
 
-def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemRepository):
+def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("00fbe982-1c90-4e7a-bf73-4716fa565b3c"),
                       url='https://item-with-same-url.com')
 
@@ -234,7 +234,7 @@ def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemReposit
 
 
 def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publish_date(
-        item_repo: MongoDBItemRepository):
+        item_repo: MongoDBItemRepository) -> None:
     sub_uuid = UUID("480e5b4d-c193-4548-a987-c125d1699d10")
     item1 = mock_item(item_uuid=UUID("72e47bdc-793e-4420-b6b6-f6a415cb1e3c"),
                       sub_uuid=sub_uuid,
@@ -291,7 +291,7 @@ def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publ
     assert total_items == 2
 
 
-def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepository):
+def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepository) -> None:
     item_repo.delete_all_items()
 
     item1 = mock_item(item_uuid=UUID("e1f898c2-bcfb-435a-97c0-9f462f73e95b"),
@@ -319,7 +319,7 @@ def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepositor
     assert item1.uuid not in [item.uuid for item in found_items]
 
 
-def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: MongoDBItemRepository):
+def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: MongoDBItemRepository) -> None:
     sub1_uuid = UUID("b76f981e-083f-4cee-9e5c-9f46f010546f")
     item1 = mock_item(
         name="Football is cool and it is almost free!",

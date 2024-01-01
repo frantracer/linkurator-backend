@@ -5,7 +5,7 @@ from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-import pymongo  # type: ignore
+import pymongo
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
 from pydantic.main import BaseModel
@@ -73,7 +73,7 @@ class MongoDBItemRepository(ItemRepository):
     db_name: str
     _collection_name: str = 'items'
 
-    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str):
+    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
         self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
@@ -82,7 +82,7 @@ class MongoDBItemRepository(ItemRepository):
             raise CollectionIsNotInitialized(
                 f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
 
-    def upsert_bulk(self, items: List[Item]):
+    def upsert_bulk(self, items: List[Item]) -> None:
         if len(items) == 0:
             return
         collection = self._item_collection()

@@ -10,9 +10,9 @@ class SessionRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def add(self, session: Session):
+    def add(self, session: Session) -> None:
         pass
 
     @abc.abstractmethod
-    def delete(self, token: str):
+    def delete(self, token: str) -> None:
         pass

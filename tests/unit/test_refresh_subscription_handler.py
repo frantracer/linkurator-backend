@@ -8,7 +8,7 @@ from linkurator_core.domain.common.mock_factory import mock_user, mock_sub, mock
 
 
 @pytest.mark.asyncio
-async def test_an_user_can_refresh_a_subscription_if_has_one_uploaded_credential():
+async def test_an_user_can_refresh_a_subscription_if_has_one_uploaded_credential() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
     credential = mock_credential(user_id=user.uuid)
@@ -41,7 +41,7 @@ async def test_an_user_can_refresh_a_subscription_if_has_one_uploaded_credential
 
 
 @pytest.mark.asyncio
-async def test_an_user_with_no_credentials_cannot_refresh_a_subscription():
+async def test_an_user_with_no_credentials_cannot_refresh_a_subscription() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
 
@@ -71,7 +71,7 @@ async def test_an_user_with_no_credentials_cannot_refresh_a_subscription():
 
 
 @pytest.mark.asyncio
-async def test_a_non_existing_user_cannot_refresh_a_subscription():
+async def test_a_non_existing_user_cannot_refresh_a_subscription() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
 
@@ -101,7 +101,7 @@ async def test_a_non_existing_user_cannot_refresh_a_subscription():
 
 
 @pytest.mark.asyncio
-async def test_a_user_not_subscribed_cannot_refresh_a_subscription():
+async def test_a_user_not_subscribed_cannot_refresh_a_subscription() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[])
 

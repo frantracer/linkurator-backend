@@ -6,7 +6,7 @@ from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
 class GetTopicHandler:
-    def __init__(self, topic_repository: TopicRepository):
+    def __init__(self, topic_repository: TopicRepository) -> None:
         self.topic_repository = topic_repository
 
     def handle(self, topic_id: UUID) -> Topic:

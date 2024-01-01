@@ -45,7 +45,7 @@ class MongoDBExternalCredentials(BaseModel):
 class MongodDBExternalCredentialRepository(ExternalCredentialRepository):
     _collection_name: str = 'external_credentials'
 
-    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str):
+    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
         self.client = AsyncIOMotorClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name

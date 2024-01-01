@@ -6,7 +6,7 @@ from linkurator_core.infrastructure.config.google_secrets import GoogleClientSec
 from linkurator_core.infrastructure.google.youtube_service import YoutubeApiClient
 
 
-async def main():
+async def main() -> None:
     args = argparse.ArgumentParser()
     args.add_argument("--playlist-id", required=True, help="Playlist ID of the youtube channel main playlist")
     args.add_argument('--from-date', required=True, help='From date in format YYYY-MM-DD:HH:MM:SSZ',

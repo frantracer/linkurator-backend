@@ -4,7 +4,7 @@ from linkurator_core.infrastructure.config.google_secrets import GoogleClientSec
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description='Get google account user information')
     parser.add_argument('--refresh-token', type=str, required=True,
                         help='Refresh token that will be used to get the Access token')

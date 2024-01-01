@@ -6,7 +6,7 @@ from linkurator_core.domain.items.interaction import InteractionType, Interactio
 from linkurator_core.domain.items.interaction_repository import InteractionRepository
 
 
-def test_delete_item_interaction_handler():
+def test_delete_item_interaction_handler() -> None:
     interaction_repo_mock = MagicMock(spec=InteractionRepository)
     dummy_interaction = Interaction.new(
         uuid=UUID('8572d7bb-91e6-49ad-ac17-bf3c7ec76ece'),

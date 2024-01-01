@@ -6,11 +6,11 @@ from linkurator_core.domain.items.interaction import Interaction
 
 
 class InteractionRepository(abc.ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @abc.abstractmethod
-    def add(self, interaction: Interaction):
+    def add(self, interaction: Interaction) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -18,7 +18,7 @@ class InteractionRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, interaction_id: UUID):
+    def delete(self, interaction_id: UUID) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod

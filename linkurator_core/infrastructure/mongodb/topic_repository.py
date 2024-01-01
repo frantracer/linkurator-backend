@@ -5,7 +5,7 @@ from ipaddress import IPv4Address
 from typing import List, Optional, Any
 from uuid import UUID
 
-import pymongo  # type: ignore
+import pymongo
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
 from pydantic import BaseModel

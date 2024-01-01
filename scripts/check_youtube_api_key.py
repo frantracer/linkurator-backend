@@ -7,7 +7,7 @@ from linkurator_core.domain.users.external_service_credential import ExternalSer
 from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
 
 
-async def main():
+async def main() -> None:
     parser = argparse.ArgumentParser(description='Check youtube api key')
     parser.add_argument('--api-key', type=str, required=True,
                         help='API key that will be used to check if it is valid')

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from uuid import UUID
 
 from pydantic import AnyUrl, BaseModel
@@ -18,7 +20,7 @@ class SubscriptionSchema(BaseModel):
     scanned_at: Iso8601Datetime
 
     @classmethod
-    def from_domain_subscription(cls, subscription: Subscription):
+    def from_domain_subscription(cls, subscription: Subscription) -> SubscriptionSchema:
         return cls(uuid=subscription.uuid, name=subscription.name, url=subscription.url,
                    thumbnail=subscription.thumbnail, created_at=subscription.created_at,
                    scanned_at=subscription.scanned_at)

@@ -28,7 +28,7 @@ class FindOutdatedSubscriptionsHandler:
         self.external_credentials_repository = external_credentials_repository
         self.user_repository = user_repository
 
-    async def handle(self):
+    async def handle(self) -> None:
         logging.info("Finding outdated subscriptions")
         now = datetime.now(tz=timezone.utc)
         datetime_limit = now - timedelta(minutes=REFRESH_PERIOD_WITH_NO_CREDENTIALS_IN_MINUTES)

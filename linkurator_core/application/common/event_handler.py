@@ -2,8 +2,7 @@ from linkurator_core.application.items.refresh_items_handler import RefreshItems
 from linkurator_core.application.subscriptions.update_subscription_items_handler import UpdateSubscriptionItemsHandler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent, UserSubscriptionsBecameOutdatedEvent, \
-    ItemsBecameOutdatedEvent
-from linkurator_core.domain.common.event_bus_service import Event
+    ItemsBecameOutdatedEvent, Event
 
 
 class EventHandler:

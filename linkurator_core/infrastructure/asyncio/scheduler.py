@@ -21,7 +21,7 @@ class TaskScheduler:
         self.tasks: List[Task] = []
         self.is_running = False
 
-    def schedule_recurring_task(self, task: TaskCallback, interval_seconds: int, skip_first: bool = False):
+    def schedule_recurring_task(self, task: TaskCallback, interval_seconds: int, skip_first: bool = False) -> None:
         latest_executed = datetime.fromtimestamp(0)
         if skip_first:
             latest_executed = datetime.now()
@@ -32,7 +32,7 @@ class TaskScheduler:
                         latest_executed=latest_executed)
         self.tasks.append(new_task)
 
-    async def start(self):
+    async def start(self) -> None:
         self.is_running = True
         while self.is_running:
             waiting_seconds = sys.maxsize
@@ -46,5 +46,5 @@ class TaskScheduler:
 
             await asyncio.sleep(waiting_seconds)
 
-    async def stop(self):
+    async def stop(self) -> None:
         self.is_running = False

@@ -60,7 +60,7 @@ class Item:
             version=version,
             provider=provider)
 
-    def __eq__(self, other: Any):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Item):
             return False
         return self.uuid == other.uuid and \
@@ -76,5 +76,5 @@ class Item:
             int(self.updated_at.timestamp() * 100) == floor(other.updated_at.timestamp() * 100) and \
             int(self.published_at.timestamp() * 100) == floor(other.published_at.timestamp() * 100)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.uuid)

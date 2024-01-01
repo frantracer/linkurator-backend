@@ -8,7 +8,7 @@ from linkurator_core.domain.items.item_repository import ItemRepository, ItemFil
 
 
 class FindDeprecatedItemsHandler:
-    def __init__(self, item_repository: ItemRepository, event_bus: EventBusService):
+    def __init__(self, item_repository: ItemRepository, event_bus: EventBusService) -> None:
         self.item_repository = item_repository
         self.event_bus = event_bus
 
