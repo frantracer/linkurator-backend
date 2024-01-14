@@ -11,7 +11,6 @@ COPY scripts ./scripts
 COPY ./tests ./tests
 COPY ./requirements.txt ./requirements.txt
 COPY ./.pylintrc ./.pylintrc
-COPY ./mypy.ini ./mypy.ini
 COPY ./Makefile ./Makefile
 COPY ./config ./config
 
