@@ -10,6 +10,7 @@ COPY ./linkurator_core ./linkurator_core
 COPY scripts ./scripts
 COPY ./tests ./tests
 COPY ./requirements.txt ./requirements.txt
+COPY ./pyproject.toml ./pyproject.toml
 COPY ./.pylintrc ./.pylintrc
 COPY ./Makefile ./Makefile
 COPY ./config ./config
