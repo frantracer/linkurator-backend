@@ -23,8 +23,8 @@ class GetSubscriptionItemsHandler:
                include_discouraged_items: bool = True,
                include_viewed_items: bool = True,
                include_hidden_items: bool = True,
-               ) -> Tuple[List[Tuple[Item, List[Interaction]]], int]:
-        items, total_items = self.item_repository.find_items(
+               ) -> List[Tuple[Item, List[Interaction]]]:
+        items = self.item_repository.find_items(
             criteria=ItemFilterCriteria(
                 subscription_ids=[subscription_id],
                 published_after=datetime.fromtimestamp(0, tz=timezone.utc),
@@ -48,4 +48,4 @@ class GetSubscriptionItemsHandler:
             item_ids=[item.uuid for item in items]
         )
 
-        return [(item, interactions_by_item.get(item.uuid, [])) for item in items], total_items
+        return [(item, interactions_by_item.get(item.uuid, [])) for item in items]

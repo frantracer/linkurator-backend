@@ -20,7 +20,7 @@ async def test_find_deprecated_items_publish_an_event_with_all_deprecated_items(
     items = [mock_item(item_uuid=uuid4()),
              mock_item(item_uuid=uuid4())]
 
-    item_repository.find_items.return_value = (items, 2)
+    item_repository.find_items.return_value = items
 
     await find_deprecated_items_handler.handle()
 
@@ -38,7 +38,7 @@ async def test_find_deprecated_items_does_not_publish_an_event_if_there_are_no_d
     event_bus = MagicMock(spec=EventBusService)
     find_deprecated_items_handler = FindDeprecatedItemsHandler(item_repository, event_bus)
 
-    item_repository.find_items.return_value = ([], 0)
+    item_repository.find_items.return_value = []
 
     await find_deprecated_items_handler.handle()
 

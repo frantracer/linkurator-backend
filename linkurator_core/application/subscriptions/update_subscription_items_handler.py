@@ -50,7 +50,7 @@ class UpdateSubscriptionItemsHandler:
                     logging.debug("%s items processed", item_count)
                 item_count += 1
 
-                items, _ = self.item_repository.find_items(criteria=ItemFilterCriteria(url=item.url),
+                items = self.item_repository.find_items(criteria=ItemFilterCriteria(url=item.url),
                                                            page_number=0, limit=1)
                 if len(items) == 0:
                     new_filtered_items.append(item)

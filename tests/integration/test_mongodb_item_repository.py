@@ -159,9 +159,9 @@ def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository) -> Non
     items_from_sub3 = item_repo.find_items(
         criteria=ItemFilterCriteria(subscription_ids=[subscription_uuid_3]), page_number=0, limit=10)
 
-    assert len(items_from_sub1[0]) == 2
-    assert len(items_from_sub2[0]) == 1
-    assert len(items_from_sub3[0]) == 0
+    assert len(items_from_sub1) == 2
+    assert len(items_from_sub2) == 1
+    assert len(items_from_sub3) == 0
 
 
 def test_find_items_by_uuid(item_repo: MongoDBItemRepository) -> None:
@@ -170,18 +170,16 @@ def test_find_items_by_uuid(item_repo: MongoDBItemRepository) -> None:
 
     item_repo.upsert_items([item1, item2])
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(item_ids={item1.uuid, uuid4()}), page_number=0, limit=10)
 
     assert len(found_items) == 1
-    assert total_items == 1
     assert found_items[0] == item1
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(item_ids=set()), page_number=0, limit=10)
 
     assert len(found_items) == 0
-    assert total_items == 0
 
 
 def test_find_items_by_subscription_uuids(item_repo: MongoDBItemRepository) -> None:
@@ -192,18 +190,16 @@ def test_find_items_by_subscription_uuids(item_repo: MongoDBItemRepository) -> N
 
     item_repo.upsert_items([item1, item2])
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(subscription_ids=[item1.subscription_uuid, uuid4()]), page_number=0, limit=10)
 
     assert len(found_items) == 1
-    assert total_items == 1
     assert found_items[0] == item1
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(subscription_ids=[]), page_number=0, limit=10)
 
     assert len(found_items) == 0
-    assert total_items == 0
 
 
 def test_find_item_with_same_url(item_repo: MongoDBItemRepository) -> None:
@@ -212,12 +208,11 @@ def test_find_item_with_same_url(item_repo: MongoDBItemRepository) -> None:
 
     item_repo.upsert_items([item1])
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(url=utils.parse_url('https://item-with-same-url.com')),
         page_number=0, limit=10)
 
     assert len(found_items) == 1
-    assert total_items == 1
     assert found_items[0].uuid == item1.uuid
 
 
@@ -227,12 +222,11 @@ def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemReposit
 
     item_repo.upsert_items([item1])
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(url=utils.parse_url('https://item-with-different-url.com')),
         page_number=0, limit=10)
 
     assert len(found_items) == 0
-    assert total_items == 0
 
 
 def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publish_date(
@@ -257,7 +251,7 @@ def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publ
 
     item_repo.upsert_items([item1, item2, item3, item4])
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             subscription_ids=[sub_uuid],
             published_after=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
@@ -266,10 +260,9 @@ def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publ
         limit=1)
 
     assert len(found_items) == 1
-    assert total_items == 2
     assert found_items[0].uuid == item4.uuid
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             subscription_ids=[sub_uuid],
             published_after=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
@@ -278,10 +271,9 @@ def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publ
         limit=1)
 
     assert len(found_items) == 1
-    assert total_items == 2
     assert found_items[0].uuid == item1.uuid
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             subscription_ids=[sub_uuid],
             published_after=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
@@ -290,7 +282,6 @@ def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publ
         limit=1)
 
     assert len(found_items) == 0
-    assert total_items == 2
 
 
 def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepository) -> None:
@@ -302,19 +293,19 @@ def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepositor
 
     item_repo.upsert_items([item1])
 
-    found_items, _ = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(created_before=datetime(2000, 1, 1, 0, 0, 11, tzinfo=timezone.utc)),
         page_number=0,
         limit=1)
     assert item1.uuid in [item.uuid for item in found_items]
 
-    found_items, _ = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(created_before=datetime(2000, 1, 1, 0, 0, 10, tzinfo=timezone.utc)),
         page_number=0,
         limit=1)
     assert item1.uuid not in [item.uuid for item in found_items]
 
-    found_items, _ = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(created_before=datetime(2000, 1, 1, 0, 0, 9, tzinfo=timezone.utc)),
         page_number=0,
         limit=1)
@@ -350,7 +341,7 @@ def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: Mong
     item_repo.delete_all_items()
     item_repo.upsert_items([item1, item2, item3, item4])
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             subscription_ids=[sub1_uuid],
             text="videogames"),
@@ -358,11 +349,10 @@ def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: Mong
         limit=4
     )
     assert len(found_items) == 2
-    assert total_items == 2
     assert found_items[0].uuid == item4.uuid
     assert found_items[1].uuid == item2.uuid
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             subscription_ids=[sub1_uuid],
             text="cool -videogames"),
@@ -370,10 +360,9 @@ def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: Mong
         page_number=0,
     )
     assert len(found_items) == 1
-    assert total_items == 1
     assert found_items[0].uuid == item1.uuid
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             subscription_ids=[sub1_uuid],
             text="\"free time\""),
@@ -381,10 +370,9 @@ def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: Mong
         page_number=0,
     )
     assert len(found_items) == 1
-    assert total_items == 1
     assert found_items[0].uuid == item3.uuid
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             subscription_ids=[sub1_uuid],
             text="swim"),
@@ -392,7 +380,6 @@ def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: Mong
         page_number=0,
     )
     assert len(found_items) == 0
-    assert total_items == 0
 
 
 def test_filter_with_empty_string_returns_all_items(item_repo: MongoDBItemRepository) -> None:
@@ -412,13 +399,12 @@ def test_filter_with_empty_string_returns_all_items(item_repo: MongoDBItemReposi
     item_repo.delete_all_items()
     item_repo.upsert_items([item1, item2])
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(text=""),
         page_number=0,
         limit=2
     )
     assert len(found_items) == 2
-    assert total_items == 2
 
 
 def test_find_deprecated_items(item_repo: MongoDBItemRepository) -> None:
@@ -435,7 +421,7 @@ def test_find_deprecated_items(item_repo: MongoDBItemRepository) -> None:
 
     item_repo.upsert_items([item1, item2, item3, item4])
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             last_version=2,
             provider=ItemProvider.YOUTUBE,
@@ -443,10 +429,9 @@ def test_find_deprecated_items(item_repo: MongoDBItemRepository) -> None:
         limit=4,
         page_number=0)
     assert len(found_items) == 2
-    assert total_items == 2
     assert {item.uuid for item in found_items} == {item1.uuid, item4.uuid}
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             last_version=3,
             provider=ItemProvider.YOUTUBE,
@@ -454,7 +439,6 @@ def test_find_deprecated_items(item_repo: MongoDBItemRepository) -> None:
         limit=1,
         page_number=0)
     assert len(found_items) == 1
-    assert total_items == 3
     assert found_items[0].uuid == item4.uuid
 
 
@@ -545,7 +529,7 @@ def test_find_items_with_every_interaction(
         created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
     ))
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             interactions=AnyItemInteraction(
                 without_interactions=True,
@@ -556,10 +540,9 @@ def test_find_items_with_every_interaction(
         page_number=0)
 
     assert len(found_items) == 6
-    assert total_items == 6
     assert [item10, item8, item6, item4, item2, item1] == found_items
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             interactions=AnyItemInteraction(
                 viewed=True,
@@ -570,10 +553,9 @@ def test_find_items_with_every_interaction(
         page_number=0)
 
     assert len(found_items) == 1
-    assert total_items == 1
     assert [item3] == found_items
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             interactions=AnyItemInteraction(
                 recommended=True,
@@ -584,10 +566,9 @@ def test_find_items_with_every_interaction(
         page_number=0)
 
     assert len(found_items) == 1
-    assert total_items == 1
     assert [item5] == found_items
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             interactions=AnyItemInteraction(
                 discouraged=True,
@@ -598,10 +579,9 @@ def test_find_items_with_every_interaction(
         page_number=0)
 
     assert len(found_items) == 1
-    assert total_items == 1
     assert [item7] == found_items
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             interactions=AnyItemInteraction(
                 hidden=True,
@@ -612,7 +592,6 @@ def test_find_items_with_every_interaction(
         page_number=0)
 
     assert len(found_items) == 1
-    assert total_items == 1
     assert [item9] == found_items
 
 
@@ -653,7 +632,7 @@ def test_find_user_recommended_or_without_interaction_items(
         created_at=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
     ))
 
-    found_items, total_items = item_repo.find_items(
+    found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             interactions=AnyItemInteraction(
                 without_interactions=True,
@@ -665,7 +644,6 @@ def test_find_user_recommended_or_without_interaction_items(
         page_number=0)
 
     assert len(found_items) == 2
-    assert total_items == 2
     assert [item3, item1] == found_items
 
 

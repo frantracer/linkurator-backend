@@ -69,7 +69,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
     user_repo_mock.get.return_value = user
     handler = GetUserSubscriptionsHandler(subscription_repo_mock, user_repo_mock)
 
-    the_subscriptions, total_subscriptions = handler.handle(
+    the_subscriptions = handler.handle(
         user_id=user.uuid,
         page_number=0,
         page_size=2,
@@ -77,9 +77,8 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
     )
 
     assert the_subscriptions == [sub3, sub2]
-    assert total_subscriptions == 3
 
-    the_subscriptions, total_subscriptions = handler.handle(
+    the_subscriptions = handler.handle(
         user_id=user.uuid,
         page_number=1,
         page_size=2,
@@ -87,9 +86,8 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
     )
 
     assert the_subscriptions == [sub1]
-    assert total_subscriptions == 3
 
-    the_subscriptions, total_subscriptions = handler.handle(
+    the_subscriptions = handler.handle(
         user_id=user.uuid,
         page_number=2,
         page_size=2,
@@ -97,4 +95,3 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
     )
 
     assert the_subscriptions == []
-    assert total_subscriptions == 3

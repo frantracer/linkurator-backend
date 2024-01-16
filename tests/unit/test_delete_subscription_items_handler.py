@@ -31,8 +31,9 @@ def test_delete_subscription_items_handler() -> None:
 
     # mock find_items to be called twice, one with item1 and another with item2
     item_repo_mock.find_items.side_effect = [
-        ([item1], 2),
-        ([item2], 2),
+        [item1],
+        [item2],
+        []
     ]
     handler = DeleteSubscriptionItemsHandler(
         user_repository=user_repo_mock,
@@ -45,7 +46,7 @@ def test_delete_subscription_items_handler() -> None:
 
     assert user_repo_mock.get.call_count == 1
     assert subscription_repo_mock.get.call_count == 1
-    assert item_repo_mock.find_items.call_count == 2
+    assert item_repo_mock.find_items.call_count == 3
     assert item_repo_mock.delete_item.call_count == 2
     assert item_repo_mock.delete_item.call_args_list == [call(item1.uuid), call(item2.uuid)]
     assert subscription_repo_mock.update.call_count == 1

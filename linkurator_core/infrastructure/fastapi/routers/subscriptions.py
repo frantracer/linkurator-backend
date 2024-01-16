@@ -47,7 +47,7 @@ def get_router(
         if created_before_ts is None:
             created_before_ts = datetime.now(tz=timezone.utc).timestamp()
 
-        subscriptions, total_subs = get_user_subscriptions_handler.handle(
+        subscriptions = get_user_subscriptions_handler.handle(
             session.user_id, page_number, page_size, datetime.fromtimestamp(created_before_ts, tz=timezone.utc))
 
         current_url = request.url.include_query_params(
@@ -58,7 +58,6 @@ def get_router(
 
         return Page[SubscriptionSchema].create(
             elements=[SubscriptionSchema.from_domain_subscription(subscription) for subscription in subscriptions],
-            total_elements=total_subs,
             page_number=page_number,
             page_size=page_size,
             current_url=current_url)
@@ -108,7 +107,7 @@ def get_router(
         def _include_interaction(interaction: InteractionFilterSchema) -> bool:
             return interactions is None or interaction in interactions
 
-        items_with_interactions, total_items = get_subscription_items_handler.handle(
+        items_with_interactions = get_subscription_items_handler.handle(
             user_id=session.user_id,
             subscription_id=sub_id,
             created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
@@ -131,7 +130,6 @@ def get_router(
         return Page[ItemSchema].create(
             elements=[ItemSchema.from_domain_item(item_with_interactions[0], item_with_interactions[1])
                       for item_with_interactions in items_with_interactions],
-            total_elements=total_items,
             page_number=page_number,
             page_size=page_size,
             current_url=current_url)

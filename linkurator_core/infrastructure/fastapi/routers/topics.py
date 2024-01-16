@@ -78,7 +78,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             return interactions is None or interaction in interactions
 
         try:
-            items_with_interactions, total_items = get_topic_items_handler.handle(
+            items_with_interactions = get_topic_items_handler.handle(
                 user_id=session.user_id,
                 topic_id=topic_id,
                 created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
@@ -101,7 +101,6 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             return Page[ItemSchema].create(
                 elements=[ItemSchema.from_domain_item(item_with_interactions[0], item_with_interactions[1])
                           for item_with_interactions in items_with_interactions],
-                total_elements=total_items,
                 page_number=page_number,
                 page_size=page_size,
                 current_url=current_url)
@@ -127,7 +126,6 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
 
         return Page[TopicSchema].create(
             elements=[TopicSchema.from_domain_topic(topic) for topic in topics],
-            total_elements=len(topics),
             page_number=0,
             page_size=len(topics) + 1,
             current_url=request.url)

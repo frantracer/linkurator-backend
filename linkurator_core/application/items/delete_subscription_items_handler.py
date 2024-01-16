@@ -26,14 +26,15 @@ class DeleteSubscriptionItemsHandler:
             raise SubscriptionNotFoundError(subscription_id)
 
         items_uuids: List[UUID] = []
-        total_items = -1
         page_number = 0
 
-        while total_items != len(items_uuids):
-            items, total_items = self.item_repository.find_items(
+        while True:
+            items = self.item_repository.find_items(
                 criteria=ItemFilterCriteria(subscription_ids=[subscription_id]),
                 page_number=page_number,
                 limit=100)
+            if len(items) == 0:
+                break
             items_uuids.extend([item.uuid for item in items])
 
         for item_uuid in items_uuids:

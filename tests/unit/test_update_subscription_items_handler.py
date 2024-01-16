@@ -46,7 +46,7 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered() 
     subscription_repository.get.return_value = copy(sub1)
 
     item_repository = MagicMock(spec=ItemRepository)
-    item_repository.find_items.return_value = ([], 0)
+    item_repository.find_items.return_value = []
 
     handler = UpdateSubscriptionItemsHandler(subscription_service=subscription_service,
                                              subscription_repository=subscription_repository,
@@ -104,7 +104,7 @@ async def test_update_subscriptions_items_with_items_that_are_already_registered
     subscription_repository.get.return_value = copy(sub1)
 
     item_repository = MagicMock(spec=ItemRepository)
-    item_repository.find_items.return_value = ([item2], 1)
+    item_repository.find_items.return_value = [item2]
 
     handler = UpdateSubscriptionItemsHandler(subscription_service=subscription_service,
                                              subscription_repository=subscription_repository,

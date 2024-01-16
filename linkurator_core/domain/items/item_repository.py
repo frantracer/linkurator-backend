@@ -1,16 +1,13 @@
 import abc
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Dict
 from uuid import UUID
 
 from pydantic.networks import AnyUrl
 
 from linkurator_core.domain.items.interaction import Interaction
 from linkurator_core.domain.items.item import Item, ItemProvider
-
-TotalItems = int
-FindResult = Tuple[List[Item], TotalItems]
 
 
 @dataclass
@@ -53,7 +50,7 @@ class ItemRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> FindResult:
+    def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> List[Item]:
         raise NotImplementedError
 
     @abc.abstractmethod

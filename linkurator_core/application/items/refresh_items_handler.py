@@ -13,7 +13,7 @@ class RefreshItemsHandler:
     async def handle(self, item_uuids: set[UUID]) -> None:
         logging.info("Refreshing information for %s items", len(item_uuids))
 
-        items, _ = self.item_repository.find_items(criteria=ItemFilterCriteria(item_ids=item_uuids),
+        items = self.item_repository.find_items(criteria=ItemFilterCriteria(item_ids=item_uuids),
                                                    page_number=0, limit=len(item_uuids))
 
         updated_items = await self.subscription_service.get_items(set(item.uuid for item in items))

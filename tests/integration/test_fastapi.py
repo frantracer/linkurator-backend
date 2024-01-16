@@ -111,21 +111,25 @@ def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
                      thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
                      published_at=datetime.fromtimestamp(0, tz=timezone.utc))
     dummy_get_subscription_items_handler = MagicMock(spec=GetSubscriptionItemsHandler)
-    dummy_get_subscription_items_handler.handle.return_value = ([(item1, [])], 1)
+    dummy_get_subscription_items_handler.handle.return_value = [(item1, [])]
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
 
-    response = client.get('/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?page_number=0&page_size=1')
+    response = client.get(
+        '/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
+        'created_before_ts=777.0&page_number=0&page_size=1')
     assert response.status_code == 200
     assert len(response.json()['elements']) == 1
-    assert response.json()['next_page'] is None
+    assert response.json()['next_page'] == (
+        "http://testserver/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?"
+        "created_before_ts=777.0&page_number=1&page_size=1")
     assert response.json()['previous_page'] is None
 
 
 def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> None:
     dummy_get_subscription_items_handler = MagicMock(spec=GetSubscriptionItemsHandler)
-    dummy_get_subscription_items_handler.handle.return_value = ([], 0)
+    dummy_get_subscription_items_handler.handle.return_value = []
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -150,7 +154,7 @@ def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> N
 
 def test_get_subscription_items_recommended_and_without_interactions(handlers: Handlers) -> None:
     dummy_get_subscription_items_handler = MagicMock(spec=GetSubscriptionItemsHandler)
-    dummy_get_subscription_items_handler.handle.return_value = ([], 0)
+    dummy_get_subscription_items_handler.handle.return_value = []
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -265,15 +269,18 @@ def test_get_topic_items_returns_200(handlers: Handlers) -> None:
         url=utils.parse_url('https://ae1b82ee.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    dummy_handler.handle.return_value = ([(item1, [])], 1)
+    dummy_handler.handle.return_value = [(item1, [])]
     handlers.get_topic_items_handler = dummy_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
 
-    response = client.get('/topics/1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac/items?page_number=0&page_size=1')
+    response = client.get(
+        '/topics/1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac/items?'
+        'created_before_ts=888.0&page_number=0&page_size=1')
     assert response.status_code == 200
     assert len(response.json()['elements']) == 1
-    assert response.json()['next_page'] is None
+    assert response.json()['next_page'] == ("http://testserver/topics/1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac/items?"
+                                            "created_before_ts=888.0&page_number=1&page_size=1")
     assert response.json()['previous_page'] is None
 
 
@@ -290,7 +297,7 @@ def test_get_topic_items_for_non_existing_topic_returns_404(handlers: Handlers) 
 
 def test_get_topic_items_parses_query_parameters(handlers: Handlers) -> None:
     dummy_get_topic_items_handler = MagicMock(spec=GetTopicItemsHandler)
-    dummy_get_topic_items_handler.handle.return_value = ([], 0)
+    dummy_get_topic_items_handler.handle.return_value = []
     handlers.get_topic_items_handler = dummy_get_topic_items_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -315,7 +322,7 @@ def test_get_topic_items_parses_query_parameters(handlers: Handlers) -> None:
 
 def test_get_topic_items_recommended_and_without_interactions(handlers: Handlers) -> None:
     dummy_get_topic_items_handler = MagicMock(spec=GetTopicItemsHandler)
-    dummy_get_topic_items_handler.handle.return_value = ([], 0)
+    dummy_get_topic_items_handler.handle.return_value = []
     handlers.get_topic_items_handler = dummy_get_topic_items_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -410,13 +417,17 @@ def test_get_subscriptions_items_returns_200(handlers: Handlers) -> None:
         url=utils.parse_url('https://ae1b82ee.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    dummy_handler.handle.return_value = ([(item1, [])], 1)
+    dummy_handler.handle.return_value = [(item1, [])]
     handlers.get_subscription_items_handler = dummy_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
 
-    response = client.get('/subscriptions/df836d19-1e78-4880-bf5f-af1c18e4d57d/items?page_number=0&page_size=1')
+    response = client.get(
+        '/subscriptions/df836d19-1e78-4880-bf5f-af1c18e4d57d/items?'
+        'created_before_ts=999.0&page_number=0&page_size=1')
     assert response.status_code == 200
     assert len(response.json()['elements']) == 1
-    assert response.json()['next_page'] is None
+    assert response.json()['next_page'] == (
+        'http://testserver/subscriptions/df836d19-1e78-4880-bf5f-af1c18e4d57d/items?'
+        'created_before_ts=999.0&page_number=1&page_size=1')
     assert response.json()['previous_page'] is None

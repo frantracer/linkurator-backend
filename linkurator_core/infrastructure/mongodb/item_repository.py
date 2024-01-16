@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Any, Dict, List, Optional, Sequence, Mapping
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import pymongo
@@ -15,7 +15,7 @@ from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.units import Seconds
 from linkurator_core.domain.items.interaction import InteractionType, Interaction
 from linkurator_core.domain.items.item import Item, ItemProvider
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria, FindResult
+from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 ITEM_COLLECTION_NAME = 'items'
@@ -118,37 +118,34 @@ def _generate_filter_query(criteria: ItemFilterCriteria) -> Dict[str, Any]:
         filter_query['provider'] = criteria.provider.value
     if criteria.text is not None and len(criteria.text) > 0:
         filter_query['$text'] = {'$search': criteria.text}
+
     return filter_query
 
 
 def _generate_filter_interaction_query(criteria: ItemFilterCriteria) -> Dict[str, Any]:
     interaction_filter: list[dict[str, Any]] = []
-    if criteria.interactions.without_interactions:
+    if criteria.interactions.recommended or criteria.interactions.without_interactions:
         interaction_filter = interaction_filter + [
-            {'interactions': {'$size': 0}}
+            {'type': InteractionType.RECOMMENDED.value}
         ]
-    if criteria.interactions.recommended:
+    if criteria.interactions.discouraged or criteria.interactions.without_interactions:
         interaction_filter = interaction_filter + [
-            {'interactions': {'$elemMatch': {'type': InteractionType.RECOMMENDED.value}}}
+            {'type': InteractionType.DISCOURAGED.value}
         ]
-    if criteria.interactions.discouraged:
+    if criteria.interactions.viewed or criteria.interactions.without_interactions:
         interaction_filter = interaction_filter + [
-            {'interactions': {'$elemMatch': {'type': InteractionType.DISCOURAGED.value}}}
+            {'type': InteractionType.VIEWED.value}
         ]
-    if criteria.interactions.viewed:
+    if criteria.interactions.hidden or criteria.interactions.without_interactions:
         interaction_filter = interaction_filter + [
-            {'interactions': {'$elemMatch': {'type': InteractionType.VIEWED.value}}}
-        ]
-    if criteria.interactions.hidden:
-        interaction_filter = interaction_filter + [
-            {'interactions': {'$elemMatch': {'type': InteractionType.HIDDEN.value}}}
+            {'type': InteractionType.HIDDEN.value}
         ]
 
-    filter_interactions_query: Dict[str, Any] = {}
+    filter_interactions_query: Dict[str, Any] = {
+        'user_uuid': criteria.interactions_from_user
+    }
     if len(interaction_filter) > 0:
-        filter_interactions_query = {
-            '$or': interaction_filter
-        }
+        filter_interactions_query['$or'] = interaction_filter
 
     return filter_interactions_query
 
@@ -196,77 +193,79 @@ class MongoDBItemRepository(ItemRepository):
             {'$set': {'deleted_at': datetime.utcnow()}}
         )
 
-    def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> FindResult:
-        filter_query = _generate_filter_query(criteria)
+    def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> List[Item]:
+        items: List[Item] = []
 
-        filter_interactions_query = _generate_filter_interaction_query(criteria)
+        filter_with_interactions: bool = False
+        interactions_by_item: Dict[UUID, List[InteractionType]] = {}
 
-        item_collection = self._item_collection()
-        interaction_collection = self._interaction_collection()
+        if criteria.interactions_from_user is not None:
+            filter_with_interactions = True
+            interaction_collection = self._interaction_collection()
+            interaction_results = list(interaction_collection.aggregate([
+                {
+                    '$match': _generate_filter_interaction_query(criteria)
+                },
+                {
+                    '$group': {
+                        '_id': '$item_uuid',
+                        'values': {'$push': '$$ROOT.type'}
+                    }
+                },
+            ]))
 
-        filtered_interactions_pipeline: Sequence[Mapping[str, Any]] = [
-            {
-                '$match': {
-                    'user_uuid': criteria.interactions_from_user
-                }
-            },
-            {
-                '$out': 'filtered_interactions'
-            }
-        ]
+            for result in interaction_results:
+                interactions_by_item[result['_id']] = result['values']
 
-        interaction_collection.aggregate(filtered_interactions_pipeline)
+        more_items = True
+        internal_page_size = 100
+        internal_page_number = 0
+        while len(items) < (page_number + 1) * limit and more_items:
+            item_collection = self._item_collection()
+            items_result = list(item_collection.aggregate([
+                {'$match': _generate_filter_query(criteria)},
+                {'$sort': {'published_at': -1}},
+                {'$skip': internal_page_number * internal_page_size},
+                {'$limit': internal_page_size}
+            ]))
 
-        pipeline_pagination = [
-            {
-                "$sort": {
-                    "published_at": pymongo.DESCENDING
-                }
-            },
-            {
-                "$skip": page_number * limit
-            },
-            {
-                "$limit": limit
-            }
-        ]
+            if len(items_result) == 0:
+                more_items = False
 
-        pipeline_count = [
-            {
-                "$count": "total_items"
-            }
-        ]
+            if filter_with_interactions:
+                items = items + self._filter_items_with_interactions(items_result, criteria, interactions_by_item)
+            else:
+                items = items + [MongoDBItem(**item).to_domain_item() for item in items_result]
+            internal_page_number = internal_page_number + 1
 
-        facet_pipeline = [
-            {
-                "$match": filter_query
-            },
-            {
-                '$lookup': {
-                    'from': 'filtered_interactions',
-                    'localField': 'uuid',
-                    'foreignField': 'item_uuid',
-                    'as': 'interactions'
-                }
-            },
-            {
-                "$match": filter_interactions_query
-            },
-            {
-                '$facet': {
-                    'pagination': pipeline_pagination,
-                    'count': pipeline_count
-                }
-            }
-        ]
+        return items[page_number * limit: min((page_number + 1) * limit, len(items))]
 
-        result = list(item_collection.aggregate(facet_pipeline))
-        items = result[0]['pagination']
-        total_items = 0
-        if len(result[0]['count']) > 0:
-            total_items = result[0]['count'][0]['total_items']
+    @staticmethod
+    def _filter_items_with_interactions(
+            items_result: List[Dict[str, Any]],
+            criteria: ItemFilterCriteria,
+            interactions_by_item: Dict[UUID, List[InteractionType]],
+    ) -> List[Item]:
+        items = []
+        for item in items_result:
+            interactions = interactions_by_item.get(item['uuid'], [])
+            if interactions is not None:
+                add_item = False
+                if criteria.interactions.recommended and InteractionType.RECOMMENDED.value in interactions:
+                    add_item = True
+                elif criteria.interactions.discouraged and InteractionType.DISCOURAGED.value in interactions:
+                    add_item = True
+                elif criteria.interactions.viewed and InteractionType.VIEWED.value in interactions:
+                    add_item = True
+                elif criteria.interactions.hidden and InteractionType.HIDDEN.value in interactions:
+                    add_item = True
+                elif len(interactions) == 0 and criteria.interactions.without_interactions is True:
+                    add_item = True
 
-        return [MongoDBItem(**item).to_domain_item() for item in items], total_items
+                if add_item is True:
+                    items.append(MongoDBItem(**item).to_domain_item())
+
+        return items
 
     def delete_all_items(self) -> None:
         collection = self._item_collection()

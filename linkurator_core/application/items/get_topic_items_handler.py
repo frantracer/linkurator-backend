@@ -28,7 +28,7 @@ class GetTopicItemsHandler:
                include_discouraged_items: bool = True,
                include_viewed_items: bool = True,
                include_hidden_items: bool = True,
-               ) -> Tuple[List[Tuple[Item, List[Interaction]]], int]:
+               ) -> List[Tuple[Item, List[Interaction]]]:
         topic = self.topic_repository.get(topic_id)
         if topic is None:
             raise TopicNotFoundError(topic_id)
@@ -48,7 +48,7 @@ class GetTopicItemsHandler:
             ),
         )
 
-        items, total_items = self.item_repository.find_items(
+        items = self.item_repository.find_items(
             criteria=filter_criteria,
             page_number=page_number,
             limit=page_size,
@@ -57,4 +57,4 @@ class GetTopicItemsHandler:
         interactions_by_item = self.item_repository.get_user_interactions_by_item_id(
             user_id=user_id, item_ids=[item.uuid for item in items])
 
-        return [(item, interactions_by_item.get(item.uuid, [])) for item in items], total_items
+        return [(item, interactions_by_item.get(item.uuid, [])) for item in items]

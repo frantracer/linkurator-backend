@@ -379,7 +379,7 @@ async def test_get_youtube_videos_returns_all_available_videos() -> None:
     random_item_uuid = uuid4()
 
     item_repo_mock = MagicMock(spec=ItemRepository)
-    item_repo_mock.find_items.return_value = ([item1, item2], 2)
+    item_repo_mock.find_items.return_value = [item1, item2]
 
     service = YoutubeService(youtube_client=youtube_client_mock,
                              api_key="api_key",

@@ -18,7 +18,7 @@ async def test_refresh_items_handler_updates_items_with_latest_info() -> None:
     items = [mock_item(item_uuid=uuid4()),
              mock_item(item_uuid=uuid4())]
 
-    item_repository.find_items.return_value = (items, 2)
+    item_repository.find_items.return_value = items
     subscription_service.get_items.return_value = items
 
     await refresh_items_handler.handle({items[0].uuid, items[1].uuid})
@@ -36,7 +36,7 @@ async def test_refresh_items_handler_deletes_items_that_are_not_returned_by_subs
     items = [mock_item(item_uuid=uuid4()),
              mock_item(item_uuid=uuid4())]
 
-    item_repository.find_items.return_value = (items, 2)
+    item_repository.find_items.return_value = items
     subscription_service.get_items.return_value = [items[0]]
 
     await refresh_items_handler.handle({items[0].uuid, items[1].uuid})
