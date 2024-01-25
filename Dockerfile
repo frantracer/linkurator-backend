@@ -12,6 +12,7 @@ COPY ./tests ./tests
 COPY ./requirements.txt ./requirements.txt
 COPY ./pyproject.toml ./pyproject.toml
 COPY ./.pylintrc ./.pylintrc
+COPY ./pytest.ini ./pytest.ini
 COPY ./Makefile ./Makefile
 COPY ./config ./config
 
