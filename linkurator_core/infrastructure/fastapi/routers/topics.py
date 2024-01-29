@@ -54,6 +54,8 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             page_size: PositiveInt = 50,
             created_before_ts: Optional[float] = None,
             search: Optional[str] = None,
+            min_duration: Optional[int] = None,
+            max_duration: Optional[int] = None,
             include_interactions: Annotated[str | None, Query(
                 description=f"Comma separated values. Valid values: {VALID_INTERACTIONS}")] = None,
             session: Optional[Session] = Depends(get_session)
@@ -85,6 +87,8 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
                 page_number=page_number,
                 page_size=page_size,
                 text_filter=search,
+                min_duration=min_duration,
+                max_duration=max_duration,
                 include_items_without_interactions=_include_interaction(InteractionFilterSchema.WITHOUT_INTERACTIONS),
                 include_recommended_items=_include_interaction(InteractionFilterSchema.RECOMMENDED),
                 include_discouraged_items=_include_interaction(InteractionFilterSchema.DISCOURAGED),

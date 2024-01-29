@@ -75,6 +75,8 @@ def get_router(
             page_size: PositiveInt = 50,
             created_before_ts: Optional[float] = None,
             search: Optional[str] = None,
+            min_duration: Optional[int] = None,
+            max_duration: Optional[int] = None,
             include_interactions: Annotated[str | None, Query(
                 description=f"Comma separated values. Valid values: {VALID_INTERACTIONS}")] = None,
             session: Optional[Session] = Depends(get_session)
@@ -87,6 +89,9 @@ def get_router(
         :param page_size: Number of elements per page (query parameter)
         :param created_before_ts: Filter elements created before the timestamp (query parameter)
         :param search: Filter elements by text (query parameter)
+        :param min_duration: Filter elements with a duration greater than this value (query parameter)
+        :param max_duration: Filter elements with a duration lower than this value (query parameter)
+        :param include_interactions: Filter elements by interactions (query parameter)
         :param session: The session of the logged user
         :return: A page with the items. UNAUTHORIZED status code if the session is invalid.
         """
@@ -114,6 +119,8 @@ def get_router(
             page_number=page_number,
             page_size=page_size,
             text_filter=search,
+            min_duration=min_duration,
+            max_duration=max_duration,
             include_items_without_interactions=_include_interaction(InteractionFilterSchema.WITHOUT_INTERACTIONS),
             include_recommended_items=_include_interaction(InteractionFilterSchema.RECOMMENDED),
             include_discouraged_items=_include_interaction(InteractionFilterSchema.DISCOURAGED),

@@ -11,19 +11,22 @@ class GetSubscriptionItemsHandler:
     def __init__(self, item_repository: ItemRepository) -> None:
         self.item_repository = item_repository
 
-    def handle(self,
-               user_id: UUID,
-               subscription_id: UUID,
-               created_before: datetime,
-               page_number: int,
-               page_size: int,
-               text_filter: Optional[str] = None,
-               include_items_without_interactions: bool = True,
-               include_recommended_items: bool = True,
-               include_discouraged_items: bool = True,
-               include_viewed_items: bool = True,
-               include_hidden_items: bool = True,
-               ) -> List[Tuple[Item, List[Interaction]]]:
+    def handle(
+            self,
+            user_id: UUID,
+            subscription_id: UUID,
+            created_before: datetime,
+            page_number: int,
+            page_size: int,
+            text_filter: Optional[str] = None,
+            min_duration: Optional[int] = None,
+            max_duration: Optional[int] = None,
+            include_items_without_interactions: bool = True,
+            include_recommended_items: bool = True,
+            include_discouraged_items: bool = True,
+            include_viewed_items: bool = True,
+            include_hidden_items: bool = True,
+    ) -> List[Tuple[Item, List[Interaction]]]:
         items = self.item_repository.find_items(
             criteria=ItemFilterCriteria(
                 subscription_ids=[subscription_id],
@@ -31,6 +34,8 @@ class GetSubscriptionItemsHandler:
                 created_before=created_before,
                 text=text_filter,
                 interactions_from_user=user_id,
+                min_duration=min_duration,
+                max_duration=max_duration,
                 interactions=AnyItemInteraction(
                     without_interactions=include_items_without_interactions,
                     recommended=include_recommended_items,

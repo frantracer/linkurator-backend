@@ -137,6 +137,7 @@ def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> N
     client.get(
         '/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
         'page_number=0&page_size=1&search=test&created_before_ts=0&'
+        'max_duration=100&min_duration=10&'
         'include_interactions=without_interactions,recommended,viewed,hidden,discouraged')
     dummy_get_subscription_items_handler.handle.assert_called_once_with(
         user_id=USER_UUID,
@@ -145,6 +146,8 @@ def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> N
         page_number=0,
         page_size=1,
         text_filter='test',
+        min_duration=10,
+        max_duration=100,
         include_items_without_interactions=True,
         include_recommended_items=True,
         include_discouraged_items=True,
@@ -170,6 +173,8 @@ def test_get_subscription_items_recommended_and_without_interactions(handlers: H
         page_number=0,
         page_size=1,
         text_filter='test',
+        min_duration=None,
+        max_duration=None,
         include_items_without_interactions=True,
         include_recommended_items=True,
         include_discouraged_items=False,
@@ -305,6 +310,7 @@ def test_get_topic_items_parses_query_parameters(handlers: Handlers) -> None:
     client.get(
         '/topics/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
         'page_number=0&page_size=1&search=test&created_before_ts=0&'
+        'max_duration=100&min_duration=10&'
         'include_interactions=without_interactions,recommended,viewed,hidden,discouraged')
     dummy_get_topic_items_handler.handle.assert_called_once_with(
         user_id=USER_UUID,
@@ -313,6 +319,8 @@ def test_get_topic_items_parses_query_parameters(handlers: Handlers) -> None:
         page_number=0,
         page_size=1,
         text_filter='test',
+        min_duration=10,
+        max_duration=100,
         include_items_without_interactions=True,
         include_recommended_items=True,
         include_discouraged_items=True,
@@ -338,6 +346,8 @@ def test_get_topic_items_recommended_and_without_interactions(handlers: Handlers
         page_number=0,
         page_size=1,
         text_filter='test',
+        min_duration=None,
+        max_duration=None,
         include_items_without_interactions=True,
         include_recommended_items=True,
         include_discouraged_items=False,
