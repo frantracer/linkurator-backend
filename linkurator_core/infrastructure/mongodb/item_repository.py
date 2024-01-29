@@ -119,6 +119,13 @@ def _generate_filter_query(criteria: ItemFilterCriteria) -> Dict[str, Any]:
     if criteria.text is not None and len(criteria.text) > 0:
         filter_query['$text'] = {'$search': criteria.text}
 
+    if criteria.max_duration and criteria.min_duration:
+        filter_query['duration'] = {'$gte': criteria.min_duration, '$lte': criteria.max_duration}
+    elif criteria.max_duration:
+        filter_query['duration'] = {'$lte': criteria.max_duration}
+    elif criteria.min_duration:
+        filter_query['duration'] = {'$gte': criteria.min_duration}
+
     return filter_query
 
 

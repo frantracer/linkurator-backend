@@ -30,6 +30,8 @@ class ItemFilterCriteria:
     provider: Optional[ItemProvider] = None
     text: Optional[str] = None
     interactions_from_user: Optional[UUID] = None
+    min_duration: Optional[int] = None
+    max_duration: Optional[int] = None
     interactions: AnyItemInteraction = AnyItemInteraction()
 
 
