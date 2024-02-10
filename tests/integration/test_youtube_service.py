@@ -9,7 +9,7 @@ import pytest
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
 from linkurator_core.domain.common.mock_factory import mock_user, mock_credential, mock_sub
 from linkurator_core.domain.common.utils import parse_url
-from linkurator_core.domain.items.item import YOUTUBE_ITEM_VERSION
+from linkurator_core.domain.items.item import YOUTUBE_ITEM_VERSION, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -18,7 +18,7 @@ from linkurator_core.domain.users.external_service_credential_repository import 
 from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService, YoutubeApiClient, YoutubeChannel, \
-    YoutubeVideo
+    YoutubeVideo, LiveBroadcastContent
 
 
 def mock_youtube_channel(channel_id: str = "channel_id") -> YoutubeChannel:
@@ -48,6 +48,7 @@ def mock_youtube_video(video_id: Optional[str] = None, channel_id: Optional[str]
         published_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         url=f"https://www.youtube.com/watch?v={video_id}",
         duration="PT1H1M1S",
+        live_broadcast_content=LiveBroadcastContent.NONE
     )
 
 
@@ -172,6 +173,7 @@ async def test_youtube_service_returns_subscription_items() -> None:
             published_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
             url="https://video_url.com/video_id",
             duration="PT1H1M1S",
+            live_broadcast_content=LiveBroadcastContent.NONE
         )
     ]
     service = YoutubeService(youtube_client=client_mock,
@@ -495,6 +497,91 @@ def test_youtube_video_parsing() -> None:
     assert item.duration == 1263
     assert item.version == YOUTUBE_ITEM_VERSION
     assert item.published_at == datetime(2012, 10, 1, 15, 27, 35, tzinfo=timezone.utc)
+    assert item.provider == ItemProvider.YOUTUBE
+    assert item.deleted_at is None
+
+
+def test_youtube_video_with_upcoming_live_for_a_year_parsing() -> None:
+    video_json = '''
+    {
+      "kind": "youtube#video",
+      "etag": "je9B2E53VF3MnXHWrugb_rbPsqQ",
+      "id": "Ks-_Mh1QhMc",
+      "snippet": {
+        "publishedAt": "2022-10-01T15:27:35Z",
+        "channelId": "UCAuUUnT6oDeKwE6v1NGQxug",
+        "title": "Your body language may shape who you are | Amy Cuddy",
+        "description": "Body language affects how others see us, but it may also change how we see ourselves",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/Ks-_Mh1QhMc/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/Ks-_Mh1QhMc/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/Ks-_Mh1QhMc/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/Ks-_Mh1QhMc/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/Ks-_Mh1QhMc/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "TED",
+        "tags": [],
+        "categoryId": "22",
+        "liveBroadcastContent": "upcoming",
+        "defaultLanguage": "en",
+        "localized": {
+          "title": "Your body language may shape who you are | Amy Cuddy",
+          "description": "Body language affects how others see us, but it may also change how we see ourselves"
+        },
+        "defaultAudioLanguage": "en"
+      },
+      "contentDetails": {
+        "duration": "P0D",
+        "dimension": "2d",
+        "definition": "sd",
+        "caption": "false",
+        "licensedContent": false,
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "statistics": {
+        "viewCount": "23939769",
+        "likeCount": "405624",
+        "favoriteCount": "0",
+        "commentCount": "9597"
+      }
+    }
+    '''
+
+    video = YoutubeVideo.from_dict(json.loads(video_json))
+    item = video.to_item(item_id=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
+                         sub_id=UUID("f1edd7fe-a588-485b-b85c-3c087b9f174f"),
+                         current_date=datetime(2022, 11, 1, tzinfo=timezone.utc))
+
+    assert item.uuid == UUID("321cbb52-1398-406e-b278-0a81e85d3274")
+    assert item.deleted_at is None
+
+    item = video.to_item(item_id=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
+                         sub_id=UUID("f1edd7fe-a588-485b-b85c-3c087b9f174f"),
+                         current_date=datetime(2023, 11, 1, tzinfo=timezone.utc))
+
+    assert item.uuid == UUID("321cbb52-1398-406e-b278-0a81e85d3274")
+    assert item.deleted_at == datetime(2023, 11, 1, tzinfo=timezone.utc)
 
 
 def test_youtube_channel_parsing() -> None:

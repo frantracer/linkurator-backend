@@ -33,9 +33,11 @@ class Item:
     created_at: datetime
     updated_at: datetime
     published_at: datetime
+    deleted_at: Optional[datetime] = None
 
     @classmethod
-    def new(cls, uuid: UUID,
+    def new(cls,
+            uuid: UUID,
             subscription_uuid: UUID,
             name: str,
             description: str,
@@ -44,7 +46,9 @@ class Item:
             published_at: datetime,
             duration: Optional[Seconds] = None,
             version: int = DEFAULT_ITEM_VERSION,
-            provider: ItemProvider = ItemProvider.YOUTUBE) -> Item:
+            provider: ItemProvider = ItemProvider.YOUTUBE,
+            deleted_at: Optional[datetime] = None
+            ) -> Item:
         now = datetime.now(tz=timezone.utc)
         return cls(
             uuid=uuid,
@@ -58,7 +62,8 @@ class Item:
             updated_at=now,
             published_at=published_at.astimezone(timezone.utc),
             version=version,
-            provider=provider)
+            provider=provider,
+            deleted_at=deleted_at)
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Item):

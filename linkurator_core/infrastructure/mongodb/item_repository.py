@@ -50,6 +50,7 @@ class MongoDBItem(BaseModel):
             version=item.version,
             created_at=item.created_at,
             updated_at=item.updated_at,
+            deleted_at=item.deleted_at,
             published_at=item.published_at,
             provider=item.provider.value
         )
@@ -66,6 +67,7 @@ class MongoDBItem(BaseModel):
             version=self.version,
             created_at=self.created_at,
             updated_at=self.updated_at,
+            deleted_at=self.deleted_at,
             published_at=self.published_at,
             provider=ItemProvider(self.provider)
         )

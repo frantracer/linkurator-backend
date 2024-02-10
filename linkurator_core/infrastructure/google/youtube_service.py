@@ -3,7 +3,8 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from enum import Enum
 from random import randint
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
@@ -25,6 +26,12 @@ from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 MAX_VIDEOS_PER_QUERY = 50
+
+
+class LiveBroadcastContent(str, Enum):
+    UPCOMING = "upcoming"
+    LIVE = "live"
+    NONE = "none"
 
 
 @dataclass
@@ -79,6 +86,7 @@ class YoutubeVideo:
     channel_url: str
     country: str
     duration: str
+    live_broadcast_content: LiveBroadcastContent
 
     @staticmethod
     def from_dict(video: dict[str, Any]) -> YoutubeVideo:
@@ -94,10 +102,16 @@ class YoutubeVideo:
             channel_id=video["snippet"]["channelId"],
             channel_url=f'https://www.youtube.com/channel/{video["snippet"]["channelId"]}',
             country=video['snippet'].get('country', ''),
-            duration=video['contentDetails']['duration']
+            duration=video['contentDetails']['duration'],
+            live_broadcast_content=LiveBroadcastContent(video["snippet"]["liveBroadcastContent"])
         )
 
-    def to_item(self, item_id: uuid.UUID, sub_id: uuid.UUID) -> Item:
+    def to_item(self, item_id: uuid.UUID, sub_id: uuid.UUID,
+                current_date: datetime = datetime.now(tz=timezone.utc)) -> Item:
+        deleted_at: Optional[datetime] = None
+        if self.live_broadcast_content == LiveBroadcastContent.UPCOMING and \
+                self.published_at + timedelta(days=365) < current_date:
+            deleted_at = current_date
         return Item.new(
             uuid=item_id,
             subscription_uuid=sub_id,
@@ -107,7 +121,8 @@ class YoutubeVideo:
             thumbnail=utils.parse_url(self.thumbnail_url),
             published_at=self.published_at,
             duration=isodate.parse_duration(self.duration).total_seconds(),
-            version=YOUTUBE_ITEM_VERSION
+            version=YOUTUBE_ITEM_VERSION,
+            deleted_at=deleted_at
         )
 
 

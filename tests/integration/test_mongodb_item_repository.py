@@ -786,3 +786,27 @@ def test_find_items_updated_before_a_date(item_repo: MongoDBItemRepository) -> N
         limit=10)
     assert len(found_items) == 1
     assert found_items == [item1]
+
+
+def test_update_video_with_deleted_at_date(item_repo: MongoDBItemRepository) -> None:
+    item_repo.delete_all_items()
+
+    item1 = mock_item(item_uuid=UUID("cf567af9-09dc-4719-b7d4-1a50c293f3b3"))
+
+    item_repo.upsert_items([item1])
+
+    found_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(),
+        page_number=0,
+        limit=10)
+    assert len(found_items) == 1
+    assert found_items == [item1]
+
+    item1.deleted_at = datetime.now(tz=timezone.utc)
+    item_repo.upsert_items([item1])
+
+    found_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(),
+        page_number=0,
+        limit=10)
+    assert len(found_items) == 0
