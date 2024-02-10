@@ -53,6 +53,7 @@ def mock_item(
         item_uuid: Optional[UUID] = None,
         sub_uuid: Optional[UUID] = None,
         created_at: Optional[datetime] = None,
+        updated_at: Optional[datetime] = None,
         published_at: Optional[datetime] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,
@@ -68,6 +69,7 @@ def mock_item(
     random_thumbnail = utils.parse_url(f'https://{random_uuid}.com/thumbnail.png')
     random_published_at = published_at if published_at is not None else datetime.now(tz=timezone.utc)
     random_created_at = created_at if created_at is not None else datetime.now(tz=timezone.utc)
+    random_updated_at = updated_at if updated_at is not None else datetime.now(tz=timezone.utc)
     version = version if version is not None else 1
 
     return Item(
@@ -79,7 +81,7 @@ def mock_item(
         thumbnail=random_thumbnail,
         published_at=random_published_at,
         created_at=random_created_at,
-        updated_at=random_created_at,
+        updated_at=random_updated_at,
         version=version,
         duration=duration,
         provider=ItemProvider.YOUTUBE

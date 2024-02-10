@@ -106,24 +106,26 @@ def _generate_filter_query(criteria: ItemFilterCriteria) -> Dict[str, Any]:
         filter_query['uuid'] = {'$in': list(criteria.item_ids)}
     if criteria.subscription_ids is not None:
         filter_query['subscription_uuid'] = {'$in': criteria.subscription_ids}
-    if criteria.published_after:
+    if criteria.published_after is not None:
         filter_query['published_at'] = {'$gt': criteria.published_after}
-    if criteria.created_before:
+    if criteria.created_before is not None:
         filter_query['created_at'] = {'$lt': criteria.created_before}
-    if criteria.url:
+    if criteria.updated_before is not None:
+        filter_query['updated_at'] = {'$lt': criteria.updated_before}
+    if criteria.url is not None:
         filter_query['url'] = str(criteria.url)
-    if criteria.last_version:
+    if criteria.last_version is not None:
         filter_query['version'] = {'$lt': criteria.last_version}
-    if criteria.provider:
+    if criteria.provider is not None:
         filter_query['provider'] = criteria.provider.value
     if criteria.text is not None and len(criteria.text) > 0:
         filter_query['$text'] = {'$search': criteria.text}
 
-    if criteria.max_duration and criteria.min_duration:
+    if criteria.max_duration is not None and criteria.min_duration is not None:
         filter_query['duration'] = {'$gte': criteria.min_duration, '$lte': criteria.max_duration}
-    elif criteria.max_duration:
+    elif criteria.max_duration is not None:
         filter_query['duration'] = {'$lte': criteria.max_duration}
-    elif criteria.min_duration:
+    elif criteria.min_duration is not None:
         filter_query['duration'] = {'$gte': criteria.min_duration}
 
     return filter_query

@@ -24,6 +24,7 @@ class ItemFilterCriteria:
     item_ids: Optional[set[UUID]] = None
     subscription_ids: Optional[List[UUID]] = None
     published_after: Optional[datetime] = None
+    updated_before: Optional[datetime] = None
     created_before: Optional[datetime] = None
     url: Optional[AnyUrl] = None
     last_version: Optional[int] = None

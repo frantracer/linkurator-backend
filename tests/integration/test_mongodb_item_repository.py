@@ -742,3 +742,47 @@ def test_find_items_with_max_and_min_duration(item_repo: MongoDBItemRepository) 
 
     assert len(found_items) == 1
     assert {item1} == set(found_items)
+
+
+def test_find_zero_duration_items(item_repo: MongoDBItemRepository) -> None:
+    item_repo.delete_all_items()
+
+    item1 = mock_item(item_uuid=UUID("ea04f10a-8c2b-4f3f-82be-0534eb5a0326"),
+                      duration=0)
+    item2 = mock_item(item_uuid=UUID("841ce05f-baf8-45b1-80c2-82c4b716339b"),
+                      duration=None)
+    item3 = mock_item(item_uuid=UUID("cc3596f9-512a-4bd0-94eb-9a2640ba1b51"),
+                      duration=1)
+
+    item_repo.upsert_items([item1, item2, item3])
+
+    found_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            max_duration=0
+        ),
+        limit=10,
+        page_number=0)
+
+    assert len(found_items) == 1
+    assert {item1} == set(found_items)
+
+
+def test_find_items_updated_before_a_date(item_repo: MongoDBItemRepository) -> None:
+    item_repo.delete_all_items()
+
+    item1 = mock_item(item_uuid=UUID("ea04f10a-8c2b-4f3f-82be-0534eb5a0326"),
+                      updated_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc))
+    item2 = mock_item(item_uuid=UUID("841ce05f-baf8-45b1-80c2-82c4b716339b"),
+                      updated_at=datetime(2020, 1, 1, 0, 0, 1, tzinfo=timezone.utc))
+    item3 = mock_item(item_uuid=UUID("cc3596f9-512a-4bd0-94eb-9a2640ba1b51"),
+                      updated_at=datetime(2020, 1, 1, 0, 0, 2, tzinfo=timezone.utc))
+
+    item_repo.upsert_items([item1, item2, item3])
+
+    found_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            updated_before=datetime(2020, 1, 1, 0, 0, 1, tzinfo=timezone.utc)),
+        page_number=0,
+        limit=10)
+    assert len(found_items) == 1
+    assert found_items == [item1]

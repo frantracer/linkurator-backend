@@ -8,7 +8,7 @@ from pydantic import AnyUrl
 
 
 @dataclass
-class User:  # pylint: disable=too-many-instance-attributes
+class User:
     uuid: UUID
     first_name: str
     last_name: str

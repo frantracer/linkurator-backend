@@ -4,6 +4,7 @@ import os
 
 from linkurator_core.application.common.event_handler import EventHandler
 from linkurator_core.application.items.find_deprecated_items_handler import FindDeprecatedItemsHandler
+from linkurator_core.application.items.find_zero_duration_items import FindZeroDurationItems
 from linkurator_core.application.items.refresh_items_handler import RefreshItemsHandler
 from linkurator_core.application.subscriptions.find_outdated_subscriptions_handler import \
     FindOutdatedSubscriptionsHandler
@@ -82,6 +83,9 @@ async def main() -> None:  # pylint: disable=too-many-locals
     find_deprecated_items = FindDeprecatedItemsHandler(
         item_repository=item_repository,
         event_bus=event_bus)
+    find_zero_duration_items = FindZeroDurationItems(
+        item_repository=item_repository,
+        event_bus=event_bus)
     event_handler = EventHandler(
         update_user_subscriptions_handler=update_user_subscriptions,
         update_subscription_items_handler=update_subscriptions_items,
@@ -96,6 +100,7 @@ async def main() -> None:  # pylint: disable=too-many-locals
     scheduler.schedule_recurring_task(task=find_outdated_users.handle, interval_seconds=60 * 5)
     scheduler.schedule_recurring_task(task=find_outdated_subscriptions.handle, interval_seconds=60)
     scheduler.schedule_recurring_task(task=find_deprecated_items.handle, interval_seconds=60 * 5)
+    scheduler.schedule_recurring_task(task=find_zero_duration_items.handle, interval_seconds=60 * 5)
 
     await run_parallel(
         event_bus.start(),
