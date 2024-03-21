@@ -13,7 +13,7 @@ async def test_publish_and_subscribe() -> None:
     event_bus = AsyncioEventBusService()
     dummy_function = AsyncMock()
     event_bus.subscribe(UserSubscriptionsBecameOutdatedEvent, dummy_function)
-    event_bus.publish(UserSubscriptionsBecameOutdatedEvent(uuid.uuid4(), uuid.uuid4()))
+    await event_bus.publish(UserSubscriptionsBecameOutdatedEvent(uuid.uuid4(), uuid.uuid4()))
 
     results = await run_parallel(
         event_bus.start(),

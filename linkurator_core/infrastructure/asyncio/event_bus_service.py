@@ -17,7 +17,7 @@ class AsyncioEventBusService(EventBusService):
         self._callbacks: Dict[Type[Event], List[Callable[[Event], Coroutine[Any, Any, None]]]] = {}
         self._is_running = False
 
-    def publish(self, event: Event) -> None:
+    async def publish(self, event: Event) -> None:
         self._queue.put_nowait(event)
 
     def subscribe(self, event_type: Type[Event], callback: Callable[[Event], Coroutine[Any, Any, None]]) -> None:

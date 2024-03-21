@@ -26,4 +26,4 @@ class FindZeroDurationItems:
 
         if len(items) > 0:
             item_uuids = set(item.uuid for item in items)
-            self.event_bus.publish(ItemsBecameOutdatedEvent(event_id=uuid4(), item_ids=item_uuids))
+            await self.event_bus.publish(ItemsBecameOutdatedEvent(event_id=uuid4(), item_ids=item_uuids))

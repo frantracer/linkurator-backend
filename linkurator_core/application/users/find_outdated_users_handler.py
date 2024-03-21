@@ -17,4 +17,4 @@ class FindOutdatedUsersHandler:
 
         for user in outdated_users:
             print(f'Found outdated user: {user.uuid}')
-            self.event_bus.publish(UserSubscriptionsBecameOutdatedEvent(uuid.uuid4(), user.uuid))
+            await self.event_bus.publish(UserSubscriptionsBecameOutdatedEvent(uuid.uuid4(), user.uuid))

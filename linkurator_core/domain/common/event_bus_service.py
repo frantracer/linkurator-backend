@@ -6,7 +6,7 @@ from linkurator_core.domain.common.event import Event
 
 class EventBusService(abc.ABC):
     @abc.abstractmethod
-    def publish(self, event: Event) -> None:
+    async def publish(self, event: Event) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod
