@@ -20,3 +20,7 @@ class EventBusService(abc.ABC):
     @abc.abstractmethod
     async def stop(self) -> None:
         raise NotImplementedError()
+
+    @abc.abstractmethod
+    def is_running(self) -> bool:
+        raise NotImplementedError()

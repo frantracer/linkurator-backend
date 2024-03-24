@@ -2,7 +2,7 @@ from time import strftime, gmtime
 
 import pytest
 
-from linkurator_core.infrastructure.asyncio.scheduler import TaskScheduler
+from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 
 
 @pytest.mark.asyncio

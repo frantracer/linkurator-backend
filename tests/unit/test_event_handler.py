@@ -1,3 +1,4 @@
+import datetime
 from unittest.mock import AsyncMock, MagicMock, call
 import uuid
 
@@ -17,7 +18,8 @@ async def test_user_became_obsolete_event_triggers_update_user_subscriptions_han
         refresh_items_handler=MagicMock())
 
     await event_handler.handle(UserSubscriptionsBecameOutdatedEvent(
-        event_id=uuid.UUID("416db0f0-d66f-4f47-9924-25c234615cc7"),
+        id=uuid.UUID("416db0f0-d66f-4f47-9924-25c234615cc7"),
+        created_at=datetime.datetime.utcnow(),
         user_id=uuid.UUID("5b71a7fa-0664-47b9-a28c-d43f2190c693")))
 
     handle_calls = update_user_subscriptions_handler.handle.call_args_list
@@ -35,7 +37,8 @@ async def test_subscription_became_obsolete_event_triggers_update_subscriptions_
         refresh_items_handler=MagicMock())
 
     await event_handler.handle(SubscriptionBecameOutdatedEvent(
-        event_id=uuid.UUID("f71fcaa6-0baf-43f3-863d-292bea2989e9"),
+        id=uuid.UUID("f71fcaa6-0baf-43f3-863d-292bea2989e9"),
+        created_at=datetime.datetime.utcnow(),
         subscription_id=uuid.UUID("4d00e658-2947-4781-a045-691f0ef57831")))
 
     handle_calls = update_subscription_items_handler.handle.call_args_list

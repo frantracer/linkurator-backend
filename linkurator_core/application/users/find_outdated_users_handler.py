@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta, timezone
-import uuid
 
-from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
@@ -17,4 +16,4 @@ class FindOutdatedUsersHandler:
 
         for user in outdated_users:
             print(f'Found outdated user: {user.uuid}')
-            await self.event_bus.publish(UserSubscriptionsBecameOutdatedEvent(uuid.uuid4(), user.uuid))
+            await self.event_bus.publish(UserSubscriptionsBecameOutdatedEvent.new(user.uuid))

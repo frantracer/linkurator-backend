@@ -13,9 +13,8 @@ from linkurator_core.application.users.find_outdated_users_handler import FindOu
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent, SubscriptionBecameOutdatedEvent, \
     ItemsBecameOutdatedEvent
-from linkurator_core.infrastructure.asyncio.event_bus_service import AsyncioEventBusService
-from linkurator_core.infrastructure.asyncio.scheduler import TaskScheduler
-from linkurator_core.infrastructure.asyncio.utils import run_parallel
+from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
+from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
@@ -24,6 +23,7 @@ from linkurator_core.infrastructure.mongodb.external_credentials_repository impo
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
+from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -62,7 +62,7 @@ async def main() -> None:  # pylint: disable=too-many-locals
         youtube_client=youtube_client)
 
     # Event bus
-    event_bus = AsyncioEventBusService()
+    event_bus = RabbitMQEventBus(host="localhost", port=5672, username="develop", password="develop")
 
     # Event handlers
     update_user_subscriptions = UpdateUserSubscriptionsHandler(
@@ -104,7 +104,10 @@ async def main() -> None:  # pylint: disable=too-many-locals
 
     await run_parallel(
         event_bus.start(),
-        scheduler.start()
+        run_sequence(
+            wait_until(event_bus.is_running),
+            scheduler.start()
+        )
     )
 
 

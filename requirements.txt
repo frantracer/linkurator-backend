@@ -16,3 +16,4 @@ backoff==2.1.2
 motor==3.2.0
 coverage==7.3.0
 isodate==0.6.1
+aio_pika==9.4.1

@@ -14,7 +14,7 @@ from linkurator_core.domain.items.item_repository import ItemRepository, ItemFil
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
-from linkurator_core.infrastructure.asyncio.utils import run_parallel
+from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel
 
 
 @pytest.mark.asyncio

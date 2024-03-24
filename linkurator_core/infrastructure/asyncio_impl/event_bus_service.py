@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import logging
+from datetime import datetime
 from typing import Any, Callable, Coroutine, Dict, List, Type
 from uuid import uuid4
 
@@ -8,7 +11,12 @@ from linkurator_core.domain.common.event_bus_service import EventBusService
 
 
 class ShutdownEvent(Event):
-    pass
+    @classmethod
+    def new(cls) -> ShutdownEvent:
+        return cls(
+            id=uuid4(),
+            created_at=datetime.utcnow()
+        )
 
 
 class AsyncioEventBusService(EventBusService):
@@ -42,4 +50,7 @@ class AsyncioEventBusService(EventBusService):
 
     async def stop(self) -> None:
         logging.info('stopping event bus service')
-        self._queue.put_nowait(ShutdownEvent(event_id=uuid4()))
+        self._queue.put_nowait(ShutdownEvent.new())
+
+    def is_running(self) -> bool:
+        return self._is_running

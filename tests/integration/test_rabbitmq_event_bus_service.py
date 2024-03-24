@@ -1,24 +1,29 @@
 import uuid
+from datetime import datetime
 from unittest.mock import AsyncMock
 
 import pytest
 
 from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
-from linkurator_core.infrastructure.asyncio_impl.event_bus_service import AsyncioEventBusService
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
+from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 
 
 @pytest.mark.asyncio
 async def test_publish_and_subscribe() -> None:
-    event_bus = AsyncioEventBusService()
+    event_bus = RabbitMQEventBus(host='localhost', port=5672, username='develop', password='develop')
     dummy_function = AsyncMock()
     event_bus.subscribe(UserSubscriptionsBecameOutdatedEvent, dummy_function)
+    event = UserSubscriptionsBecameOutdatedEvent(
+        id=uuid.uuid4(),
+        created_at=datetime.now(),
+        user_id=uuid.uuid4())
 
     results = await run_parallel(
         event_bus.start(),
         run_sequence(
             wait_until(event_bus.is_running),
-            event_bus.publish(UserSubscriptionsBecameOutdatedEvent.new(uuid.uuid4())),
+            event_bus.publish(event),
             wait_until(lambda: dummy_function.call_count == 1),
             event_bus.stop()
         )

@@ -1,5 +1,4 @@
 import logging
-from uuid import uuid4
 
 from linkurator_core.domain.common.event import ItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
@@ -22,4 +21,4 @@ class FindDeprecatedItemsHandler:
 
         if len(items) > 0:
             item_uuids = set(item.uuid for item in items)
-            await self.event_bus.publish(ItemsBecameOutdatedEvent(event_id=uuid4(), item_ids=item_uuids))
+            await self.event_bus.publish(ItemsBecameOutdatedEvent.new(item_ids=item_uuids))

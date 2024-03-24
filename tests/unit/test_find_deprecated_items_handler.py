@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, ANY
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
@@ -29,7 +29,7 @@ async def test_find_deprecated_items_publish_an_event_with_all_deprecated_items(
         page_number=0,
         limit=50)
     event_bus.publish.assert_called_once_with(
-        ItemsBecameOutdatedEvent(event_id=ANY, item_ids={items[0].uuid, items[1].uuid}))
+        ItemsBecameOutdatedEvent.new(item_ids={items[0].uuid, items[1].uuid}))
 
 
 @pytest.mark.asyncio

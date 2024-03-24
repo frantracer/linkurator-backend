@@ -7,3 +7,12 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=develop
       - MONGO_INITDB_ROOT_PASSWORD=develop
+
+  rabbitmq:
+    image: rabbitmq:3.9.7-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=develop
+      - RABBITMQ_DEFAULT_PASS=develop

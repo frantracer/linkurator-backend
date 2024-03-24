@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 
@@ -28,7 +28,7 @@ async def test_handler_sends_two_events_if_there_are_two_outdated_users() -> Non
                      google_refresh_token="token")
     user_repo_mock.find_latest_scan_before.return_value = [user1, user2]
 
-    event_bus_mock = MagicMock()
+    event_bus_mock = AsyncMock()
     handler = FindOutdatedUsersHandler(user_repo_mock, event_bus_mock)
 
     await handler.handle()
