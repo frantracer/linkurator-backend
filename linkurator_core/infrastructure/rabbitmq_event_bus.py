@@ -21,6 +21,7 @@ class RabbitMQEventBus(EventBusService):
         self.queue_name = queue_name
         self._is_running = False
         self.loop = loop or asyncio.get_event_loop()
+        self.url = f"amqp://{self.username}:{self.password}@{self.host}:{self.port}/"
 
     async def publish(self, event: Event) -> None:
         event_data = event.serialize()
@@ -28,7 +29,7 @@ class RabbitMQEventBus(EventBusService):
 
     async def _publish(self, data: str) -> None:
         if self.connection is None:
-            raise ValueError('Connection is not established')
+            self.connection = await aio_pika.connect_robust(self.url, loop=self.loop)
 
         channel = await self.connection.channel()
         await channel.default_exchange.publish(
@@ -43,8 +44,7 @@ class RabbitMQEventBus(EventBusService):
         self.event_handlers[event_type].append(callback)
 
     async def start(self) -> None:
-        url = f"amqp://{self.username}:{self.password}@{self.host}:{self.port}/"
-        self.connection = await aio_pika.connect_robust(url, loop=self.loop)
+        self.connection = await aio_pika.connect_robust(self.url, loop=self.loop)
 
         if self.connection is None:
             raise ValueError('Connection is not established')

@@ -1,17 +1,19 @@
-from datetime import datetime, timedelta, timezone
 import unittest
-from unittest.mock import MagicMock
 import uuid
+from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock, AsyncMock
 
-from linkurator_core.domain.users.account_service import UserInfo
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.domain.common.event_bus_service import EventBusService
+from linkurator_core.domain.users.account_service import UserInfo
 from linkurator_core.domain.users.session import Session
 from linkurator_core.domain.users.user import User
 
 
-class TestValidateTokenHandler(unittest.TestCase):
-    def test_an_existing_session_returns_a_session(self) -> None:
+class TestValidateTokenHandler(unittest.IsolatedAsyncioTestCase):
+    async def test_an_existing_session_returns_a_session(self) -> None:
         session_repo_mock = MagicMock()
         user_id: uuid.UUID = uuid.UUID("15537505-3cc9-441a-9eb7-36045042fb4d")
         dummy_session = Session("mytoken", user_id, datetime.now(tz=timezone.utc) + timedelta(days=1))
@@ -28,13 +30,15 @@ class TestValidateTokenHandler(unittest.TestCase):
         user_repo_mock.get.return_value = dummy_user
 
         account_service_mock = MagicMock()
+        event_bus_mock = AsyncMock(spec=EventBusService)
 
-        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock)
+        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock, event_bus_mock)
 
-        the_session = handler.handle(access_token="mytoken", refresh_token=None)
+        the_session = await handler.handle(access_token="mytoken", refresh_token=None)
         self.assertEqual(dummy_session, the_session)
+        self.assertEqual(event_bus_mock.publish.call_count, 0)
 
-    def test_a_non_existing_session_updates_user_information(self) -> None:
+    async def test_a_non_existing_session_updates_user_information(self) -> None:
         session_repo_mock = MagicMock()
         session_repo_mock.get.return_value = None
 
@@ -63,9 +67,11 @@ class TestValidateTokenHandler(unittest.TestCase):
             locale="es"
         )
 
-        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock)
+        event_bus_mock = AsyncMock(spec=EventBusService)
 
-        the_session = handler.handle(access_token="mytoken", refresh_token="myrefreshtoken")
+        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock, event_bus_mock)
+
+        the_session = await handler.handle(access_token="mytoken", refresh_token="myrefreshtoken")
         self.assertIsNotNone(the_session)
         self.assertEqual(user_repo_mock.update.call_count, 1)
         input_user: User = user_repo_mock.update.call_args[0][0]
@@ -78,8 +84,9 @@ class TestValidateTokenHandler(unittest.TestCase):
         self.assertGreater(input_user.updated_at, datetime.fromtimestamp(0, tz=timezone.utc))
         self.assertGreater(input_user.last_login_at, datetime.fromtimestamp(0, tz=timezone.utc))
 
+        self.assertEqual(event_bus_mock.publish.call_count, 0)
 
-    def test_a_invalid_session_returns_none(self) -> None:
+    async def test_a_invalid_session_returns_none(self) -> None:
         session_repo_mock = MagicMock()
         session_repo_mock.get.return_value = None
 
@@ -89,12 +96,14 @@ class TestValidateTokenHandler(unittest.TestCase):
         account_service_mock = MagicMock()
         account_service_mock.get_user_info.return_value = None
 
-        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock)
+        event_bus_mock = AsyncMock(spec=EventBusService)
 
-        the_session = handler.handle(access_token="mytoken", refresh_token=None)
+        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock, event_bus_mock)
+
+        the_session = await handler.handle(access_token="mytoken", refresh_token=None)
         self.assertIsNone(the_session)
 
-    def test_an_expired_session_returns_none(self) -> None:
+    async def test_an_expired_session_returns_none(self) -> None:
         session_repo_mock = MagicMock()
 
         session_repo_mock.get.return_value = Session(
@@ -107,12 +116,14 @@ class TestValidateTokenHandler(unittest.TestCase):
         account_service_mock = MagicMock()
         account_service_mock.get_user_info.return_value = None
 
-        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock)
+        event_bus_mock = AsyncMock(spec=EventBusService)
 
-        the_session = handler.handle(access_token="mytoken", refresh_token=None)
+        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock, event_bus_mock)
+
+        the_session = await handler.handle(access_token="mytoken", refresh_token=None)
         self.assertIsNone(the_session)
 
-    def test_valid_credentials_registers_a_user(self) -> None:
+    async def test_valid_credentials_registers_a_user(self) -> None:
         session_repo_mock = MagicMock()
         session_repo_mock.get.return_value = None
 
@@ -128,9 +139,11 @@ class TestValidateTokenHandler(unittest.TestCase):
             locale="en"
         )
 
-        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock)
+        event_bus_mock = AsyncMock(spec=EventBusService)
 
-        the_session = handler.handle(access_token="mytoken", refresh_token="myrefreshtoken")
+        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock, event_bus_mock)
+
+        the_session = await handler.handle(access_token="mytoken", refresh_token="myrefreshtoken")
         self.assertIsNotNone(the_session)
 
         self.assertEqual(user_repo_mock.add.call_count, 1)
@@ -140,7 +153,10 @@ class TestValidateTokenHandler(unittest.TestCase):
         self.assertEqual(created_user.email, "john@email.com")
         self.assertEqual(created_user.google_refresh_token, "myrefreshtoken")
 
-    def test_non_null_refresh_token_updates_user_refresh_token(self) -> None:
+        self.assertEqual(event_bus_mock.publish.call_count, 1)
+        self.assertEqual(type(event_bus_mock.publish.call_args[0][0]), UserSubscriptionsBecameOutdatedEvent)
+
+    async def test_non_null_refresh_token_updates_user_refresh_token(self) -> None:
         session_repo_mock = MagicMock()
         session_repo_mock.get.return_value = None
 
@@ -164,16 +180,18 @@ class TestValidateTokenHandler(unittest.TestCase):
             locale="en"
         )
 
-        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock)
+        event_bus_mock = AsyncMock(spec=EventBusService)
 
-        the_session = handler.handle(access_token="mytoken", refresh_token="myrefreshtoken")
+        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock, event_bus_mock)
+
+        the_session = await handler.handle(access_token="mytoken", refresh_token="myrefreshtoken")
         self.assertIsNotNone(the_session)
 
         self.assertEqual(user_repo_mock.update.call_count, 1)
         created_user: User = user_repo_mock.update.call_args[0][0]
         self.assertEqual(created_user.google_refresh_token, "myrefreshtoken")
 
-    def test_null_refresh_token_does_not_update_user_refresh_token(self) -> None:
+    async def test_null_refresh_token_does_not_update_user_refresh_token(self) -> None:
         session_repo_mock = MagicMock()
         session_repo_mock.get.return_value = None
 
@@ -197,9 +215,11 @@ class TestValidateTokenHandler(unittest.TestCase):
             locale="en"
         )
 
-        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock)
+        event_bus_mock = AsyncMock(spec=EventBusService)
 
-        the_session = handler.handle(access_token="mytoken", refresh_token=None)
+        handler = ValidateTokenHandler(user_repo_mock, session_repo_mock, account_service_mock, event_bus_mock)
+
+        the_session = await handler.handle(access_token="mytoken", refresh_token=None)
         self.assertIsNotNone(the_session)
 
         self.assertEqual(user_repo_mock.delete.call_count, 0)

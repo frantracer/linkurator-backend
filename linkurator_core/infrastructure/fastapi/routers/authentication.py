@@ -27,7 +27,7 @@ def get_router(validate_token_handler: ValidateTokenHandler, google_client: Goog
 
         token = request.cookies.get("token")
         if token is not None:
-            session = validate_token_handler.handle(access_token=token, refresh_token=None)
+            session = await validate_token_handler.handle(access_token=token, refresh_token=None)
             if session is not None:
                 if redirect_uri is None:
                     return JSONResponse(content={"token": session.token})
@@ -56,7 +56,7 @@ def get_router(validate_token_handler: ValidateTokenHandler, google_client: Goog
         if tokens is not None:
             token = tokens.access_token
 
-            session = validate_token_handler.handle(access_token=token, refresh_token=tokens.refresh_token)
+            session = await validate_token_handler.handle(access_token=token, refresh_token=tokens.refresh_token)
 
             if session is None:
                 return JSONResponse(content={"message": "Invalid token"}, status_code=http.HTTPStatus.UNAUTHORIZED)

@@ -30,6 +30,7 @@ from linkurator_core.application.users.get_user_profile_handler import GetUserPr
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
+from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
@@ -40,6 +41,7 @@ from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSes
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
+from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 
 
 def app_handlers() -> Handlers:
@@ -79,8 +81,12 @@ def app_handlers() -> Handlers:
         youtube_client=YoutubeApiClient(),
         api_key=google_secrets.api_key)
 
+    rabbitmq_settings = RabbitMQSettings()
+    event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,
+                                 username=rabbitmq_settings.user, password=rabbitmq_settings.password)
+
     return Handlers(
-        validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
+        validate_token=ValidateTokenHandler(user_repository, session_repository, account_service, event_bus),
         google_client=account_service,
         get_user_subscriptions=GetUserSubscriptionsHandler(subscription_repository, user_repository),
         get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository),

@@ -68,7 +68,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         token = request.cookies.get("token")
         if token is None:
             return None
-        session = handlers.validate_token.handle(access_token=token, refresh_token=None)
+        session = await handlers.validate_token.handle(access_token=token, refresh_token=None)
         return session
 
     @app.get("/health", tags=["API Status"])

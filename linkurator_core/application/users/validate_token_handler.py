@@ -2,10 +2,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import uuid4
 
-from linkurator_core.domain.users.user import User
+from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.users.account_service import AccountService
 from linkurator_core.domain.users.session import Session
 from linkurator_core.domain.users.session_repository import SessionRepository
+from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
 
 SESSION_DURATION_IN_DAYS: int = 30
@@ -13,12 +15,13 @@ SESSION_DURATION_IN_DAYS: int = 30
 
 class ValidateTokenHandler:
     def __init__(self, user_repository: UserRepository, session_repository: SessionRepository,
-                 account_service: AccountService):
+                 account_service: AccountService, event_bus: EventBusService):
         self.user_repository = user_repository
         self.session_repository = session_repository
         self.account_service = account_service
+        self.event_bus = event_bus
 
-    def handle(self, access_token: str, refresh_token: Optional[str]) -> Optional[Session]:
+    async def handle(self, access_token: str, refresh_token: Optional[str]) -> Optional[Session]:
         session: Optional[Session] = self.session_repository.get(access_token)
         if session is not None and not session.is_expired():
             return session
@@ -36,6 +39,8 @@ class ValidateTokenHandler:
                     last_name=user_info.family_name,
                     google_refresh_token=refresh_token)
                 self.user_repository.add(user)
+
+                await self.event_bus.publish(UserSubscriptionsBecameOutdatedEvent.new(user_id=user.uuid))
             else:
                 user.avatar_url = user_info.picture
                 user.locale = user_info.locale
