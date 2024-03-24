@@ -181,3 +181,20 @@ deploy: check-vault-pass-is-defined check-ssh-connection
 		make run-processor"
 	ssh root@$(SSH_IP_ADDRESS) "docker image prune -a -f"
 	@echo "Latest image is deployed"
+
+deploy-infra: deploy-mongodb deploy-rabbitmq
+
+deploy-mongodb: check-ssh-connection
+	@if [ -z "${MONGODB_USER}" ]; then echo "MONGODB_USER environment variable is not set"; exit 1; fi
+	@if [ -z "${MONGODB_PASS}" ]; then echo "MONGODB_PASS environment variable is not set"; exit 1; fi
+
+	ssh root@$(SSH_IP_ADDRESS) "docker run -d -p 27017:27017 --name linkurator-db --restart always -e 'MONGO_INITDB_ROOT_USERNAME=$(MONGODB_USER)' -e 'MONGO_INITDB_ROOT_PASSWORD=$(MONGODB_PASS)' mongo:5.0.5"
+
+deploy-rabbitmq: check-ssh-connection
+	@if [ -z "${RABBITMQ_USER}" ]; then echo "RABBITMQ_USER environment variable is not set"; exit 1; fi
+	@if [ -z "${RABBITMQ_PASS}" ]; then echo "RABBITMQ_PASS environment variable is not set"; exit 1; fi
+
+	ssh root@$(SSH_IP_ADDRESS) "docker run -d -p 5672:5672 -p 15672:15672 -h linkurator-rabbitmq --name linkurator-rabbitmq --restart always -e 'RABBITMQ_DEFAULT_USER=$(RABBITMQ_USER)' -e 'RABBITMQ_DEFAULT_PASS=$(RABBITMQ_PASS)' rabbitmq:3.13.0-management"
+
+tunnel-rabbitmq: check-ssh-connection
+	ssh -L 15000:localhost:15672 -N root@$(SSH_IP_ADDRESS)

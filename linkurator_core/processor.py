@@ -17,6 +17,7 @@ from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
+from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService, YoutubeApiClient
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
@@ -62,7 +63,9 @@ async def main() -> None:  # pylint: disable=too-many-locals
         youtube_client=youtube_client)
 
     # Event bus
-    event_bus = RabbitMQEventBus(host="localhost", port=5672, username="develop", password="develop")
+    rabbitmq_settings = RabbitMQSettings()
+    event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,
+                                 username=rabbitmq_settings.user, password=rabbitmq_settings.password)
 
     # Event handlers
     update_user_subscriptions = UpdateUserSubscriptionsHandler(
