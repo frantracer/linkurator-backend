@@ -36,6 +36,7 @@ class RabbitMQEventBus(EventBusService):
             aio_pika.Message(body=data.encode()),
             routing_key=self.queue_name
         )
+        await channel.close()
 
     def subscribe(self, event_type: Type[Event], callback: Callable[[Event], Coroutine[Any, Any, None]]) -> None:
         if event_type not in self.event_handlers:
@@ -68,6 +69,8 @@ class RabbitMQEventBus(EventBusService):
                         if event.__class__ in self.event_handlers:
                             for handler in self.event_handlers[event.__class__]:
                                 self.loop.create_task(handler(event))
+
+            await channel.close()
 
             self._is_running = False
 
