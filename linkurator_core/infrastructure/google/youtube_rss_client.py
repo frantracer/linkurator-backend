@@ -1,0 +1,57 @@
+import logging
+import xml.etree.ElementTree as ET
+from dataclasses import dataclass
+from datetime import datetime, timezone
+
+import aiohttp
+
+
+@dataclass
+class YoutubeRssItem:
+    title: str
+    link: str
+    published: datetime
+
+
+class YoutubeRssClient:
+    async def get_youtube_items(self, playlist_id: str) -> list[YoutubeRssItem]:
+        items = []
+        url = youtube_rss_url(playlist_id)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                response_text = await response.text()
+
+        root = ET.fromstring(response_text)
+
+        namespaces = {
+            "atom": "http://www.w3.org/2005/Atom"
+        }
+
+        item: ET.Element
+        for item in root.findall("atom:entry", namespaces):
+            title = item.findtext("atom:title", namespaces=namespaces)
+            if title is None:
+                title = ""
+
+            link_element = item.find("atom:link", namespaces=namespaces)
+            link_str = ""
+            if link_element is not None:
+                link_str = link_element.attrib.get("href", "")
+
+            published_str = item.findtext("atom:published", namespaces=namespaces)
+            published_date = datetime.fromtimestamp(0, tz=timezone.utc)
+            if published_str is not None:
+                try:
+                    # format is 2019-06-16T19:58:45+00:00
+                    published_date = datetime.strptime(published_str, "%Y-%m-%dT%H:%M:%S+00:00").replace(
+                        tzinfo=timezone.utc)
+                except ValueError as exception:
+                    logging.error("Error parsing published date: %s", exception)
+
+            items.append(YoutubeRssItem(title=title, link=link_str, published=published_date))
+
+        return items
+
+
+def youtube_rss_url(playlist_id: str) -> str:
+    return f"https://www.youtube.com/feeds/videos.xml?playlist_id={playlist_id}"

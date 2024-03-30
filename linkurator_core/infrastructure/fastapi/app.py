@@ -33,8 +33,10 @@ from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
-from linkurator_core.infrastructure.google.youtube_service import YoutubeService, YoutubeApiClient
+from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
+from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
@@ -79,7 +81,9 @@ def app_handlers() -> Handlers:
         item_repository=item_repository,
         credentials_repository=credentials_repository,
         youtube_client=YoutubeApiClient(),
-        api_key=google_secrets.api_key)
+        youtube_rss_client=YoutubeRssClient(),
+        api_key=google_secrets.api_key,
+    )
 
     rabbitmq_settings = RabbitMQSettings()
     event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,

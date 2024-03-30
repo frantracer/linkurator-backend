@@ -3,7 +3,7 @@ import asyncio
 from datetime import datetime
 
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
-from linkurator_core.infrastructure.google.youtube_service import YoutubeApiClient
+from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 
 
 async def main() -> None:

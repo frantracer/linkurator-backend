@@ -4,7 +4,7 @@ import sys
 
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
-from linkurator_core.infrastructure.google.youtube_service import YoutubeApiClient
+from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 
 
 async def main() -> None:

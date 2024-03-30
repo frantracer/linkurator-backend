@@ -19,7 +19,9 @@ from linkurator_core.infrastructure.config.google_secrets import GoogleClientSec
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
-from linkurator_core.infrastructure.google.youtube_service import YoutubeService, YoutubeApiClient
+from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
+from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
+from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
@@ -50,6 +52,7 @@ async def main() -> None:  # pylint: disable=too-many-locals
     google_client_secret_path = os.environ.get('LINKURATOR_GOOGLE_SECRET_PATH', "secrets/client_secret.json")
     google_secrets = GoogleClientSecrets(google_client_secret_path)
     youtube_client = YoutubeApiClient()
+    youtube_rss_client = YoutubeRssClient()
     account_service = GoogleAccountService(
         client_id=google_secrets.client_id,
         client_secret=google_secrets.client_secret)
@@ -60,7 +63,9 @@ async def main() -> None:  # pylint: disable=too-many-locals
         item_repository=item_repository,
         credentials_repository=credentials_repository,
         api_key=google_secrets.api_key,
-        youtube_client=youtube_client)
+        youtube_client=youtube_client,
+        youtube_rss_client=youtube_rss_client
+    )
 
     # Event bus
     rabbitmq_settings = RabbitMQSettings()

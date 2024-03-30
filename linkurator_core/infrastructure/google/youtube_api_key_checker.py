@@ -2,7 +2,7 @@ from datetime import datetime
 
 from linkurator_core.domain.users.external_credentials_checker_service import ExternalCredentialsCheckerService
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
-from linkurator_core.infrastructure.google.youtube_service import YoutubeApiClient
+from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 
 
 class YoutubeApiKeyChecker(ExternalCredentialsCheckerService):

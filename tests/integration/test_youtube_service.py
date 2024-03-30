@@ -1,5 +1,5 @@
 import json
-from datetime import timezone, datetime
+from datetime import timezone, datetime, timedelta
 from typing import Optional
 from unittest.mock import AsyncMock, MagicMock, call
 from uuid import UUID, uuid4
@@ -17,8 +17,10 @@ from linkurator_core.domain.users.external_service_credential import ExternalSer
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
-from linkurator_core.infrastructure.google.youtube_service import YoutubeService, YoutubeApiClient, YoutubeChannel, \
-    YoutubeVideo, LiveBroadcastContent
+from linkurator_core.infrastructure.google.youtube_api_client import (YoutubeChannel, YoutubeVideo,
+                                                                      LiveBroadcastContent, YoutubeApiClient)
+from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient, YoutubeRssItem
+from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 
 
 def mock_youtube_channel(channel_id: str = "channel_id") -> YoutubeChannel:
@@ -81,7 +83,12 @@ async def test_youtube_service_returns_subscriptions_from_user() -> None:
             country="country",
             url="https://channel_url.com/channel_id")
     ]
+
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = []
+
     service = YoutubeService(youtube_client=client_mock,
+                             youtube_rss_client=rss_client_mock,
                              api_key="api_key",
                              google_account_service=google_service_mock,
                              user_repository=MagicMock(),
@@ -125,7 +132,12 @@ async def test_youtube_service_returns_a_single_subscription_using_the_key_from_
         channel_title="channel_title",
         country="country",
         url="https://channel_url.com/channel_id")
+
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = []
+
     service = YoutubeService(youtube_client=client_mock,
+                             youtube_rss_client=rss_client_mock,
                              api_key="api_key",
                              google_account_service=MagicMock(),
                              user_repository=user_repo_mock,
@@ -160,23 +172,33 @@ async def test_youtube_service_returns_subscription_items() -> None:
         },
     )
 
+    video = YoutubeVideo(
+        video_id="video_id",
+        channel_id="channel_123",
+        title="video_title",
+        country="country",
+        channel_url="https://channel_url.com/channel_id",
+        thumbnail_url="https://thumbnail.com/image",
+        description="video_description",
+        published_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        url="https://video_url.com/video_id",
+        duration="PT1H1M1S",
+        live_broadcast_content=LiveBroadcastContent.NONE
+    )
     client_mock = AsyncMock(spec=YoutubeApiClient)
-    client_mock.get_youtube_videos_from_playlist.return_value = [
-        YoutubeVideo(
-            video_id="video_id",
-            channel_id="channel_123",
-            title="video_title",
-            country="country",
-            channel_url="https://channel_url.com/channel_id",
-            thumbnail_url="https://thumbnail.com/image",
-            description="video_description",
-            published_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-            url="https://video_url.com/video_id",
-            duration="PT1H1M1S",
-            live_broadcast_content=LiveBroadcastContent.NONE
+    client_mock.get_youtube_videos_from_playlist.return_value = [video]
+
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = [
+        YoutubeRssItem(
+            title=video.title,
+            link=video.url,
+            published=video.published_at
         )
     ]
+
     service = YoutubeService(youtube_client=client_mock,
+                             youtube_rss_client=rss_client_mock,
                              api_key="api_key",
                              google_account_service=MagicMock(),
                              user_repository=MagicMock(),
@@ -210,7 +232,12 @@ async def test_get_youtube_subscriptions_uses_provided_credentials() -> None:
 
     client_mock = AsyncMock(spec=YoutubeApiClient)
     client_mock.get_youtube_subscriptions.return_value = []
+
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = []
+
     service = YoutubeService(youtube_client=client_mock,
+                             youtube_rss_client=rss_client_mock,
                              api_key="api_key",
                              google_account_service=google_service_mock,
                              user_repository=MagicMock(),
@@ -238,7 +265,12 @@ async def test_get_youtube_subscriptions_raise_error_if_credential_is_not_a_yout
 
     client_mock = AsyncMock(spec=YoutubeApiClient)
     client_mock.get_youtube_subscriptions.return_value = []
+
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = []
+
     service = YoutubeService(youtube_client=client_mock,
+                             youtube_rss_client=rss_client_mock,
                              api_key="api_key",
                              google_account_service=google_service_mock,
                              user_repository=MagicMock(),
@@ -266,7 +298,12 @@ async def test_get_youtube_channel_uses_provided_credentials() -> None:
 
     client_mock = AsyncMock(spec=YoutubeApiClient)
     client_mock.get_youtube_channel.return_value = youtube_channel
+
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = []
+
     service = YoutubeService(youtube_client=client_mock,
+                             youtube_rss_client=rss_client_mock,
                              api_key="api_key",
                              google_account_service=google_service_mock,
                              user_repository=MagicMock(),
@@ -296,7 +333,12 @@ async def test_get_youtube_channel_raise_error_if_credential_is_not_a_youtube_ap
 
     client_mock = AsyncMock(spec=YoutubeApiClient)
     client_mock.get_youtube_channel.return_value = youtube_channel
+
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = []
+
     service = YoutubeService(youtube_client=client_mock,
+                             youtube_rss_client=rss_client_mock,
                              api_key="api_key",
                              google_account_service=google_service_mock,
                              user_repository=MagicMock(),
@@ -323,8 +365,20 @@ async def test_get_youtube_videos_from_playlist_uses_provided_credential() -> No
 
     client_mock = AsyncMock(spec=YoutubeApiClient)
     client_mock.get_youtube_channel.return_value = youtube_channel
+    video = mock_youtube_video()
+    client_mock.get_youtube_videos_from_playlist.return_value = [video]
+
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = [
+        YoutubeRssItem(
+            title=video.title,
+            link=video.url,
+            published=video.published_at
+        )
+    ]
 
     service = YoutubeService(youtube_client=client_mock,
+                             youtube_rss_client=rss_client_mock,
                              api_key="api_key",
                              google_account_service=google_service_mock,
                              user_repository=MagicMock(),
@@ -332,10 +386,56 @@ async def test_get_youtube_videos_from_playlist_uses_provided_credential() -> No
                              item_repository=MagicMock(spec=ItemRepository),
                              credentials_repository=AsyncMock())
 
-    await service.get_subscription_items(sub_id=sub.uuid, from_date=datetime.now(), credential=credential)
+    await service.get_subscription_items(sub_id=sub.uuid, from_date=video.published_at, credential=credential)
 
     assert client_mock.get_youtube_videos_from_playlist.call_count == 1
     assert client_mock.get_youtube_videos_from_playlist.call_args[1]['api_key'] == credential.credential_value
+
+
+@pytest.mark.asyncio
+async def test_youtube_videos_from_playlist_does_not_ask_youtube_api_if_there_is_no_newer_videos_in_rss() -> None:
+    video = mock_youtube_video()
+
+    youtube_channel = mock_youtube_channel()
+
+    sub = mock_sub()
+    sub.external_data = {"playlist_id": youtube_channel.playlist_id}
+    subs_repo_mock = MagicMock(spec=SubscriptionRepository)
+    subs_repo_mock.get.return_value = sub
+
+    google_service_mock = MagicMock(spec=GoogleAccountService)
+
+    credential = mock_credential()
+
+    client_mock = AsyncMock(spec=YoutubeApiClient)
+    client_mock.get_youtube_channel.return_value = youtube_channel
+    client_mock.get_youtube_videos_from_playlist.return_value = [video]
+
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = [
+        YoutubeRssItem(
+            title=video.title,
+            link=video.url,
+            published=video.published_at
+        )
+    ]
+
+    service = YoutubeService(youtube_client=client_mock,
+                             youtube_rss_client=rss_client_mock,
+                             api_key="api_key",
+                             google_account_service=google_service_mock,
+                             user_repository=MagicMock(),
+                             subscription_repository=subs_repo_mock,
+                             item_repository=MagicMock(spec=ItemRepository),
+                             credentials_repository=AsyncMock())
+
+    items = await service.get_subscription_items(sub_id=sub.uuid,
+                                                 from_date=video.published_at + timedelta(seconds=1),
+                                                 credential=credential)
+
+    assert len(items) == 0
+    assert rss_client_mock.get_youtube_items.call_count == 1
+    assert client_mock.get_youtube_videos_from_playlist.call_count == 0
 
 
 @pytest.mark.asyncio
@@ -354,8 +454,20 @@ async def test_get_youtube_videos_raise_error_if_credential_is_not_a_youtube_api
 
     client_mock = AsyncMock(spec=YoutubeApiClient)
     client_mock.get_youtube_channel.return_value = youtube_channel
+    video = mock_youtube_video()
+    client_mock.get_youtube_videos_from_playlist.return_value = [video]
+
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = [
+        YoutubeRssItem(
+            title=video.title,
+            link=video.url,
+            published=video.published_at
+        )
+    ]
 
     service = YoutubeService(youtube_client=client_mock,
+                             youtube_rss_client=rss_client_mock,
                              api_key="api_key",
                              google_account_service=google_service_mock,
                              user_repository=MagicMock(),
@@ -364,7 +476,7 @@ async def test_get_youtube_videos_raise_error_if_credential_is_not_a_youtube_api
                              credentials_repository=AsyncMock())
 
     with pytest.raises(InvalidCredentialTypeError):
-        await service.get_subscription_items(sub_id=sub.uuid, from_date=datetime.now(), credential=credential)
+        await service.get_subscription_items(sub_id=sub.uuid, from_date=video.published_at, credential=credential)
 
 
 @pytest.mark.asyncio
@@ -383,7 +495,11 @@ async def test_get_youtube_videos_returns_all_available_videos() -> None:
     item_repo_mock = MagicMock(spec=ItemRepository)
     item_repo_mock.find_items.return_value = [item1, item2]
 
+    rss_client_mock = AsyncMock(spec=YoutubeRssClient)
+    rss_client_mock.get_youtube_items.return_value = []
+
     service = YoutubeService(youtube_client=youtube_client_mock,
+                             youtube_rss_client=rss_client_mock,
                              api_key="api_key",
                              google_account_service=MagicMock(spec=GoogleAccountService),
                              user_repository=MagicMock(spec=UserRepository),
