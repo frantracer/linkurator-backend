@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime
 from random import randint
@@ -105,6 +106,8 @@ class YoutubeService(SubscriptionService):
         rss_items = [i for i in rss_items if i.published >= from_date]
         if len(rss_items) == 0:
             return []
+
+        logging.info("Checking youtube API")
 
         if credential is not None:
             if not credential.credential_type == ExternalServiceType.YOUTUBE_API_KEY:

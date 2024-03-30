@@ -41,7 +41,7 @@ async def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions(
 
 
 @pytest.mark.asyncio
-async def test_calculate_subscription_refresh_period_is_2_hours_if_there_is_one_user_with_no_credentials() -> None:
+async def test_calculate_subscription_refresh_period_is_5_minutes_if_there_is_one_user_with_no_credentials() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
 
@@ -57,11 +57,11 @@ async def test_calculate_subscription_refresh_period_is_2_hours_if_there_is_one_
                                                user_repository=user_repository_mock,
                                                external_credentials_repository=credentials_repository_mock)
 
-    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 60 * 2
+    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 5
 
 
 @pytest.mark.asyncio
-async def test_calculate_subscription_refresh_period_is_60_minutes_if_there_is_one_user_and_one_credential() -> None:
+async def test_calculate_subscription_refresh_period_is_1_minute_if_there_is_one_user_and_one_credential() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
     credential = mock_credential(user.uuid)
@@ -78,11 +78,11 @@ async def test_calculate_subscription_refresh_period_is_60_minutes_if_there_is_o
                                                user_repository=user_repository_mock,
                                                external_credentials_repository=credentials_repository_mock)
 
-    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 60
+    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 1
 
 
 @pytest.mark.asyncio
-async def test_calculate_subscription_refresh_period_is_30_minutes_if_there_is_one_user_and_two_credentials() -> None:
+async def test_calculate_subscription_refresh_period_is_1_minute_if_there_is_one_user_and_two_credentials() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
     credential1 = mock_credential(user.uuid)
@@ -100,7 +100,7 @@ async def test_calculate_subscription_refresh_period_is_30_minutes_if_there_is_o
                                                user_repository=user_repository_mock,
                                                external_credentials_repository=credentials_repository_mock)
 
-    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 30
+    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 1
 
 
 @pytest.mark.asyncio

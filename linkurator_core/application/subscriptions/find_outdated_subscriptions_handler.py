@@ -10,8 +10,8 @@ from linkurator_core.domain.users.external_service_credential_repository import 
 from linkurator_core.domain.users.user_repository import UserRepository
 
 REFRESH_PERIOD_WITH_NO_SUBSCRIBERS_IN_MINUTES = 60 * 24
-REFRESH_PERIOD_WITH_NO_CREDENTIALS_IN_MINUTES = 60 * 2
-REFRESH_PERIOD_WITH_ONE_CREDENTIAL_IN_MINUTES = 60
+REFRESH_PERIOD_WITH_NO_CREDENTIALS_IN_MINUTES = 5
+REFRESH_PERIOD_WITH_CREDENTIALS_IN_MINUTES = 1
 
 
 class FindOutdatedSubscriptionsHandler:
@@ -55,4 +55,4 @@ class FindOutdatedSubscriptionsHandler:
         if len(credentials) == 0:
             return REFRESH_PERIOD_WITH_NO_CREDENTIALS_IN_MINUTES
 
-        return int(REFRESH_PERIOD_WITH_ONE_CREDENTIAL_IN_MINUTES / len(credentials))
+        return REFRESH_PERIOD_WITH_CREDENTIALS_IN_MINUTES
