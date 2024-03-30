@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 
 import aiohttp
 
+from linkurator_core.domain.common.exceptions import InvalidYoutubeRssFeedError
+
 
 @dataclass
 class YoutubeRssItem:
@@ -19,6 +21,8 @@ class YoutubeRssClient:
         url = youtube_rss_url(playlist_id)
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
+                if response.status != 200:
+                    raise InvalidYoutubeRssFeedError(f"Invalid response status: {response.status}")
                 response_text = await response.text()
 
         root = ET.fromstring(response_text)

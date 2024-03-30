@@ -28,3 +28,7 @@ class CredentialsAlreadyExistsError(Exception):
 
 class InvalidCredentialTypeError(Exception):
     pass
+
+
+class InvalidYoutubeRssFeedError(Exception):
+    pass
