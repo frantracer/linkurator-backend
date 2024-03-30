@@ -66,10 +66,8 @@ class RabbitMQEventBus(EventBusService):
                         event = Event.deserialize(payload)
 
                         if event.__class__ in self.event_handlers:
-                            tasks = []
                             for handler in self.event_handlers[event.__class__]:
-                                tasks.append(handler(event))
-                            await asyncio.gather(*tasks)
+                                self.loop.create_task(handler(event))
 
             self._is_running = False
 
