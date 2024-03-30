@@ -3,9 +3,8 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-import aiohttp
-
 from linkurator_core.domain.common.exceptions import InvalidYoutubeRssFeedError
+from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
 
 
 @dataclass
@@ -16,16 +15,20 @@ class YoutubeRssItem:
 
 
 class YoutubeRssClient:
+    def __init__(self, http_client: AsyncHttpClient = AsyncHttpClient()):
+        self.http_client = http_client
+
     async def get_youtube_items(self, playlist_id: str) -> list[YoutubeRssItem]:
         items = []
         url = youtube_rss_url(playlist_id)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status != 200:
-                    raise InvalidYoutubeRssFeedError(f"Invalid response status: {response.status}")
-                response_text = await response.text()
 
-        root = ET.fromstring(response_text)
+        response = await self.http_client.get(url)
+        if response.status == 404:
+            return []
+        if response.status != 200:
+            raise InvalidYoutubeRssFeedError(f"Invalid response status: {response.status}")
+
+        root = ET.fromstring(response.text)
 
         namespaces = {
             "atom": "http://www.w3.org/2005/Atom"
