@@ -181,7 +181,7 @@ async def test_youtube_service_returns_subscription_items() -> None:
         channel_url="https://channel_url.com/channel_id",
         thumbnail_url="https://thumbnail.com/image",
         description="video_description",
-        published_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        published_at=datetime(2020, 1, 1, 2, 0, 0, tzinfo=timezone.utc),
         url="https://video_url.com/video_id",
         duration="PT1H1M1S",
         live_broadcast_content=LiveBroadcastContent.NONE
@@ -387,7 +387,8 @@ async def test_get_youtube_videos_from_playlist_uses_provided_credential() -> No
                              item_repository=MagicMock(spec=ItemRepository),
                              credentials_repository=AsyncMock())
 
-    await service.get_subscription_items(sub_id=sub.uuid, from_date=video.published_at, credential=credential)
+    from_date = video.published_at - timedelta(seconds=1)
+    await service.get_subscription_items(sub_id=sub.uuid, from_date=from_date, credential=credential)
 
     assert client_mock.get_youtube_videos_from_playlist.call_count == 1
     assert client_mock.get_youtube_videos_from_playlist.call_args[1]['api_key'] == credential.credential_value
@@ -477,7 +478,8 @@ async def test_get_youtube_videos_raise_error_if_credential_is_not_a_youtube_api
                              credentials_repository=AsyncMock())
 
     with pytest.raises(InvalidCredentialTypeError):
-        await service.get_subscription_items(sub_id=sub.uuid, from_date=video.published_at, credential=credential)
+        from_date = video.published_at - timedelta(seconds=1)
+        await service.get_subscription_items(sub_id=sub.uuid, from_date=from_date, credential=credential)
 
 
 @pytest.mark.asyncio

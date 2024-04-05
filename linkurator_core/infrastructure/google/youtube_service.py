@@ -102,7 +102,7 @@ class YoutubeService(SubscriptionService):
 
         rss_items = await self.youtube_rss_client.get_youtube_items(
             playlist_id=subscription.external_data["playlist_id"])
-        rss_items = [i for i in rss_items if i.published >= from_date]
+        rss_items = [i for i in rss_items if i.published > from_date]
         if len(rss_items) == 0:
             return []
 
