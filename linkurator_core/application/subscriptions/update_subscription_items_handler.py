@@ -42,7 +42,6 @@ class UpdateSubscriptionItemsHandler:
                 from_date=subscription.last_published_at)
             item_count = 0
             new_filtered_items: List[Item] = []
-            last_published_item = datetime.fromtimestamp(0, tz=timezone.utc)
             for item in new_items:
                 if item_count % 100 == 0:
                     logging.debug("%s items processed", item_count)
@@ -50,15 +49,15 @@ class UpdateSubscriptionItemsHandler:
 
                 items = self.item_repository.find_items(criteria=ItemFilterCriteria(url=item.url),
                                                         page_number=0, limit=1)
-                if len(items) > 0:
-                    last_published_item = max([item.published_at for item in items] + [last_published_item])
+
                 if len(items) == 0:
                     new_filtered_items.append(item)
 
             self.item_repository.upsert_items(new_filtered_items)
 
             subscription.scanned_at = now
-            subscription.last_published_at = last_published_item
+            if len(new_items) > 0:
+                subscription.last_published_at = max([i.published_at for i in new_items])
             self.subscription_repository.update(subscription)
 
             logging.info("Updated %s items of subscription %s - %s",
