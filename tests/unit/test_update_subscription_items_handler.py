@@ -14,7 +14,7 @@ from linkurator_core.domain.items.item_repository import ItemRepository, ItemFil
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
-from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel
+from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence
 
 
 @pytest.mark.asyncio
@@ -146,13 +146,14 @@ async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription() -
         last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
         external_data={})
 
-    async def wait_1_second_and_return_no_items(
-            sub_id: uuid.UUID, from_date: datetime) -> List[Item]:  # pylint: disable=unused-argument
-        await asyncio.sleep(1)
+    async def wait_2_second_and_return_no_items(
+            sub_id: uuid.UUID, from_date: datetime  # pylint: disable=unused-argument
+    ) -> List[Item]:
+        await asyncio.sleep(2)
         return []
 
     subscription_service = AsyncMock(spec=SubscriptionService)
-    subscription_service.get_subscription_items.side_effect = wait_1_second_and_return_no_items
+    subscription_service.get_subscription_items.side_effect = wait_2_second_and_return_no_items
 
     subscription_repository = MagicMock(spec=SubscriptionRepository)
     subscription_repository.get.return_value = copy(sub1)
@@ -164,8 +165,10 @@ async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription() -
                                              item_repository=item_repository)
     await run_parallel(
         handler.handle(sub1.uuid),
-        handler.handle(sub1.uuid))
+        run_sequence(
+            asyncio.sleep(1),
+            handler.handle(sub1.uuid)
+        )
+    )
 
-    await handler.handle(sub1.uuid)
-
-    assert subscription_repository.update.call_count == 2
+    assert subscription_repository.update.call_count == 1
