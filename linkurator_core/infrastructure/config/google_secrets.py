@@ -18,4 +18,4 @@ class GoogleClientSecrets:
         if api_key_path == '':
             api_key_path = f'{pathlib.Path(__file__).parent.absolute()}/../../../secrets/google_api_key.txt'
         with open(api_key_path, "r", encoding='UTF-8') as api_key_file:
-            self.api_keys = api_key_file.read().splitlines()
+            self.api_keys = [key for key in api_key_file.read().splitlines() if key.strip() != '']
