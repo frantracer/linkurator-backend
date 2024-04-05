@@ -19,7 +19,7 @@ async def main() -> None:
 
     client = YoutubeApiClient()
     videos = await client.get_youtube_videos_from_playlist(
-        api_key=secrets.api_key,
+        api_key=secrets.api_keys[0],
         playlist_id=playlist_id,
         from_date=from_date)
 

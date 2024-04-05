@@ -82,7 +82,7 @@ def app_handlers() -> Handlers:
         credentials_repository=credentials_repository,
         youtube_client=YoutubeApiClient(),
         youtube_rss_client=YoutubeRssClient(),
-        api_key=google_secrets.api_key,
+        api_keys=google_secrets.api_keys,
     )
 
     rabbitmq_settings = RabbitMQSettings()

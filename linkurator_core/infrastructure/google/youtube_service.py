@@ -28,7 +28,7 @@ class YoutubeService(SubscriptionService):
                  credentials_repository: ExternalCredentialRepository,
                  youtube_client: YoutubeApiClient,
                  youtube_rss_client: YoutubeRssClient,
-                 api_key: str):
+                 api_keys: list[str]):
         self.google_account_service = google_account_service
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
@@ -36,7 +36,10 @@ class YoutubeService(SubscriptionService):
         self.credentials_repository = credentials_repository
         self.youtube_client = youtube_client
         self.youtube_rss_client = youtube_rss_client
-        self.api_key = api_key
+        self.api_keys = api_keys
+
+        if len(api_keys) == 0:
+            raise ValueError("No API keys provided")
 
     async def get_subscriptions(
             self,
@@ -46,7 +49,7 @@ class YoutubeService(SubscriptionService):
         user = self.user_repository.get(user_id)
         youtube_channels = []
 
-        api_key = self.api_key
+        api_key = self._get_api_key()
         if credential is not None:
             if not credential.credential_type == ExternalServiceType.YOUTUBE_API_KEY:
                 raise InvalidCredentialTypeError("Invalid credential type")
@@ -136,7 +139,7 @@ class YoutubeService(SubscriptionService):
         video_id_to_item: Dict[str, Item] = {link_to_video_id(str(item.url)): item for item in items}
 
         updated_videos = await self.youtube_client.get_youtube_videos(
-            api_key=self.api_key if credential is None else credential.credential_value,
+            api_key=self._get_api_key() if credential is None else credential.credential_value,
             video_ids=[link_to_video_id(str(item.url)) for item in items])
 
         updated_items = {v.to_item(item_id=video_id_to_item[v.video_id].uuid,
@@ -148,7 +151,7 @@ class YoutubeService(SubscriptionService):
     async def _get_api_key_for_sub(self, sub_id: uuid.UUID) -> str:
         subscribed_users = self.user_repository.find_users_subscribed_to_subscription(sub_id)
         if len(subscribed_users) == 0:
-            return self.api_key
+            return self._get_api_key()
 
         credentials = await self.credentials_repository.find_by_users_and_type(
             user_ids=[u.uuid for u in subscribed_users],
@@ -156,6 +159,9 @@ class YoutubeService(SubscriptionService):
         )
 
         if len(credentials) == 0:
-            return self.api_key
+            return self._get_api_key()
 
         return credentials[randint(0, len(credentials) - 1)].credential_value
+
+    def _get_api_key(self) -> str:
+        return self.api_keys[randint(0, len(self.api_keys) - 1)]
