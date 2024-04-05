@@ -46,6 +46,8 @@ def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository) -> N
     assert int(the_subscription.created_at.timestamp() * 100) == floor(subscription.created_at.timestamp() * 100)
     assert int(the_subscription.updated_at.timestamp() * 100) == floor(subscription.updated_at.timestamp() * 100)
     assert int(the_subscription.scanned_at.timestamp() * 100) == floor(subscription.scanned_at.timestamp() * 100)
+    assert int(the_subscription.last_published_at.timestamp() * 100) == floor(
+        subscription.last_published_at.timestamp() * 100)
 
 
 def test_add_subscriptions_stores_any_external_data(subscription_repo: MongoDBSubscriptionRepository) -> None:
@@ -103,6 +105,7 @@ def test_find_subscriptions_scanned_before_a_date(subscription_repo: MongoDBSubs
         created_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
         updated_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
         scanned_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+        last_published_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
         external_data={}
     )
     sub2 = Subscription(
@@ -114,6 +117,7 @@ def test_find_subscriptions_scanned_before_a_date(subscription_repo: MongoDBSubs
         created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         updated_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         scanned_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        last_published_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         external_data={}
     )
 
@@ -165,7 +169,9 @@ def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: Mong
         external_data={},
         created_at=datetime(2020, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
         updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc))
+        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc)
+    )
     sub2 = Subscription(
         name="test",
         uuid=uuid.UUID("5745b75b-9a0a-49ff-85c5-b69c03bd1ba2"),
@@ -175,7 +181,9 @@ def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: Mong
         external_data={},
         created_at=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
         updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc))
+        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc)
+    )
     sub3 = Subscription(
         name="test",
         uuid=uuid.UUID("d30ca1c8-40c4-4bcd-8b4f-81f0e315c975"),
@@ -185,7 +193,9 @@ def test_get_list_of_subscriptions_ordered_by_created_at(subscription_repo: Mong
         external_data={},
         created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc))
+        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc)
+    )
 
     subscription_repo.add(sub1)
     subscription_repo.add(sub2)
@@ -208,7 +218,9 @@ def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository) -
         external_data={},
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
         updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc))
+        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc)
+    )
     subscription_repo.add(sub)
 
     sub.name = "new name"
@@ -219,6 +231,7 @@ def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository) -
     sub.created_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     sub.updated_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     sub.scanned_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    sub.last_published_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
 
     subscription_repo.update(sub)
     updated_subscription = subscription_repo.get(sub.uuid)
@@ -231,6 +244,7 @@ def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository) -
     assert updated_subscription.created_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     assert updated_subscription.updated_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     assert updated_subscription.scanned_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    assert updated_subscription.last_published_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
 
 
 def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository) -> None:

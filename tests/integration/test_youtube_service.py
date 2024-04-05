@@ -162,6 +162,7 @@ async def test_youtube_service_returns_subscription_items() -> None:
         scanned_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         updated_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        last_published_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         name="channel_title",
         provider=SubscriptionProvider.YOUTUBE,
         url=parse_url("https://channel_url.com/channel_id"),

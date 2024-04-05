@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from ipaddress import IPv4Address
 from typing import Dict, List, Optional, Any
 from uuid import UUID
@@ -26,6 +26,7 @@ class MongoDBSubscription(BaseModel):
     created_at: datetime
     updated_at: datetime
     scanned_at: datetime
+    last_published_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
 
     @staticmethod
     def from_domain_subscription(subscription: Subscription) -> MongoDBSubscription:
@@ -38,7 +39,8 @@ class MongoDBSubscription(BaseModel):
             thumbnail=str(subscription.thumbnail),
             created_at=subscription.created_at,
             updated_at=subscription.updated_at,
-            scanned_at=subscription.scanned_at
+            scanned_at=subscription.scanned_at,
+            last_published_at=subscription.last_published_at
         )
 
     def to_domain_subscription(self) -> Subscription:
@@ -51,7 +53,8 @@ class MongoDBSubscription(BaseModel):
             thumbnail=utils.parse_url(self.thumbnail),
             created_at=self.created_at,
             updated_at=self.updated_at,
-            scanned_at=self.scanned_at
+            scanned_at=self.scanned_at,
+            last_published_at=self.last_published_at
         )
 
 

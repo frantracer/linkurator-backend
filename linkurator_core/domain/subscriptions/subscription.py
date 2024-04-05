@@ -24,6 +24,7 @@ class Subscription:
     created_at: datetime
     updated_at: datetime
     scanned_at: datetime
+    last_published_at: datetime
 
     @classmethod
     def new(cls, uuid: UUID, name: str, provider: SubscriptionProvider, url: AnyUrl, thumbnail: AnyUrl,
@@ -38,5 +39,6 @@ class Subscription:
             thumbnail=thumbnail,
             created_at=now,
             updated_at=now,
-            scanned_at=datetime.fromtimestamp(0, tz=timezone.utc)
+            scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
+            last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
         )

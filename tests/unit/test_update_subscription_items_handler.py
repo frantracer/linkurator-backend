@@ -28,6 +28,7 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered() 
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
         updated_at=datetime.fromtimestamp(1, tz=timezone.utc),
         scanned_at=datetime.fromtimestamp(2, tz=timezone.utc),
+        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
         external_data={})
 
     item1 = Item.new(
@@ -55,7 +56,8 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered() 
     await handler.handle(sub1.uuid)
 
     assert subscription_service.get_subscription_items.call_count == 1
-    assert subscription_service.get_subscription_items.call_args == call(sub_id=sub1.uuid, from_date=sub1.scanned_at)
+    assert subscription_service.get_subscription_items.call_args == call(sub_id=sub1.uuid,
+                                                                         from_date=sub1.last_published_at)
     assert subscription_repository.get.call_count == 1
     assert subscription_repository.get.call_args == call(sub1.uuid)
     assert item_repository.find_items.call_count == 1
@@ -77,6 +79,7 @@ async def test_update_subscriptions_items_with_items_that_are_already_registered
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
         updated_at=datetime.fromtimestamp(1, tz=timezone.utc),
         scanned_at=datetime.fromtimestamp(2, tz=timezone.utc),
+        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
         external_data={})
 
     item1 = Item.new(
@@ -113,7 +116,8 @@ async def test_update_subscriptions_items_with_items_that_are_already_registered
     await handler.handle(sub1.uuid)
 
     assert subscription_service.get_subscription_items.call_count == 1
-    assert subscription_service.get_subscription_items.call_args == call(sub_id=sub1.uuid, from_date=sub1.scanned_at)
+    assert subscription_service.get_subscription_items.call_args == call(sub_id=sub1.uuid,
+                                                                         from_date=sub1.last_published_at)
     assert subscription_repository.get.call_count == 1
     assert subscription_repository.get.call_args == call(sub1.uuid)
     assert item_repository.find_items.call_count == 1
@@ -139,6 +143,7 @@ async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription() -
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
         updated_at=datetime.fromtimestamp(1, tz=timezone.utc),
         scanned_at=datetime.fromtimestamp(2, tz=timezone.utc),
+        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
         external_data={})
 
     async def wait_1_second_and_return_no_items(
