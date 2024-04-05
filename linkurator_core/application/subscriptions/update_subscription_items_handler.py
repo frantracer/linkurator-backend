@@ -23,20 +23,17 @@ class UpdateSubscriptionItemsHandler:
         self.item_repository = item_repository
 
     async def handle(self, subscription_id: uuid.UUID) -> None:
-        subscription = self.subscription_repository.get(subscription_id)
-        if subscription is None:
-            logging.error("Cannot update items of subscription %s because it does not exist", subscription_id)
-            return
-
         now = datetime.now(tz=timezone.utc)
-
         if subscription_id in self.subscriptions_being_updated:
             logging.info("Skipping update of subscription %s because it was scheduled on %s",
                          subscription_id, self.subscriptions_being_updated[subscription_id])
             return
-
         self.subscriptions_being_updated[subscription_id] = now
 
+        subscription = self.subscription_repository.get(subscription_id)
+        if subscription is None:
+            logging.error("Cannot update items of subscription %s because it does not exist", subscription_id)
+            return
         logging.info("Updating items for subscription %s - %s", subscription_id, subscription.name)
 
         try:
