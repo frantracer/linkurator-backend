@@ -34,10 +34,6 @@ class FindOutdatedSubscriptionsHandler:
         outdated_subscriptions = self.subscription_repository.find_latest_scan_before(datetime_limit)
 
         for subscription in outdated_subscriptions:
-            subscribed_users = self.user_repository.find_users_subscribed_to_subscription(subscription.uuid)
-            if len(subscribed_users) == 0:
-                continue
-
             refresh_period = await self.calculate_subscription_refresh_period_in_minutes(subscription)
             if subscription.scanned_at + timedelta(minutes=refresh_period) < now:
                 logging.info('Found outdated subscription: %s - %s', subscription.uuid, subscription.name)
