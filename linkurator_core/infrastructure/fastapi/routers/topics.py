@@ -44,7 +44,6 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
 
     @router.get("/{topic_id}/items",
                 responses={
-                    status.HTTP_401_UNAUTHORIZED: {'model': None},
                     status.HTTP_404_NOT_FOUND: {'model': None}
                 })
     async def items_by_topic(
@@ -63,9 +62,6 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         """
         Get the items from a topic
         """
-        if session is None:
-            raise default_responses.not_authenticated()
-
         if created_before_ts is None:
             created_before_ts = datetime.now(timezone.utc).timestamp()
 
@@ -81,7 +77,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
 
         try:
             items_with_interactions = get_topic_items_handler.handle(
-                user_id=session.user_id,
+                user_id=session.user_id if session is not None else None,
                 topic_id=topic_id,
                 created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
                 page_number=page_number,
@@ -136,19 +132,14 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
 
     @router.get("/{topic_id}",
                 responses={
-                    status.HTTP_401_UNAUTHORIZED: {'model': None},
                     status.HTTP_404_NOT_FOUND: {'model': None}
                 })
     async def get_topic(
             topic_id: UUID,
-            session: Optional[Session] = Depends(get_session)
     ) -> TopicSchema:
         """
         Get a topic information from a user
         """
-        if session is None:
-            raise default_responses.not_authenticated()
-
         try:
             topic = get_topic_handler.handle(topic_id=topic_id)
             return TopicSchema.from_domain_topic(topic)
