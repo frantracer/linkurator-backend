@@ -5,7 +5,8 @@ from urllib.parse import urlencode
 import requests
 from requests.auth import HTTPBasicAuth
 
-from linkurator_core.domain.users.account_service import AccountService, UserInfo, CodeValidationResponse
+from linkurator_core.domain.common.utils import parse_url
+from linkurator_core.domain.users.account_service import AccountService, UserInfo, CodeValidationResponse, UserDetails
 
 
 class GoogleAccountService(AccountService):
@@ -27,8 +28,9 @@ class GoogleAccountService(AccountService):
             "redirect_uri": redirect_uri,
             "scope": " ".join(scopes),
             "state": "ETL04Oop9e1yFQQFRM2KpHvbWwtMRV",
+            "include_granted_scopes": "false",
             "access_type": "offline",
-            "include_granted_scopes": "true"
+            "prompt": "select_account"
         }
         return f"{google_oauth_url}?{urlencode(query_params)}"
 
@@ -75,10 +77,24 @@ class GoogleAccountService(AccountService):
             return None
 
         user_info = dict(user_info_response.json())
+        user_details: Optional[UserDetails] = None
+        if user_info.get('given_name') is not None:
+            user_details = UserDetails(
+                given_name=user_info['given_name'],
+                family_name=user_info.get('family_name', ''),
+                picture=parse_url(user_info.get('picture', '')),
+                locale=user_info.get('locale', 'en')
+            )
         return UserInfo(
-            given_name=user_info['given_name'],
-            family_name=user_info.get('family_name', ''),
             email=user_info['email'],
-            picture=user_info['picture'],
-            locale=user_info['locale']
+            details=user_details
         )
+
+    def token_has_scope_access(self, access_token: str, scope: str) -> bool:
+        scope_validation_url = "https://www.googleapis.com/oauth2/v1/tokeninfo"
+        scope_validation_response = requests.get(scope_validation_url, params={'access_token': access_token})
+
+        if scope_validation_response.status_code != http.HTTPStatus.OK:
+            return False
+
+        return scope in scope_validation_response.json().get('scope', '').split(" ")

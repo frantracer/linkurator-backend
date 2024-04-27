@@ -12,12 +12,17 @@ class CodeValidationResponse:
 
 
 @dataclass
-class UserInfo:
+class UserDetails:
     given_name: str
     family_name: str
-    email: str
     picture: AnyUrl
     locale: str
+
+
+@dataclass
+class UserInfo:
+    email: str
+    details: Optional[UserDetails]
 
 
 class AccountService(abc.ABC):

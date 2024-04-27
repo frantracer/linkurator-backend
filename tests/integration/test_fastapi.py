@@ -29,6 +29,7 @@ def dummy_handlers() -> Handlers:
 
     return Handlers(
         validate_token=dummy_validate_token_handler,
+        register_user=MagicMock(),
         google_client=MagicMock(),
         get_user_subscriptions=MagicMock(),
         get_subscription_items_handler=MagicMock(),

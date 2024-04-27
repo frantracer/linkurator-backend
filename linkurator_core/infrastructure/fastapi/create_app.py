@@ -29,6 +29,7 @@ from linkurator_core.application.users.add_external_credentials import AddExtern
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
+from linkurator_core.application.users.register_user_handler import RegisterUserHandler
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items, \
@@ -39,6 +40,7 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 @dataclass
 class Handlers:  # pylint: disable=too-many-instance-attributes
     validate_token: ValidateTokenHandler
+    register_user: RegisterUserHandler
     google_client: GoogleAccountService
     get_user_subscriptions: GetUserSubscriptionsHandler
     get_subscription_items_handler: GetSubscriptionItemsHandler
@@ -68,7 +70,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         token = request.cookies.get("token")
         if token is None:
             return None
-        session = await handlers.validate_token.handle(access_token=token, refresh_token=None)
+        session = await handlers.validate_token.handle(access_token=token)
         return session
 
     @app.get("/health", tags=["API Status"])
@@ -82,6 +84,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         tags=["Authentication"],
         router=authentication.get_router(
             validate_token_handler=handlers.validate_token,
+            register_user_handler=handlers.register_user,
             google_client=handlers.google_client))
     app.include_router(
         tags=["Profile"],
