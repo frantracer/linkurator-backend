@@ -25,6 +25,7 @@ from linkurator_core.application.topics.unassign_subscription_from_user_topic_ha
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
+from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.register_user_handler import RegisterUserHandler
@@ -106,6 +107,7 @@ def app_handlers() -> Handlers:
             subscription_service=youtube_service,
             credentials_repository=credentials_repository),
         get_user_profile_handler=GetUserProfileHandler(user_repository),
+        delete_user_handler=DeleteUserHandler(user_repository, session_repository, account_service),
         get_user_topics_handler=GetUserTopicsHandler(topic_repo=topic_repository, user_repo=user_repository),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
         get_topic_items_handler=GetTopicItemsHandler(

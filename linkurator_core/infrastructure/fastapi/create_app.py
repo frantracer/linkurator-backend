@@ -27,6 +27,7 @@ from linkurator_core.application.topics.unassign_subscription_from_user_topic_ha
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
+from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.register_user_handler import RegisterUserHandler
@@ -47,6 +48,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     delete_subscription_items_handler: DeleteSubscriptionItemsHandler
     refresh_subscrition_handler: RefreshSubscriptionHandler
     get_user_profile_handler: GetUserProfileHandler
+    delete_user_handler: DeleteUserHandler
     create_topic_handler: CreateTopicHandler
     get_user_topics_handler: GetUserTopicsHandler
     get_topic_handler: GetTopicHandler
@@ -90,7 +92,8 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         tags=["Profile"],
         router=profile.get_router(
             get_session=get_current_session,
-            get_user_profile_handler=handlers.get_user_profile_handler
+            get_user_profile_handler=handlers.get_user_profile_handler,
+            delete_user_handler=handlers.delete_user_handler
         ),
         prefix="/profile"
     )

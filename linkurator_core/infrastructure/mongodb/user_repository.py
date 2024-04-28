@@ -28,6 +28,7 @@ class MongoDBUser(BaseModel):
     updated_at: datetime
     scanned_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
     last_login_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
+    deleted_at: Optional[datetime] = None
     google_refresh_token: Optional[str] = None
     subscription_uuids: List[UUID] = []
     is_admin: bool = False
@@ -92,7 +93,7 @@ class MongoDBUserRepository(UserRepository):
 
     def get(self, user_id: UUID) -> Optional[User]:
         collection = self._user_collection()
-        user = collection.find_one({'uuid': user_id})
+        user = collection.find_one({'uuid': user_id, 'deleted_at': None})
         if user is None:
             return None
         user.pop('_id', None)
@@ -100,7 +101,7 @@ class MongoDBUserRepository(UserRepository):
 
     def get_by_email(self, email: str) -> Optional[User]:
         collection = self._user_collection()
-        user = collection.find_one({'email': email})
+        user = collection.find_one({'email': email, 'deleted_at': None})
         if user is None:
             return None
         user.pop('_id', None)
@@ -108,7 +109,7 @@ class MongoDBUserRepository(UserRepository):
 
     def delete(self, user_id: UUID) -> None:
         collection = self._user_collection()
-        collection.delete_one({'uuid': user_id})
+        collection.update_one({'uuid': user_id}, {'$set': {'deleted_at': datetime.now(timezone.utc)}})
 
     def update(self, user: User) -> None:
         collection = self._user_collection()
@@ -116,12 +117,12 @@ class MongoDBUserRepository(UserRepository):
 
     def find_latest_scan_before(self, timestamp: datetime) -> List[User]:
         collection = self._user_collection()
-        users = collection.find({'scanned_at': {'$lt': timestamp}})
+        users = collection.find({'scanned_at': {'$lt': timestamp}, 'deleted_at': None})
         return [MongoDBUser(**user).to_domain_user() for user in users]
 
     def find_users_subscribed_to_subscription(self, subscription_id: UUID) -> List[User]:
         collection = self._user_collection()
-        users = collection.find({'subscription_uuids': subscription_id})
+        users = collection.find({'subscription_uuids': subscription_id, 'deleted_at': None})
         return [MongoDBUser(**user).to_domain_user() for user in users]
 
     def _user_collection(self) -> Any:
