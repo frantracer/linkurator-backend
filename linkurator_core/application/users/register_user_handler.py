@@ -36,7 +36,6 @@ class RegisterUserHandler:
                 google_refresh_token=refresh_token)
             self.user_repository.add(user)
 
-            await self.event_bus.publish(UserSubscriptionsBecameOutdatedEvent.new(user_id=user.uuid))
         else:
             user.avatar_url = user_info.details.picture
             user.locale = user_info.details.locale
@@ -48,5 +47,7 @@ class RegisterUserHandler:
             user.updated_at = now
             user.last_login_at = now
             self.user_repository.update(user)
+
+        await self.event_bus.publish(UserSubscriptionsBecameOutdatedEvent.new(user_id=user.uuid))
 
         return None

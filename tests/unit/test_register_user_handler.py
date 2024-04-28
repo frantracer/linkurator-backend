@@ -79,4 +79,5 @@ class TestRegisterUserHandler(unittest.IsolatedAsyncioTestCase):
         created_user: User = user_repo_mock.update.call_args[0][0]
         self.assertEqual(created_user.google_refresh_token, "myrefreshtoken")
 
-        self.assertEqual(event_bus_mock.publish.call_count, 0)
+        self.assertEqual(event_bus_mock.publish.call_count, 1)
+        self.assertEqual(type(event_bus_mock.publish.call_args[0][0]), UserSubscriptionsBecameOutdatedEvent)
