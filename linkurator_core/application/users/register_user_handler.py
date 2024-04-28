@@ -19,13 +19,16 @@ class RegisterUserHandler:
         self.account_service = account_service
         self.event_bus = event_bus
 
-    async def handle(self, access_token: str, refresh_token: str) -> Optional[RegistrationError]:
+    async def handle(self, access_token: str, refresh_token: Optional[str]) -> Optional[RegistrationError]:
         user_info = self.account_service.get_user_info(access_token)
         if user_info is None or user_info.details is None:
             return "Failed to get user info"
 
         user = self.user_repository.get_by_email(user_info.email)
         if user is None:
+            if refresh_token is None:
+                return "Refresh token is required for new users"
+
             user = User.new(
                 uuid=uuid4(),
                 email=user_info.email,
@@ -41,7 +44,8 @@ class RegisterUserHandler:
             user.locale = user_info.details.locale
             user.first_name = user_info.details.given_name
             user.last_name = user_info.details.family_name
-            user.google_refresh_token = refresh_token
+            if refresh_token is not None:
+                user.google_refresh_token = refresh_token
 
             now = datetime.now(timezone.utc)
             user.updated_at = now

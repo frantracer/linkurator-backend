@@ -162,9 +162,6 @@ def get_router(  # pylint: disable=too-many-statements
             elif not google_client.token_has_scope_access(tokens.access_token, YOUTUBE_CHANNEL_SCOPE):
                 auth_error = "Invalid scope access"
 
-            elif tokens.refresh_token is None:
-                auth_error = "No refresh token"
-
             else:
                 register_error = await register_user_handler.handle(
                     access_token=tokens.access_token,
