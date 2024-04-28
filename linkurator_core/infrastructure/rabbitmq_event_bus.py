@@ -1,12 +1,16 @@
 import asyncio
+import logging
 from typing import Type, Callable, Coroutine, Any, Optional
 
 import aio_pika
+from aio_pika import logger
 
 from linkurator_core.domain.common.event import Event
 from linkurator_core.domain.common.event_bus_service import EventBusService
 
 STOP_PAYLOAD = 'STOP'
+
+logger.setLevel(logging.ERROR)
 
 
 class RabbitMQEventBus(EventBusService):
