@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import uuid
 
+from linkurator_core.domain.common.exceptions import InvalidCredentialError
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -22,11 +23,13 @@ class UpdateUserSubscriptionsHandler:
             print(f"Cannot update subscriptions for user with id {user_id}: user not found")
             return
 
-        subscriptions = await self.subscription_service.get_subscriptions(user_id)
+        try:
+            subscriptions = await self.subscription_service.get_subscriptions(user_id)
+            updated_subscriptions = [self._get_or_create_subscription(subscription) for subscription in subscriptions]
+            user.subscription_uuids = [subscription.uuid for subscription in updated_subscriptions]
+        except InvalidCredentialError as exception:
+            print(f"Failed to update subscriptions for user with id {user_id}: {str(exception)}")
 
-        updated_subscriptions = [self._get_or_create_subscription(subscription) for subscription in subscriptions]
-
-        user.subscription_uuids = [subscription.uuid for subscription in updated_subscriptions]
         user.scanned_at = datetime.now(timezone.utc)
         self.user_repository.update(user)
 

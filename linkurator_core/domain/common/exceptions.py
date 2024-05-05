@@ -26,6 +26,10 @@ class CredentialsAlreadyExistsError(Exception):
     pass
 
 
+class InvalidCredentialError(Exception):
+    pass
+
+
 class InvalidCredentialTypeError(Exception):
     pass
 

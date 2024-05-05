@@ -6,7 +6,7 @@ from random import randint
 from typing import Dict, List, Optional
 
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
+from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError, InvalidCredentialError
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
@@ -46,6 +46,17 @@ class YoutubeService(SubscriptionService):
             user_id: uuid.UUID,
             credential: Optional[ExternalServiceCredential] = None
     ) -> List[Subscription]:
+        """
+        Get subscriptions for a user from YouTube.
+
+        :param user_id: user id
+        :param credential: credential to use for the request
+        :return: list of subscriptions
+
+        :raises InvalidCredentialTypeError: if the credential type is not YOUTUBE_API_KEY
+        :raises InvalidCredentialError: if the user refresh token is invalid
+        """
+
         user = self.user_repository.get(user_id)
         youtube_channels = []
 
@@ -59,10 +70,12 @@ class YoutubeService(SubscriptionService):
             access_token = self.google_account_service.generate_access_token_from_refresh_token(
                 user.google_refresh_token)
 
-            if access_token is not None:
-                channels = await self.youtube_client.get_youtube_subscriptions(access_token=access_token,
-                                                                               api_key=api_key)
-                youtube_channels = [c.to_subscription(sub_id=uuid.uuid4()) for c in channels]
+            if access_token is None:
+                raise InvalidCredentialError("Invalid refresh token")
+
+            channels = await self.youtube_client.get_youtube_subscriptions(access_token=access_token,
+                                                                           api_key=api_key)
+            youtube_channels = [c.to_subscription(sub_id=uuid.uuid4()) for c in channels]
 
         return youtube_channels
 
