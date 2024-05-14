@@ -8,6 +8,7 @@ from pydantic.types import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
+from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
@@ -20,6 +21,7 @@ from linkurator_core.infrastructure.fastapi.models.subscription import Subscript
 
 def get_router(
         get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
+        get_subscription_handler: GetSubscriptionHandler,
         get_user_subscriptions_handler: GetUserSubscriptionsHandler,
         get_subscription_items_handler: GetSubscriptionItemsHandler,
         delete_subscription_items_handler: DeleteSubscriptionItemsHandler,
@@ -61,6 +63,25 @@ def get_router(
             page_number=page_number,
             page_size=page_size,
             current_url=current_url)
+
+    @router.get("/{sub_id}",
+                status_code=status.HTTP_200_OK,
+                responses={
+                    status.HTTP_404_NOT_FOUND: {"model": None}
+                })
+    async def get_subscription(
+            sub_id: UUID,
+    ) -> SubscriptionSchema:
+        """
+        Get the subscription information
+        :param sub_id: UUID of the subscription included in the url
+        :return: The subscription information. UNAUTHORIZED status code if the session is invalid.
+        """
+        try:
+            subscription = get_subscription_handler.handle(sub_id)
+            return SubscriptionSchema.from_domain_subscription(subscription)
+        except SubscriptionNotFoundError as error:
+            raise default_responses.not_found("Subscription not found") from error
 
     @router.get("/{sub_id}/items",
                 status_code=status.HTTP_200_OK,

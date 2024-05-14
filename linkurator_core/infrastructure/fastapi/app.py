@@ -12,6 +12,7 @@ from linkurator_core.application.items.delete_subscription_items_handler import 
 from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import \
@@ -96,12 +97,13 @@ def app_handlers() -> Handlers:
         register_user=RegisterUserHandler(user_repository, account_service, event_bus),
         google_client=account_service,
         get_user_subscriptions=GetUserSubscriptionsHandler(subscription_repository, user_repository),
+        get_subscription=GetSubscriptionHandler(subscription_repository),
         get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository),
         delete_subscription_items_handler=DeleteSubscriptionItemsHandler(
             item_repository=item_repository,
             subscription_repository=subscription_repository,
             user_repository=user_repository),
-        refresh_subscrition_handler=RefreshSubscriptionHandler(
+        refresh_subscription_handler=RefreshSubscriptionHandler(
             user_repository=user_repository,
             subscription_repository=subscription_repository,
             subscription_service=youtube_service,

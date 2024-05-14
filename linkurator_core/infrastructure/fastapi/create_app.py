@@ -14,6 +14,7 @@ from linkurator_core.application.items.delete_subscription_items_handler import 
 from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import \
@@ -43,10 +44,11 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     validate_token: ValidateTokenHandler
     register_user: RegisterUserHandler
     google_client: GoogleAccountService
+    get_subscription: GetSubscriptionHandler
     get_user_subscriptions: GetUserSubscriptionsHandler
     get_subscription_items_handler: GetSubscriptionItemsHandler
     delete_subscription_items_handler: DeleteSubscriptionItemsHandler
-    refresh_subscrition_handler: RefreshSubscriptionHandler
+    refresh_subscription_handler: RefreshSubscriptionHandler
     get_user_profile_handler: GetUserProfileHandler
     delete_user_handler: DeleteUserHandler
     create_topic_handler: CreateTopicHandler
@@ -115,10 +117,11 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         tags=["Subscriptions"],
         router=subscriptions.get_router(
             get_session=get_current_session,
+            get_subscription_handler=handlers.get_subscription,
             get_user_subscriptions_handler=handlers.get_user_subscriptions,
             get_subscription_items_handler=handlers.get_subscription_items_handler,
             delete_subscription_items_handler=handlers.delete_subscription_items_handler,
-            refresh_subscription_handler=handlers.refresh_subscrition_handler),
+            refresh_subscription_handler=handlers.refresh_subscription_handler),
         prefix="/subscriptions")
     app.include_router(
         tags=["Items"],
