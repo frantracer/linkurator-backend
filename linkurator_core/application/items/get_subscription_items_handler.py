@@ -13,7 +13,7 @@ class GetSubscriptionItemsHandler:
 
     def handle(
             self,
-            user_id: UUID,
+            user_id: Optional[UUID],
             subscription_id: UUID,
             created_before: datetime,
             page_number: int,
@@ -48,9 +48,11 @@ class GetSubscriptionItemsHandler:
             limit=page_size
         )
 
-        interactions_by_item = self.item_repository.get_user_interactions_by_item_id(
-            user_id=user_id,
-            item_ids=[item.uuid for item in items]
-        )
+        interactions_by_item: dict[UUID, List[Interaction]] = {}
+        if user_id:
+            interactions_by_item = self.item_repository.get_user_interactions_by_item_id(
+                user_id=user_id,
+                item_ids=[item.uuid for item in items]
+            )
 
         return [(item, interactions_by_item.get(item.uuid, [])) for item in items]

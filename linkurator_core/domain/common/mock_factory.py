@@ -4,6 +4,7 @@ from uuid import uuid4, UUID
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.utils import parse_url
+from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider, Subscription
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
@@ -85,4 +86,24 @@ def mock_item(
         version=version,
         duration=duration,
         provider=ItemProvider.YOUTUBE
+    )
+
+
+def mock_interaction(
+        uuid: Optional[UUID] = None,
+        user_id: Optional[UUID] = None,
+        item_id: Optional[UUID] = None,
+        created_at: Optional[datetime] = None,
+        interaction_type: InteractionType = InteractionType.RECOMMENDED
+) -> Interaction:
+    uuid = uuid or uuid4()
+    item_id = item_id or uuid4()
+    user_id = user_id or uuid4()
+    created_at = created_at or datetime.now(tz=timezone.utc)
+    return Interaction(
+        uuid=uuid,
+        user_uuid=user_id,
+        item_uuid=item_id,
+        created_at=created_at,
+        type=interaction_type
     )

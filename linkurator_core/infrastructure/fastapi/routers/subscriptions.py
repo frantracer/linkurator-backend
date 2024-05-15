@@ -117,9 +117,6 @@ def get_router(
         :return: A page with the items. UNAUTHORIZED status code if the session is invalid.
         """
 
-        if session is None:
-            raise default_responses.not_authenticated()
-
         if created_before_ts is None:
             created_before_ts = datetime.now(tz=timezone.utc).timestamp()
 
@@ -134,7 +131,7 @@ def get_router(
             return interactions is None or interaction in interactions
 
         items_with_interactions = get_subscription_items_handler.handle(
-            user_id=session.user_id,
+            user_id=session.user_id if session else None,
             subscription_id=sub_id,
             created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
             page_number=page_number,
