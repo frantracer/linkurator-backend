@@ -17,3 +17,4 @@ motor==3.2.0
 coverage==7.3.0
 isodate==0.6.1
 aio-pika==9.4.1
+ruff==0.4.5

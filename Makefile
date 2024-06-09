@@ -98,7 +98,7 @@ create-vault-pass: check-vault-pass-is-defined
 ####################
 # Test
 ####################
-lint: mypy pylint
+lint: mypy ruff
 
 mypy:
 	./venv/bin/mypy --config-file pyproject.toml linkurator_core tests scripts
@@ -107,6 +107,9 @@ pylint:
 	find ./linkurator_core -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
 	find ./tests -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
 	find ./scripts -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
+
+ruff:
+	./venv/bin/ruff check 
 
 test:
 	./venv/bin/pytest -v tests
