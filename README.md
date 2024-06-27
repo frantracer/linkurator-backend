@@ -8,7 +8,7 @@ The API is currently available at https://api.linkurator.com/docs
 
 ## Requirements
 
-* Python 3.8 with pip and venv
+* Python 3.10 with pip and venv
 * Docker
 * Docker Compose
 * Ansible vault password to decrypt some secrets
@@ -51,7 +51,7 @@ The project is composed of two services: the API and the processor:
 
 Run the API with your local python venv:
 ```bash
-make run-api
+make local-run-api
 ```
 
 Or with docker:
@@ -66,7 +66,7 @@ Once you have the API running, you can access the documentation at http://localh
 
 Run the processor with your local python venv:
 ```bash
-make run-procesor
+make local-run-procesor
 ```
 
 Or with docker:
