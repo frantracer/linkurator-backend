@@ -62,6 +62,7 @@ encrypt-secrets: create-vault-pass
 	cp secrets/app_config_production.ini config/app_config_production.ini.enc
 	cp secrets/docker_token.txt config/docker_token.txt.enc
 	cp secrets/google_api_key.txt config/google_api_key.txt.enc
+	cp secrets/gmail_refresh_token.txt config/gmail_refresh_token.txt.enc
 
 	ansible-vault encrypt --vault-password-file=secrets/vault_password.txt config/*.enc
 
@@ -73,6 +74,7 @@ decrypt-secrets: create-vault-pass
 	mv -f secrets/app_config_production.ini.enc secrets/app_config_production.ini
 	mv -f secrets/docker_token.txt.enc secrets/docker_token.txt
 	mv -f secrets/google_api_key.txt.enc secrets/google_api_key.txt
+	mv -f secrets/gmail_refresh_token.txt.enc secrets/gmail_refresh_token.txt
 
 link-config:
 	@if [ "${LINKURATOR_ENVIRONMENT}" = "PRODUCTION" ]; then \
