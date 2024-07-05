@@ -121,7 +121,9 @@ def _generate_filter_query(criteria: ItemFilterCriteria) -> Dict[str, Any]:
     if criteria.provider is not None:
         filter_query['provider'] = criteria.provider.value
     if criteria.text is not None and len(criteria.text) > 0:
-        filter_query['$text'] = {'$search': criteria.text}
+        text = criteria.text.replace("\"", " ")
+        text = " ".join([f"\"{word}\"" for word in text.split(" ") if len(word) > 0])
+        filter_query['$text'] = {'$search': text}
 
     if criteria.max_duration is not None and criteria.min_duration is not None:
         filter_query['duration'] = {'$gte': criteria.min_duration, '$lte': criteria.max_duration}

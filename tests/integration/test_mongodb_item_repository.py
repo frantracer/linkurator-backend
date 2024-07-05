@@ -355,22 +355,22 @@ def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: Mong
     found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
             subscription_ids=[sub1_uuid],
-            text="cool -videogames"),
+            text="cool videogames"),
+        limit=4,
+        page_number=0,
+    )
+    assert len(found_items) == 1
+    assert found_items[0].uuid == item2.uuid
+
+    found_items = item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub1_uuid],
+            text="\"football free\""),
         limit=4,
         page_number=0,
     )
     assert len(found_items) == 1
     assert found_items[0].uuid == item1.uuid
-
-    found_items = item_repo.find_items(
-        criteria=ItemFilterCriteria(
-            subscription_ids=[sub1_uuid],
-            text="\"free time\""),
-        limit=4,
-        page_number=0,
-    )
-    assert len(found_items) == 1
-    assert found_items[0].uuid == item3.uuid
 
     found_items = item_repo.find_items(
         criteria=ItemFilterCriteria(
