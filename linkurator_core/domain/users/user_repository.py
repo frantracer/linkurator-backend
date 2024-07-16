@@ -15,29 +15,29 @@ class UserRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def add(self, user: User) -> None:
+    async def add(self, user: User) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get(self, user_id: UUID) -> Optional[User]:
+    async def get(self, user_id: UUID) -> Optional[User]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> Optional[User]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, user_id: UUID) -> None:
+    async def delete(self, user_id: UUID) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update(self, user: User) -> None:
+    async def update(self, user: User) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def find_latest_scan_before(self, timestamp: datetime.datetime) -> List[User]:
+    async def find_latest_scan_before(self, timestamp: datetime.datetime) -> List[User]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def find_users_subscribed_to_subscription(self, subscription_id: UUID) -> List[User]:
+    async def find_users_subscribed_to_subscription(self, subscription_id: UUID) -> List[User]:
         raise NotImplementedError

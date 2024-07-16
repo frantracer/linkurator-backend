@@ -1,18 +1,19 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import pytest
 
-from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user_repository import UserRepository
 
 
 @pytest.mark.asyncio
 async def test_get_user_topics_handler() -> None:
-    user_repo_mock = MagicMock()
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user = User.new(
         uuid=UUID('ac32894a-d568-4def-9cfd-08779845018f'),
         first_name='John',
@@ -41,7 +42,7 @@ async def test_get_user_topics_handler() -> None:
 
 @pytest.mark.asyncio
 async def test_get_user_topics_handler_user_not_found() -> None:
-    user_repo_mock = MagicMock()
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = None
 
     topic_repo_mock = MagicMock()

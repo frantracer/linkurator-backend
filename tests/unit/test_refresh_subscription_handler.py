@@ -5,6 +5,7 @@ import pytest
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.domain.common.mock_factory import mock_user, mock_sub, mock_credential
+from linkurator_core.domain.users.user_repository import UserRepository
 
 
 @pytest.mark.asyncio
@@ -13,7 +14,7 @@ async def test_an_user_can_refresh_a_subscription_if_has_one_uploaded_credential
     user = mock_user(subscribed_to=[sub.uuid])
     credential = mock_credential(user_id=user.uuid)
 
-    user_repository = MagicMock()
+    user_repository = AsyncMock(spec=UserRepository)
     user_repository.get.return_value = user
 
     subscription_repository = MagicMock()
@@ -45,7 +46,7 @@ async def test_an_user_with_no_credentials_cannot_refresh_a_subscription() -> No
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
 
-    user_repository = MagicMock()
+    user_repository = AsyncMock(spec=UserRepository)
     user_repository.get.return_value = user
 
     subscription_repository = MagicMock()
@@ -75,7 +76,7 @@ async def test_a_non_existing_user_cannot_refresh_a_subscription() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[sub.uuid])
 
-    user_repository = MagicMock()
+    user_repository = AsyncMock(spec=UserRepository)
     user_repository.get.return_value = None
 
     subscription_repository = MagicMock()
@@ -105,7 +106,7 @@ async def test_a_user_not_subscribed_cannot_refresh_a_subscription() -> None:
     sub = mock_sub()
     user = mock_user(subscribed_to=[])
 
-    user_repository = MagicMock()
+    user_repository = AsyncMock(spec=UserRepository)
     user_repository.get.return_value = user
 
     subscription_repository = MagicMock()

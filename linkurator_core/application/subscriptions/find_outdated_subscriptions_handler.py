@@ -40,7 +40,7 @@ class FindOutdatedSubscriptionsHandler:
                 await self.event_bus.publish(SubscriptionBecameOutdatedEvent.new(subscription.uuid))
 
     async def calculate_subscription_refresh_period_in_minutes(self, subscription: Subscription) -> int:
-        subscribed_users = self.user_repository.find_users_subscribed_to_subscription(subscription.uuid)
+        subscribed_users = await self.user_repository.find_users_subscribed_to_subscription(subscription.uuid)
         if len(subscribed_users) == 0:
             return REFRESH_PERIOD_WITH_NO_SUBSCRIBERS_IN_MINUTES
 

@@ -23,7 +23,7 @@ class RefreshSubscriptionHandler:
         self._credentials_repository = credentials_repository
 
     async def handle(self, user_id: UUID, subscription_id: UUID) -> None:
-        user = self._user_repository.get(user_id)
+        user = await self._user_repository.get(user_id)
         if user is None:
             raise UserNotFoundError("No user found")
 

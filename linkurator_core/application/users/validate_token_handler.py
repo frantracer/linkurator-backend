@@ -26,7 +26,7 @@ class ValidateTokenHandler:
         if user_info is None:
             return None
 
-        user = self.user_repository.get_by_email(user_info.email)
+        user = await self.user_repository.get_by_email(user_info.email)
         if user is None:
             return None
 

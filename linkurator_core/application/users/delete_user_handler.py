@@ -21,4 +21,4 @@ class DeleteUserHandler:
 
         self.session_repository.delete(user_session.token)
 
-        self.user_repository.delete(user_id)
+        await self.user_repository.delete(user_id)

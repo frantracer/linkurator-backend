@@ -39,7 +39,7 @@ async def main() -> None:
 
     is_there_and_outdated_subscription = True
 
-    admin = user_repository.get_by_email(args.admin_email)
+    admin = await user_repository.get_by_email(args.admin_email)
     if admin is None:
         logging.error('Admin user not found')
         sys.exit(1)

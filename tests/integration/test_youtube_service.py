@@ -60,7 +60,7 @@ async def test_youtube_service_returns_subscriptions_from_user() -> None:
     sub_repo_mock = MagicMock(spec=SubscriptionRepository)
     sub_repo_mock.get.return_value = [sub]
 
-    user_repo_mock = MagicMock(spec=UserRepository)
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user = mock_user()
     user_repo_mock.find_users_subscribed_to_subscription.return_value = [user]
 
@@ -91,7 +91,7 @@ async def test_youtube_service_returns_subscriptions_from_user() -> None:
                              youtube_rss_client=rss_client_mock,
                              api_keys=["api_key"],
                              google_account_service=google_service_mock,
-                             user_repository=MagicMock(),
+                             user_repository=AsyncMock(spec=UserRepository),
                              subscription_repository=sub_repo_mock,
                              item_repository=MagicMock(spec=ItemRepository),
                              credentials_repository=credentials_repo)
@@ -202,7 +202,7 @@ async def test_youtube_service_returns_subscription_items() -> None:
                              youtube_rss_client=rss_client_mock,
                              api_keys=["api_key"],
                              google_account_service=MagicMock(),
-                             user_repository=MagicMock(),
+                             user_repository=AsyncMock(spec=UserRepository),
                              subscription_repository=subs_repo_mock,
                              item_repository=MagicMock(spec=ItemRepository),
                              credentials_repository=AsyncMock())
@@ -222,7 +222,7 @@ async def test_youtube_service_returns_subscription_items() -> None:
 
 @pytest.mark.asyncio
 async def test_get_youtube_subscriptions_uses_provided_credentials() -> None:
-    user_repo_mock = MagicMock(spec=UserRepository)
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user = mock_user()
     user_repo_mock.get.return_value = user
 
@@ -241,7 +241,7 @@ async def test_get_youtube_subscriptions_uses_provided_credentials() -> None:
                              youtube_rss_client=rss_client_mock,
                              api_keys=["api_key"],
                              google_account_service=google_service_mock,
-                             user_repository=MagicMock(),
+                             user_repository=AsyncMock(spec=UserRepository),
                              subscription_repository=MagicMock(),
                              item_repository=MagicMock(spec=ItemRepository),
                              credentials_repository=AsyncMock())
@@ -254,7 +254,7 @@ async def test_get_youtube_subscriptions_uses_provided_credentials() -> None:
 
 @pytest.mark.asyncio
 async def test_get_youtube_subscriptions_raise_error_if_credential_is_not_a_youtube_api_key() -> None:
-    user_repo_mock = MagicMock(spec=UserRepository)
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user = mock_user()
     user_repo_mock.get.return_value = user
 
@@ -274,7 +274,7 @@ async def test_get_youtube_subscriptions_raise_error_if_credential_is_not_a_yout
                              youtube_rss_client=rss_client_mock,
                              api_keys=["api_key"],
                              google_account_service=google_service_mock,
-                             user_repository=MagicMock(),
+                             user_repository=AsyncMock(spec=UserRepository),
                              subscription_repository=MagicMock(),
                              item_repository=MagicMock(spec=ItemRepository),
                              credentials_repository=AsyncMock())

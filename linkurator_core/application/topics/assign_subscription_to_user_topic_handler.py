@@ -15,7 +15,7 @@ class AssignSubscriptionToTopicHandler:
         self.topic_repository = topic_repository
 
     async def handle(self, user_id: UUID, subscription_id: UUID, topic_id: UUID) -> None:
-        user = self.user_repository.get(user_id)
+        user = await self.user_repository.get(user_id)
         if user is None:
             raise UserNotFoundError(user_id)
 

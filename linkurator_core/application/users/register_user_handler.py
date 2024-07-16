@@ -24,7 +24,7 @@ class RegisterUserHandler:
         if user_info is None or user_info.details is None:
             return "Failed to get user info"
 
-        user = self.user_repository.get_by_email(user_info.email)
+        user = await self.user_repository.get_by_email(user_info.email)
         if user is None:
             if refresh_token is None:
                 return "Refresh token is required for new users"
@@ -37,7 +37,7 @@ class RegisterUserHandler:
                 first_name=user_info.details.given_name,
                 last_name=user_info.details.family_name,
                 google_refresh_token=refresh_token)
-            self.user_repository.add(user)
+            await self.user_repository.add(user)
 
         else:
             user.avatar_url = user_info.details.picture
@@ -50,7 +50,7 @@ class RegisterUserHandler:
             now = datetime.now(timezone.utc)
             user.updated_at = now
             user.last_login_at = now
-            self.user_repository.update(user)
+            await self.user_repository.update(user)
 
         await self.event_bus.publish(UserSubscriptionsBecameOutdatedEvent.new(user_id=user.uuid))
 

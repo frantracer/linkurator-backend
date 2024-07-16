@@ -12,4 +12,4 @@ class GetUserProfileHandler:
         self.user_repository = user_repository
 
     async def handle(self, user_id: UUID) -> Optional[User]:
-        return self.user_repository.get(user_id)
+        return await self.user_repository.get(user_id)

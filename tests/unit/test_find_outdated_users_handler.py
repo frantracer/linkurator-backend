@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -7,11 +7,12 @@ from linkurator_core.application.users.find_outdated_users_handler import FindOu
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
 from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user_repository import UserRepository
 
 
 @pytest.mark.asyncio
 async def test_handler_sends_two_events_if_there_are_two_outdated_users() -> None:
-    user_repo_mock = MagicMock()
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user1 = User.new(uuid=uuid.UUID("844f3bfb-ddab-4280-a3e6-fabc53a2984b"),
                      first_name='user1',
                      last_name="name1",

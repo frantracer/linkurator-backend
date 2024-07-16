@@ -17,7 +17,7 @@ class DeleteSubscriptionItemsHandler:
         self.item_repository = item_repository
 
     async def handle(self, user_id: UUID, subscription_id: UUID) -> None:
-        user = self.user_repository.get(user_id)
+        user = await self.user_repository.get(user_id)
         if user is None or user.is_admin is False:
             raise PermissionError("Only admins can delete subscription items")
 

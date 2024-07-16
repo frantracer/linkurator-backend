@@ -12,7 +12,7 @@ class FindOutdatedUsersHandler:
 
     async def handle(self) -> None:
         datetime_limit = datetime.now(tz=timezone.utc) - timedelta(days=1)
-        outdated_users = self.user_repository.find_latest_scan_before(datetime_limit)
+        outdated_users = await self.user_repository.find_latest_scan_before(datetime_limit)
 
         for user in outdated_users:
             print(f'Found outdated user: {user.uuid}')

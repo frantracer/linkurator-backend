@@ -17,7 +17,7 @@ class GetUserSubscriptionsHandler:
                page_size: int,
                created_before: datetime
                ) -> list[Subscription]:
-        user = self.user_repository.get(user_id)
+        user = await self.user_repository.get(user_id)
         if user is None:
             return []
 

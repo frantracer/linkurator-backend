@@ -57,7 +57,7 @@ class YoutubeService(SubscriptionService):
         :raises InvalidCredentialError: if the user refresh token is invalid
         """
 
-        user = self.user_repository.get(user_id)
+        user = await self.user_repository.get(user_id)
         youtube_channels = []
 
         api_key = self._get_api_key()
@@ -162,7 +162,7 @@ class YoutubeService(SubscriptionService):
         return updated_items
 
     async def _get_api_key_for_sub(self, sub_id: uuid.UUID) -> str:
-        subscribed_users = self.user_repository.find_users_subscribed_to_subscription(sub_id)
+        subscribed_users = await self.user_repository.find_users_subscribed_to_subscription(sub_id)
         if len(subscribed_users) == 0:
             return self._get_api_key()
 

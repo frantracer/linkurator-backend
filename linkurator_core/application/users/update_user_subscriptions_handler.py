@@ -18,7 +18,7 @@ class UpdateUserSubscriptionsHandler:
         self.user_repository = user_repository
 
     async def handle(self, user_id: uuid.UUID) -> None:
-        user = self.user_repository.get(user_id)
+        user = await self.user_repository.get(user_id)
         if user is None:
             print(f"Cannot update subscriptions for user with id {user_id}: user not found")
             return
@@ -31,7 +31,7 @@ class UpdateUserSubscriptionsHandler:
             print(f"Failed to update subscriptions for user with id {user_id}: {str(exception)}")
 
         user.scanned_at = datetime.now(timezone.utc)
-        self.user_repository.update(user)
+        await self.user_repository.update(user)
 
     def _get_or_create_subscription(self, subscription: Subscription) -> Subscription:
         registered_subscription = self.subscription_repository.find(subscription)
