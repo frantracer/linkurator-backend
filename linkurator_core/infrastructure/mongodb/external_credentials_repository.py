@@ -2,16 +2,17 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import Any, List, Optional
+from typing import List, Optional
 from uuid import UUID
 
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
-from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from pydantic.main import BaseModel
 
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
+from linkurator_core.infrastructure.mongodb.common import MongoDBMapping
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 
@@ -32,6 +33,10 @@ class MongoDBExternalCredentials(BaseModel):
             updated_at=credentials.updated_at
         )
 
+    @staticmethod
+    def from_dict(credentials: MongoDBMapping) -> MongoDBExternalCredentials:
+        return MongoDBExternalCredentials(**credentials)
+
     def to_domain_credentials(self) -> ExternalServiceCredential:
         return ExternalServiceCredential(
             user_id=self.user_id,
@@ -41,16 +46,20 @@ class MongoDBExternalCredentials(BaseModel):
             updated_at=self.updated_at
         )
 
+    def to_dict(self) -> MongoDBMapping:
+        return self.model_dump()
+
 
 class MongodDBExternalCredentialRepository(ExternalCredentialRepository):
     _collection_name: str = 'external_credentials'
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
-        self.client = AsyncIOMotorClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
+        self.client = AsyncIOMotorClient[MongoDBMapping](
+            f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
 
-    def _collection(self) -> Any:
+    def _collection(self) -> AsyncIOMotorCollection[MongoDBMapping]:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
         return self.client.get_database(self.db_name, codec_options=codec_options).get_collection(self._collection_name)
 
@@ -65,12 +74,12 @@ class MongodDBExternalCredentialRepository(ExternalCredentialRepository):
 
     async def add(self, credentials: ExternalServiceCredential) -> None:
         await self._collection().insert_one(
-            MongoDBExternalCredentials.from_domain_credentials(credentials).model_dump())
+            MongoDBExternalCredentials.from_domain_credentials(credentials).to_dict())
 
     async def update(self, credentials: ExternalServiceCredential) -> None:
         await self._collection().update_one(
             {'user_id': credentials.user_id},
-            {'$set': MongoDBExternalCredentials.from_domain_credentials(credentials).model_dump()}
+            {'$set': MongoDBExternalCredentials.from_domain_credentials(credentials).to_dict()}
         )
 
     async def delete(
