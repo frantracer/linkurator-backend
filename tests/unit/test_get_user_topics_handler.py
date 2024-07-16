@@ -10,7 +10,8 @@ from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.user import User
 
 
-def test_get_user_topics_handler() -> None:
+@pytest.mark.asyncio
+async def test_get_user_topics_handler() -> None:
     user_repo_mock = MagicMock()
     user = User.new(
         uuid=UUID('ac32894a-d568-4def-9cfd-08779845018f'),
@@ -32,13 +33,14 @@ def test_get_user_topics_handler() -> None:
 
     handler = GetUserTopicsHandler(user_repo_mock, topic_repo_mock)
 
-    topics = handler.handle(user.uuid)
+    topics = await handler.handle(user.uuid)
 
     assert len(topics) == 1
     assert topics[0] == topic1
 
 
-def test_get_user_topics_handler_user_not_found() -> None:
+@pytest.mark.asyncio
+async def test_get_user_topics_handler_user_not_found() -> None:
     user_repo_mock = MagicMock()
     user_repo_mock.get.return_value = None
 
@@ -47,4 +49,4 @@ def test_get_user_topics_handler_user_not_found() -> None:
     handler = GetUserTopicsHandler(user_repo_mock, topic_repo_mock)
 
     with pytest.raises(UserNotFoundError):
-        handler.handle(UUID('7b444729-aaea-4f0c-8fa3-ef307e164a80'))
+        await handler.handle(UUID('7b444729-aaea-4f0c-8fa3-ef307e164a80'))

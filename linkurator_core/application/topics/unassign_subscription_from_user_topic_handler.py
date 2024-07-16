@@ -8,7 +8,7 @@ class UnassignSubscriptionFromUserTopicHandler:
     def __init__(self, topic_repository: TopicRepository) -> None:
         self.topic_repository = topic_repository
 
-    def handle(self, user_id: UUID, subscription_id: UUID, topic_id: UUID) -> None:
+    async def handle(self, user_id: UUID, subscription_id: UUID, topic_id: UUID) -> None:
         topic = self.topic_repository.get(topic_id)
         if topic is None or topic.user_id != user_id:
             raise TopicNotFoundError(topic_id)

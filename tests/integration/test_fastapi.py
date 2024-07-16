@@ -1,12 +1,13 @@
 import uuid
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
 
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
@@ -21,7 +22,7 @@ USER_UUID = uuid.UUID("8efe1fe3-906d-4aa4-8fbe-b47810c197d8")
 
 @pytest.fixture(name="handlers", scope="function")
 def dummy_handlers() -> Handlers:
-    dummy_validate_token_handler = MagicMock(spec=ValidateTokenHandler)
+    dummy_validate_token_handler = AsyncMock(spec=ValidateTokenHandler)
     dummy_validate_token_handler.handle.return_value = Session(
         user_id=USER_UUID,
         expires_at=datetime.fromisoformat('3000-01-01T00:00:00+00:00'),
@@ -29,29 +30,29 @@ def dummy_handlers() -> Handlers:
 
     return Handlers(
         validate_token=dummy_validate_token_handler,
-        register_user=MagicMock(),
-        google_client=MagicMock(),
-        get_subscription=MagicMock(),
-        get_user_subscriptions=MagicMock(),
-        get_subscription_items_handler=MagicMock(),
-        delete_subscription_items_handler=MagicMock(),
-        refresh_subscription_handler=MagicMock(),
-        get_user_profile_handler=MagicMock(),
-        delete_user_handler=MagicMock(),
-        get_topic_handler=MagicMock(),
-        get_topic_items_handler=MagicMock(),
-        get_user_topics_handler=MagicMock(),
-        create_topic_handler=MagicMock(),
-        assign_subscription_to_topic_handler=MagicMock(),
-        delete_topic_handler=MagicMock(),
-        unassign_subscription_from_topic_handler=MagicMock(),
-        update_topic_handler=MagicMock(),
-        get_item_handler=MagicMock(),
-        create_item_interaction_handler=MagicMock(),
-        delete_item_interaction_handler=MagicMock(),
-        get_user_external_credentials_handler=MagicMock(),
-        add_external_credentials_handler=MagicMock(),
-        delete_external_credential_handler=MagicMock(),
+        register_user=AsyncMock(),
+        google_client=AsyncMock(),
+        get_subscription=AsyncMock(),
+        get_user_subscriptions=AsyncMock(),
+        get_subscription_items_handler=AsyncMock(),
+        delete_subscription_items_handler=AsyncMock(),
+        refresh_subscription_handler=AsyncMock(),
+        get_user_profile_handler=AsyncMock(),
+        delete_user_handler=AsyncMock(),
+        get_topic_handler=AsyncMock(),
+        get_topic_items_handler=AsyncMock(),
+        get_user_topics_handler=AsyncMock(),
+        create_topic_handler=AsyncMock(),
+        assign_subscription_to_topic_handler=AsyncMock(),
+        delete_topic_handler=AsyncMock(),
+        unassign_subscription_from_topic_handler=AsyncMock(),
+        update_topic_handler=AsyncMock(),
+        get_item_handler=AsyncMock(),
+        create_item_interaction_handler=AsyncMock(),
+        delete_item_interaction_handler=AsyncMock(),
+        get_user_external_credentials_handler=AsyncMock(),
+        add_external_credentials_handler=AsyncMock(),
+        delete_external_credential_handler=AsyncMock(),
     )
 
 
@@ -64,7 +65,7 @@ def test_health_returns_200(handlers: Handlers) -> None:
 
 
 def test_user_profile_returns_200(handlers: Handlers) -> None:
-    dummy_get_user_profile_handler = MagicMock()
+    dummy_get_user_profile_handler = AsyncMock(spec=GetUserProfileHandler)
     dummy_get_user_profile_handler.handle.return_value = User(
         uuid=uuid.UUID("cb856f4f-8371-4648-af75-38fb34231092"),
         first_name="first name",
@@ -95,7 +96,7 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
 
 
 def test_user_profile_returns_404_when_user_not_found(handlers: Handlers) -> None:
-    dummy_get_user_profile_handler = MagicMock()
+    dummy_get_user_profile_handler = AsyncMock(spec=GetUserProfileHandler)
     dummy_get_user_profile_handler.handle.return_value = None
     handlers.get_user_profile_handler = dummy_get_user_profile_handler
 
@@ -113,7 +114,7 @@ def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
                      url=utils.parse_url('https://ae1b82ee.com'),
                      thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
                      published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    dummy_get_subscription_items_handler = MagicMock(spec=GetSubscriptionItemsHandler)
+    dummy_get_subscription_items_handler = AsyncMock(spec=GetSubscriptionItemsHandler)
     dummy_get_subscription_items_handler.handle.return_value = [(item1, [])]
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
@@ -131,7 +132,7 @@ def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
 
 
 def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> None:
-    dummy_get_subscription_items_handler = MagicMock(spec=GetSubscriptionItemsHandler)
+    dummy_get_subscription_items_handler = AsyncMock(spec=GetSubscriptionItemsHandler)
     dummy_get_subscription_items_handler.handle.return_value = []
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
@@ -159,7 +160,7 @@ def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> N
 
 
 def test_get_subscription_items_recommended_and_without_interactions(handlers: Handlers) -> None:
-    dummy_get_subscription_items_handler = MagicMock(spec=GetSubscriptionItemsHandler)
+    dummy_get_subscription_items_handler = AsyncMock(spec=GetSubscriptionItemsHandler)
     dummy_get_subscription_items_handler.handle.return_value = []
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
@@ -208,7 +209,7 @@ def test_delete_topic_returns_204(handlers: Handlers) -> None:
 
 
 def test_delete_non_existing_topic_returns_404(handlers: Handlers) -> None:
-    dummy_handler = MagicMock()
+    dummy_handler = AsyncMock()
     dummy_handler.handle.side_effect = TopicNotFoundError
     handlers.delete_topic_handler = dummy_handler
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -218,7 +219,7 @@ def test_delete_non_existing_topic_returns_404(handlers: Handlers) -> None:
 
 
 def test_get_topics_returns_200(handlers: Handlers) -> None:
-    dummy_handler = MagicMock()
+    dummy_handler = AsyncMock()
     dummy_handler.handle.return_value = [Topic.new(
         uuid=uuid.UUID("f22b92da-5b90-455f-8141-fb4a37f07805"),
         name="topic1",
@@ -237,7 +238,7 @@ def test_get_topics_returns_200(handlers: Handlers) -> None:
 
 
 def test_get_topic_returns_200(handlers: Handlers) -> None:
-    dummy_handler = MagicMock()
+    dummy_handler = AsyncMock()
     dummy_handler.handle.return_value = Topic.new(
         uuid=uuid.UUID("f8be01d6-98b3-4ba7-a540-d2f008d1adbc"),
         name="topic1",
@@ -257,7 +258,7 @@ def test_get_topic_returns_200(handlers: Handlers) -> None:
 
 
 def test_get_topic_returns_404_when_topic_not_found(handlers: Handlers) -> None:
-    dummy_handler = MagicMock()
+    dummy_handler = AsyncMock()
     dummy_handler.handle.side_effect = TopicNotFoundError
     handlers.get_topic_handler = dummy_handler
 
@@ -268,7 +269,7 @@ def test_get_topic_returns_404_when_topic_not_found(handlers: Handlers) -> None:
 
 
 def test_get_topic_items_returns_200(handlers: Handlers) -> None:
-    dummy_handler = MagicMock(spec=GetTopicItemsHandler)
+    dummy_handler = AsyncMock(spec=GetTopicItemsHandler)
     item1 = Item.new(
         uuid=uuid.UUID("1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac"),
         name="item1",
@@ -293,7 +294,7 @@ def test_get_topic_items_returns_200(handlers: Handlers) -> None:
 
 
 def test_get_topic_items_for_non_existing_topic_returns_404(handlers: Handlers) -> None:
-    dummy_handler = MagicMock()
+    dummy_handler = AsyncMock()
     dummy_handler.handle.side_effect = TopicNotFoundError
     handlers.get_topic_items_handler = dummy_handler
 
@@ -304,7 +305,7 @@ def test_get_topic_items_for_non_existing_topic_returns_404(handlers: Handlers) 
 
 
 def test_get_topic_items_parses_query_parameters(handlers: Handlers) -> None:
-    dummy_get_topic_items_handler = MagicMock(spec=GetTopicItemsHandler)
+    dummy_get_topic_items_handler = AsyncMock(spec=GetTopicItemsHandler)
     dummy_get_topic_items_handler.handle.return_value = []
     handlers.get_topic_items_handler = dummy_get_topic_items_handler
 
@@ -332,7 +333,7 @@ def test_get_topic_items_parses_query_parameters(handlers: Handlers) -> None:
 
 
 def test_get_topic_items_recommended_and_without_interactions(handlers: Handlers) -> None:
-    dummy_get_topic_items_handler = MagicMock(spec=GetTopicItemsHandler)
+    dummy_get_topic_items_handler = AsyncMock(spec=GetTopicItemsHandler)
     dummy_get_topic_items_handler.handle.return_value = []
     handlers.get_topic_items_handler = dummy_get_topic_items_handler
 
@@ -368,7 +369,7 @@ def test_assign_subscription_to_topic_returns_200(handlers: Handlers) -> None:
 
 
 def test_assign_non_existing_subscription_to_topic_returns_404(handlers: Handlers) -> None:
-    dummy_handler = MagicMock()
+    dummy_handler = AsyncMock()
     dummy_handler.handle.side_effect = SubscriptionNotFoundError
     handlers.assign_subscription_to_topic_handler = dummy_handler
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -379,7 +380,7 @@ def test_assign_non_existing_subscription_to_topic_returns_404(handlers: Handler
 
 
 def test_assign_subscription_to_non_existing_topic_returns_404(handlers: Handlers) -> None:
-    dummy_handler = MagicMock()
+    dummy_handler = AsyncMock()
     dummy_handler.handle.side_effect = TopicNotFoundError
     handlers.assign_subscription_to_topic_handler = dummy_handler
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -399,7 +400,7 @@ def test_unassign_subscription_from_topic_returns_204(handlers: Handlers) -> Non
 
 
 def test_unassign_non_existing_subscription_from_topic_returns_404(handlers: Handlers) -> None:
-    dummy_handler = MagicMock()
+    dummy_handler = AsyncMock()
     dummy_handler.handle.side_effect = SubscriptionNotFoundError
     handlers.unassign_subscription_from_topic_handler = dummy_handler
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -410,7 +411,7 @@ def test_unassign_non_existing_subscription_from_topic_returns_404(handlers: Han
 
 
 def test_unassign_subscription_from_non_existing_topic_returns_404(handlers: Handlers) -> None:
-    dummy_handler = MagicMock()
+    dummy_handler = AsyncMock()
     dummy_handler.handle.side_effect = TopicNotFoundError
     handlers.unassign_subscription_from_topic_handler = dummy_handler
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -421,7 +422,7 @@ def test_unassign_subscription_from_non_existing_topic_returns_404(handlers: Han
 
 
 def test_get_subscriptions_items_returns_200(handlers: Handlers) -> None:
-    dummy_handler = MagicMock(spec=GetSubscriptionItemsHandler)
+    dummy_handler = AsyncMock(spec=GetSubscriptionItemsHandler)
     item1 = Item.new(
         uuid=uuid.UUID("1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac"),
         name="item1",

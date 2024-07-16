@@ -38,7 +38,7 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        create_item_interaction_handler.handle(Interaction.new(
+        await create_item_interaction_handler.handle(Interaction.new(
             uuid=uuid4(),
             user_uuid=session.user_id,
             item_uuid=item_id,
@@ -59,7 +59,7 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        delete_item_interaction_handler.handle(session.user_id, item_id, interaction_type)
+        await delete_item_interaction_handler.handle(session.user_id, item_id, interaction_type)
 
         return
 
@@ -79,7 +79,7 @@ def get_router(
             raise default_responses.not_authenticated()
 
         try:
-            item_detail = get_item_handler.handle(user_id=session.user_id, item_id=item_id)
+            item_detail = await get_item_handler.handle(user_id=session.user_id, item_id=item_id)
             return ItemSchema.from_domain_item(item_detail.item, item_detail.interactions)
         except ItemNotFoundError as error:
             raise default_responses.not_found("Item not found") from error

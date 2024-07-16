@@ -11,7 +11,7 @@ class GetSubscriptionItemsHandler:
     def __init__(self, item_repository: ItemRepository) -> None:
         self.item_repository = item_repository
 
-    def handle(
+    async def handle(
             self,
             user_id: Optional[UUID],
             subscription_id: UUID,

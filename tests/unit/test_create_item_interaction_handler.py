@@ -13,7 +13,8 @@ from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemRepository
 
 
-def test_recommend_item_creates_interaction_and_mark_as_viewed() -> None:
+@pytest.mark.asyncio
+async def test_recommend_item_creates_interaction_and_mark_as_viewed() -> None:
     dummy_item = mock_item(
         item_uuid=UUID('76095094-994f-40f0-a1cb-b0bf438f3fd6'),
     )
@@ -43,7 +44,7 @@ def test_recommend_item_creates_interaction_and_mark_as_viewed() -> None:
         date_generator=lambda: viewed_interaction.created_at
     )
 
-    handler.handle(recommend_interaction)
+    await handler.handle(recommend_interaction)
 
     assert item_repo_mock.get_item.called
     assert item_repo_mock.get_user_interactions_by_item_id.called
@@ -52,7 +53,8 @@ def test_recommend_item_creates_interaction_and_mark_as_viewed() -> None:
     assert call(viewed_interaction) in item_repo_mock.add_interaction.call_args_list
 
 
-def test_discourage_item_creates_interaction_and_mark_as_viewed() -> None:
+@pytest.mark.asyncio
+async def test_discourage_item_creates_interaction_and_mark_as_viewed() -> None:
     dummy_item = mock_item(
         item_uuid=UUID('76095094-994f-40f0-a1cb-b0bf438f3fd6'),
     )
@@ -82,7 +84,7 @@ def test_discourage_item_creates_interaction_and_mark_as_viewed() -> None:
         date_generator=lambda: viewed_interaction.created_at
     )
 
-    handler.handle(discourage_interaction)
+    await handler.handle(discourage_interaction)
 
     assert item_repo_mock.get_item.called
     assert item_repo_mock.get_user_interactions_by_item_id.called
@@ -91,7 +93,8 @@ def test_discourage_item_creates_interaction_and_mark_as_viewed() -> None:
     assert call(viewed_interaction) in item_repo_mock.add_interaction.call_args_list
 
 
-def test_recommend_item_that_already_is_viewed_only_creates_one_interaction() -> None:
+@pytest.mark.asyncio
+async def test_recommend_item_that_already_is_viewed_only_creates_one_interaction() -> None:
     dummy_item = mock_item(
         item_uuid=UUID('76095094-994f-40f0-a1cb-b0bf438f3fd6'),
     )
@@ -126,7 +129,7 @@ def test_recommend_item_that_already_is_viewed_only_creates_one_interaction() ->
         date_generator=lambda: viewed_interaction.created_at
     )
 
-    handler.handle(recommend_interaction)
+    await handler.handle(recommend_interaction)
 
     assert item_repo_mock.get_item.called
     assert item_repo_mock.get_user_interactions_by_item_id.called
@@ -135,7 +138,8 @@ def test_recommend_item_that_already_is_viewed_only_creates_one_interaction() ->
     assert item_repo_mock.add_interaction.call_count == 1
 
 
-def test_create_item_interaction_handler_with_existing_interaction_does_nothing() -> None:
+@pytest.mark.asyncio
+async def test_create_item_interaction_handler_with_existing_interaction_does_nothing() -> None:
     dummy_item = Item.new(
         uuid=UUID('9d0b1abf-4fb8-469a-80a3-6df4ae84cd96'),
         subscription_uuid=UUID('a74efb1b-830d-49ff-85c9-15e68b055725'),
@@ -165,14 +169,15 @@ def test_create_item_interaction_handler_with_existing_interaction_does_nothing(
 
     handler = CreateItemInteractionHandler(item_repository=item_repo_mock)
 
-    handler.handle(new_interaction)
+    await handler.handle(new_interaction)
 
     assert item_repo_mock.get_item.called
     assert item_repo_mock.get_user_interactions_by_item_id.called
     assert item_repo_mock.add_interaction.call_count == 0
 
 
-def test_create_item_interaction_handler_with_non_existing_item_raises_an_error() -> None:
+@pytest.mark.asyncio
+async def test_create_item_interaction_handler_with_non_existing_item_raises_an_error() -> None:
     item_repo_mock = MagicMock(spec=ItemRepository)
     item_repo_mock.get_item = MagicMock(return_value=None)
     item_repo_mock.get_user_interactions_by_item_id = MagicMock(return_value={})
@@ -186,4 +191,4 @@ def test_create_item_interaction_handler_with_non_existing_item_raises_an_error(
     handler = CreateItemInteractionHandler(item_repository=item_repo_mock)
 
     with pytest.raises(ItemNotFoundError):
-        handler.handle(new_interaction)
+        await handler.handle(new_interaction)

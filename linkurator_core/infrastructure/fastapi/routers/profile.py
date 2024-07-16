@@ -27,7 +27,7 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        user = get_user_profile_handler.handle(session.user_id)
+        user = await get_user_profile_handler.handle(session.user_id)
         if user is None:
             raise default_responses.not_found("User not found")
         return ProfileSchema.from_domain_user(user)
@@ -43,6 +43,6 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        delete_user_handler.handle(session)
+        await delete_user_handler.handle(session)
 
     return router

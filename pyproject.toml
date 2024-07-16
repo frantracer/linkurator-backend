@@ -4,7 +4,7 @@ plugins = [
 ]
 
 mypy_path = "."
-follow_imports = "silent"
+follow_imports = "normal"
 warn_redundant_casts = true
 disallow_any_generics = true
 strict_equality = true

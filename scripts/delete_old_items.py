@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import logging
 import sys
 from datetime import datetime, timezone
@@ -13,7 +14,7 @@ from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRe
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 
-def main() -> None:
+async def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('--admin-email', type=str, required=True)
     args = parser.parse_args()
@@ -56,11 +57,11 @@ def main() -> None:
 
         for subscription_uuid in subscriptions_uuids:
             logging.info("Deleting items for subscription with uuid: %s", subscription_uuid)
-            delete_subscription_items.handle(admin.uuid, subscription_uuid)
+            await delete_subscription_items.handle(admin.uuid, subscription_uuid)
 
         if len(subscriptions_uuids) == 0:
             is_there_and_outdated_subscription = False
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())

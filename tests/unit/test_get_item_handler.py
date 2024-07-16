@@ -4,16 +4,17 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.domain.common.exceptions import ItemNotFoundError
 from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.exceptions import ItemNotFoundError
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemRepository
 from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
 
 
-def test_get_item_with_interaction() -> None:
+@pytest.mark.asyncio
+async def test_get_item_with_interaction() -> None:
     item1 = Item.new(
         uuid=UUID("e730d42d-a5e6-4705-9850-22b91df95429"),
         subscription_uuid=UUID("cec49f90-444c-477b-9fa8-96a5f772f2f5"),
@@ -38,17 +39,18 @@ def test_get_item_with_interaction() -> None:
 
     handler = GetItemHandler(item_repository=mock_item_repository)
 
-    result = handler.handle(item_id=item1.uuid, user_id=interaction1.user_uuid)
+    result = await handler.handle(item_id=item1.uuid, user_id=interaction1.user_uuid)
 
     assert result == ItemWithInteractions(item1, [interaction1])
 
 
-def test_get_not_existing_item_returns_error() -> None:
+@pytest.mark.asyncio
+async def test_get_not_existing_item_returns_error() -> None:
     mock_item_repository = MagicMock(spec=ItemRepository)
     mock_item_repository.get_item.return_value = None
 
     handler = GetItemHandler(item_repository=mock_item_repository)
 
     with pytest.raises(ItemNotFoundError):
-        handler.handle(item_id=UUID("e730d42d-a5e6-4705-9850-22b91df95429"),
-                       user_id=UUID("0cb96f09-6b77-4351-a9f9-331026091c86"))
+        await handler.handle(item_id=UUID("e730d42d-a5e6-4705-9850-22b91df95429"),
+                             user_id=UUID("0cb96f09-6b77-4351-a9f9-331026091c86"))

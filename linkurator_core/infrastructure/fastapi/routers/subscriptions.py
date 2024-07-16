@@ -49,7 +49,7 @@ def get_router(
         if created_before_ts is None:
             created_before_ts = datetime.now(tz=timezone.utc).timestamp()
 
-        subscriptions = get_user_subscriptions_handler.handle(
+        subscriptions = await get_user_subscriptions_handler.handle(
             session.user_id, page_number, page_size, datetime.fromtimestamp(created_before_ts, tz=timezone.utc))
 
         current_url = request.url.include_query_params(
@@ -78,7 +78,7 @@ def get_router(
         :return: The subscription information. UNAUTHORIZED status code if the session is invalid.
         """
         try:
-            subscription = get_subscription_handler.handle(sub_id)
+            subscription = await get_subscription_handler.handle(sub_id)
             return SubscriptionSchema.from_domain_subscription(subscription)
         except SubscriptionNotFoundError as error:
             raise default_responses.not_found("Subscription not found") from error
@@ -130,7 +130,7 @@ def get_router(
         def _include_interaction(interaction: InteractionFilterSchema) -> bool:
             return interactions is None or interaction in interactions
 
-        items_with_interactions = get_subscription_items_handler.handle(
+        items_with_interactions = await get_subscription_items_handler.handle(
             user_id=session.user_id if session else None,
             subscription_id=sub_id,
             created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
@@ -181,7 +181,7 @@ def get_router(
             raise default_responses.not_authenticated()
 
         try:
-            delete_subscription_items_handler.handle(user_id=session.user_id, subscription_id=sub_id)
+            await delete_subscription_items_handler.handle(user_id=session.user_id, subscription_id=sub_id)
             return
         except PermissionError as error:
             raise default_responses.forbidden("You don't have permissions to delete this subscription") from error

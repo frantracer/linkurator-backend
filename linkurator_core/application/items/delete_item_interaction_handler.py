@@ -10,7 +10,7 @@ class DeleteItemInteractionHandler:
     def __init__(self, item_repository: ItemRepository) -> None:
         self.item_repository = item_repository
 
-    def handle(self, user_id: UUID, item_id: UUID, interaction_type: InteractionType) -> None:
+    async def handle(self, user_id: UUID, item_id: UUID, interaction_type: InteractionType) -> None:
         current_interactions = self.item_repository.get_user_interactions_by_item_id(
             user_id=user_id, item_ids=[item_id])
 

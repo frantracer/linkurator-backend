@@ -76,7 +76,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             return interactions is None or interaction in interactions
 
         try:
-            items_with_interactions = get_topic_items_handler.handle(
+            items_with_interactions = await get_topic_items_handler.handle(
                 user_id=session.user_id if session is not None else None,
                 topic_id=topic_id,
                 created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
@@ -122,7 +122,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         if session is None:
             raise default_responses.not_authenticated()
 
-        topics = get_user_topics_handler.handle(user_id=session.user_id)
+        topics = await get_user_topics_handler.handle(user_id=session.user_id)
 
         return Page[TopicSchema].create(
             elements=[TopicSchema.from_domain_topic(topic) for topic in topics],
@@ -141,7 +141,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         Get a topic information from a user
         """
         try:
-            topic = get_topic_handler.handle(topic_id=topic_id)
+            topic = await get_topic_handler.handle(topic_id=topic_id)
             return TopicSchema.from_domain_topic(topic)
         except TopicNotFoundError as error:
             raise default_responses.not_found('Topic not found') from error
@@ -163,7 +163,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         if session is None:
             raise default_responses.not_authenticated()
 
-        create_topic_handler.handle(Topic.new(
+        await create_topic_handler.handle(Topic.new(
             uuid=new_topic.uuid,
             name=new_topic.name,
             user_id=session.user_id,
@@ -189,7 +189,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             raise default_responses.not_authenticated()
 
         try:
-            update_user_topic_handler.handle(
+            await update_user_topic_handler.handle(
                 topic_id=topic_id,
                 name=topic_update.name,
                 subscriptions_ids=topic_update.subscriptions_ids)
@@ -215,7 +215,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             raise default_responses.not_authenticated()
 
         try:
-            delete_user_topic_handler.handle(user_id=session.user_id, topic_id=topic_id)
+            await delete_user_topic_handler.handle(user_id=session.user_id, topic_id=topic_id)
         except TopicNotFoundError as error:
             raise default_responses.not_found('Topic not found') from error
 
@@ -238,7 +238,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             raise default_responses.not_authenticated()
 
         try:
-            assign_subscription_to_user_topic_handler.handle(
+            await assign_subscription_to_user_topic_handler.handle(
                 topic_id=topic_id,
                 subscription_id=subscription_id,
                 user_id=session.user_id)
@@ -266,7 +266,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             raise default_responses.not_authenticated()
 
         try:
-            unassign_subscription_from_user_topic_handler.handle(
+            await unassign_subscription_from_user_topic_handler.handle(
                 topic_id=topic_id,
                 subscription_id=subscription_id,
                 user_id=session.user_id)

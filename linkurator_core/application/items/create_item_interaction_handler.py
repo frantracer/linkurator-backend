@@ -20,7 +20,7 @@ class CreateItemInteractionHandler:
         self.uuid_generator = uuid_generator
         self.date_generator = date_generator
 
-    def handle(self, new_interaction: Interaction) -> None:
+    async def handle(self, new_interaction: Interaction) -> None:
         if self.item_repository.get_item(new_interaction.item_uuid) is None:
             raise ItemNotFoundError(f"Item with id '{new_interaction.item_uuid}' not found")
 

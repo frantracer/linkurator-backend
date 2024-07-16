@@ -12,7 +12,7 @@ class GetUserTopicsHandler:
         self.user_repo = user_repo
         self.topic_repo = topic_repo
 
-    def handle(self, user_id: UUID) -> List[Topic]:
+    async def handle(self, user_id: UUID) -> List[Topic]:
         user = self.user_repo.get(user_id)
         if user is None:
             raise UserNotFoundError(user_id)

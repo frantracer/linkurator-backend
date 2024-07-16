@@ -14,7 +14,8 @@ from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
-def test_update_topic_name() -> None:
+@pytest.mark.asyncio
+async def test_update_topic_name() -> None:
     topic = Topic(
         uuid=uuid.UUID("37e47030-5f82-4b17-a5c6-a9667bbff1be"),
         name="topic1",
@@ -29,7 +30,7 @@ def test_update_topic_name() -> None:
 
     handler = UpdateTopicHandler(topic_repository=topic_repository, subscription_repository=subscription_repository)
 
-    handler.handle(topic_id=topic.uuid, name="topic2", subscriptions_ids=None)
+    await handler.handle(topic_id=topic.uuid, name="topic2", subscriptions_ids=None)
 
     assert topic_repository.get.call_count == 1
     assert topic_repository.get.call_args == call(topic.uuid)
@@ -40,7 +41,8 @@ def test_update_topic_name() -> None:
     assert updated_topic.subscriptions_ids == topic.subscriptions_ids
 
 
-def test_update_topic_subscriptions() -> None:
+@pytest.mark.asyncio
+async def test_update_topic_subscriptions() -> None:
     topic = Topic(
         uuid=uuid.UUID("08ec8a7e-b433-4c70-971e-d52d1e3ffcc0"),
         name="topic1",
@@ -65,7 +67,7 @@ def test_update_topic_subscriptions() -> None:
         topic_repository=topic_repository,
         subscription_repository=subscription_repository)
 
-    handler.handle(
+    await handler.handle(
         topic_id=topic.uuid,
         name=None,
         subscriptions_ids=[uuid.UUID("8cfb4561-6fc5-4cc0-914d-cc91737cb316")])
@@ -83,7 +85,8 @@ def test_update_topic_subscriptions() -> None:
     assert updated_topic.subscriptions_ids == [uuid.UUID("8cfb4561-6fc5-4cc0-914d-cc91737cb316")]
 
 
-def test_update_non_existing_topic_returns_error() -> None:
+@pytest.mark.asyncio
+async def test_update_non_existing_topic_returns_error() -> None:
     topic_repository = MagicMock(spec=TopicRepository)
     topic_repository.get.return_value = None
 
@@ -92,13 +95,14 @@ def test_update_non_existing_topic_returns_error() -> None:
     handler = UpdateTopicHandler(topic_repository=topic_repository, subscription_repository=subscription_repository)
 
     with pytest.raises(TopicNotFoundError):
-        handler.handle(
+        await handler.handle(
             topic_id=uuid.UUID("37e47030-5f82-4b17-a5c6-a9667bbff1be"),
             name="topic2",
             subscriptions_ids=None)
 
 
-def test_update_topic_with_non_existing_topic_returns_error() -> None:
+@pytest.mark.asyncio
+async def test_update_topic_with_non_existing_topic_returns_error() -> None:
     topic_repository = MagicMock(spec=TopicRepository)
     topic_repository.get.return_value = Topic(
         uuid=uuid.UUID("cdd2d4ec-4965-4751-b001-3cc6c5de68ae"),
@@ -115,7 +119,7 @@ def test_update_topic_with_non_existing_topic_returns_error() -> None:
     handler = UpdateTopicHandler(topic_repository=topic_repository, subscription_repository=subscription_repository)
 
     with pytest.raises(SubscriptionNotFoundError):
-        handler.handle(
+        await handler.handle(
             topic_id=uuid.UUID("cdd2d4ec-4965-4751-b001-3cc6c5de68ae"),
             name="topic2",
             subscriptions_ids=[uuid.UUID("0dc54832-41d5-41e4-9da1-e2c741a928d9")])

@@ -11,7 +11,7 @@ class DeleteUserHandler:
         self.session_repository = session_repository
         self.account_service = account_service
 
-    def handle(self, user_session: Session) -> None:
+    async def handle(self, user_session: Session) -> None:
         user_id = user_session.user_id
         user = self.user_repository.get(user_id)
         if user is None:

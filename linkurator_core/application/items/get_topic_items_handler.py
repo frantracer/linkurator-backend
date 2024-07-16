@@ -16,7 +16,7 @@ class GetTopicItemsHandler:
         self.item_repository = item_repository
         self.topic_repository = topic_repository
 
-    def handle(
+    async def handle(
             self,
             user_id: Optional[UUID],
             topic_id: UUID,

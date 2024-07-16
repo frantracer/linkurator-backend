@@ -1,12 +1,15 @@
 from unittest.mock import MagicMock, call
 from uuid import UUID
 
+import pytest
+
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.domain.items.interaction import InteractionType, Interaction
 from linkurator_core.domain.items.item_repository import ItemRepository
 
 
-def test_delete_item_interaction_handler() -> None:
+@pytest.mark.asyncio
+async def test_delete_item_interaction_handler() -> None:
     item_repo_mock = MagicMock(spec=ItemRepository)
     dummy_interaction = Interaction.new(
         uuid=UUID('8572d7bb-91e6-49ad-ac17-bf3c7ec76ece'),
@@ -19,7 +22,7 @@ def test_delete_item_interaction_handler() -> None:
     }
     handler = DeleteItemInteractionHandler(item_repository=item_repo_mock)
 
-    handler.handle(
+    await handler.handle(
         user_id=dummy_interaction.user_uuid,
         item_id=dummy_interaction.item_uuid,
         interaction_type=dummy_interaction.type

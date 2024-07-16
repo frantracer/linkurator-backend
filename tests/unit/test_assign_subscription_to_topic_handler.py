@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 from uuid import UUID
 
 import pytest
@@ -10,14 +10,16 @@ from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, 
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user_repository import UserRepository
 
 
-def test_assign_subscription_to_topic_handler() -> None:
+@pytest.mark.asyncio
+async def test_assign_subscription_to_topic_handler() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
-    user_repo_mock = MagicMock()
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = User.new(
         uuid=user_id,
         first_name='John',
@@ -48,7 +50,7 @@ def test_assign_subscription_to_topic_handler() -> None:
         subscription_repository=subs_repo_mock,
         topic_repository=topic_repo_mock)
 
-    handler.handle(user_id, subscription_id, topic_id)
+    await handler.handle(user_id, subscription_id, topic_id)
 
     assert user_repo_mock.get.called
     assert subs_repo_mock.get.called
@@ -59,12 +61,13 @@ def test_assign_subscription_to_topic_handler() -> None:
     assert subscription_id in updated_topic.subscriptions_ids
 
 
-def test_assign_subscription_to_topic_handler_user_not_found_raises_an_error() -> None:
+@pytest.mark.asyncio
+async def test_assign_subscription_to_topic_handler_user_not_found_raises_an_error() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
-    user_repo_mock = MagicMock()
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = None
     handler = AssignSubscriptionToTopicHandler(
         user_repository=user_repo_mock,
@@ -72,15 +75,16 @@ def test_assign_subscription_to_topic_handler_user_not_found_raises_an_error() -
         topic_repository=MagicMock())
 
     with pytest.raises(UserNotFoundError):
-        handler.handle(user_id, subscription_id, topic_id)
+        await handler.handle(user_id, subscription_id, topic_id)
 
 
-def test_assign_subscription_to_topic_handler_subscription_not_found_raises_an_error() -> None:
+@pytest.mark.asyncio
+async def test_assign_subscription_to_topic_handler_subscription_not_found_raises_an_error() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
-    user_repo_mock = MagicMock()
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = User.new(
         uuid=user_id,
         first_name='John',
@@ -99,15 +103,16 @@ def test_assign_subscription_to_topic_handler_subscription_not_found_raises_an_e
         topic_repository=MagicMock())
 
     with pytest.raises(SubscriptionNotFoundError):
-        handler.handle(user_id, subscription_id, topic_id)
+        await handler.handle(user_id, subscription_id, topic_id)
 
 
-def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subscription_raises_an_error() -> None:
+@pytest.mark.asyncio
+async def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subscription_raises_an_error() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
-    user_repo_mock = MagicMock()
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = User.new(
         uuid=user_id,
         first_name='John',
@@ -133,15 +138,16 @@ def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subscriptio
         topic_repository=MagicMock())
 
     with pytest.raises(SubscriptionNotFoundError):
-        handler.handle(user_id, subscription_id, topic_id)
+        await handler.handle(user_id, subscription_id, topic_id)
 
 
-def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_error() -> None:
+@pytest.mark.asyncio
+async def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_error() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
-    user_repo_mock = MagicMock()
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = User.new(
         uuid=user_id,
         first_name='John',
@@ -169,15 +175,16 @@ def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_error() 
         topic_repository=topic_repo_mock)
 
     with pytest.raises(TopicNotFoundError):
-        handler.handle(user_id, subscription_id, topic_id)
+        await handler.handle(user_id, subscription_id, topic_id)
 
 
-def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_user_raises_an_error() -> None:
+@pytest.mark.asyncio
+async def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_user_raises_an_error() -> None:
     user_id = UUID('b9534313-5dbf-4596-9493-779b55ead651')
     subscription_id = UUID('942ad011-362c-4b12-accb-a5c8f273e8db')
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
-    user_repo_mock = MagicMock()
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = User.new(
         uuid=user_id,
         first_name='John',
@@ -209,4 +216,4 @@ def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_user_rais
         topic_repository=topic_repo_mock)
 
     with pytest.raises(TopicNotFoundError):
-        handler.handle(user_id, subscription_id, topic_id)
+        await handler.handle(user_id, subscription_id, topic_id)

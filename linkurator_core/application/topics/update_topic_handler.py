@@ -15,7 +15,7 @@ class UpdateTopicHandler:
         self.topic_repository = topic_repository
         self.subscription_repository = subscription_repository
 
-    def handle(self, topic_id: UUID, name: Optional[str], subscriptions_ids: Optional[List[UUID]]) -> None:
+    async def handle(self, topic_id: UUID, name: Optional[str], subscriptions_ids: Optional[List[UUID]]) -> None:
         topic = self.topic_repository.get(topic_id)
         if topic is None:
             raise TopicNotFoundError()

@@ -7,7 +7,7 @@ class CreateTopicHandler:
     def __init__(self, topic_repository: TopicRepository) -> None:
         self.topic_repository = topic_repository
 
-    def handle(self, topic: Topic) -> None:
+    async def handle(self, topic: Topic) -> None:
         try:
             self.topic_repository.add(topic)
         except DuplicatedKeyError as err:

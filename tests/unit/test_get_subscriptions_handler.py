@@ -1,14 +1,18 @@
-from datetime import datetime
-from unittest.mock import MagicMock
 import uuid
+from datetime import datetime
+from unittest.mock import MagicMock, AsyncMock
 
+import pytest
+
+from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.users.user import User
-from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
+from linkurator_core.domain.users.user_repository import UserRepository
 
 
-def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_creation_date() -> None:
+@pytest.mark.asyncio
+async def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_creation_date() -> None:
     sub1 = Subscription(
         uuid=uuid.UUID("6473ad5b-75ad-4384-a48d-924e026dd988"),
         name="Test1",
@@ -60,7 +64,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
 
     subscription_repo_mock = MagicMock()
     subscription_repo_mock.get_list.return_value = [sub4, sub3, sub2, sub1]
-    user_repo_mock = MagicMock()
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user = User.new(
         uuid=uuid.UUID('84a6ad8f-e0e0-42a7-be27-ca79e65ec6b2'),
         first_name='John',
@@ -73,7 +77,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
     user_repo_mock.get.return_value = user
     handler = GetUserSubscriptionsHandler(subscription_repo_mock, user_repo_mock)
 
-    the_subscriptions = handler.handle(
+    the_subscriptions = await handler.handle(
         user_id=user.uuid,
         page_number=0,
         page_size=2,
@@ -82,7 +86,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
 
     assert the_subscriptions == [sub3, sub2]
 
-    the_subscriptions = handler.handle(
+    the_subscriptions = await handler.handle(
         user_id=user.uuid,
         page_number=1,
         page_size=2,
@@ -91,7 +95,7 @@ def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_crea
 
     assert the_subscriptions == [sub1]
 
-    the_subscriptions = handler.handle(
+    the_subscriptions = await handler.handle(
         user_id=user.uuid,
         page_number=2,
         page_size=2,

@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, call, AsyncMock
 from uuid import UUID
 
 import pytest
@@ -13,8 +13,9 @@ from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
-def test_delete_subscription_items_handler() -> None:
-    user_repo_mock = MagicMock(spec=UserRepository)
+@pytest.mark.asyncio
+async def test_delete_subscription_items_handler() -> None:
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user = mock_user(uuid=UUID('1ae708ad-0cf8-4212-9bb7-a7aeb6440546'), is_admin=True)
     user_repo_mock.get.return_value = user
 
@@ -40,7 +41,7 @@ def test_delete_subscription_items_handler() -> None:
         subscription_repository=subscription_repo_mock,
         item_repository=item_repo_mock)
 
-    handler.handle(
+    await handler.handle(
         user_id=UUID('1ae708ad-0cf8-4212-9bb7-a7aeb6440546'),
         subscription_id=UUID('0a46b804-a370-480b-b64e-c2079aaaa64b'))
 
@@ -52,8 +53,9 @@ def test_delete_subscription_items_handler() -> None:
     assert subscription_repo_mock.update.call_count == 1
 
 
-def test_user_requires_to_be_admin_to_delete_subscription_items() -> None:
-    user_repo_mock = MagicMock(spec=UserRepository)
+@pytest.mark.asyncio
+async def test_user_requires_to_be_admin_to_delete_subscription_items() -> None:
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = User.new(
         uuid=UUID('f12c465f-4aa3-4e1f-ba04-389791080c6a'),
         first_name='John',
@@ -73,13 +75,14 @@ def test_user_requires_to_be_admin_to_delete_subscription_items() -> None:
         item_repository=item_repo_mock)
 
     with pytest.raises(PermissionError):
-        handler.handle(
+        await handler.handle(
             user_id=UUID('f12c465f-4aa3-4e1f-ba04-389791080c6a'),
             subscription_id=UUID('0a46b804-a370-480b-b64e-c2079aaaa64b'))
 
 
-def test_delete_items_handler_raises_exception_if_subscription_does_not_exist() -> None:
-    user_repo_mock = MagicMock(spec=UserRepository)
+@pytest.mark.asyncio
+async def test_delete_items_handler_raises_exception_if_subscription_does_not_exist() -> None:
+    user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = User.new(
         uuid=UUID('1ae708ad-0cf8-4212-9bb7-a7aeb6440546'),
         first_name='John',
@@ -101,6 +104,6 @@ def test_delete_items_handler_raises_exception_if_subscription_does_not_exist() 
         item_repository=item_repo_mock)
 
     with pytest.raises(SubscriptionNotFoundError):
-        handler.handle(
+        await handler.handle(
             user_id=UUID('1ae708ad-0cf8-4212-9bb7-a7aeb6440546'),
             subscription_id=UUID('0a46b804-a370-480b-b64e-c2079aaaa64b'))

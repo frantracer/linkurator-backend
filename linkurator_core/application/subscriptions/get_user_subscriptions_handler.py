@@ -11,7 +11,7 @@ class GetUserSubscriptionsHandler:
         self.subscription_repository = subscription_repository
         self.user_repository = user_repository
 
-    def handle(self,
+    async def handle(self,
                user_id: UUID,
                page_number: int,
                page_size: int,
