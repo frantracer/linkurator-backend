@@ -141,7 +141,7 @@ docker-lint:
 	docker run --name $(DOCKER_CONTAINER_LINTING) --pull never --network host $(DOCKER_IMAGE) make lint
 
 docker-run-external-services:
-	docker-compose up -d
+	docker compose up -d
 
 docker-stop:
 	docker stop $(DOCKER_CONTAINER_API) $(DOCKER_CONTAINER_PROCESSOR)
