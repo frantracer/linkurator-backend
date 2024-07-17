@@ -7,6 +7,7 @@ from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider, Subscription
+from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.domain.users.user import User
 
@@ -33,6 +34,17 @@ def mock_sub(uuid: Optional[UUID] = None) -> Subscription:
         url=parse_url(f'https://www.youtube.com/channel/{uuid}'),
         thumbnail=parse_url(f'https://www.youtube.com/channel/{uuid}/thumbnail'),
         external_data={},
+    )
+
+
+def mock_topic(uuid: Optional[UUID] = None, user_uuid: Optional[UUID] = None) -> Topic:
+    uuid = uuid or uuid4()
+    user_uuid = user_uuid or uuid4()
+    return Topic.new(
+        uuid=uuid,
+        name=f'Topic {uuid}',
+        user_id=user_uuid,
+        subscription_ids=[],
     )
 
 

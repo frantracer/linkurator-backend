@@ -36,3 +36,7 @@ class InvalidCredentialTypeError(Exception):
 
 class InvalidYoutubeRssFeedError(Exception):
     pass
+
+
+class CannotFollowOwnedTopicError(Exception):
+    pass
