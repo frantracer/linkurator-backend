@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
@@ -7,6 +7,7 @@ from linkurator_core.application.topics.get_user_topics_handler import GetUserTo
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
 
@@ -24,7 +25,7 @@ async def test_get_user_topics_handler() -> None:
         google_refresh_token='refresh_token'
     )
     user_repo_mock.get.return_value = user
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic1 = Topic.new(
         uuid=UUID('ac32894a-d568-4def-9cfd-08779845018f'),
         name='Topic 1',
@@ -45,7 +46,7 @@ async def test_get_user_topics_handler_user_not_found() -> None:
     user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = None
 
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
 
     handler = GetUserTopicsHandler(user_repo_mock, topic_repo_mock)
 

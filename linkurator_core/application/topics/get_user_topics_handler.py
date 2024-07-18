@@ -17,4 +17,4 @@ class GetUserTopicsHandler:
         if user is None:
             raise UserNotFoundError(user_id)
 
-        return self.topic_repo.get_by_user_id(user_id)
+        return await self.topic_repo.get_by_user_id(user_id)

@@ -9,7 +9,7 @@ class DeleteUserTopicHandler:
         self.topic_repository = topic_repository
 
     async def handle(self, user_id: UUID, topic_id: UUID) -> None:
-        topic = self.topic_repository.get(topic_id)
+        topic = await self.topic_repository.get(topic_id)
         if topic is None or topic.user_id != user_id:
             raise TopicNotFoundError(topic_id)
-        self.topic_repository.delete(topic_id)
+        await self.topic_repository.delete(topic_id)

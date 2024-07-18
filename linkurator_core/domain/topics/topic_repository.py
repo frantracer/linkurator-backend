@@ -10,21 +10,21 @@ class TopicRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def add(self, topic: Topic) -> None:
+    async def add(self, topic: Topic) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get(self, topic_id: UUID) -> Optional[Topic]:
+    async def get(self, topic_id: UUID) -> Optional[Topic]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update(self, topic: Topic) -> None:
+    async def update(self, topic: Topic) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, topic_id: UUID) -> None:
+    async def delete(self, topic_id: UUID) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_by_user_id(self, user_id: UUID) -> List[Topic]:
+    async def get_by_user_id(self, user_id: UUID) -> List[Topic]:
         raise NotImplementedError

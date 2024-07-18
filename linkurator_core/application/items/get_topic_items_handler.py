@@ -32,7 +32,7 @@ class GetTopicItemsHandler:
             include_viewed_items: bool = True,
             include_hidden_items: bool = True,
     ) -> List[Tuple[Item, List[Interaction]]]:
-        topic = self.topic_repository.get(topic_id)
+        topic = await self.topic_repository.get(topic_id)
         if topic is None:
             raise TopicNotFoundError(topic_id)
 

@@ -9,6 +9,7 @@ from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError, UserNotFoundError
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
 
@@ -39,7 +40,7 @@ async def test_assign_subscription_to_topic_handler() -> None:
         thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
         external_data={}
     )
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = Topic.new(
         uuid=topic_id,
         name='Topic 1',
@@ -167,7 +168,7 @@ async def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_er
         thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
         external_data={}
     )
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = None
     handler = AssignSubscriptionToTopicHandler(
         user_repository=user_repo_mock,
@@ -204,7 +205,7 @@ async def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_use
         thumbnail=utils.parse_url('https://example.com/thumbnail.png'),
         external_data={}
     )
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = Topic.new(
         uuid=topic_id,
         name='Topic 1',

@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
@@ -6,6 +6,7 @@ import pytest
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
 @pytest.mark.asyncio
@@ -17,7 +18,7 @@ async def test_delete_user_topic_handler() -> None:
         name='Test Topic'
     )
 
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = topic
 
     handler = DeleteUserTopicHandler(topic_repo_mock)
@@ -31,7 +32,7 @@ async def test_delete_user_topic_handler() -> None:
 
 @pytest.mark.asyncio
 async def test_delete_non_existent_topic_raises_exception() -> None:
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = None
 
     handler = DeleteUserTopicHandler(topic_repo_mock)
@@ -50,7 +51,7 @@ async def test_delete_topic_with_different_user_raises_exception() -> None:
         name='Test Topic'
     )
 
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = topic
 
     handler = DeleteUserTopicHandler(topic_repo_mock)

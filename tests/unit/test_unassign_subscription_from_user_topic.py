@@ -1,13 +1,14 @@
 from copy import copy
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
 
-from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler \
     import UnassignSubscriptionFromUserTopicHandler
+from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
 @pytest.mark.asyncio
@@ -23,7 +24,7 @@ async def test_unassign_subscription_from_user_topic_handler() -> None:
         subscription_ids=[subscription_id]
     )
 
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = copy(topic)
     topic_repo_mock.update.return_value = None
 
@@ -33,8 +34,8 @@ async def test_unassign_subscription_from_user_topic_handler() -> None:
 
     await handler.handle(user_id=user_id, subscription_id=subscription_id, topic_id=topic_id)
 
-    assert topic_repo_mock.get.called_once()
-    assert topic_repo_mock.update.called_once()
+    topic_repo_mock.get.assert_awaited_once_with(topic_id)
+    topic_repo_mock.update.assert_awaited_once()
     updated_topic: Topic = topic_repo_mock.update.call_args[0][0]
     assert subscription_id not in updated_topic.subscriptions_ids
 
@@ -45,7 +46,7 @@ async def test_unassign_subscription_from_non_existent_topic_raises_an_exception
     subscription_id = UUID('5543fc75-2c64-43b6-8dc1-22d68fffee94')
     topic_id = UUID('2642a2b7-0d9d-4b68-8b13-c7dc8370d33e')
 
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = None
 
     handler = UnassignSubscriptionFromUserTopicHandler(
@@ -69,7 +70,7 @@ async def test_unassign_subscription_from_a_different_user_topic_raises_an_excep
         subscription_ids=[subscription_id]
     )
 
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = copy(topic)
     topic_repo_mock.update.return_value = None
 
@@ -94,7 +95,7 @@ async def test_unassign_non_existent_subscription_from_user_topic_does_nothing()
         subscription_ids=[]
     )
 
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = copy(topic)
     topic_repo_mock.update.return_value = None
 
@@ -104,7 +105,7 @@ async def test_unassign_non_existent_subscription_from_user_topic_does_nothing()
 
     await handler.handle(user_id=user_id, subscription_id=subscription_id, topic_id=topic_id)
 
-    assert topic_repo_mock.get.called_once()
-    assert topic_repo_mock.update.called_once()
+    topic_repo_mock.get.assert_awaited_once_with(topic_id)
+    topic_repo_mock.update.assert_awaited_once()
     updated_topic: Topic = topic_repo_mock.update.call_args[0][0]
     assert updated_topic == topic

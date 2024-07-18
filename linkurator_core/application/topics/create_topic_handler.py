@@ -9,6 +9,6 @@ class CreateTopicHandler:
 
     async def handle(self, topic: Topic) -> None:
         try:
-            self.topic_repository.add(topic)
+            await self.topic_repository.add(topic)
         except DuplicatedKeyError as err:
             print(f'Duplicated key error: {err}')

@@ -1,15 +1,16 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
 
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
 @pytest.mark.asyncio
 async def test_create_topic_handler() -> None:
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.add.return_value = None
     handler = CreateTopicHandler(topic_repository=topic_repo_mock)
 

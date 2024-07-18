@@ -1,11 +1,12 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
 
-from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
+from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
 @pytest.mark.asyncio
@@ -17,7 +18,7 @@ async def test_get_topic_handler() -> None:
         subscription_ids=[UUID('263bda19-e32e-47df-a0c5-7884bdafc23f')]
     )
 
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = topic
 
     handler = GetTopicHandler(topic_repo_mock)
@@ -29,7 +30,7 @@ async def test_get_topic_handler() -> None:
 
 @pytest.mark.asyncio
 async def test_get_topic_handler_not_found() -> None:
-    topic_repo_mock = MagicMock()
+    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = None
 
     handler = GetTopicHandler(topic_repo_mock)

@@ -10,7 +10,7 @@ class GetTopicHandler:
         self.topic_repository = topic_repository
 
     async def handle(self, topic_id: UUID) -> Topic:
-        topic = self.topic_repository.get(topic_id)
+        topic = await self.topic_repository.get(topic_id)
         if topic is None:
             raise TopicNotFoundError(topic_id)
         return topic

@@ -12,7 +12,7 @@ class FollowTopicHandler:
         self.followed_topics_repository = followed_topics_repository
 
     async def handle(self, user_id: UUID, topic_id: UUID) -> None:
-        topic = self.topic_repository.get(topic_id)
+        topic = await self.topic_repository.get(topic_id)
         if topic is None:
             raise TopicNotFoundError()
 
