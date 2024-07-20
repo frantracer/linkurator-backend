@@ -80,6 +80,11 @@ class MongoDBTopicRepository(TopicRepository):
             return None
         return MongoDBTopic(**topic).to_domain_topic()
 
+    async def find_topics(self, topic_ids: List[UUID]) -> List[Topic]:
+        collection = self._topic_collection()
+        topics = await collection.find({'uuid': {'$in': topic_ids}}).to_list(length=None)
+        return [MongoDBTopic(**topic).to_domain_topic() for topic in topics]
+
     async def update(self, topic: Topic) -> None:
         collection = self._topic_collection()
         await collection.update_one({'uuid': topic.uuid}, {'$set': MongoDBTopic.from_domain_topic(topic).model_dump()})

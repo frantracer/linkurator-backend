@@ -18,6 +18,10 @@ class TopicRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    async def find_topics(self, topic_ids: List[UUID]) -> List[Topic]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     async def update(self, topic: Topic) -> None:
         raise NotImplementedError
 

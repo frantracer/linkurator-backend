@@ -151,3 +151,25 @@ async def test_create_topic_with_same_raises_duplicated_key_exception(topic_repo
     await topic_repo.add(topic)
     with pytest.raises(DuplicatedKeyError):
         await topic_repo.add(topic)
+
+
+@pytest.mark.asyncio
+async def test_find_one_existing_and_non_existing_topics_returns_only_one_topic(
+        topic_repo: MongoDBTopicRepository
+) -> None:
+    topic1 = Topic.new(
+        name="test_topic_1",
+        uuid=uuid.UUID("0bfd4fee-99c2-43bb-8178-cc8b324917d2"),
+        user_id=uuid.UUID("59819801-ee52-4f80-bbcb-06c65659ff41"))
+    topic2 = Topic.new(
+        name="test_topic_2",
+        uuid=uuid.UUID("f159a3e3-11fe-4198-aae8-8bc016c13830"),
+        user_id=uuid.UUID("e2a11fb7-9f4b-492f-a902-3368d8ab80b0"))
+
+    assert len(await topic_repo.find_topics([topic1.uuid, topic2.uuid])) == 0
+
+    await topic_repo.add(topic1)
+    topics = await topic_repo.find_topics([topic1.uuid, topic2.uuid])
+
+    assert len(topics) == 1
+    assert topics[0].uuid == topic1.uuid
