@@ -41,6 +41,7 @@ from linkurator_core.infrastructure.google.youtube_api_key_checker import Youtub
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
+from linkurator_core.infrastructure.mongodb.followed_topics_repository import MongoDBFollowedTopicsRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
@@ -70,6 +71,9 @@ def app_handlers() -> Handlers:
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
     topic_repository = MongoDBTopicRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password)
+    followed_topics_repository = MongoDBFollowedTopicsRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
     credentials_repository = MongodDBExternalCredentialRepository(
@@ -110,7 +114,11 @@ def app_handlers() -> Handlers:
             credentials_repository=credentials_repository),
         get_user_profile_handler=GetUserProfileHandler(user_repository),
         delete_user_handler=DeleteUserHandler(user_repository, session_repository, account_service),
-        get_user_topics_handler=GetUserTopicsHandler(topic_repo=topic_repository, user_repo=user_repository),
+        get_user_topics_handler=GetUserTopicsHandler(
+            topic_repo=topic_repository,
+            user_repo=user_repository,
+            followed_topics_repo=followed_topics_repository
+        ),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
         get_topic_items_handler=GetTopicItemsHandler(
             topic_repository=topic_repository,
