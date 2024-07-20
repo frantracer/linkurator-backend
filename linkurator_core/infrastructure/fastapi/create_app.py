@@ -21,10 +21,12 @@ from linkurator_core.application.topics.assign_subscription_to_user_topic_handle
     AssignSubscriptionToTopicHandler
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.application.topics.follow_topic_handler import FollowTopicHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
     UnassignSubscriptionFromUserTopicHandler
+from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
@@ -59,6 +61,8 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_topic_items_handler: GetTopicItemsHandler
     delete_topic_handler: DeleteUserTopicHandler
     update_topic_handler: UpdateTopicHandler
+    follow_topic_handler: FollowTopicHandler
+    unfollow_topic_handler: UnfollowTopicHandler
     get_item_handler: GetItemHandler
     create_item_interaction_handler: CreateItemInteractionHandler
     delete_item_interaction_handler: DeleteItemInteractionHandler
@@ -110,7 +114,9 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             assign_subscription_to_user_topic_handler=handlers.assign_subscription_to_topic_handler,
             unassign_subscription_from_user_topic_handler=handlers.unassign_subscription_from_topic_handler,
             delete_user_topic_handler=handlers.delete_topic_handler,
-            update_user_topic_handler=handlers.update_topic_handler
+            update_user_topic_handler=handlers.update_topic_handler,
+            follow_topic_handler=handlers.follow_topic_handler,
+            unfollow_topic_handler=handlers.unfollow_topic_handler
         ),
         prefix="/topics")
     app.include_router(

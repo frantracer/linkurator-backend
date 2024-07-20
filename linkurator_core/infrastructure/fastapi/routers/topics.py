@@ -11,10 +11,12 @@ from linkurator_core.application.topics.assign_subscription_to_user_topic_handle
     AssignSubscriptionToTopicHandler
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.application.topics.follow_topic_handler import FollowTopicHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
     UnassignSubscriptionFromUserTopicHandler
+from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
 from linkurator_core.domain.topics.topic import Topic
@@ -34,7 +36,9 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         assign_subscription_to_user_topic_handler: AssignSubscriptionToTopicHandler,
         unassign_subscription_from_user_topic_handler: UnassignSubscriptionFromUserTopicHandler,
         delete_user_topic_handler: DeleteUserTopicHandler,
-        update_user_topic_handler: UpdateTopicHandler
+        update_user_topic_handler: UpdateTopicHandler,
+        follow_topic_handler: FollowTopicHandler,
+        unfollow_topic_handler: UnfollowTopicHandler
 ) -> APIRouter:
     """
     Get the router for the topics
@@ -274,5 +278,46 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             raise default_responses.not_found('Subscription not found') from error
         except TopicNotFoundError as error:
             raise default_responses.not_found('Topic not found') from error
+
+    @router.post("/{topic_id}/follow",
+                 status_code=status.HTTP_201_CREATED,
+                 response_class=Response,
+                 responses={
+                     status.HTTP_401_UNAUTHORIZED: {'model': None},
+                     status.HTTP_404_NOT_FOUND: {'model': None}
+                 })
+    async def follow_topic(
+            topic_id: UUID,
+            session: Optional[Session] = Depends(get_session)
+    ) -> None:
+        """
+        Follow a topic
+        """
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        try:
+            await follow_topic_handler.handle(user_id=session.user_id, topic_id=topic_id)
+        except TopicNotFoundError as error:
+            raise default_responses.not_found('Topic not found') from error
+
+    @router.delete("/{topic_id}/follow",
+                   status_code=status.HTTP_204_NO_CONTENT,
+                   response_class=Response,
+                   responses={
+                       status.HTTP_401_UNAUTHORIZED: {'model': None},
+                       status.HTTP_404_NOT_FOUND: {'model': None}
+                   })
+    async def unfollow_topic(
+            topic_id: UUID,
+            session: Optional[Session] = Depends(get_session)
+    ) -> None:
+        """
+        Unfollow a topic
+        """
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        await unfollow_topic_handler.handle(user_id=session.user_id, topic_id=topic_id)
 
     return router

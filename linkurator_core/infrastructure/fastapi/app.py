@@ -19,10 +19,12 @@ from linkurator_core.application.topics.assign_subscription_to_user_topic_handle
     AssignSubscriptionToTopicHandler
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.application.topics.follow_topic_handler import FollowTopicHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
     UnassignSubscriptionFromUserTopicHandler
+from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
@@ -134,6 +136,11 @@ def app_handlers() -> Handlers:
         get_topic_handler=GetTopicHandler(topic_repository=topic_repository),
         unassign_subscription_from_topic_handler=UnassignSubscriptionFromUserTopicHandler(
             topic_repository=topic_repository),
+        follow_topic_handler=FollowTopicHandler(
+            followed_topics_repository=followed_topics_repository,
+            topic_repository=topic_repository),
+        unfollow_topic_handler=UnfollowTopicHandler(
+            followed_topics_repository=followed_topics_repository),
         get_item_handler=GetItemHandler(
             item_repository=item_repository),
         create_item_interaction_handler=CreateItemInteractionHandler(
