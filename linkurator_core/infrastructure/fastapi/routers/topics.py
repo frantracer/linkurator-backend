@@ -126,12 +126,14 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         if session is None:
             raise default_responses.not_authenticated()
 
-        topics = await get_user_topics_handler.handle(user_id=session.user_id)
+        response = await get_user_topics_handler.handle(user_id=session.user_id)
 
         return Page[TopicSchema].create(
-            elements=[TopicSchema.from_domain_topic(topic) for topic in topics],
+            elements=[TopicSchema.from_domain_topic(topic, session.user_id, topic.uuid in response.followed_topics_ids)
+                      for topic
+                      in response.topics],
             page_number=0,
-            page_size=len(topics) + 1,
+            page_size=len(response.topics) + 1,
             current_url=request.url)
 
     @router.get("/{topic_id}",
@@ -140,13 +142,18 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
                 })
     async def get_topic(
             topic_id: UUID,
+            session: Optional[Session] = Depends(get_session)
     ) -> TopicSchema:
         """
         Get a topic information from a user
         """
+        user_id: Optional[UUID] = None
+        if session is not None:
+            user_id = session.user_id
+
         try:
-            topic = await get_topic_handler.handle(topic_id=topic_id)
-            return TopicSchema.from_domain_topic(topic)
+            response = await get_topic_handler.handle(topic_id=topic_id, user_id=user_id)
+            return TopicSchema.from_domain_topic(response.topic, user_id, response.followed)
         except TopicNotFoundError as error:
             raise default_responses.not_found('Topic not found') from error
 

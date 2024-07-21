@@ -54,3 +54,6 @@ class MongoDBFollowedTopicsRepository(FollowedTopicsRepository):
 
     async def unfollow_topic(self, user_uuid: UUID, topic_uuid: UUID) -> None:
         await self._collection().delete_one({'user_uuid': user_uuid, 'topic_uuid': topic_uuid})
+
+    async def is_following(self, user_uuid: UUID, topic_uuid: UUID) -> bool:
+        return await self._collection().count_documents({'user_uuid': user_uuid, 'topic_uuid': topic_uuid}) > 0

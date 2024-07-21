@@ -7,6 +7,8 @@ from fastapi.testclient import TestClient
 
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.application.topics.get_topic_handler import GetTopicHandler, GetTopicResponse
+from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler, GetUserTopicsResponse
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.common import utils
@@ -221,13 +223,16 @@ def test_delete_non_existing_topic_returns_404(handlers: Handlers) -> None:
 
 
 def test_get_topics_returns_200(handlers: Handlers) -> None:
-    dummy_handler = AsyncMock()
-    dummy_handler.handle.return_value = [Topic.new(
-        uuid=uuid.UUID("f22b92da-5b90-455f-8141-fb4a37f07805"),
-        name="topic1",
-        user_id=uuid.UUID("24060726-9ee6-450e-bec2-0edf8e7b33b2"),
-        subscription_ids=[]
-    )]
+    dummy_handler = AsyncMock(spec=GetUserTopicsHandler)
+    dummy_handler.handle.return_value = GetUserTopicsResponse(
+        topics=[Topic.new(
+            uuid=uuid.UUID("f22b92da-5b90-455f-8141-fb4a37f07805"),
+            name="topic1",
+            user_id=uuid.UUID("24060726-9ee6-450e-bec2-0edf8e7b33b2"),
+            subscription_ids=[]
+        )],
+        followed_topics_ids=set()
+    )
     handlers.get_user_topics_handler = dummy_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -240,12 +245,15 @@ def test_get_topics_returns_200(handlers: Handlers) -> None:
 
 
 def test_get_topic_returns_200(handlers: Handlers) -> None:
-    dummy_handler = AsyncMock()
-    dummy_handler.handle.return_value = Topic.new(
-        uuid=uuid.UUID("f8be01d6-98b3-4ba7-a540-d2f008d1adbc"),
-        name="topic1",
-        user_id=uuid.UUID("f5b11947-0203-45b5-9c55-f3bd391ed150"),
-        subscription_ids=[uuid.UUID("00ff1b4a-aeed-4321-8e40-53e78c13685d")]
+    dummy_handler = AsyncMock(spec=GetTopicHandler)
+    dummy_handler.handle.return_value = GetTopicResponse(
+        topic=Topic.new(
+            uuid=uuid.UUID("f8be01d6-98b3-4ba7-a540-d2f008d1adbc"),
+            name="topic1",
+            user_id=uuid.UUID("f5b11947-0203-45b5-9c55-f3bd391ed150"),
+            subscription_ids=[uuid.UUID("00ff1b4a-aeed-4321-8e40-53e78c13685d")]
+        ),
+        followed=False
     )
     handlers.get_topic_handler = dummy_handler
 
@@ -257,6 +265,7 @@ def test_get_topic_returns_200(handlers: Handlers) -> None:
     assert response.json()['name'] == 'topic1'
     assert response.json()['user_id'] == 'f5b11947-0203-45b5-9c55-f3bd391ed150'
     assert response.json()['subscriptions_ids'] == ['00ff1b4a-aeed-4321-8e40-53e78c13685d']
+    assert response.json()['followed'] is False
 
 
 def test_get_topic_returns_404_when_topic_not_found(handlers: Handlers) -> None:

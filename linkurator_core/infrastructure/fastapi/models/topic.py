@@ -34,12 +34,18 @@ class TopicSchema(BaseModel):
     name: str
     user_id: UUID
     subscriptions_ids: List[UUID]
+    is_owner: bool
+    followed: bool
     created_at: Iso8601Datetime
 
     @classmethod
-    def from_domain_topic(cls, topic: Topic) -> TopicSchema:
+    def from_domain_topic(cls, topic: Topic,
+                          current_user_id: Optional[UUID],
+                          followed: bool) -> TopicSchema:
         return cls(uuid=topic.uuid,
                    user_id=topic.user_id,
                    name=topic.name,
                    subscriptions_ids=topic.subscriptions_ids,
+                   is_owner=current_user_id == topic.user_id,
+                   followed=followed,
                    created_at=topic.created_at)

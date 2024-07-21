@@ -29,10 +29,10 @@ async def test_get_user_topics_handler() -> None:
 
     handler = GetUserTopicsHandler(user_repo_mock, topic_repo_mock, followed_topics_repo_mock)
 
-    topics = await handler.handle(user.uuid)
+    response = await handler.handle(user.uuid)
 
-    assert len(topics) == 1
-    assert topics[0] == topic1
+    assert len(response.topics) == 1
+    assert response.topics[0] == topic1
 
 
 @pytest.mark.asyncio
@@ -75,7 +75,8 @@ async def test_get_user_topics_with_followed_topics() -> None:
 
     handler = GetUserTopicsHandler(user_repo_mock, topic_repo_mock, followed_topics_repo_mock)
 
-    topics = await handler.handle(user1.uuid)
+    response = await handler.handle(user1.uuid)
 
-    assert len(topics) == 2
-    assert {topic.uuid for topic in topics} == {topic1.uuid, topic2.uuid}
+    assert len(response.topics) == 2
+    assert {topic.uuid for topic in response.topics} == {topic1.uuid, topic2.uuid}
+    assert response.followed_topics_ids == {topic2.uuid}

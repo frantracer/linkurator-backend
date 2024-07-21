@@ -14,5 +14,10 @@ class FollowedTopicsRepository(ABC):
     async def follow_topic(self, user_id: UUID, topic_id: UUID) -> None:
         pass
 
+    @abstractmethod
     async def unfollow_topic(self, user_uuid: UUID, topic_uuid: UUID) -> None:
+        pass
+
+    @abstractmethod
+    async def is_following(self, user_uuid: UUID, topic_uuid: UUID) -> bool:
         pass

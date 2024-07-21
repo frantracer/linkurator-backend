@@ -133,7 +133,10 @@ def app_handlers() -> Handlers:
             topic_repository=topic_repository,
             subscription_repository=subscription_repository),
         delete_topic_handler=DeleteUserTopicHandler(topic_repository=topic_repository),
-        get_topic_handler=GetTopicHandler(topic_repository=topic_repository),
+        get_topic_handler=GetTopicHandler(
+            topic_repository=topic_repository,
+            followed_topics_repository=followed_topics_repository
+        ),
         unassign_subscription_from_topic_handler=UnassignSubscriptionFromUserTopicHandler(
             topic_repository=topic_repository),
         follow_topic_handler=FollowTopicHandler(
