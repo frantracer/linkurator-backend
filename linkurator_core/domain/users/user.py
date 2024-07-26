@@ -12,6 +12,7 @@ class User:
     uuid: UUID
     first_name: str
     last_name: str
+    username: str
     email: str
     avatar_url: AnyUrl
     locale: str
@@ -28,6 +29,7 @@ class User:
             uuid: UUID,
             first_name: str,
             last_name: str,
+            username: str,
             email: str,
             avatar_url: AnyUrl,
             locale: str,
@@ -39,6 +41,7 @@ class User:
             uuid=uuid,
             first_name=first_name,
             last_name=last_name,
+            username=username,
             email=email,
             avatar_url=avatar_url,
             locale=locale,

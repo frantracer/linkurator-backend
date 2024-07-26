@@ -7,10 +7,10 @@ from linkurator_core.application.topics.assign_subscription_to_user_topic_handle
     AssignSubscriptionToTopicHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError, UserNotFoundError
+from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
-from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
@@ -21,16 +21,7 @@ async def test_assign_subscription_to_topic_handler() -> None:
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
     user_repo_mock = AsyncMock(spec=UserRepository)
-    user_repo_mock.get.return_value = User.new(
-        uuid=user_id,
-        first_name='John',
-        last_name='Doe',
-        email='jonh@doe.com',
-        locale='en',
-        avatar_url=utils.parse_url('https://example.com/avatar.png'),
-        google_refresh_token='token',
-        subscription_uuids=[subscription_id]
-    )
+    user_repo_mock.get.return_value = mock_user(uuid=user_id, subscribed_to=[subscription_id])
     subs_repo_mock = MagicMock()
     subs_repo_mock.get.return_value = Subscription.new(
         uuid=subscription_id,
@@ -86,16 +77,7 @@ async def test_assign_subscription_to_topic_handler_subscription_not_found_raise
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
     user_repo_mock = AsyncMock(spec=UserRepository)
-    user_repo_mock.get.return_value = User.new(
-        uuid=user_id,
-        first_name='John',
-        last_name='Doe',
-        email='test@email.com',
-        locale='en',
-        avatar_url=utils.parse_url('https://example.com/avatar.png'),
-        google_refresh_token='token',
-        subscription_uuids=[]
-    )
+    user_repo_mock.get.return_value = mock_user(uuid=user_id)
     subs_repo_mock = MagicMock()
     subs_repo_mock.get.return_value = None
     handler = AssignSubscriptionToTopicHandler(
@@ -114,16 +96,7 @@ async def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subsc
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
     user_repo_mock = AsyncMock(spec=UserRepository)
-    user_repo_mock.get.return_value = User.new(
-        uuid=user_id,
-        first_name='John',
-        last_name='Doe',
-        email='test@email.com',
-        locale='en',
-        avatar_url=utils.parse_url('https://example.com/avatar.png'),
-        google_refresh_token='token',
-        subscription_uuids=[]
-    )
+    user_repo_mock.get.return_value = mock_user(uuid=user_id, subscribed_to=[])
     subs_repo_mock = MagicMock()
     subs_repo_mock.get.return_value = Subscription.new(
         uuid=subscription_id,
@@ -149,16 +122,7 @@ async def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_er
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
     user_repo_mock = AsyncMock(spec=UserRepository)
-    user_repo_mock.get.return_value = User.new(
-        uuid=user_id,
-        first_name='John',
-        last_name='Doe',
-        email='test@email.com',
-        locale='en',
-        avatar_url=utils.parse_url('https://example.com/avatar.png'),
-        google_refresh_token='token',
-        subscription_uuids=[subscription_id]
-    )
+    user_repo_mock.get.return_value = mock_user(uuid=user_id, subscribed_to=[subscription_id])
     subs_repo_mock = MagicMock()
     subs_repo_mock.get.return_value = Subscription.new(
         uuid=subscription_id,
@@ -186,16 +150,7 @@ async def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_use
     topic_id = UUID('9b3020f8-6f72-4a78-bff6-c315e36808de')
 
     user_repo_mock = AsyncMock(spec=UserRepository)
-    user_repo_mock.get.return_value = User.new(
-        uuid=user_id,
-        first_name='John',
-        last_name='Doe',
-        email='test@email.com',
-        locale='en',
-        avatar_url=utils.parse_url('https://example.com/avatar.png'),
-        google_refresh_token='token',
-        subscription_uuids=[subscription_id]
-    )
+    user_repo_mock.get.return_value = mock_user(uuid=user_id, subscribed_to=[subscription_id])
     subs_repo_mock = MagicMock()
     subs_repo_mock.get.return_value = Subscription.new(
         uuid=subscription_id,

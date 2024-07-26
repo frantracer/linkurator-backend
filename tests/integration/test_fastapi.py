@@ -74,6 +74,7 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         uuid=uuid.UUID("cb856f4f-8371-4648-af75-38fb34231092"),
         first_name="first name",
         last_name="last name",
+        username="username",
         email="test@email.com",
         avatar_url=utils.parse_url('https://test.com/avatar.png'),
         locale="en-US",
@@ -94,6 +95,7 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
     assert response.json()['uuid'] == 'cb856f4f-8371-4648-af75-38fb34231092'
     assert response.json()['first_name'] == 'first name'
     assert response.json()['last_name'] == 'last name'
+    assert response.json()['username'] == 'username'
     assert response.json()['email'] == 'test@email.com'
     assert response.json()['created_at'] == '1970-01-01T00:00:00+00:00'
     assert response.json()['last_scanned_at'] == '1970-01-01T00:00:00+00:00'

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Protocol
 from uuid import uuid4
 
 from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
@@ -11,13 +11,30 @@ from linkurator_core.domain.users.user_repository import UserRepository
 RegistrationError = str
 
 
+class UsernameGenerator(Protocol):
+    def generate_username(self) -> str:
+        ...
+
+
+class UsernameGeneratorFromFirstAndLastName:
+    def __init__(self, first_name: str, last_name: str):
+        self.first_name = first_name
+        self.last_name = last_name
+
+    def generate_username(self) -> str:
+        random_number = str(uuid4().int)[:4]
+        return f"{self.first_name}{self.last_name}{random_number}".strip().replace(" ", "").lower()
+
+
 class RegisterUserHandler:
     def __init__(self, user_repository: UserRepository,
                  account_service: AccountService,
-                 event_bus: EventBusService):
+                 event_bus: EventBusService,
+                 username_generator: UsernameGenerator | None = None):
         self.user_repository = user_repository
         self.account_service = account_service
         self.event_bus = event_bus
+        self.username_generator = username_generator
 
     async def handle(self, access_token: str, refresh_token: Optional[str]) -> Optional[RegistrationError]:
         user_info = self.account_service.get_user_info(access_token)
@@ -29,13 +46,25 @@ class RegisterUserHandler:
             if refresh_token is None:
                 return "Refresh token is required for new users"
 
+            username: str
+            if self.username_generator is None:
+                username = UsernameGeneratorFromFirstAndLastName(
+                    user_info.details.given_name,
+                    user_info.details.family_name
+                ).generate_username()
+            else:
+                username = self.username_generator.generate_username()
+
+            first_name = user_info.details.given_name
+            last_name = user_info.details.family_name
             user = User.new(
                 uuid=uuid4(),
                 email=user_info.email,
                 avatar_url=user_info.details.picture,
                 locale=user_info.details.locale,
-                first_name=user_info.details.given_name,
-                last_name=user_info.details.family_name,
+                first_name=first_name,
+                last_name=last_name,
+                username=username,
                 google_refresh_token=refresh_token)
             await self.user_repository.add(user)
 

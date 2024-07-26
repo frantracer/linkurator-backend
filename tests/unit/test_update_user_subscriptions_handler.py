@@ -1,12 +1,12 @@
 import uuid
 from copy import deepcopy
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.common.exceptions import InvalidCredentialError
+from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -30,20 +30,7 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
     subscription_repository.add.return_value = None
 
     user_repository = MagicMock(spec=UserRepository)
-    user = User(
-        uuid=uuid.UUID("7869ee20-fda4-4ec9-88d3-c952bff2c613"),
-        email="test@email.com",
-        first_name="test",
-        last_name="test",
-        locale="en",
-        avatar_url=parse_url("http://avatar.com/test.png"),
-        google_refresh_token="refresh_token",
-        subscription_uuids=[],
-        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        last_login_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        is_admin=False)
+    user = mock_user()
     user_repository.get.return_value = deepcopy(user)
     user_repository.update.return_value = None
 
@@ -85,13 +72,7 @@ async def test_update_user_subscription_with_subscription_that_is_already_regist
     subscription_repository.add.return_value = None
 
     user_repository = MagicMock(spec=UserRepository)
-    user = User.new(uuid=uuid.UUID("e55d0fe1-f70e-4387-9269-8e80cb747ccc"),
-                    email="test@email.com",
-                    first_name="test",
-                    last_name="test",
-                    locale="en",
-                    avatar_url=parse_url("http://avatar.com/test.png"),
-                    google_refresh_token="refresh_token")
+    user = mock_user()
     user_repository.get.return_value = user
     user_repository.update.return_value = None
 
@@ -135,14 +116,7 @@ async def test_update_subscriptions_for_user_with_invalid_refresh_token_only_upd
     subscription_service.get_subscriptions.side_effect = InvalidCredentialError("Invalid refresh token")
     subscription_repository = MagicMock(spec=SubscriptionRepository)
     user_repository = MagicMock(spec=UserRepository)
-    user = User.new(uuid=uuid.UUID("0b29d41c-ea7a-49f8-b9ac-866e4903ddbb"),
-                    email="johndoe@email.com",
-                    first_name="John",
-                    last_name="Doe",
-                    locale="en",
-                    avatar_url=parse_url("https://avatar.com/johndoe.png"),
-                    google_refresh_token="invalid_refresh_token",
-                    subscription_uuids=[uuid.UUID("7bfb363a-1aff-40d2-b472-0bb6280f586b")])
+    user = mock_user()
     user_repository.get.return_value = deepcopy(user)
 
     handler = UpdateUserSubscriptionsHandler(subscription_service=subscription_service,

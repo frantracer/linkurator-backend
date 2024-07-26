@@ -22,6 +22,7 @@ class MongoDBUser(BaseModel):
     uuid: UUID
     first_name: str
     last_name: str
+    username: str
     email: str
     locale: str = "en"
     avatar_url: str = 'https://www.linkurator.com/favicon.ico'
@@ -40,6 +41,7 @@ class MongoDBUser(BaseModel):
             uuid=user.uuid,
             first_name=user.first_name,
             last_name=user.last_name,
+            username=user.username,
             email=user.email,
             locale=user.locale,
             avatar_url=str(user.avatar_url),
@@ -57,6 +59,7 @@ class MongoDBUser(BaseModel):
             uuid=self.uuid,
             first_name=self.first_name,
             last_name=self.last_name,
+            username=self.username,
             email=self.email,
             locale=self.locale,
             avatar_url=utils.parse_url(self.avatar_url),

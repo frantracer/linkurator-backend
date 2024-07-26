@@ -4,9 +4,8 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
-from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.session import Session
-from linkurator_core.domain.users.user import User
 
 
 class TestValidateTokenHandler(unittest.IsolatedAsyncioTestCase):
@@ -17,13 +16,7 @@ class TestValidateTokenHandler(unittest.IsolatedAsyncioTestCase):
         session_repo_mock.get.return_value = dummy_session
 
         user_repo_mock = MagicMock()
-        dummy_user = User.new(uuid=user_id,
-                              first_name="John",
-                              last_name="Doe",
-                              email="john@example.com",
-                              locale="en",
-                              avatar_url=utils.parse_url("https://example.com/john.jpg"),
-                              google_refresh_token="myrefreshtoken")
+        dummy_user = mock_user(uuid=user_id)
         user_repo_mock.get.return_value = dummy_user
 
         account_service_mock = MagicMock()

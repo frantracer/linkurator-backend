@@ -30,6 +30,7 @@ class ProfileSchema(BaseModel):
     uuid: UUID
     first_name: str
     last_name: str
+    username: str
     email: str
     avatar_url: AnyUrl
     language: LanguageSchema
@@ -43,6 +44,7 @@ class ProfileSchema(BaseModel):
             uuid=user.uuid,
             first_name=user.first_name,
             last_name=user.last_name,
+            username=user.username,
             email=user.email,
             avatar_url=user.avatar_url,
             language=LanguageSchema.from_locale(user.locale),

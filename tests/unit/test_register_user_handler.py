@@ -1,11 +1,11 @@
 import unittest
-import uuid
 from unittest.mock import AsyncMock, MagicMock
 
 from linkurator_core.application.users.register_user_handler import RegisterUserHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
+from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.account_service import UserDetails, UserInfo
 from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
@@ -72,15 +72,7 @@ class TestRegisterUserHandler(unittest.IsolatedAsyncioTestCase):
 
     async def test_registering_existing_user_updates_the_user_data(self) -> None:
         user_repo_mock = AsyncMock(spec=UserRepository)
-        user_repo_mock.get_by_email.return_value = User.new(
-            uuid=uuid.uuid4(),
-            first_name="John",
-            last_name="Doe",
-            email="john@email.com",
-            locale="en",
-            avatar_url=utils.parse_url("https://example.com/john.jpg"),
-            google_refresh_token="oldtoken"
-        )
+        user_repo_mock.get_by_email.return_value = mock_user()
 
         event_bus_mock = AsyncMock(spec=EventBusService)
 
@@ -109,16 +101,7 @@ class TestRegisterUserHandler(unittest.IsolatedAsyncioTestCase):
 
     async def test_registering_existing_user_with_refresh_token_do_not_update_current_token(self) -> None:
         user_repo_mock = AsyncMock(spec=UserRepository)
-        user_repo_mock.get_by_email.return_value = User.new(
-            uuid=uuid.uuid4(),
-            first_name="John",
-            last_name="Doe",
-            email="john@email.com",
-            locale="en",
-            avatar_url=utils.parse_url("https://example.com/john.jpg"),
-            google_refresh_token="oldtoken"
-        )
-
+        user_repo_mock.get_by_email.return_value = mock_user(refresh_token="oldtoken")
         event_bus_mock = AsyncMock(spec=EventBusService)
 
         account_service_mock = MagicMock()

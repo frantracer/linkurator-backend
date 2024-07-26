@@ -1,32 +1,18 @@
-import uuid
 from unittest.mock import AsyncMock
 
 import pytest
 
 from linkurator_core.application.users.find_outdated_users_handler import FindOutdatedUsersHandler
-from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
-from linkurator_core.domain.users.user import User
+from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
 @pytest.mark.asyncio
 async def test_handler_sends_two_events_if_there_are_two_outdated_users() -> None:
     user_repo_mock = AsyncMock(spec=UserRepository)
-    user1 = User.new(uuid=uuid.UUID("844f3bfb-ddab-4280-a3e6-fabc53a2984b"),
-                     first_name='user1',
-                     last_name="name1",
-                     email='mock1@email.com',
-                     locale='en',
-                     avatar_url=utils.parse_url('https://example.com/avatar.png'),
-                     google_refresh_token="token")
-    user2 = User.new(uuid=uuid.UUID("844f3bfb-ddab-4280-a3e6-fabc53a2984b"),
-                     first_name='user2',
-                     last_name="name2",
-                     email='mock2@email.com',
-                     locale='en',
-                     avatar_url=utils.parse_url('https://example.com/avatar.png'),
-                     google_refresh_token="token")
+    user1 = mock_user()
+    user2 = mock_user()
     user_repo_mock.find_latest_scan_before.return_value = [user1, user2]
 
     event_bus_mock = AsyncMock()

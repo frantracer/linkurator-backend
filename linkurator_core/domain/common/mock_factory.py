@@ -12,15 +12,21 @@ from linkurator_core.domain.users.external_service_credential import ExternalSer
 from linkurator_core.domain.users.user import User
 
 
-def mock_user(uuid: Optional[UUID] = None, subscribed_to: Optional[List[UUID]] = None, is_admin: bool = False) -> User:
+def mock_user(
+        uuid: Optional[UUID] = None,
+        subscribed_to: Optional[List[UUID]] = None,
+        refresh_token: Optional[str] = None,
+        is_admin: bool = False
+) -> User:
     uuid = uuid or uuid4()
     return User.new(uuid=uuid,
                     last_name="name",
                     first_name="user",
+                    username=str(uuid),
                     email=f"{uuid}@email.com",
                     locale="en",
                     avatar_url=parse_url(f"https://avatar.com/{uuid}.png"),
-                    google_refresh_token=str(uuid),
+                    google_refresh_token=str(uuid) if refresh_token is None else refresh_token,
                     subscription_uuids=subscribed_to,
                     is_admin=is_admin)
 

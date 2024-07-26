@@ -6,8 +6,8 @@ import pytest
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
-from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
@@ -65,15 +65,7 @@ async def test_get_subscriptions_handler_returns_results_paginated_and_filters_b
     subscription_repo_mock = MagicMock()
     subscription_repo_mock.get_list.return_value = [sub4, sub3, sub2, sub1]
     user_repo_mock = AsyncMock(spec=UserRepository)
-    user = User.new(
-        uuid=uuid.UUID('84a6ad8f-e0e0-42a7-be27-ca79e65ec6b2'),
-        first_name='John',
-        last_name='Doe',
-        email='jonh@email.com',
-        locale='en',
-        avatar_url=utils.parse_url("https://url.com/avatar.png"),
-        google_refresh_token='token'
-    )
+    user = mock_user()
     user_repo_mock.get.return_value = user
     handler = GetUserSubscriptionsHandler(subscription_repo_mock, user_repo_mock)
 

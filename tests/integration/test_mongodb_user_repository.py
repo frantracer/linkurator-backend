@@ -32,6 +32,7 @@ async def test_add_user_to_mongodb(user_repo: MongoDBUserRepository) -> None:
     user = User.new(
         first_name="test",
         last_name="test",
+        username="testtest",
         email="test@test.com",
         locale="en",
         avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
@@ -44,6 +45,8 @@ async def test_add_user_to_mongodb(user_repo: MongoDBUserRepository) -> None:
 
     assert the_user is not None
     assert the_user.first_name == user.first_name
+    assert the_user.last_name == user.last_name
+    assert the_user.username == user.username
     assert the_user.email == user.email
     assert the_user.uuid == user.uuid
     assert the_user.locale == user.locale
@@ -68,6 +71,7 @@ async def test_get_user_with_invalid_format_raises_an_exception(user_repo: Mongo
     user_dict = MongoDBUser(uuid=uuid.UUID("449e3bee-6f9b-4cbc-8a09-64a6fcface96"),
                             first_name="test",
                             last_name="test",
+                            username="test",
                             email="test@email.com",
                             locale="en",
                             avatar_url="https://avatars.com/avatar.png",
@@ -88,6 +92,7 @@ async def test_get_user_with_invalid_format_raises_an_exception(user_repo: Mongo
 async def test_delete_user(user_repo: MongoDBUserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
+                    username="test_1",
                     email="test_1@test.com",
                     locale="en",
                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
@@ -107,6 +112,7 @@ async def test_delete_user(user_repo: MongoDBUserRepository) -> None:
 async def test_update_user(user_repo: MongoDBUserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
+                    username="update_1",
                     email="update_1@email.com",
                     locale="en",
                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
@@ -128,6 +134,7 @@ async def test_update_user(user_repo: MongoDBUserRepository) -> None:
 async def test_get_user_by_email(user_repo: MongoDBUserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
+                    username="sample_1",
                     email="sample_1@test.com",
                     locale="en",
                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
@@ -143,20 +150,24 @@ async def test_get_user_by_email(user_repo: MongoDBUserRepository) -> None:
 
 @pytest.mark.asyncio
 async def test_the_email_is_unique(user_repo: MongoDBUserRepository) -> None:
-    user_1 = User.new(first_name="test",
-                      last_name="test",
-                      email="sample_2@test.com",
-                      locale="en",
-                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
-                      uuid=uuid.UUID("18244f86-75ea-4420-abcb-3552a51289ea"),
-                      google_refresh_token="token")
-    user_2 = User.new(first_name="test",
-                      last_name="test",
-                      email="sample_2@test.com",
-                      locale="en",
-                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
-                      uuid=uuid.UUID("b310f930-0f0b-467e-b746-0ed1c11449b8"),
-                      google_refresh_token="token")
+    user_1 = User.new(
+        first_name="test",
+        last_name="test",
+        username="sample_2",
+        email="sample_2@test.com",
+        locale="en",
+        avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+        uuid=uuid.UUID("18244f86-75ea-4420-abcb-3552a51289ea"),
+        google_refresh_token="token")
+    user_2 = User.new(
+        first_name="test",
+        last_name="test",
+        username="sample_2_bis",
+        email="sample_2@test.com",
+        locale="en",
+        avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+        uuid=uuid.UUID("b310f930-0f0b-467e-b746-0ed1c11449b8"),
+        google_refresh_token="token")
 
     await user_repo.add(user_1)
 
@@ -168,6 +179,7 @@ async def test_the_email_is_unique(user_repo: MongoDBUserRepository) -> None:
 async def test_find_latest_scan(user_repo: MongoDBUserRepository) -> None:
     user1 = User.new(first_name="test",
                      last_name="test",
+                     username="c2d73a23",
                      email="c2d73a23@email.com",
                      locale="en",
                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
@@ -177,6 +189,7 @@ async def test_find_latest_scan(user_repo: MongoDBUserRepository) -> None:
 
     user2 = User.new(first_name="test",
                      last_name="test",
+                     username="4cef3a68",
                      email="4cef3a68@email.com",
                      locale="en",
                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
@@ -199,6 +212,7 @@ async def test_find_latest_scan(user_repo: MongoDBUserRepository) -> None:
 async def test_find_users_by_subscription(user_repo: MongoDBUserRepository) -> None:
     user1 = User.new(first_name="test",
                      last_name="test",
+                     username="9cca4ef4",
                      email="9cca4ef4@email.com",
                      locale="en",
                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
@@ -208,6 +222,7 @@ async def test_find_users_by_subscription(user_repo: MongoDBUserRepository) -> N
 
     user2 = User.new(first_name="test",
                      last_name="test",
+                     username="021991aa",
                      email="021991aa@email.com",
                      locale="en",
                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
@@ -228,6 +243,7 @@ async def test_find_users_by_subscription(user_repo: MongoDBUserRepository) -> N
 async def test_find_users_by_subscription_empty(user_repo: MongoDBUserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
+                    username="cb7b18dc",
                     email="cb7b18dc@email.com",
                     locale="en",
                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
