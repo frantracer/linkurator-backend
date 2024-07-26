@@ -27,6 +27,10 @@ class UserRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    async def get_by_username(self, username: str) -> Optional[User]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     async def delete(self, user_id: UUID) -> None:
         raise NotImplementedError
 

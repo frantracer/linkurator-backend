@@ -256,3 +256,38 @@ async def test_find_users_by_subscription_empty(user_repo: MongoDBUserRepository
     users = await user_repo.find_users_subscribed_to_subscription(uuid.UUID("225b802f-af94-4c47-870a-f51bbecc5610"))
 
     assert len(users) == 0
+
+
+@pytest.mark.asyncio
+async def test_get_user_by_username(user_repo: MongoDBUserRepository) -> None:
+    user1 = User.new(first_name="test",
+                     last_name="test",
+                     username="eeff7d5b",
+                     email="eeff7d5b@email.com",
+                     locale="en",
+                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+                     uuid=uuid.UUID("eeff7d5b-6c6a-442d-86d4-0140c4212116"),
+                     google_refresh_token="token",
+                     subscription_uuids=[])
+
+    user2 = User.new(first_name="test",
+                     last_name="test",
+                     username="c932c023",
+                     email="c932c023@email.com",
+                     locale="en",
+                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+                     uuid=uuid.UUID("c932c023-730f-4448-9022-854e64cff9ee"),
+                     google_refresh_token="token",
+                     subscription_uuids=[])
+
+    await user_repo.add(user1)
+    await user_repo.add(user2)
+
+    found_user = await user_repo.get_by_username("eeff7d5b")
+    assert found_user is not None
+    assert found_user.uuid == user1.uuid
+
+
+@pytest.mark.asyncio
+async def test_get_non_existing_username(user_repo: MongoDBUserRepository) -> None:
+    assert await user_repo.get_by_username("non_existent") is None

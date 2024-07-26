@@ -112,6 +112,13 @@ class MongoDBUserRepository(UserRepository):
         user.pop('_id', None)
         return MongoDBUser(**user).to_domain_user()
 
+    async def get_by_username(self, username: str) -> Optional[User]:
+        user = await self._collection().find_one({'username': username, 'deleted_at': None})
+        if user is None:
+            return None
+        user.pop('_id', None)
+        return MongoDBUser(**user).to_domain_user()
+
     async def delete(self, user_id: UUID) -> None:
         await self._collection().update_one(
             {'uuid': user_id},
