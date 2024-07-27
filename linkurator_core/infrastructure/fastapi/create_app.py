@@ -31,13 +31,14 @@ from linkurator_core.application.topics.update_topic_handler import UpdateTopicH
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
 from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
+from linkurator_core.application.users.find_user_handler import FindUserHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.register_user_handler import RegisterUserHandler
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items, \
-    credentials
+    credentials, users
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
@@ -52,6 +53,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     delete_subscription_items_handler: DeleteSubscriptionItemsHandler
     refresh_subscription_handler: RefreshSubscriptionHandler
     get_user_profile_handler: GetUserProfileHandler
+    find_user_handler: FindUserHandler
     delete_user_handler: DeleteUserHandler
     create_topic_handler: CreateTopicHandler
     get_user_topics_handler: GetUserTopicsHandler
@@ -102,6 +104,13 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             delete_user_handler=handlers.delete_user_handler
         ),
         prefix="/profile"
+    )
+    app.include_router(
+        tags=["Users"],
+        router=users.get_router(
+            get_session=get_current_session,
+            find_user_handler=handlers.find_user_handler
+        ),
     )
     app.include_router(
         tags=["Topics"],
