@@ -45,6 +45,7 @@ def dummy_handlers() -> Handlers:
         get_topic_handler=AsyncMock(),
         get_topic_items_handler=AsyncMock(),
         get_user_topics_handler=AsyncMock(),
+        get_curator_topics_as_user_handler=AsyncMock(),
         create_topic_handler=AsyncMock(),
         assign_subscription_to_topic_handler=AsyncMock(),
         delete_topic_handler=AsyncMock(),

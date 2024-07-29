@@ -22,6 +22,7 @@ from linkurator_core.application.topics.assign_subscription_to_user_topic_handle
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.topics.follow_topic_handler import FollowTopicHandler
+from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsAsUserHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
@@ -38,7 +39,7 @@ from linkurator_core.application.users.register_user_handler import RegisterUser
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items, \
-    credentials, users
+    credentials, curators
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
@@ -57,6 +58,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     delete_user_handler: DeleteUserHandler
     create_topic_handler: CreateTopicHandler
     get_user_topics_handler: GetUserTopicsHandler
+    get_curator_topics_as_user_handler: GetCuratorTopicsAsUserHandler
     get_topic_handler: GetTopicHandler
     assign_subscription_to_topic_handler: AssignSubscriptionToTopicHandler
     unassign_subscription_from_topic_handler: UnassignSubscriptionFromUserTopicHandler
@@ -106,11 +108,13 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         prefix="/profile"
     )
     app.include_router(
-        tags=["Users"],
-        router=users.get_router(
+        tags=["Curators"],
+        router=curators.get_router(
             get_session=get_current_session,
-            find_user_handler=handlers.find_user_handler
+            find_user_handler=handlers.find_user_handler,
+            get_curator_topics_as_user=handlers.get_curator_topics_as_user_handler
         ),
+        prefix="/curators"
     )
     app.include_router(
         tags=["Topics"],
