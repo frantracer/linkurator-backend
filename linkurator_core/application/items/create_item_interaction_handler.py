@@ -24,7 +24,7 @@ class CreateItemInteractionHandler:
         if self.item_repository.get_item(new_interaction.item_uuid) is None:
             raise ItemNotFoundError(f"Item with id '{new_interaction.item_uuid}' not found")
 
-        current_interactions = self.item_repository.get_user_interactions_by_item_id(
+        current_interactions = await self.item_repository.get_user_interactions_by_item_id(
             user_id=new_interaction.user_uuid, item_ids=[new_interaction.item_uuid])
 
         current_item_interactions = current_interactions.get(new_interaction.item_uuid, [])
@@ -33,7 +33,7 @@ class CreateItemInteractionHandler:
         if new_interaction.type in current_interaction_types:
             return
 
-        self.item_repository.add_interaction(new_interaction)
+        await self.item_repository.add_interaction(new_interaction)
 
         is_recommendation = new_interaction.type in [InteractionType.DISCOURAGED, InteractionType.RECOMMENDED]
         is_viewed = InteractionType.VIEWED in current_interaction_types
@@ -45,4 +45,4 @@ class CreateItemInteractionHandler:
                 type=InteractionType.VIEWED,
                 created_at=self.date_generator()
             )
-            self.item_repository.add_interaction(viewed_interaction)
+            await self.item_repository.add_interaction(viewed_interaction)

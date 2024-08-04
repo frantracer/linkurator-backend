@@ -14,7 +14,7 @@ class FindZeroDurationItems:
     async def handle(self) -> None:
         logging.info("Finding zero duration items")
 
-        items = self.item_repository.find_items(
+        items = await self.item_repository.find_items(
             criteria=ItemFilterCriteria(
                 min_duration=0,
                 max_duration=0,

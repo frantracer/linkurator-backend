@@ -14,7 +14,7 @@ class FindDeprecatedItemsHandler:
     async def handle(self) -> None:
         logging.info("Finding deprecated items")
 
-        items = self.item_repository.find_items(
+        items = await self.item_repository.find_items(
             criteria=ItemFilterCriteria(provider=ItemProvider.YOUTUBE, last_version=YOUTUBE_ITEM_VERSION),
             page_number=0,
             limit=50)

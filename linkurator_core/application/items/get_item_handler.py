@@ -10,8 +10,8 @@ class GetItemHandler:
         self.item_repository = item_repository
 
     async def handle(self, user_id: UUID, item_id: UUID) -> ItemWithInteractions:
-        item = self.item_repository.get_item(item_id)
+        item = await self.item_repository.get_item(item_id)
         if item is None:
             raise ItemNotFoundError(item_id)
-        interactions = self.item_repository.get_user_interactions_by_item_id(user_id, [item_id])
+        interactions = await self.item_repository.get_user_interactions_by_item_id(user_id, [item_id])
         return ItemWithInteractions(item, interactions.get(item_id, []))

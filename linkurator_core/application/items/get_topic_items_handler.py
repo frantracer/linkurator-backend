@@ -53,7 +53,7 @@ class GetTopicItemsHandler:
             ),
         )
 
-        items = self.item_repository.find_items(
+        items = await self.item_repository.find_items(
             criteria=filter_criteria,
             page_number=page_number,
             limit=page_size,
@@ -61,7 +61,7 @@ class GetTopicItemsHandler:
 
         interactions_by_item: dict[UUID, list[Interaction]] = {}
         if user_id is not None:
-            interactions_by_item = self.item_repository.get_user_interactions_by_item_id(
+            interactions_by_item = await self.item_repository.get_user_interactions_by_item_id(
                 user_id=user_id, item_ids=[item.uuid for item in items])
 
         return [(item, interactions_by_item.get(item.uuid, [])) for item in items]

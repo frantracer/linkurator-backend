@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, call, AsyncMock
 from uuid import UUID
 
 import pytest
@@ -20,9 +20,9 @@ async def test_recommend_item_creates_interaction_and_mark_as_viewed() -> None:
     )
     user_id = UUID('3b434473-c6b4-4c6a-a5f8-a5c22021ee3b')
 
-    item_repo_mock = MagicMock(spec=ItemRepository)
-    item_repo_mock.get_user_interactions_by_item_id = MagicMock(return_value={})
-    item_repo_mock.get_item = MagicMock(return_value=dummy_item)
+    item_repo_mock = AsyncMock(spec=ItemRepository)
+    item_repo_mock.get_user_interactions_by_item_id = AsyncMock(return_value={})
+    item_repo_mock.get_item = AsyncMock(return_value=dummy_item)
 
     recommend_interaction = Interaction.new(
         uuid=UUID('b02c962e-7466-4028-8c72-503821d637a5'),
@@ -60,9 +60,9 @@ async def test_discourage_item_creates_interaction_and_mark_as_viewed() -> None:
     )
     user_id = UUID('3b434473-c6b4-4c6a-a5f8-a5c22021ee3b')
 
-    item_repo_mock = MagicMock(spec=ItemRepository)
-    item_repo_mock.get_user_interactions_by_item_id = MagicMock(return_value={})
-    item_repo_mock.get_item = MagicMock(return_value=dummy_item)
+    item_repo_mock = AsyncMock(spec=ItemRepository)
+    item_repo_mock.get_user_interactions_by_item_id = AsyncMock(return_value={})
+    item_repo_mock.get_item = AsyncMock(return_value=dummy_item)
 
     discourage_interaction = Interaction.new(
         uuid=UUID('b02c962e-7466-4028-8c72-503821d637a5'),
@@ -100,14 +100,14 @@ async def test_recommend_item_that_already_is_viewed_only_creates_one_interactio
     )
     user_id = UUID('3b434473-c6b4-4c6a-a5f8-a5c22021ee3b')
 
-    item_repo_mock = MagicMock(spec=ItemRepository)
-    item_repo_mock.get_user_interactions_by_item_id = MagicMock(
+    item_repo_mock = AsyncMock(spec=ItemRepository)
+    item_repo_mock.get_user_interactions_by_item_id = AsyncMock(
         return_value={dummy_item.uuid: [Interaction.new(
             uuid=UUID('b02c962e-7466-4028-8c72-503821d637a5'),
             item_uuid=dummy_item.uuid,
             user_uuid=user_id,
             interaction_type=InteractionType.VIEWED)]})
-    item_repo_mock.get_item = MagicMock(return_value=dummy_item)
+    item_repo_mock.get_item = AsyncMock(return_value=dummy_item)
 
     recommend_interaction = Interaction.new(
         uuid=UUID('b02c962e-7466-4028-8c72-503821d637a5'),
@@ -156,9 +156,9 @@ async def test_create_item_interaction_handler_with_existing_interaction_does_no
         user_uuid=UUID('3b434473-c6b4-4c6a-a5f8-a5c22021ee3b'),
         interaction_type=InteractionType.RECOMMENDED)
 
-    item_repo_mock = MagicMock(spec=ItemRepository)
-    item_repo_mock.get_item = MagicMock(return_value=dummy_item)
-    item_repo_mock.get_user_interactions_by_item_id = MagicMock(
+    item_repo_mock = AsyncMock(spec=ItemRepository)
+    item_repo_mock.get_item = AsyncMock(return_value=dummy_item)
+    item_repo_mock.get_user_interactions_by_item_id = AsyncMock(
         return_value={dummy_interaction.item_uuid: [dummy_interaction]})
 
     new_interaction = Interaction.new(

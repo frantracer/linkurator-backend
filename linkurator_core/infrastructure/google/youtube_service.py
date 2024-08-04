@@ -144,7 +144,7 @@ class YoutubeService(SubscriptionService):
         def link_to_video_id(link: str) -> str:
             return link.rsplit('/watch?v=', maxsplit=1)[-1]
 
-        items = self.item_repository.find_items(
+        items = await self.item_repository.find_items(
             criteria=ItemFilterCriteria(item_ids=item_ids),
             page_number=0,
             limit=len(item_ids))

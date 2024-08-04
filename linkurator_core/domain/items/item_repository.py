@@ -41,37 +41,39 @@ class ItemRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def upsert_items(self, items: List[Item]) -> None:
+    async def upsert_items(self, items: List[Item]) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_item(self, item_id: UUID) -> Optional[Item]:
+    async def get_item(self, item_id: UUID) -> Optional[Item]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete_item(self, item_id: UUID) -> None:
+    async def delete_item(self, item_id: UUID) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> List[Item]:
+    async def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> List[Item]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete_all_items(self) -> None:
+    async def delete_all_items(self) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def add_interaction(self, interaction: Interaction) -> None:
+    async def add_interaction(self, interaction: Interaction) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_interaction(self, interaction_id: UUID) -> Optional[Interaction]:
+    async def get_interaction(self, interaction_id: UUID) -> Optional[Interaction]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete_interaction(self, interaction_id: UUID) -> None:
+    async def delete_interaction(self, interaction_id: UUID) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_user_interactions_by_item_id(self, user_id: UUID, item_ids: List[UUID]) -> Dict[UUID, List[Interaction]]:
+    async def get_user_interactions_by_item_id(
+            self, user_id: UUID, item_ids: List[UUID]
+    ) -> Dict[UUID, List[Interaction]]:
         raise NotImplementedError

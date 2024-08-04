@@ -45,7 +45,7 @@ async def main() -> None:
         sys.exit(1)
 
     while is_there_and_outdated_subscription:
-        items = item_repository.find_items(
+        items = await item_repository.find_items(
             criteria=ItemFilterCriteria(created_before=datetime.now(tz=timezone.utc)),
             page_number=0, limit=1)
 

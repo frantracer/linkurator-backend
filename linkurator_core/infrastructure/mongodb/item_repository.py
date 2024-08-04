@@ -8,14 +8,15 @@ from uuid import UUID
 import pymongo
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
+from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic.main import BaseModel
-from pymongo import MongoClient
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.units import Seconds
 from linkurator_core.domain.items.interaction import InteractionType, Interaction
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.infrastructure.mongodb.common import MongoDBMapping
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 ITEM_COLLECTION_NAME = 'items'
@@ -164,24 +165,25 @@ def _generate_filter_interaction_query(criteria: ItemFilterCriteria) -> Dict[str
 
 
 class MongoDBItemRepository(ItemRepository):
-    client: MongoClient[Any]
     db_name: str
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
-        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
+        self.client = AsyncIOMotorClient[MongoDBMapping](
+            f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
 
+    async def check_connection(self) -> None:
         for collection_name in [ITEM_COLLECTION_NAME, INTERACTION_COLLECTION_NAME]:
-            if collection_name not in self.client[self.db_name].list_collection_names():
+            if collection_name not in await self.client[self.db_name].list_collection_names():
                 raise CollectionIsNotInitialized(
                     f"Collection '{collection_name}' is not initialized in database '{self.db_name}'")
 
-    def upsert_items(self, items: List[Item]) -> None:
+    async def upsert_items(self, items: List[Item]) -> None:
         if len(items) == 0:
             return
         collection = self._item_collection()
-        collection.bulk_write([
+        await collection.bulk_write([
             pymongo.ReplaceOne(
                 {'uuid': item.uuid},
                 MongoDBItem.from_domain_item(item).model_dump(),
@@ -189,9 +191,9 @@ class MongoDBItemRepository(ItemRepository):
             ) for item in items
         ])
 
-    def get_item(self, item_id: UUID) -> Optional[Item]:
+    async def get_item(self, item_id: UUID) -> Optional[Item]:
         collection = self._item_collection()
-        item: Optional[dict[str, Any]] = collection.find_one({'uuid': item_id})
+        item: Optional[dict[str, Any]] = await collection.find_one({'uuid': item_id})
         if item is None:
             return None
         mongo_item = MongoDBItem(**item)
@@ -199,14 +201,14 @@ class MongoDBItemRepository(ItemRepository):
             return None
         return mongo_item.to_domain_item()
 
-    def delete_item(self, item_id: UUID) -> None:
+    async def delete_item(self, item_id: UUID) -> None:
         collection = self._item_collection()
-        collection.update_one(
+        await collection.update_one(
             {'uuid': item_id},
             {'$set': {'deleted_at': datetime.utcnow()}}
         )
 
-    def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> List[Item]:
+    async def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> List[Item]:
         items: List[Item] = []
 
         filter_with_interactions: bool = False
@@ -215,7 +217,7 @@ class MongoDBItemRepository(ItemRepository):
         if criteria.interactions_from_user is not None:
             filter_with_interactions = True
             interaction_collection = self._interaction_collection()
-            interaction_results = list(interaction_collection.aggregate([
+            interaction_results = list(await interaction_collection.aggregate([
                 {
                     '$match': _generate_filter_interaction_query(criteria)
                 },
@@ -225,7 +227,7 @@ class MongoDBItemRepository(ItemRepository):
                         'values': {'$push': '$$ROOT.type'}
                     }
                 },
-            ]))
+            ]).to_list(length=None))
 
             for result in interaction_results:
                 interactions_by_item[result['_id']] = result['values']
@@ -235,12 +237,12 @@ class MongoDBItemRepository(ItemRepository):
         internal_page_number = 0
         while len(items) < (page_number + 1) * limit and more_items:
             item_collection = self._item_collection()
-            items_result = list(item_collection.aggregate([
+            items_result = list(await item_collection.aggregate([
                 {'$match': _generate_filter_query(criteria)},
                 {'$sort': {'published_at': -1}},
                 {'$skip': internal_page_number * internal_page_size},
                 {'$limit': internal_page_size}
-            ]))
+            ]).to_list(length=None))
 
             if len(items_result) == 0:
                 more_items = False
@@ -280,31 +282,38 @@ class MongoDBItemRepository(ItemRepository):
 
         return items
 
-    def delete_all_items(self) -> None:
+    async def delete_all_items(self) -> None:
         collection = self._item_collection()
-        collection.update_many(
+        await collection.update_many(
             {},
             {'$set': {'deleted_at': datetime.utcnow()}}
         )
 
-    def add_interaction(self, interaction: Interaction) -> None:
+    async def add_interaction(self, interaction: Interaction) -> None:
         collection = self._interaction_collection()
-        collection.insert_one(dict(MongoDBInteraction.from_domain_interaction(interaction)))
+        await collection.insert_one(dict(MongoDBInteraction.from_domain_interaction(interaction)))
 
-    def delete_interaction(self, interaction_id: UUID) -> None:
+    async def delete_interaction(self, interaction_id: UUID) -> None:
         collection = self._interaction_collection()
-        collection.delete_one({'uuid': interaction_id})
+        await collection.delete_one({'uuid': interaction_id})
 
-    def get_interaction(self, interaction_id: UUID) -> Optional[Interaction]:
+    async def get_interaction(self, interaction_id: UUID) -> Optional[Interaction]:
         collection = self._interaction_collection()
-        interaction = collection.find_one({'uuid': interaction_id})
+        interaction = await collection.find_one({'uuid': interaction_id})
         if interaction is None:
             return None
         return MongoDBInteraction(**interaction).to_domain_interaction()
 
-    def get_user_interactions_by_item_id(self, user_id: UUID, item_ids: List[UUID]) -> Dict[UUID, List[Interaction]]:
+    async def get_user_interactions_by_item_id(
+            self, user_id: UUID, item_ids: List[UUID]
+    ) -> Dict[UUID, List[Interaction]]:
         collection = self._interaction_collection()
-        interactions = collection.find({'user_uuid': user_id, 'item_uuid': {'$in': item_ids}})
+        interactions = await collection.find(
+            {
+                'user_uuid': user_id,
+                'item_uuid': {'$in': item_ids}
+            }
+        ).to_list(length=None)
         result: Dict[UUID, List[Interaction]] = {}
         for interaction in interactions:
             if interaction['item_uuid'] not in result:

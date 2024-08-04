@@ -27,7 +27,7 @@ class GetSubscriptionItemsHandler:
             include_viewed_items: bool = True,
             include_hidden_items: bool = True,
     ) -> List[Tuple[Item, List[Interaction]]]:
-        items = self.item_repository.find_items(
+        items = await self.item_repository.find_items(
             criteria=ItemFilterCriteria(
                 subscription_ids=[subscription_id],
                 published_after=datetime.fromtimestamp(0, tz=timezone.utc),
@@ -50,7 +50,7 @@ class GetSubscriptionItemsHandler:
 
         interactions_by_item: dict[UUID, List[Interaction]] = {}
         if user_id:
-            interactions_by_item = self.item_repository.get_user_interactions_by_item_id(
+            interactions_by_item = await self.item_repository.get_user_interactions_by_item_id(
                 user_id=user_id,
                 item_ids=[item.uuid for item in items]
             )
