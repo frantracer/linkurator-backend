@@ -9,6 +9,7 @@ from fastapi.applications import FastAPI
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
+from linkurator_core.application.items.get_curator_items_handler import GetCuratorItemsHandler
 from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
@@ -128,6 +129,9 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             topic_repository=topic_repository,
             followed_topics_repository=followed_topics_repository),
+        get_curator_items_handler=GetCuratorItemsHandler(
+            item_repository=item_repository
+        ),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
         get_topic_items_handler=GetTopicItemsHandler(
             topic_repository=topic_repository,

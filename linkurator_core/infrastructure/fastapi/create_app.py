@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
+from linkurator_core.application.items.get_curator_items_handler import GetCuratorItemsHandler
 from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
@@ -59,6 +60,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     create_topic_handler: CreateTopicHandler
     get_user_topics_handler: GetUserTopicsHandler
     get_curator_topics_as_user_handler: GetCuratorTopicsAsUserHandler
+    get_curator_items_handler: GetCuratorItemsHandler
     get_topic_handler: GetTopicHandler
     assign_subscription_to_topic_handler: AssignSubscriptionToTopicHandler
     unassign_subscription_from_topic_handler: UnassignSubscriptionFromUserTopicHandler
@@ -112,7 +114,8 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         router=curators.get_router(
             get_session=get_current_session,
             find_user_handler=handlers.find_user_handler,
-            get_curator_topics_as_user=handlers.get_curator_topics_as_user_handler
+            get_curator_topics_as_user=handlers.get_curator_topics_as_user_handler,
+            get_curator_items_handler=handlers.get_curator_items_handler
         ),
         prefix="/curators"
     )
