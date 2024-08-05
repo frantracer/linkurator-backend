@@ -251,6 +251,10 @@ class MongoDBItemRepository(ItemRepository):
                 items = items + self._filter_items_with_interactions(items_result, criteria, interactions_by_item)
             else:
                 items = items + [MongoDBItem(**item).to_domain_item() for item in items_result]
+
+            if filter_with_interactions and len(interactions_by_item) == len(items):
+                more_items = False
+
             internal_page_number = internal_page_number + 1
 
         return items[page_number * limit: min((page_number + 1) * limit, len(items))]
