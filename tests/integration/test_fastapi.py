@@ -42,6 +42,9 @@ def dummy_handlers() -> Handlers:
         get_user_profile_handler=AsyncMock(),
         find_user_handler=AsyncMock(),
         delete_user_handler=AsyncMock(),
+        get_curators_handler=AsyncMock(),
+        follow_curator_handler=AsyncMock(),
+        unfollow_curator_handler=AsyncMock(),
         get_topic_handler=AsyncMock(),
         get_topic_items_handler=AsyncMock(),
         get_user_topics_handler=AsyncMock(),
@@ -87,7 +90,8 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         last_login_at=datetime.fromtimestamp(0, tz=timezone.utc),
         subscription_uuids=[],
         google_refresh_token="refresh token",
-        is_admin=False
+        is_admin=False,
+        curators=set()
     )
     handlers.get_user_profile_handler = dummy_get_user_profile_handler
 

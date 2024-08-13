@@ -32,9 +32,12 @@ from linkurator_core.application.users.add_external_credentials import AddExtern
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
 from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
 from linkurator_core.application.users.find_user_handler import FindUserHandler
+from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
+from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.register_user_handler import RegisterUserHandler
+from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
@@ -120,6 +123,9 @@ def app_handlers() -> Handlers:
         get_user_profile_handler=GetUserProfileHandler(user_repository),
         find_user_handler=FindUserHandler(user_repository),
         delete_user_handler=DeleteUserHandler(user_repository, session_repository, account_service),
+        get_curators_handler=GetCuratorsHandler(user_repository),
+        follow_curator_handler=FollowCuratorHandler(user_repository),
+        unfollow_curator_handler=UnfollowCuratorHandler(user_repository),
         get_user_topics_handler=GetUserTopicsHandler(
             topic_repo=topic_repository,
             user_repo=user_repository,

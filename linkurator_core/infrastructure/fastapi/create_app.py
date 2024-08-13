@@ -34,9 +34,12 @@ from linkurator_core.application.users.add_external_credentials import AddExtern
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
 from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
 from linkurator_core.application.users.find_user_handler import FindUserHandler
+from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
+from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.register_user_handler import RegisterUserHandler
+from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
 from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items, \
@@ -57,6 +60,9 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_user_profile_handler: GetUserProfileHandler
     find_user_handler: FindUserHandler
     delete_user_handler: DeleteUserHandler
+    get_curators_handler: GetCuratorsHandler
+    follow_curator_handler: FollowCuratorHandler
+    unfollow_curator_handler: UnfollowCuratorHandler
     create_topic_handler: CreateTopicHandler
     get_user_topics_handler: GetUserTopicsHandler
     get_curator_topics_as_user_handler: GetCuratorTopicsAsUserHandler
@@ -113,6 +119,9 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         tags=["Curators"],
         router=curators.get_router(
             get_session=get_current_session,
+            get_curators_handler=handlers.get_curators_handler,
+            follow_curator_handler=handlers.follow_curator_handler,
+            unfollow_curator_handler=handlers.unfollow_curator_handler,
             find_user_handler=handlers.find_user_handler,
             get_curator_topics_as_user=handlers.get_curator_topics_as_user_handler,
             get_curator_items_handler=handlers.get_curator_items_handler

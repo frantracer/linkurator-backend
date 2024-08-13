@@ -38,7 +38,9 @@ async def test_add_user_to_mongodb(user_repo: MongoDBUserRepository) -> None:
         avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
         uuid=uuid.UUID("679c6db9-a54e-4947-b825-57a96fb5f599"),
         google_refresh_token="token",
-        is_admin=True)
+        is_admin=True,
+        curators={uuid.UUID("0453e71a-2754-4a27-9ac3-d5e2a9768e8a")}
+    )
 
     await user_repo.add(user)
     the_user = await user_repo.get(user.uuid)
@@ -57,6 +59,7 @@ async def test_add_user_to_mongodb(user_repo: MongoDBUserRepository) -> None:
     assert int(the_user.scanned_at.timestamp() * 100) == floor(user.scanned_at.timestamp() * 100)
     assert int(the_user.last_login_at.timestamp() * 100) == floor(user.last_login_at.timestamp() * 100)
     assert the_user.is_admin
+    assert the_user.curators == user.curators
 
 
 @pytest.mark.asyncio

@@ -24,6 +24,7 @@ class User:
     google_refresh_token: Optional[str]
     subscription_uuids: List[UUID]
     is_admin: bool
+    curators: set[UUID]
 
     @classmethod
     def new(cls,
@@ -36,7 +37,9 @@ class User:
             locale: str,
             google_refresh_token: Optional[str],
             subscription_uuids: Optional[List[UUID]] = None,
-            is_admin: bool = False) -> User:
+            is_admin: bool = False,
+            curators: Optional[set[UUID]] = None
+            ) -> User:
         now = datetime.now(timezone.utc)
         return cls(
             uuid=uuid,
@@ -52,5 +55,13 @@ class User:
             last_login_at=now,
             google_refresh_token=google_refresh_token,
             subscription_uuids=[] if subscription_uuids is None else subscription_uuids,
-            is_admin=is_admin
+            is_admin=is_admin,
+            curators=set() if curators is None else curators
         )
+
+    def follow_curator(self, curator_id: UUID) -> None:
+        self.curators.add(curator_id)
+
+    def unfollow_curator(self, curator_id: UUID) -> None:
+        if curator_id in self.curators:
+            self.curators.remove(curator_id)
