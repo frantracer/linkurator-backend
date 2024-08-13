@@ -65,6 +65,8 @@ def app_handlers() -> Handlers:
         client_id=google_secrets.client_id,
         client_secret=google_secrets.client_secret)
 
+    logging.getLogger('pymongo').setLevel(logging.INFO)
+
     db_settings = MongoDBSettings()
     user_repository = MongoDBUserRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
