@@ -169,8 +169,8 @@ provision: check-ssh-connection
 # Deploy
 ####################
 deploy: check-vault-pass-is-defined check-ssh-connection
-	ssh root@$(SSH_IP_ADDRESS) "docker rm -f $(DOCKER_CONTAINER_API) $(DOCKER_CONTAINER_PROCESSOR)"
 	ssh root@$(SSH_IP_ADDRESS) "docker pull $(DOCKER_IMAGE)"
+	ssh root@$(SSH_IP_ADDRESS) "docker rm -f $(DOCKER_CONTAINER_API) $(DOCKER_CONTAINER_PROCESSOR)"
 	@ssh root@$(SSH_IP_ADDRESS) "docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
 		-e 'LINKURATOR_ENVIRONMENT=PRODUCTION' --name $(DOCKER_CONTAINER_API) --network host --restart always \
 		-d $(DOCKER_IMAGE) \
