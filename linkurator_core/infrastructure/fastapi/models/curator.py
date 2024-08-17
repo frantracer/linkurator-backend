@@ -11,11 +11,13 @@ class CuratorSchema(BaseModel):
     id: UUID
     username: str
     avatar_url: AnyUrl
+    followed: bool
 
     @classmethod
-    def from_domain_user(cls, user: User) -> CuratorSchema:
+    def from_domain_user(cls, user: User, followed: bool) -> CuratorSchema:
         return cls(
             id=user.uuid,
             username=user.username,
-            avatar_url=user.avatar_url
+            avatar_url=user.avatar_url,
+            followed=followed
         )

@@ -33,7 +33,7 @@ from linkurator_core.application.topics.update_topic_handler import UpdateTopicH
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
 from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
-from linkurator_core.application.users.find_user_handler import FindUserHandler
+from linkurator_core.application.users.find_user_handler import FindCuratorHandler
 from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
@@ -58,7 +58,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     delete_subscription_items_handler: DeleteSubscriptionItemsHandler
     refresh_subscription_handler: RefreshSubscriptionHandler
     get_user_profile_handler: GetUserProfileHandler
-    find_user_handler: FindUserHandler
+    find_user_handler: FindCuratorHandler
     delete_user_handler: DeleteUserHandler
     get_curators_handler: GetCuratorsHandler
     follow_curator_handler: FollowCuratorHandler

@@ -7,7 +7,7 @@ from pydantic import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.items.get_curator_items_handler import GetCuratorItemsHandler
 from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsAsUserHandler
-from linkurator_core.application.users.find_user_handler import FindUserHandler
+from linkurator_core.application.users.find_user_handler import FindCuratorHandler
 from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
@@ -23,7 +23,7 @@ from linkurator_core.infrastructure.fastapi.models.topic import TopicSchema
 
 def get_router(
         get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
-        find_user_handler: FindUserHandler,
+        find_user_handler: FindCuratorHandler,
         get_curators_handler: GetCuratorsHandler,
         follow_curator_handler: FollowCuratorHandler,
         unfollow_curator_handler: UnfollowCuratorHandler,
@@ -44,7 +44,7 @@ def get_router(
 
         curators = await get_curators_handler.handle(session.user_id)
 
-        return [CuratorSchema.from_domain_user(curator) for curator in curators]
+        return [CuratorSchema.from_domain_user(user=curator, followed=True) for curator in curators]
 
     @router.post("/{curator_id}/follow",
                  responses={
@@ -94,10 +94,10 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        user = await find_user_handler.handle(username)
-        if user is None:
+        response = await find_user_handler.handle(username, session.user_id)
+        if response.user is None:
             raise default_responses.not_found("User not found")
-        return CuratorSchema.from_domain_user(user)
+        return CuratorSchema.from_domain_user(user=response.user, followed=response.followed)
 
     @router.get("/{curator_id}/topics",
                 responses={
