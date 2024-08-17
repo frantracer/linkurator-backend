@@ -133,6 +133,9 @@ def get_router(
             page_number: NonNegativeInt = 0,
             page_size: PositiveInt = 50,
             created_before_ts: Optional[float] = None,
+            search: Optional[str] = None,
+            min_duration: Optional[int] = None,
+            max_duration: Optional[int] = None,
             session: Optional[Session] = Depends(get_session),
     ) -> Page[ItemSchema]:
         if session is None:
@@ -147,7 +150,10 @@ def get_router(
             created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
             page_size=page_size,
             page_number=page_number,
-            curator_interactions=[InteractionType.RECOMMENDED]
+            curator_interactions=[InteractionType.RECOMMENDED],
+            text_filter=search,
+            min_duration=min_duration,
+            max_duration=max_duration
         )
 
         current_url = request.url.include_query_params(

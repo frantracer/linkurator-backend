@@ -26,7 +26,10 @@ class GetCuratorItemsHandler:
             page_size: int,
             curator_interactions: list[InteractionType],
             curator_id: UUID,
-            user_id: UUID
+            user_id: UUID,
+            text_filter: str | None = None,
+            min_duration: int | None = None,
+            max_duration: int | None = None,
     ) -> list[ItemWithInteractions]:
         curator_items = await self.item_repository.find_items(
             criteria=ItemFilterCriteria(
@@ -37,7 +40,10 @@ class GetCuratorItemsHandler:
                     discouraged=InteractionType.DISCOURAGED in curator_interactions,
                     viewed=InteractionType.VIEWED in curator_interactions,
                     hidden=InteractionType.HIDDEN in curator_interactions
-                )
+                ),
+                text=text_filter,
+                min_duration=min_duration,
+                max_duration=max_duration,
             ),
             page_number=page_number,
             limit=page_size,
