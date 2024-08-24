@@ -13,8 +13,12 @@ async def test_get_curator_items_handlers_returns_items_and_interactions_for_cur
     user = mock_user()
     curator = mock_user()
     item = mock_item()
-    interaction1 = mock_interaction(user_id=user.uuid, interaction_type=InteractionType.RECOMMENDED)
-    interaction2 = mock_interaction(user_id=curator.uuid, interaction_type=InteractionType.DISCOURAGED)
+    interaction1 = mock_interaction(user_id=user.uuid,
+                                    item_id=item.uuid,
+                                    interaction_type=InteractionType.DISCOURAGED)
+    interaction2 = mock_interaction(user_id=curator.uuid,
+                                    item_id=item.uuid,
+                                    interaction_type=InteractionType.RECOMMENDED)
 
     item_repo = InMemoryItemRepository()
     await item_repo.upsert_items([item])
@@ -26,7 +30,7 @@ async def test_get_curator_items_handlers_returns_items_and_interactions_for_cur
     now = datetime.now(tz=timezone.utc)
     response = await handler.handle(
         created_before=now,
-        page_number=1,
+        page_number=0,
         page_size=10,
         user_id=user.uuid,
         curator_id=curator.uuid,
@@ -34,5 +38,5 @@ async def test_get_curator_items_handlers_returns_items_and_interactions_for_cur
 
     assert len(response) == 1
     assert response[0].item.uuid == item.uuid
-    assert response[0].user_interactions[0].type == InteractionType.RECOMMENDED
-    assert response[0].curator_interactions[0].type == InteractionType.DISCOURAGED
+    assert response[0].user_interactions[0].type == InteractionType.DISCOURAGED
+    assert response[0].curator_interactions[0].type == InteractionType.RECOMMENDED
