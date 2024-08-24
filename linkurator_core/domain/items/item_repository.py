@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic.networks import AnyUrl
 
-from linkurator_core.domain.items.interaction import Interaction
+from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
 
 
@@ -34,6 +34,17 @@ class ItemFilterCriteria:
     min_duration: Optional[int] = None
     max_duration: Optional[int] = None
     interactions: AnyItemInteraction = AnyItemInteraction()
+
+
+@dataclass
+class InteractionFilterCriteria:
+    item_ids: list[UUID] | None = None
+    user_ids: list[UUID] | None = None
+    interaction_types: list[InteractionType] | None = None
+    created_before: Optional[datetime] = None
+    text: Optional[str] = None
+    min_duration: Optional[int] = None
+    max_duration: Optional[int] = None
 
 
 class ItemRepository(abc.ABC):
@@ -73,7 +84,17 @@ class ItemRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    async def delete_all_interactions(self) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     async def get_user_interactions_by_item_id(
             self, user_id: UUID, item_ids: List[UUID]
     ) -> Dict[UUID, List[Interaction]]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def find_interactions(
+            self, criteria: InteractionFilterCriteria, page_number: int, limit: int
+    ) -> List[Interaction]:
         raise NotImplementedError

@@ -12,7 +12,6 @@ from linkurator_core.application.users.follow_curator_handler import FollowCurat
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
 from linkurator_core.domain.common.exceptions import UserNotFoundError
-from linkurator_core.domain.items.interaction import InteractionType
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.curator import CuratorSchema
@@ -150,7 +149,6 @@ def get_router(
             created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
             page_size=page_size,
             page_number=page_number,
-            curator_interactions=[InteractionType.RECOMMENDED],
             text_filter=search,
             min_duration=min_duration,
             max_duration=max_duration

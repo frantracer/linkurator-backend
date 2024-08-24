@@ -15,7 +15,7 @@ from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.units import Seconds
 from linkurator_core.domain.items.interaction import InteractionType, Interaction
 from linkurator_core.domain.items.item import Item, ItemProvider
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria, InteractionFilterCriteria
 from linkurator_core.infrastructure.mongodb.common import MongoDBMapping
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
@@ -327,6 +327,63 @@ class MongoDBItemRepository(ItemRepository):
             if item_id not in result:
                 result[item_id] = []
         return result
+
+    async def find_interactions(
+            self, criteria: InteractionFilterCriteria, page_number: int, limit: int
+    ) -> List[Interaction]:
+        interactions_filter: dict[str, Any] = {}
+
+        and_filters: list[Any] = []
+
+        if criteria.item_ids is not None:
+            and_filters.append({'$or': [{'item_uuid': item_id} for item_id in criteria.item_ids]})
+
+        if criteria.user_ids is not None:
+            and_filters.append({'$or': [{'user_uuid': user_id} for user_id in criteria.user_ids]})
+
+        if criteria.interaction_types is not None:
+            and_filters.append(
+                {'$or': [{'type': interaction_type.value} for interaction_type in criteria.interaction_types]}
+            )
+
+        if len(and_filters) > 0:
+            interactions_filter['$and'] = and_filters
+
+        if criteria.created_before is not None:
+            interactions_filter['created_at'] = {'$lt': criteria.created_before}
+
+        pipeline: list[Any] = [
+            {'$match': interactions_filter},
+            {'$sort': {'created_at': -1}}
+        ]
+
+        interactions_collection = self._interaction_collection()
+        interactions = await interactions_collection.aggregate(pipeline).to_list(length=None)
+
+        if any(value is not None for value in [criteria.text, criteria.min_duration, criteria.max_duration]):
+            items_uuids = {interaction['item_uuid'] for interaction in interactions}
+            items = await self.find_items(criteria=ItemFilterCriteria(
+                item_ids=items_uuids,
+                text=criteria.text,
+                min_duration=criteria.min_duration,
+                max_duration=criteria.max_duration),
+                page_number=0,
+                limit=len(items_uuids)
+            )
+            filtered_items_uuids = {item.uuid for item in items}
+            interactions = [interaction
+                            for interaction in interactions
+                            if interaction['item_uuid'] in filtered_items_uuids]
+
+        first_index = page_number * limit
+        last_index = (page_number + 1) * limit
+        interactions = interactions[first_index:last_index]
+
+        return [MongoDBInteraction(**interaction).to_domain_interaction() for interaction in interactions]
+
+    async def delete_all_interactions(self) -> None:
+        collection = self._interaction_collection()
+        await collection.delete_many({})
 
     def _item_collection(self) -> Any:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore

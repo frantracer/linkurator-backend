@@ -1,24 +1,27 @@
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
-from unittest import mock
-from unittest.mock import AsyncMock
+from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
 
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.common.mock_factory import mock_item
+from linkurator_core.domain.common.mock_factory import mock_item, mock_user
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
-from linkurator_core.domain.items.item_repository import ItemFilterCriteria, AnyItemInteraction
-from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItem, MongoDBItemRepository
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria, AnyItemInteraction, \
+    InteractionFilterCriteria, ItemRepository
+from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
+from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 
-@pytest.fixture(name="item_repo", scope="session")
-def fixture_item_repo(db_name: str) -> MongoDBItemRepository:
-    return MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, db_name,
-                                 "develop", "develop")
+@pytest.fixture(name="item_repo", scope="session", params=["mongodb", "in_memory"])
+def fixture_item_repo(db_name: str, request: Any) -> ItemRepository:
+    if request.param == "mongodb":
+        return MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, db_name,
+                                     "develop", "develop")
+    return InMemoryItemRepository()
 
 
 @pytest.mark.asyncio
@@ -30,7 +33,7 @@ async def test_exception_is_raised_if_items_collection_is_not_created() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_item(item_repo: MongoDBItemRepository) -> None:
+async def test_get_item(item_repo: ItemRepository) -> None:
     item = Item(name="test",
                 description="some description with emojis 🙂",
                 uuid=UUID("9cedfb45-70fb-4283-bfee-993941b05b53"),
@@ -51,36 +54,14 @@ async def test_get_item(item_repo: MongoDBItemRepository) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_item_that_does_not_exist(item_repo: MongoDBItemRepository) -> None:
+async def test_get_item_that_does_not_exist(item_repo: ItemRepository) -> None:
     the_item = await item_repo.get_item(UUID("88aa425f-28d9-4a25-a87a-8c877cac772d"))
 
     assert the_item is None
 
 
 @pytest.mark.asyncio
-async def test_get_item_with_invalid_format_raises_an_exception(item_repo: MongoDBItemRepository) -> None:
-    item_dict = MongoDBItem(
-        uuid=UUID("67a06616-e127-4bf0-bcc0-faa221d554c5"),
-        subscription_uuid=UUID("9753d304-3a43-414e-a5cd-496672b27c34"),
-        name="test",
-        description="",
-        url='https://test.com',
-        thumbnail='https://test.com/thumbnail.png',
-        created_at=datetime.now(tz=timezone.utc),
-        updated_at=datetime.now(tz=timezone.utc),
-        published_at=datetime.fromtimestamp(0, tz=timezone.utc)
-    ).model_dump()
-    item_dict['uuid'] = 'invalid_uuid'
-    item_collection_mock = AsyncMock()
-    item_collection_mock.find_one = AsyncMock(return_value=item_dict)
-    with mock.patch.object(MongoDBItemRepository, '_item_collection',
-                           return_value=item_collection_mock):
-        with pytest.raises(ValueError):
-            await item_repo.get_item(UUID("756b6b0d-5f54-4099-ae7e-c900666f0a0d"))
-
-
-@pytest.mark.asyncio
-async def test_delete_item(item_repo: MongoDBItemRepository) -> None:
+async def test_delete_item(item_repo: ItemRepository) -> None:
     item = mock_item(item_uuid=UUID("4bf64498-239e-4bcb-a5a1-b84a7708ad01"))
 
     await item_repo.upsert_items([item])
@@ -93,7 +74,7 @@ async def test_delete_item(item_repo: MongoDBItemRepository) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_and_update_items(item_repo: MongoDBItemRepository) -> None:
+async def test_create_and_update_items(item_repo: ItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("72ab4421-f2b6-499a-bbf1-5105f2ed549b"))
     item2 = mock_item(item_uuid=UUID("a5a908e6-aa2c-4240-9a6d-d4340d38b8fc"))
 
@@ -144,13 +125,13 @@ async def test_create_and_update_items(item_repo: MongoDBItemRepository) -> None
 
 
 @pytest.mark.asyncio
-async def test_create_and_update_items_with_no_items(item_repo: MongoDBItemRepository) -> None:
+async def test_create_and_update_items_with_no_items(item_repo: ItemRepository) -> None:
     await item_repo.upsert_items([])
     assert True
 
 
 @pytest.mark.asyncio
-async def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository) -> None:
+async def test_get_items_by_subscription_uuid(item_repo: ItemRepository) -> None:
     subscription_uuid_1 = UUID("49e16717-3b41-4e1b-a2d8-8fccf1b6c184")
     subscription_uuid_2 = UUID("d3e22c40-c767-468b-8a61-cc61bcfd55ec")
     subscription_uuid_3 = UUID("9753d304-3a43-414e-a5cd-496672b27c34")
@@ -174,7 +155,7 @@ async def test_get_items_by_subscription_uuid(item_repo: MongoDBItemRepository) 
 
 
 @pytest.mark.asyncio
-async def test_find_items_by_uuid(item_repo: MongoDBItemRepository) -> None:
+async def test_find_items_by_uuid(item_repo: ItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("cd79132f-ad0a-4206-b118-2c958bc28506"))
     item2 = mock_item(item_uuid=UUID("8e014a74-ddf9-4ad1-a354-22e1c9dd7acc"))
 
@@ -193,7 +174,7 @@ async def test_find_items_by_uuid(item_repo: MongoDBItemRepository) -> None:
 
 
 @pytest.mark.asyncio
-async def test_find_items_by_subscription_uuids(item_repo: MongoDBItemRepository) -> None:
+async def test_find_items_by_subscription_uuids(item_repo: ItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("9559fa81-e968-4d0d-8390-070908f66985"),
                       sub_uuid=UUID("e887b865-8aa2-47a5-a133-a6eb7ba0f957"))
     item2 = mock_item(item_uuid=UUID("16f3a929-82a1-4cee-be30-70861d9266f2"),
@@ -214,7 +195,7 @@ async def test_find_items_by_subscription_uuids(item_repo: MongoDBItemRepository
 
 
 @pytest.mark.asyncio
-async def test_find_item_with_same_url(item_repo: MongoDBItemRepository) -> None:
+async def test_find_item_with_same_url(item_repo: ItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("8fc4fbca-439c-4c0e-937d-4147ef3b299c"),
                       url='https://item-with-same-url.com')
 
@@ -229,7 +210,7 @@ async def test_find_item_with_same_url(item_repo: MongoDBItemRepository) -> None
 
 
 @pytest.mark.asyncio
-async def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemRepository) -> None:
+async def test_find_item_with_different_url_returns_none(item_repo: ItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("00fbe982-1c90-4e7a-bf73-4716fa565b3c"),
                       url='https://item-with-same-url.com')
 
@@ -244,7 +225,7 @@ async def test_find_item_with_different_url_returns_none(item_repo: MongoDBItemR
 
 @pytest.mark.asyncio
 async def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publish_date(
-        item_repo: MongoDBItemRepository) -> None:
+        item_repo: ItemRepository) -> None:
     sub_uuid = UUID("480e5b4d-c193-4548-a987-c125d1699d10")
     item1 = mock_item(item_uuid=UUID("72e47bdc-793e-4420-b6b6-f6a415cb1e3c"),
                       sub_uuid=sub_uuid,
@@ -299,7 +280,7 @@ async def test_find_items_published_after_and_created_before_a_date_are_sorted_b
 
 
 @pytest.mark.asyncio
-async def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRepository) -> None:
+async def test_get_items_created_before_a_certain_date(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
     item1 = mock_item(item_uuid=UUID("e1f898c2-bcfb-435a-97c0-9f462f73e95b"),
@@ -328,7 +309,7 @@ async def test_get_items_created_before_a_certain_date(item_repo: MongoDBItemRep
 
 
 @pytest.mark.asyncio
-async def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: MongoDBItemRepository) -> None:
+async def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: ItemRepository) -> None:
     sub1_uuid = UUID("b76f981e-083f-4cee-9e5c-9f46f010546f")
     item1 = mock_item(
         name="Football is cool and it is almost free!",
@@ -399,7 +380,7 @@ async def test_find_items_for_a_subscription_with_text_search_criteria(item_repo
 
 
 @pytest.mark.asyncio
-async def test_filter_with_empty_string_returns_all_items(item_repo: MongoDBItemRepository) -> None:
+async def test_filter_with_empty_string_returns_all_items(item_repo: ItemRepository) -> None:
     sub1_uuid = UUID("b76f981e-083f-4cee-9e5c-9f46f010546f")
     item1 = mock_item(
         name="Football is cool and it is almost free!",
@@ -425,7 +406,7 @@ async def test_filter_with_empty_string_returns_all_items(item_repo: MongoDBItem
 
 
 @pytest.mark.asyncio
-async def test_find_deprecated_items(item_repo: MongoDBItemRepository) -> None:
+async def test_find_deprecated_items(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
     item1 = mock_item(item_uuid=UUID("656fbb48-7897-4528-ae8b-cc4abc81aec7"), version=1,
@@ -462,7 +443,7 @@ async def test_find_deprecated_items(item_repo: MongoDBItemRepository) -> None:
 
 @pytest.mark.asyncio
 async def test_find_items_with_every_interaction(
-        item_repo: MongoDBItemRepository
+        item_repo: ItemRepository
 ) -> None:
     await item_repo.delete_all_items()
 
@@ -616,7 +597,7 @@ async def test_find_items_with_every_interaction(
 
 @pytest.mark.asyncio
 async def test_find_user_recommended_or_without_interaction_items(
-        item_repo: MongoDBItemRepository
+        item_repo: ItemRepository
 ) -> None:
     await item_repo.delete_all_items()
 
@@ -668,7 +649,7 @@ async def test_find_user_recommended_or_without_interaction_items(
 
 
 @pytest.mark.asyncio
-async def test_get_interaction(item_repo: MongoDBItemRepository) -> None:
+async def test_get_interaction(item_repo: ItemRepository) -> None:
     interaction = Interaction.new(
         uuid=UUID("74cf7cb9-e86e-4d7d-9bb8-3881dc2ebd82"),
         item_uuid=UUID("77c0d137-b8d7-4424-836f-d9f4b546f2e9"),
@@ -680,7 +661,7 @@ async def test_get_interaction(item_repo: MongoDBItemRepository) -> None:
 
 
 @pytest.mark.asyncio
-async def test_delete_interaction(item_repo: MongoDBItemRepository) -> None:
+async def test_delete_interaction(item_repo: ItemRepository) -> None:
     interaction = Interaction.new(
         uuid=UUID("20e413a1-4600-4c7e-bab8-bb692ec51921"),
         user_uuid=UUID("60f53698-9cc6-47e5-994c-25c6cded6f62"),
@@ -695,7 +676,7 @@ async def test_delete_interaction(item_repo: MongoDBItemRepository) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_interactions_by_item(item_repo: MongoDBItemRepository) -> None:
+async def test_get_interactions_by_item(item_repo: ItemRepository) -> None:
     interaction0 = Interaction.new(
         uuid=UUID("99f8c2ce-bc34-45ed-8368-139033acf32e"),
         user_uuid=UUID("22bb661b-f298-435e-9bab-0e9a24c18638"),
@@ -722,7 +703,7 @@ async def test_get_interactions_by_item(item_repo: MongoDBItemRepository) -> Non
 
 
 @pytest.mark.asyncio
-async def test_find_items_with_max_and_min_duration(item_repo: MongoDBItemRepository) -> None:
+async def test_find_items_with_max_and_min_duration(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
     item1 = mock_item(item_uuid=UUID("ea04f10a-8c2b-4f3f-82be-0534eb5a0326"),
@@ -769,7 +750,7 @@ async def test_find_items_with_max_and_min_duration(item_repo: MongoDBItemReposi
 
 
 @pytest.mark.asyncio
-async def test_find_zero_duration_items(item_repo: MongoDBItemRepository) -> None:
+async def test_find_zero_duration_items(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
     item1 = mock_item(item_uuid=UUID("ea04f10a-8c2b-4f3f-82be-0534eb5a0326"),
@@ -793,7 +774,7 @@ async def test_find_zero_duration_items(item_repo: MongoDBItemRepository) -> Non
 
 
 @pytest.mark.asyncio
-async def test_find_items_updated_before_a_date(item_repo: MongoDBItemRepository) -> None:
+async def test_find_items_updated_before_a_date(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
     item1 = mock_item(item_uuid=UUID("ea04f10a-8c2b-4f3f-82be-0534eb5a0326"),
@@ -815,7 +796,7 @@ async def test_find_items_updated_before_a_date(item_repo: MongoDBItemRepository
 
 
 @pytest.mark.asyncio
-async def test_update_video_with_deleted_at_date(item_repo: MongoDBItemRepository) -> None:
+async def test_update_video_with_deleted_at_date(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
     item1 = mock_item(item_uuid=UUID("cf567af9-09dc-4719-b7d4-1a50c293f3b3"))
@@ -837,3 +818,133 @@ async def test_update_video_with_deleted_at_date(item_repo: MongoDBItemRepositor
         page_number=0,
         limit=10)
     assert len(found_items) == 0
+
+
+@pytest.mark.asyncio
+async def test_find_interactions(item_repo: ItemRepository) -> None:
+    await item_repo.delete_all_items()
+    await item_repo.delete_all_interactions()
+
+    user1 = mock_user()
+
+    item1 = mock_item()
+    item2 = mock_item()
+
+    interaction1 = Interaction(
+        uuid=UUID("7b4eee4a-95a6-47af-9cf1-46f5a23cbde7"),
+        user_uuid=user1.uuid,
+        item_uuid=item1.uuid,
+        created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        type=InteractionType.RECOMMENDED
+    )
+
+    interaction2 = Interaction(
+        uuid=UUID("f7175324-ad4a-4a76-accd-59c733e25926"),
+        user_uuid=user1.uuid,
+        item_uuid=item2.uuid,
+        created_at=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        type=InteractionType.RECOMMENDED
+    )
+
+    interaction3 = Interaction(
+        uuid=UUID("03c2bd85-685d-4211-833d-01f919696b76"),
+        user_uuid=user1.uuid,
+        item_uuid=item2.uuid,
+        created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        type=InteractionType.VIEWED
+    )
+
+    await item_repo.add_interaction(interaction1)
+    await item_repo.add_interaction(interaction2)
+    await item_repo.add_interaction(interaction3)
+
+    # Find all recommended interactions of a user
+    found_interactions = await item_repo.find_interactions(
+        criteria=InteractionFilterCriteria(
+            user_ids=[user1.uuid],
+            interaction_types=[InteractionType.RECOMMENDED]
+        ),
+        page_number=0,
+        limit=10
+    )
+
+    assert len(found_interactions) == 2
+    assert interaction1 in found_interactions
+    assert interaction2 in found_interactions
+
+    # Find all interactions of an item
+    found_interactions = await item_repo.find_interactions(
+        criteria=InteractionFilterCriteria(
+            item_ids=[item2.uuid]
+        ),
+        page_number=0,
+        limit=10
+    )
+
+    assert len(found_interactions) == 2
+    assert interaction2 in found_interactions
+    assert interaction3 in found_interactions
+
+    # Check all interactions paginated and sorted by date
+    found_interactions = await item_repo.find_interactions(
+        criteria=InteractionFilterCriteria(),
+        page_number=1,
+        limit=2
+    )
+
+    assert len(found_interactions) == 1
+    assert found_interactions[0] == interaction3
+
+    # Find recommended interactions from several items
+    found_interactions = await item_repo.find_interactions(
+        criteria=InteractionFilterCriteria(
+            item_ids=[item1.uuid, item2.uuid],
+            interaction_types=[InteractionType.RECOMMENDED]
+        ),
+        page_number=0,
+        limit=10
+    )
+
+    assert len(found_interactions) == 2
+    assert interaction1 in found_interactions
+    assert interaction2 in found_interactions
+
+
+@pytest.mark.asyncio
+async def test_find_interactions_filtered_by_text(item_repo: ItemRepository) -> None:
+    await item_repo.delete_all_items()
+    await item_repo.delete_all_interactions()
+
+    user1 = mock_user()
+    item1 = mock_item(name="Football is cool and it is almost free!")
+    item2 = mock_item(name="Videogames are cool")
+
+    interaction1 = Interaction(
+        uuid=UUID("7b4eee4a-95a6-47af-9cf1-46f5a23cbde7"),
+        user_uuid=user1.uuid,
+        item_uuid=item1.uuid,
+        created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        type=InteractionType.RECOMMENDED
+    )
+
+    interaction2 = Interaction(
+        uuid=UUID("f7175324-ad4a-4a76-accd-59c733e25926"),
+        user_uuid=user1.uuid,
+        item_uuid=item2.uuid,
+        created_at=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        type=InteractionType.RECOMMENDED
+    )
+
+    await item_repo.upsert_items([item1, item2])
+    await item_repo.add_interaction(interaction1)
+    await item_repo.add_interaction(interaction2)
+
+    found_interactions = await item_repo.find_interactions(
+        criteria=InteractionFilterCriteria(
+            text="videogames"
+        ),
+        page_number=0,
+        limit=10)
+
+    assert len(found_interactions) == 1
+    assert interaction2 in found_interactions
