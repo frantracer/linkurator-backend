@@ -1,6 +1,10 @@
 secrets
 venv
+data
+
 .mypy_cache
 .pytest_cache
+__pycache__
 
 .idea
+.vscode
