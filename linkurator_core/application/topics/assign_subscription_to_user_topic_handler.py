@@ -20,7 +20,7 @@ class AssignSubscriptionToTopicHandler:
             raise UserNotFoundError(user_id)
 
         subscription = self.subscription_repository.get(subscription_id)
-        if subscription is None or subscription_id not in user.subscription_uuids:
+        if subscription is None or subscription_id not in user.get_subscriptions():
             raise SubscriptionNotFoundError(subscription_id)
 
         topic = await self.topic_repository.get(topic_id)

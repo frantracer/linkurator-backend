@@ -47,7 +47,7 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
     assert user_repository.update.call_count == 1
     user_input: User = user_repository.update.call_args[0][0]
     assert user_input.uuid == user.uuid
-    assert user_input.subscription_uuids[0] == sub1.uuid
+    assert user_input.get_subscriptions() == {sub1.uuid}
     assert user_input.scanned_at > user.scanned_at
 
 
@@ -88,7 +88,7 @@ async def test_update_user_subscription_with_subscription_that_is_already_regist
     assert user_repository.update.call_count == 1
     user_input: User = user_repository.update.call_args[0][0]
     assert user_input.uuid == user.uuid
-    assert user_input.subscription_uuids[0] == sub2.uuid
+    assert user_input.get_youtube_subscriptions() == {sub2.uuid}
 
 
 @pytest.mark.asyncio
@@ -128,5 +128,5 @@ async def test_update_subscriptions_for_user_with_invalid_refresh_token_only_upd
     assert user_repository.update.call_count == 1
     user_input: User = user_repository.update.call_args[0][0]
     assert user_input.uuid == user.uuid
-    assert user_input.subscription_uuids == user.subscription_uuids
+    assert user_input.get_youtube_subscriptions() == user.get_subscriptions()
     assert user_input.scanned_at > user.scanned_at

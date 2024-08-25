@@ -29,7 +29,7 @@ def mock_user(
         locale="en",
         avatar_url=parse_url(f"https://avatar.com/{uuid}.png"),
         google_refresh_token=str(uuid) if refresh_token is None else refresh_token,
-        subscription_uuids=subscribed_to,
+        subscription_uuids=set(subscribed_to) if subscribed_to is not None else set(),
         is_admin=is_admin,
         curators=set() if curators is None else curators
     )

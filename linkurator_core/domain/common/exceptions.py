@@ -40,3 +40,7 @@ class InvalidYoutubeRssFeedError(Exception):
 
 class CannotFollowOwnedTopicError(Exception):
     pass
+
+
+class CannotUnfollowAssignedSubscriptionError(Exception):
+    pass

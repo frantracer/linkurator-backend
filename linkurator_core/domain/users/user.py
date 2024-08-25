@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from copy import copy
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from pydantic import AnyUrl
@@ -22,7 +23,8 @@ class User:
     scanned_at: datetime
     last_login_at: datetime
     google_refresh_token: Optional[str]
-    subscription_uuids: List[UUID]
+    _youtube_subscriptions_uuids: set[UUID]
+    _subscription_uuids: set[UUID]
     is_admin: bool
     curators: set[UUID]
 
@@ -36,7 +38,7 @@ class User:
             avatar_url: AnyUrl,
             locale: str,
             google_refresh_token: Optional[str],
-            subscription_uuids: Optional[List[UUID]] = None,
+            subscription_uuids: Optional[set[UUID]] = None,
             is_admin: bool = False,
             curators: Optional[set[UUID]] = None
             ) -> User:
@@ -54,7 +56,8 @@ class User:
             scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
             last_login_at=now,
             google_refresh_token=google_refresh_token,
-            subscription_uuids=[] if subscription_uuids is None else subscription_uuids,
+            _youtube_subscriptions_uuids=set(),
+            _subscription_uuids=set() if subscription_uuids is None else subscription_uuids,
             is_admin=is_admin,
             curators=set() if curators is None else curators
         )
@@ -65,3 +68,22 @@ class User:
     def unfollow_curator(self, curator_id: UUID) -> None:
         if curator_id in self.curators:
             self.curators.remove(curator_id)
+
+    def follow_subscription(self, subscription_id: UUID) -> None:
+        self._subscription_uuids.add(subscription_id)
+
+    def unfollow_subscription(self, subscription_id: UUID) -> None:
+        if subscription_id in self._subscription_uuids:
+            self._subscription_uuids.remove(subscription_id)
+
+    def set_youtube_subscriptions(self, subscription_ids: set[UUID]) -> None:
+        self._youtube_subscriptions_uuids = subscription_ids
+
+    def get_youtube_subscriptions(self) -> set[UUID]:
+        return copy(self._youtube_subscriptions_uuids)
+
+    def get_subscriptions(self, include_youtube: bool = True) -> set[UUID]:
+        uuids = copy(self._subscription_uuids)
+        if include_youtube:
+            uuids = uuids.union(self._youtube_subscriptions_uuids)
+        return uuids

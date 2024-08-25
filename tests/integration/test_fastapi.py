@@ -88,7 +88,8 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
         scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
         last_login_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        subscription_uuids=[],
+        _subscription_uuids=set(),
+        _youtube_subscriptions_uuids=set(),
         google_refresh_token="refresh token",
         is_admin=False,
         curators=set()

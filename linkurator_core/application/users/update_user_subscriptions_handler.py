@@ -26,7 +26,7 @@ class UpdateUserSubscriptionsHandler:
         try:
             subscriptions = await self.subscription_service.get_subscriptions(user_id)
             updated_subscriptions = [self._get_or_create_subscription(subscription) for subscription in subscriptions]
-            user.subscription_uuids = [subscription.uuid for subscription in updated_subscriptions]
+            user.set_youtube_subscriptions({subscription.uuid for subscription in updated_subscriptions})
         except InvalidCredentialError as exception:
             print(f"Failed to update subscriptions for user with id {user_id}: {str(exception)}")
 

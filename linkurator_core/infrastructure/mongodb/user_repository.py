@@ -33,6 +33,7 @@ class MongoDBUser(BaseModel):
     deleted_at: Optional[datetime] = None
     google_refresh_token: Optional[str] = None
     subscription_uuids: List[UUID] = []
+    youtube_subscription_uuids: List[UUID] = []
     is_admin: bool = False
     curators: list[UUID] = []
 
@@ -51,7 +52,8 @@ class MongoDBUser(BaseModel):
             scanned_at=user.scanned_at,
             last_login_at=user.last_login_at,
             google_refresh_token=user.google_refresh_token,
-            subscription_uuids=user.subscription_uuids,
+            subscription_uuids=list(user.get_subscriptions(include_youtube=False)),
+            youtube_subscription_uuids=list(user.get_youtube_subscriptions()),
             is_admin=user.is_admin,
             curators=list(user.curators)
         )
@@ -70,7 +72,8 @@ class MongoDBUser(BaseModel):
             scanned_at=self.scanned_at,
             last_login_at=self.last_login_at,
             google_refresh_token=self.google_refresh_token,
-            subscription_uuids=self.subscription_uuids,
+            _subscription_uuids=set(self.subscription_uuids),
+            _youtube_subscriptions_uuids=set(self.youtube_subscription_uuids),
             is_admin=self.is_admin,
             curators=set(self.curators)
         )
@@ -140,6 +143,12 @@ class MongoDBUserRepository(UserRepository):
 
     async def find_users_subscribed_to_subscription(self, subscription_id: UUID) -> List[User]:
         users = await self._collection().find(
-            {'subscription_uuids': subscription_id, 'deleted_at': None}
+            {
+                '$or': [
+                    {'subscription_uuids': subscription_id},
+                    {'youtube_subscription_uuids': subscription_id}
+                ],
+                'deleted_at': None
+            }
         ).to_list(length=None)
         return [MongoDBUser(**user).to_domain_user() for user in users]

@@ -27,7 +27,7 @@ class RefreshSubscriptionHandler:
         if user is None:
             raise UserNotFoundError("No user found")
 
-        if subscription_id not in user.subscription_uuids:
+        if subscription_id not in user.get_subscriptions():
             raise PermissionError("User is not subscribed to this subscription")
 
         subscription = self._subscription_repository.get(subscription_id)

@@ -48,7 +48,7 @@ class InMemoryUserRepository(UserRepository):
     async def find_users_subscribed_to_subscription(self, subscription_id: UUID) -> List[User]:
         found_users = []
         for user in self.users.values():
-            if subscription_id in user.subscription_uuids:
+            if subscription_id in user.get_subscriptions():
                 found_users.append(copy(user))
 
         return found_users

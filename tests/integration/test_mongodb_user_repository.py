@@ -221,7 +221,7 @@ async def test_find_users_by_subscription(user_repo: MongoDBUserRepository) -> N
                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
                      uuid=uuid.UUID("9cca4ef4-3940-4527-8789-f76673a3842b"),
                      google_refresh_token="token",
-                     subscription_uuids=[uuid.UUID("902e771b-4ff2-4c0a-ace2-06aab6d27e17")])
+                     subscription_uuids={uuid.UUID("902e771b-4ff2-4c0a-ace2-06aab6d27e17")})
 
     user2 = User.new(first_name="test",
                      last_name="test",
@@ -231,7 +231,7 @@ async def test_find_users_by_subscription(user_repo: MongoDBUserRepository) -> N
                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
                      uuid=uuid.UUID("021991aa-f9da-4935-bf34-7ffc805e1465"),
                      google_refresh_token="token",
-                     subscription_uuids=[uuid.UUID("7395039e-6816-49fb-a303-706caad02673")])
+                     subscription_uuids={uuid.UUID("7395039e-6816-49fb-a303-706caad02673")})
 
     await user_repo.add(user1)
     await user_repo.add(user2)
@@ -252,7 +252,7 @@ async def test_find_users_by_subscription_empty(user_repo: MongoDBUserRepository
                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
                     uuid=uuid.UUID("cb7b18dc-15d8-46b4-bce6-7214fa1a988b"),
                     google_refresh_token="token",
-                    subscription_uuids=[uuid.UUID("9373199d-118d-4493-a6ea-878bf0647ecb")])
+                    subscription_uuids={uuid.UUID("9373199d-118d-4493-a6ea-878bf0647ecb")})
 
     await user_repo.add(user)
 
@@ -271,7 +271,7 @@ async def test_get_user_by_username(user_repo: MongoDBUserRepository) -> None:
                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
                      uuid=uuid.UUID("eeff7d5b-6c6a-442d-86d4-0140c4212116"),
                      google_refresh_token="token",
-                     subscription_uuids=[])
+                     subscription_uuids=set())
 
     user2 = User.new(first_name="test",
                      last_name="test",
@@ -281,7 +281,7 @@ async def test_get_user_by_username(user_repo: MongoDBUserRepository) -> None:
                      avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
                      uuid=uuid.UUID("c932c023-730f-4448-9022-854e64cff9ee"),
                      google_refresh_token="token",
-                     subscription_uuids=[])
+                     subscription_uuids=set())
 
     await user_repo.add(user1)
     await user_repo.add(user2)
