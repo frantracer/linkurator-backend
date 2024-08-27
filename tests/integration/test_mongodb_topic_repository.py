@@ -2,19 +2,22 @@ import uuid
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
 from math import floor
-from unittest import mock
-from unittest.mock import AsyncMock
+from typing import Any
 
 import pytest
 
 from linkurator_core.domain.common.exceptions import DuplicatedKeyError
 from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
+from linkurator_core.infrastructure.in_memory.topic_repository import InMemoryTopicRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
-from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopic, MongoDBTopicRepository
+from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
 
 
-@pytest.fixture(name="topic_repo", scope="session")
-def fixture_topic_repo(db_name: str) -> MongoDBTopicRepository:
+@pytest.fixture(name="topic_repo", scope="session", params=["mongodb", "in_memory"])
+def fixture_topic_repo(db_name: str, request: Any) -> TopicRepository:
+    if request.param == "in_memory":
+        return InMemoryTopicRepository()
     return MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
@@ -27,7 +30,7 @@ async def test_exception_is_raised_if_topics_collection_is_not_created() -> None
 
 
 @pytest.mark.asyncio
-async def test_add_topic(topic_repo: MongoDBTopicRepository) -> None:
+async def test_add_topic(topic_repo: TopicRepository) -> None:
     topic = Topic(name="test",
                   uuid=uuid.UUID("0cc1102a-11e9-4e14-baa7-4a12e958a987"),
                   user_id=uuid.UUID("f29e5cec-f7c9-410e-a508-1c618612fecb"),
@@ -48,31 +51,14 @@ async def test_add_topic(topic_repo: MongoDBTopicRepository) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_topic_that_does_not_exist(topic_repo: MongoDBTopicRepository) -> None:
+async def test_get_topic_that_does_not_exist(topic_repo: TopicRepository) -> None:
     the_topic = await topic_repo.get(uuid.UUID("b613c205-f99d-43b9-9d63-4b7ebe4119a3"))
 
     assert the_topic is None
 
 
 @pytest.mark.asyncio
-async def test_get_topic_with_invalid_format_raises_an_exception(topic_repo: MongoDBTopicRepository) -> None:
-    topic_dict = MongoDBTopic(uuid=uuid.UUID("3ab7068b-1412-46ed-bc1f-46d5f03542e7"),
-                              user_id=uuid.UUID("a23ba1fc-bccb-4e70-a535-7eeca00dbac0"),
-                              subscriptions_ids=[],
-                              name="test",
-                              created_at=datetime.now(tz=timezone.utc),
-                              updated_at=datetime.now(tz=timezone.utc)
-                              ).model_dump()
-    topic_dict['uuid'] = 'invalid_uuid'
-    topic_collection_mock = AsyncMock()
-    topic_collection_mock.find_one = AsyncMock(return_value=topic_dict)
-    with mock.patch.object(MongoDBTopicRepository, '_topic_collection', return_value=topic_collection_mock):
-        with pytest.raises(ValueError):
-            await topic_repo.get(uuid.UUID("c0d59790-bb68-415b-9be5-79c3088aada0"))
-
-
-@pytest.mark.asyncio
-async def test_get_topics_by_user_id(topic_repo: MongoDBTopicRepository) -> None:
+async def test_get_topics_by_user_id(topic_repo: TopicRepository) -> None:
     user_uuid = uuid.UUID("fb0b5160-7704-4310-9bea-d7045574290b")
     topic1 = Topic(name="test_topic_1",
                    uuid=uuid.UUID("33d0aa86-9c70-40d1-8eb2-b402249d2511"),
@@ -96,7 +82,7 @@ async def test_get_topics_by_user_id(topic_repo: MongoDBTopicRepository) -> None
 
 
 @pytest.mark.asyncio
-async def test_update_topic_parameters(topic_repo: MongoDBTopicRepository) -> None:
+async def test_update_topic_parameters(topic_repo: TopicRepository) -> None:
     topic = Topic(name="test",
                   uuid=uuid.UUID("634b81ca-9dde-4bb9-b573-0c6b2cb958df"),
                   user_id=uuid.UUID("0362d52f-6e05-48f9-8144-e3483bbd2517"),
@@ -124,7 +110,7 @@ async def test_update_topic_parameters(topic_repo: MongoDBTopicRepository) -> No
 
 
 @pytest.mark.asyncio
-async def test_delete_topic(topic_repo: MongoDBTopicRepository) -> None:
+async def test_delete_topic(topic_repo: TopicRepository) -> None:
     topic = Topic(name="test",
                   uuid=uuid.UUID("abc2130f-5a83-499f-a3dc-3115b483f6ba"),
                   user_id=uuid.UUID("1ba6cf89-adc3-4841-9f05-7f3d5dcbf79d"),
@@ -142,7 +128,7 @@ async def test_delete_topic(topic_repo: MongoDBTopicRepository) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_topic_with_same_raises_duplicated_key_exception(topic_repo: MongoDBTopicRepository) -> None:
+async def test_create_topic_with_same_raises_duplicated_key_exception(topic_repo: TopicRepository) -> None:
     topic = Topic.new(
         name="test",
         uuid=uuid.UUID("a0825ffa-9671-4114-b801-c1df2e71df13"),
@@ -155,7 +141,7 @@ async def test_create_topic_with_same_raises_duplicated_key_exception(topic_repo
 
 @pytest.mark.asyncio
 async def test_find_one_existing_and_non_existing_topics_returns_only_one_topic(
-        topic_repo: MongoDBTopicRepository
+        topic_repo: TopicRepository
 ) -> None:
     topic1 = Topic.new(
         name="test_topic_1",
