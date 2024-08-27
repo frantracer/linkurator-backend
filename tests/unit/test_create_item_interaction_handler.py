@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, call, AsyncMock
+from unittest.mock import call, AsyncMock
 from uuid import UUID
 
 import pytest
@@ -178,9 +178,9 @@ async def test_create_item_interaction_handler_with_existing_interaction_does_no
 
 @pytest.mark.asyncio
 async def test_create_item_interaction_handler_with_non_existing_item_raises_an_error() -> None:
-    item_repo_mock = MagicMock(spec=ItemRepository)
-    item_repo_mock.get_item = MagicMock(return_value=None)
-    item_repo_mock.get_user_interactions_by_item_id = MagicMock(return_value={})
+    item_repo_mock = AsyncMock(spec=ItemRepository)
+    item_repo_mock.get_item = AsyncMock(return_value=None)
+    item_repo_mock.get_user_interactions_by_item_id = AsyncMock(return_value={})
 
     new_interaction = Interaction.new(
         uuid=UUID('c1ecc7f4-8555-4696-8650-3feb5958e2da'),
