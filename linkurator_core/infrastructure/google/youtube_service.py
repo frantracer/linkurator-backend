@@ -84,7 +84,7 @@ class YoutubeService(SubscriptionService):
             sub_id: uuid.UUID,
             credential: Optional[ExternalServiceCredential] = None
     ) -> Optional[Subscription]:
-        subscription = self.subscription_repository.get(sub_id)
+        subscription = await self.subscription_repository.get(sub_id)
         if subscription is None or subscription.provider != SubscriptionProvider.YOUTUBE:
             return None
 
@@ -112,7 +112,7 @@ class YoutubeService(SubscriptionService):
             credential: Optional[ExternalServiceCredential] = None
     ) -> List[Item]:
 
-        subscription = self.subscription_repository.get(sub_id)
+        subscription = await self.subscription_repository.get(sub_id)
         if subscription is None or subscription.provider != SubscriptionProvider.YOUTUBE:
             return []
 

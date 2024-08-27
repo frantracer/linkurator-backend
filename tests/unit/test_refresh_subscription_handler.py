@@ -5,6 +5,7 @@ import pytest
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.domain.common.mock_factory import mock_user, mock_sub, mock_credential
+from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
@@ -17,7 +18,7 @@ async def test_an_user_can_refresh_a_subscription_if_has_one_uploaded_credential
     user_repository = AsyncMock(spec=UserRepository)
     user_repository.get.return_value = user
 
-    subscription_repository = MagicMock()
+    subscription_repository = AsyncMock(spec=SubscriptionRepository)
     subscription_repository.get.return_value = sub
 
     subscription_service = AsyncMock()
@@ -49,7 +50,7 @@ async def test_an_user_with_no_credentials_cannot_refresh_a_subscription() -> No
     user_repository = AsyncMock(spec=UserRepository)
     user_repository.get.return_value = user
 
-    subscription_repository = MagicMock()
+    subscription_repository = AsyncMock(spec=SubscriptionRepository)
     subscription_repository.get.return_value = sub
 
     subscription_service = AsyncMock()

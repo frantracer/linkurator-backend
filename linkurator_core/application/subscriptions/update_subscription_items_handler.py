@@ -30,7 +30,7 @@ class UpdateSubscriptionItemsHandler:
             return
         self.subscriptions_being_updated[subscription_id] = now
 
-        subscription = self.subscription_repository.get(subscription_id)
+        subscription = await self.subscription_repository.get(subscription_id)
         if subscription is None:
             logging.error("Cannot update items of subscription %s because it does not exist", subscription_id)
             return
@@ -58,7 +58,7 @@ class UpdateSubscriptionItemsHandler:
             subscription.scanned_at = now
             if len(new_items) > 0:
                 subscription.last_published_at = max([i.published_at for i in new_items])
-            self.subscription_repository.update(subscription)
+            await self.subscription_repository.update(subscription)
 
             logging.info("Updated %s items of subscription %s - %s",
                          len(new_filtered_items), subscription.uuid, subscription.name)

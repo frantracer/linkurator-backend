@@ -31,7 +31,7 @@ class FindOutdatedSubscriptionsHandler:
         logging.info("Finding outdated subscriptions")
         now = datetime.now(tz=timezone.utc)
         datetime_limit = now - timedelta(minutes=REFRESH_PERIOD_WITH_NO_CREDENTIALS_IN_MINUTES)
-        outdated_subscriptions = self.subscription_repository.find_latest_scan_before(datetime_limit)
+        outdated_subscriptions = await self.subscription_repository.find_latest_scan_before(datetime_limit)
 
         for subscription in outdated_subscriptions:
             refresh_period = await self.calculate_subscription_refresh_period_in_minutes(subscription)

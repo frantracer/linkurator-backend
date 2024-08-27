@@ -21,7 +21,7 @@ class GetUserSubscriptionsHandler:
         if user is None:
             return []
 
-        user_subscriptions = self.subscription_repository.get_list(list(user.get_subscriptions()))
+        user_subscriptions = await self.subscription_repository.get_list(list(user.get_subscriptions()))
 
         filtered_subscriptions = [
             sub for sub in user_subscriptions

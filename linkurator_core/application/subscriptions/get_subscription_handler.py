@@ -10,7 +10,7 @@ class GetSubscriptionHandler:
         self.subscription_repository = subscription_repository
 
     async def handle(self, subscription_id: UUID) -> Subscription:
-        subscription = self.subscription_repository.get(subscription_id)
+        subscription = await self.subscription_repository.get(subscription_id)
         if subscription is None:
             raise SubscriptionNotFoundError(subscription_id)
         return subscription

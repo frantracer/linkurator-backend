@@ -8,7 +8,8 @@ from uuid import UUID
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
 from pydantic.main import BaseModel
-from pymongo import MongoClient, DESCENDING
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
+from pymongo import DESCENDING
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
@@ -59,62 +60,59 @@ class MongoDBSubscription(BaseModel):
 
 
 class MongoDBSubscriptionRepository(SubscriptionRepository):
-    client: MongoClient[Any]
+    client: AsyncIOMotorClient[Any]
     db_name: str
     _collection_name: str = 'subscriptions'
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
-        self.client = MongoClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
+        self.client = AsyncIOMotorClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
         self.db_name = db_name
 
-        if self._collection_name not in self.client[self.db_name].list_collection_names():
+    async def check_connection(self) -> None:
+        if self._collection_name not in await self.client[self.db_name].list_collection_names():
             raise CollectionIsNotInitialized(
                 f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
 
-    def add(self, subscription: Subscription) -> None:
-        collection = self._subscription_collection()
-        collection.insert_one(MongoDBSubscription.from_domain_subscription(subscription).model_dump())
+    async def add(self, subscription: Subscription) -> None:
+        collection = await self._subscription_collection()
+        await collection.insert_one(MongoDBSubscription.from_domain_subscription(subscription).model_dump())
 
-    def get(self, subscription_id: UUID) -> Optional[Subscription]:
-        collection = self._subscription_collection()
-        subscription: Optional[dict[str, Any]] = collection.find_one({'uuid': subscription_id})
+    async def get(self, subscription_id: UUID) -> Optional[Subscription]:
+        collection = await self._subscription_collection()
+        subscription: Optional[dict[str, Any]] = await collection.find_one({'uuid': subscription_id})
         if subscription is None:
             return None
         return MongoDBSubscription(**subscription).to_domain_subscription()
 
-    def get_list(self, subscription_ids: List[UUID]) -> List[Subscription]:
-        collection = self._subscription_collection()
-        subscriptions: List[dict[str, Any]] = list(collection.
-                                                   find({'uuid': {'$in': subscription_ids}}).
-                                                   sort('created_at', DESCENDING))
+    async def get_list(self, subscription_ids: List[UUID]) -> List[Subscription]:
+        collection = await self._subscription_collection()
+        subscriptions: List[dict[str, Any]] = await collection.find(
+            {'uuid': {'$in': subscription_ids}}).sort('created_at', DESCENDING).to_list(length=None)
         return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
 
-    def delete(self, subscription_id: UUID) -> None:
-        collection = self._subscription_collection()
-        collection.delete_one({'uuid': subscription_id})
+    async def delete(self, subscription_id: UUID) -> None:
+        collection = await self._subscription_collection()
+        await collection.delete_one({'uuid': subscription_id})
 
-    def update(self, subscription: Subscription) -> None:
-        collection = self._subscription_collection()
-        collection.update_one({'uuid': subscription.uuid},
-                              {'$set': MongoDBSubscription.from_domain_subscription(subscription).model_dump()})
+    async def update(self, subscription: Subscription) -> None:
+        collection = await self._subscription_collection()
+        await collection.update_one({'uuid': subscription.uuid},
+                                    {'$set': MongoDBSubscription.from_domain_subscription(subscription).model_dump()})
 
-    def find(self, subscription: Subscription) -> Optional[Subscription]:
-        collection = self._subscription_collection()
-        found_subscription: Optional[dict[str, Any]] = collection.find_one({'url': str(subscription.url)})
+    async def find(self, subscription: Subscription) -> Optional[Subscription]:
+        collection = await self._subscription_collection()
+        found_subscription: Optional[dict[str, Any]] = await collection.find_one({'url': str(subscription.url)})
         if found_subscription is None:
             return None
         return MongoDBSubscription(**found_subscription).to_domain_subscription()
 
-    def find_latest_scan_before(self, datetime_limit: datetime) -> List[Subscription]:
-        collection = self._subscription_collection()
-        subscriptions: List[dict[str, Any]] = list(collection.
-                                                   find({'scanned_at': {'$lt': datetime_limit}}).
-                                                   sort('scanned_at', DESCENDING))
+    async def find_latest_scan_before(self, datetime_limit: datetime) -> List[Subscription]:
+        collection = await self._subscription_collection()
+        subscriptions: List[dict[str, Any]] = await (collection.find({'scanned_at': {'$lt': datetime_limit}})
+                                                     .sort('scanned_at', DESCENDING).to_list(length=None))
         return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
 
-    def _subscription_collection(self) -> Any:
+    async def _subscription_collection(self) -> AsyncIOMotorCollection[Any]:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
-        return self.client.get_database(self.db_name).get_collection(
-            self._collection_name,
-            codec_options=codec_options)
+        return self.client.get_database(self.db_name).get_collection(self._collection_name, codec_options=codec_options)

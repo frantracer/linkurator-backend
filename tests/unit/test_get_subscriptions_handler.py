@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -8,6 +8,7 @@ from linkurator_core.application.subscriptions.get_user_subscriptions_handler im
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
@@ -62,7 +63,7 @@ async def test_get_subscriptions_handler_returns_results_paginated_and_filters_b
         last_published_at=datetime.fromisoformat("2050-01-01T00:00:00+00:00")
     )
 
-    subscription_repo_mock = MagicMock()
+    subscription_repo_mock = AsyncMock(spec=SubscriptionRepository)
     subscription_repo_mock.get_list.return_value = [sub4, sub3, sub2, sub1]
     user_repo_mock = AsyncMock(spec=UserRepository)
     user = mock_user()

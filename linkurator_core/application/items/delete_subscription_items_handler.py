@@ -21,7 +21,7 @@ class DeleteSubscriptionItemsHandler:
         if user is None or user.is_admin is False:
             raise PermissionError("Only admins can delete subscription items")
 
-        subscription = self.subscription_repository.get(subscription_id)
+        subscription = await self.subscription_repository.get(subscription_id)
         if subscription is None:
             raise SubscriptionNotFoundError(subscription_id)
 
@@ -41,6 +41,6 @@ class DeleteSubscriptionItemsHandler:
             await self.item_repository.delete_item(item_uuid)
 
         subscription.scanned_at = datetime.fromtimestamp(0, tz=timezone.utc)
-        self.subscription_repository.update(subscription)
+        await self.subscription_repository.update(subscription)
 
         logging.info("Deleted items of subscription %s - %s", subscription_id, subscription.name)

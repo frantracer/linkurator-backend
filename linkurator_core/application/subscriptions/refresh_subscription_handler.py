@@ -30,7 +30,7 @@ class RefreshSubscriptionHandler:
         if subscription_id not in user.get_subscriptions():
             raise PermissionError("User is not subscribed to this subscription")
 
-        subscription = self._subscription_repository.get(subscription_id)
+        subscription = await self._subscription_repository.get(subscription_id)
         if subscription is None:
             raise SubscriptionNotFoundError("No subscription found")
 
@@ -49,7 +49,7 @@ class RefreshSubscriptionHandler:
         if updated_sub is None:
             raise SubscriptionNotFoundError("No subscription found")
 
-        self._subscription_repository.update(updated_sub)
+        await self._subscription_repository.update(updated_sub)
 
     @staticmethod
     def map_subscription_provider_to_credential_type(provider: SubscriptionProvider) -> Optional[ExternalServiceType]:
