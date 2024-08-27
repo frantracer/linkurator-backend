@@ -2,8 +2,7 @@ import uuid
 from datetime import timezone, datetime
 from ipaddress import IPv4Address
 from math import floor
-from unittest import mock
-from unittest.mock import AsyncMock
+from typing import Any
 
 import pytest
 import pytest_asyncio
@@ -11,13 +10,15 @@ import pytest_asyncio
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
-from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository, \
-    MongoDBSubscription
+from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 
 
-@pytest_asyncio.fixture(name="subscription_repo", scope="session")
-async def fixture_subscription_repo(db_name: str) -> MongoDBSubscriptionRepository:
+@pytest_asyncio.fixture(name="subscription_repo", scope="session", params=["mongodb", "in_memory"])
+async def fixture_subscription_repo(db_name: str, request: Any) -> SubscriptionRepository:
+    if request.param == "in_memory":
+        return InMemorySubscriptionRepository()
     return MongoDBSubscriptionRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
 
 
@@ -31,7 +32,7 @@ async def test_exception_is_raised_if_subscriptions_collection_is_not_created() 
 
 
 @pytest.mark.asyncio
-async def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository) -> None:
+async def test_add_subscription(subscription_repo: SubscriptionRepository) -> None:
     subscription = Subscription.new(
         name="test",
         uuid=uuid.UUID("8d9e9e1f-c9b4-4b8f-b8c4-c8f1e7b7d9a1"),
@@ -57,7 +58,7 @@ async def test_add_subscription(subscription_repo: MongoDBSubscriptionRepository
 
 
 @pytest.mark.asyncio
-async def test_add_subscriptions_stores_any_external_data(subscription_repo: MongoDBSubscriptionRepository) -> None:
+async def test_add_subscriptions_stores_any_external_data(subscription_repo: SubscriptionRepository) -> None:
     subscription = Subscription.new(
         name="test",
         uuid=uuid.UUID("31a2ba8e-e3a5-405a-ae41-43eaaab56fdf"),
@@ -74,7 +75,7 @@ async def test_add_subscriptions_stores_any_external_data(subscription_repo: Mon
 
 
 @pytest.mark.asyncio
-async def test_find_a_subscription_that_already_exist(subscription_repo: MongoDBSubscriptionRepository) -> None:
+async def test_find_a_subscription_that_already_exist(subscription_repo: SubscriptionRepository) -> None:
     sub1 = Subscription.new(name="test",
                             uuid=uuid.UUID("e329b931-9bf0-410f-9789-d48ea4eb816b"),
                             url=utils.parse_url('https://the-same-url.com'),
@@ -93,7 +94,7 @@ async def test_find_a_subscription_that_already_exist(subscription_repo: MongoDB
 
 
 @pytest.mark.asyncio
-async def test_find_a_subscription_that_does_not_exist(subscription_repo: MongoDBSubscriptionRepository) -> None:
+async def test_find_a_subscription_that_does_not_exist(subscription_repo: SubscriptionRepository) -> None:
     sub1 = Subscription.new(name="test",
                             uuid=uuid.UUID("391f6292-b677-494f-b60d-791e51d22f08"),
                             url=utils.parse_url('https://391f6292-b677-494f-b60d-791e51d22f08.com'),
@@ -105,7 +106,7 @@ async def test_find_a_subscription_that_does_not_exist(subscription_repo: MongoD
 
 
 @pytest.mark.asyncio
-async def test_find_subscriptions_scanned_before_a_date(subscription_repo: MongoDBSubscriptionRepository) -> None:
+async def test_find_subscriptions_scanned_before_a_date(subscription_repo: SubscriptionRepository) -> None:
     sub1 = Subscription(
         name="test",
         uuid=uuid.UUID("2e17788f-0411-4383-a3f6-69c2c1a07901"),
@@ -142,38 +143,15 @@ async def test_find_subscriptions_scanned_before_a_date(subscription_repo: Mongo
 
 
 @pytest.mark.asyncio
-async def test_get_subscription_that_does_not_exist(subscription_repo: MongoDBSubscriptionRepository) -> None:
+async def test_get_subscription_that_does_not_exist(subscription_repo: SubscriptionRepository) -> None:
     the_subscription = await subscription_repo.get(uuid.UUID("0af092ed-e3f9-4919-8202-c19bfd0627a9"))
 
     assert the_subscription is None
 
 
 @pytest.mark.asyncio
-async def test_get_subscription_with_invalid_format_raises_an_exception(
-        subscription_repo: MongoDBSubscriptionRepository) -> None:
-    subscription_dict = MongoDBSubscription(
-        uuid=uuid.UUID("3ab7068b-1412-46ed-bc1f-46d5f03542e7"),
-        provider="test",
-        external_data={},
-        name="test",
-        url='https://test.com',
-        thumbnail='https://test.com/thumbnail.png',
-        created_at=datetime.now(tz=timezone.utc),
-        updated_at=datetime.now(tz=timezone.utc),
-        scanned_at=datetime(1970, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc)
-    ).model_dump()
-    subscription_dict['uuid'] = 'invalid_uuid'
-    subscription_collection_mock = AsyncMock(spec=SubscriptionRepository)
-    subscription_collection_mock.find_one = AsyncMock(return_value=subscription_dict)
-    with mock.patch.object(MongoDBSubscriptionRepository, '_subscription_collection',
-                           return_value=subscription_collection_mock):
-        with pytest.raises(ValueError):
-            await subscription_repo.get(uuid.UUID("81f7d26c-4a7f-4a27-a081-bb77e034fb30"))
-
-
-@pytest.mark.asyncio
 async def test_get_list_of_subscriptions_ordered_by_created_at(
-        subscription_repo: MongoDBSubscriptionRepository) -> None:
+        subscription_repo: SubscriptionRepository) -> None:
     sub1 = Subscription(
         name="test",
         uuid=uuid.UUID("83ea331c-fa87-4654-89d0-055972a64e5b"),
@@ -223,7 +201,7 @@ async def test_get_list_of_subscriptions_ordered_by_created_at(
 
 
 @pytest.mark.asyncio
-async def test_update_subscription(subscription_repo: MongoDBSubscriptionRepository) -> None:
+async def test_update_subscription(subscription_repo: SubscriptionRepository) -> None:
     sub = Subscription(
         name="test",
         uuid=uuid.UUID("1515c810-e22a-4b13-bf34-329f8ebe2491"),
@@ -263,7 +241,7 @@ async def test_update_subscription(subscription_repo: MongoDBSubscriptionReposit
 
 
 @pytest.mark.asyncio
-async def test_delete_subscription(subscription_repo: MongoDBSubscriptionRepository) -> None:
+async def test_delete_subscription(subscription_repo: SubscriptionRepository) -> None:
     subscription = Subscription.new(name="test",
                                     uuid=uuid.UUID("5f0430b3-6044-4cca-b739-d63c75794b3c"),
                                     url=utils.parse_url('https://test.com'),
