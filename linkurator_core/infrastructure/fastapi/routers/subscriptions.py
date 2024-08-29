@@ -13,7 +13,7 @@ from linkurator_core.application.subscriptions.get_subscription_handler import G
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.application.subscriptions.unfollow_subscription_handler import UnfollowSubscriptionHandler
-from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
+from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, SubscriptionAlreadyUpdatedError
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, InteractionFilterSchema, VALID_INTERACTIONS
@@ -225,7 +225,8 @@ def get_router(
                  status_code=status.HTTP_204_NO_CONTENT,
                  responses={
                      status.HTTP_403_FORBIDDEN: {"model": None},
-                     status.HTTP_404_NOT_FOUND: {"model": None}
+                     status.HTTP_404_NOT_FOUND: {"model": None},
+                     status.HTTP_429_TOO_MANY_REQUESTS: {"model": None}
                  })
     async def refresh_subscription_information(
             sub_id: UUID,
@@ -242,11 +243,13 @@ def get_router(
             raise default_responses.not_authenticated()
 
         try:
-            await refresh_subscription_handler.handle(user_id=session.user_id, subscription_id=sub_id)
+            await refresh_subscription_handler.handle(subscription_id=sub_id)
             return
         except PermissionError as error:
             raise default_responses.forbidden("You don't have permissions to refresh this subscription") from error
         except SubscriptionNotFoundError as error:
             raise default_responses.not_found("Subscription not found") from error
+        except SubscriptionAlreadyUpdatedError as error:
+            raise default_responses.too_many_requests("Subscription already updated") from error
 
     return router

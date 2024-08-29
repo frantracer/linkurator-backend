@@ -44,3 +44,7 @@ class CannotFollowOwnedTopicError(Exception):
 
 class CannotUnfollowAssignedSubscriptionError(Exception):
     pass
+
+
+class SubscriptionAlreadyUpdatedError(Exception):
+    pass

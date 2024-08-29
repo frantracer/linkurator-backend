@@ -28,7 +28,8 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
             del self.subscriptions[subscription_id]
 
     async def update(self, subscription: Subscription) -> None:
-        if self._find_by_url(subscription.url) is None:
+        existing_sub = self._find_by_url(subscription.url)
+        if existing_sub is None or (existing_sub is not None and existing_sub.uuid == subscription.uuid):
             self.subscriptions[subscription.uuid] = subscription
 
     async def find(self, subscription: Subscription) -> Optional[Subscription]:

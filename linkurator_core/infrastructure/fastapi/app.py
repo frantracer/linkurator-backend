@@ -123,10 +123,8 @@ def app_handlers() -> Handlers:
             subscription_repository=subscription_repository,
             user_repository=user_repository),
         refresh_subscription_handler=RefreshSubscriptionHandler(
-            user_repository=user_repository,
             subscription_repository=subscription_repository,
-            subscription_service=youtube_service,
-            credentials_repository=credentials_repository),
+            subscription_service=youtube_service),
         get_user_profile_handler=GetUserProfileHandler(user_repository),
         find_user_handler=FindCuratorHandler(user_repository),
         delete_user_handler=DeleteUserHandler(user_repository, session_repository, account_service),
