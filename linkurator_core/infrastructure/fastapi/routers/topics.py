@@ -11,6 +11,7 @@ from linkurator_core.application.topics.assign_subscription_to_user_topic_handle
     AssignSubscriptionToTopicHandler
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.application.topics.find_topics_by_name_handler import FindTopicsByNameHandler
 from linkurator_core.application.topics.follow_topic_handler import FollowTopicHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
@@ -23,7 +24,7 @@ from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, InteractionFilterSchema, VALID_INTERACTIONS
-from linkurator_core.infrastructure.fastapi.models.page import Page
+from linkurator_core.infrastructure.fastapi.models.page import Page, FullPage
 from linkurator_core.infrastructure.fastapi.models.topic import NewTopicSchema, TopicSchema, UpdateTopicSchema
 
 
@@ -33,6 +34,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         get_user_topics_handler: GetUserTopicsHandler,
         get_topic_handler: GetTopicHandler,
         get_topic_items_handler: GetTopicItemsHandler,
+        find_topics_by_name_handler: FindTopicsByNameHandler,
         assign_subscription_to_user_topic_handler: AssignSubscriptionToTopicHandler,
         unassign_subscription_from_user_topic_handler: UnassignSubscriptionFromUserTopicHandler,
         delete_user_topic_handler: DeleteUserTopicHandler,
@@ -135,6 +137,20 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             page_number=0,
             page_size=len(response.topics) + 1,
             current_url=request.url)
+
+    @router.get("/name/{name}",
+                responses={
+                })
+    async def find_topics_by_name(
+            name: str
+    ) -> FullPage[TopicSchema]:
+        """
+        Find topics by name
+        """
+        topics = await find_topics_by_name_handler.handle(name=name)
+        return FullPage[TopicSchema].create(
+            elements=[TopicSchema.from_domain_topic(topic, None, False) for topic in topics]
+        )
 
     @router.get("/{topic_id}",
                 responses={

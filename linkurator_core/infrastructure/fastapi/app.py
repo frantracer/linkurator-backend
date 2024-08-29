@@ -23,6 +23,7 @@ from linkurator_core.application.topics.assign_subscription_to_user_topic_handle
     AssignSubscriptionToTopicHandler
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.application.topics.find_topics_by_name_handler import FindTopicsByNameHandler
 from linkurator_core.application.topics.follow_topic_handler import FollowTopicHandler
 from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsAsUserHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
@@ -142,6 +143,7 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             topic_repository=topic_repository,
             followed_topics_repository=followed_topics_repository),
+        find_topics_by_name_handler=FindTopicsByNameHandler(topic_repository),
         get_curator_items_handler=GetCuratorItemsHandler(
             item_repository=item_repository
         ),

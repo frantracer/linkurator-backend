@@ -25,6 +25,7 @@ from linkurator_core.application.topics.assign_subscription_to_user_topic_handle
     AssignSubscriptionToTopicHandler
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.application.topics.find_topics_by_name_handler import FindTopicsByNameHandler
 from linkurator_core.application.topics.follow_topic_handler import FollowTopicHandler
 from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsAsUserHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
@@ -74,6 +75,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_curator_topics_as_user_handler: GetCuratorTopicsAsUserHandler
     get_curator_items_handler: GetCuratorItemsHandler
     get_topic_handler: GetTopicHandler
+    find_topics_by_name_handler: FindTopicsByNameHandler
     assign_subscription_to_topic_handler: AssignSubscriptionToTopicHandler
     unassign_subscription_from_topic_handler: UnassignSubscriptionFromUserTopicHandler
     get_topic_items_handler: GetTopicItemsHandler
@@ -143,6 +145,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             get_topic_items_handler=handlers.get_topic_items_handler,
             get_topic_handler=handlers.get_topic_handler,
             get_user_topics_handler=handlers.get_user_topics_handler,
+            find_topics_by_name_handler=handlers.find_topics_by_name_handler,
             assign_subscription_to_user_topic_handler=handlers.assign_subscription_to_topic_handler,
             unassign_subscription_from_user_topic_handler=handlers.unassign_subscription_from_topic_handler,
             delete_user_topic_handler=handlers.delete_topic_handler,
