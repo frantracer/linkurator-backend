@@ -68,3 +68,15 @@ class Page(BaseModel, Generic[Element]):
             page_number=previous_page_number,
             page_size=page_size)))
         return previous_page_url
+
+
+class FullPage(BaseModel, Generic[Element]):
+    """
+    FullPage model
+    """
+    elements: List[Element]
+    total_elements: int
+
+    @classmethod
+    def create(cls, elements: List[Element]) -> FullPage[Element]:
+        return cls(elements=elements, total_elements=len(elements))

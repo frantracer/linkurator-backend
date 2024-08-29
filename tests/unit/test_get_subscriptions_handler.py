@@ -1,98 +1,24 @@
-import uuid
-from datetime import datetime
-from unittest.mock import AsyncMock
-
 import pytest
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
-from linkurator_core.domain.common import utils
-from linkurator_core.domain.common.mock_factory import mock_user
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
-from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
-from linkurator_core.domain.users.user_repository import UserRepository
+from linkurator_core.domain.common.mock_factory import mock_user, mock_sub
+from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
+from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
 @pytest.mark.asyncio
-async def test_get_subscriptions_handler_returns_results_paginated_and_filters_by_creation_date() -> None:
-    sub1 = Subscription(
-        uuid=uuid.UUID("6473ad5b-75ad-4384-a48d-924e026dd988"),
-        name="Test1",
-        url=utils.parse_url("https://url.com"),
-        provider=SubscriptionProvider.YOUTUBE,
-        external_data={},
-        thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
-        created_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
-        updated_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
-        scanned_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
-        last_published_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00")
-    )
-    sub2 = Subscription(
-        uuid=uuid.UUID("79a636a4-6d4b-41e2-be73-4cff46110e28"),
-        name="Test2",
-        url=utils.parse_url("https://url.com"),
-        provider=SubscriptionProvider.YOUTUBE,
-        external_data={},
-        thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
-        created_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
-        updated_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
-        scanned_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
-        last_published_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00")
-    )
-    sub3 = Subscription(
-        uuid=uuid.UUID("c497fecf-425c-4bb3-b597-5a3dc7ad2fe5"),
-        name="Test3",
-        url=utils.parse_url("https://url.com"),
-        provider=SubscriptionProvider.YOUTUBE,
-        external_data={},
-        thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
-        created_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
-        updated_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
-        scanned_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00"),
-        last_published_at=datetime.fromisoformat("2020-01-01T00:00:00+00:00")
-    )
-    sub4 = Subscription(
-        uuid=uuid.UUID("c66b1e29-79af-49d8-85f4-17d3b5d0bf76"),
-        name="Test4",
-        url=utils.parse_url("https://url.com"),
-        provider=SubscriptionProvider.YOUTUBE,
-        external_data={},
-        thumbnail=utils.parse_url("https://url.com/thumbnail.png"),
-        created_at=datetime.fromisoformat("2050-01-01T00:00:00+00:00"),
-        updated_at=datetime.fromisoformat("2050-01-01T00:00:00+00:00"),
-        scanned_at=datetime.fromisoformat("2050-01-01T00:00:00+00:00"),
-        last_published_at=datetime.fromisoformat("2050-01-01T00:00:00+00:00")
-    )
+async def test_get_subscriptions() -> None:
+    sub_repo = InMemorySubscriptionRepository()
 
-    subscription_repo_mock = AsyncMock(spec=SubscriptionRepository)
-    subscription_repo_mock.get_list.return_value = [sub4, sub3, sub2, sub1]
-    user_repo_mock = AsyncMock(spec=UserRepository)
-    user = mock_user()
-    user_repo_mock.get.return_value = user
-    handler = GetUserSubscriptionsHandler(subscription_repo_mock, user_repo_mock)
+    sub = mock_sub()
+    await sub_repo.add(sub)
 
-    the_subscriptions = await handler.handle(
-        user_id=user.uuid,
-        page_number=0,
-        page_size=2,
-        created_before=datetime.fromisoformat("2020-01-02T00:00:00+00:00")
-    )
+    user = mock_user(subscribed_to=[sub.uuid])
+    user_repo = InMemoryUserRepository()
+    await user_repo.add(user)
 
-    assert the_subscriptions == [sub3, sub2]
+    handler = GetUserSubscriptionsHandler(sub_repo, user_repo)
 
-    the_subscriptions = await handler.handle(
-        user_id=user.uuid,
-        page_number=1,
-        page_size=2,
-        created_before=datetime.fromisoformat("2020-01-02T00:00:00+00:00")
-    )
+    the_subscriptions = await handler.handle(user_id=user.uuid)
 
-    assert the_subscriptions == [sub1]
-
-    the_subscriptions = await handler.handle(
-        user_id=user.uuid,
-        page_number=2,
-        page_size=2,
-        created_before=datetime.fromisoformat("2020-01-02T00:00:00+00:00")
-    )
-
-    assert the_subscriptions == []
+    assert the_subscriptions == [sub]

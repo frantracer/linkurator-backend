@@ -1,4 +1,3 @@
-from datetime import datetime
 from uuid import UUID
 
 from linkurator_core.domain.subscriptions.subscription import Subscription
@@ -11,24 +10,9 @@ class GetUserSubscriptionsHandler:
         self.subscription_repository = subscription_repository
         self.user_repository = user_repository
 
-    async def handle(self,
-               user_id: UUID,
-               page_number: int,
-               page_size: int,
-               created_before: datetime
-               ) -> list[Subscription]:
+    async def handle(self, user_id: UUID) -> list[Subscription]:
         user = await self.user_repository.get(user_id)
         if user is None:
             return []
 
-        user_subscriptions = await self.subscription_repository.get_list(list(user.get_subscriptions()))
-
-        filtered_subscriptions = [
-            sub for sub in user_subscriptions
-            if sub.created_at.timestamp() < created_before.timestamp()
-        ]
-
-        start_index = page_number * page_size
-        end_index = min(start_index + page_size, len(filtered_subscriptions))
-
-        return filtered_subscriptions[start_index:end_index]
+        return await self.subscription_repository.get_list(list(user.get_subscriptions()))

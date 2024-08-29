@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, status, Request
 from pydantic import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.items.get_curator_items_handler import GetCuratorItemsHandler
+from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsAsUserHandler
 from linkurator_core.application.users.find_user_handler import FindCuratorHandler
 from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
@@ -16,7 +17,8 @@ from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.curator import CuratorSchema
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
-from linkurator_core.infrastructure.fastapi.models.page import Page
+from linkurator_core.infrastructure.fastapi.models.page import Page, FullPage
+from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 from linkurator_core.infrastructure.fastapi.models.topic import TopicSchema
 
 
@@ -27,6 +29,7 @@ def get_router(
         follow_curator_handler: FollowCuratorHandler,
         unfollow_curator_handler: UnfollowCuratorHandler,
         get_curator_topics_as_user: GetCuratorTopicsAsUserHandler,
+        get_curator_subscriptions_handler: GetUserSubscriptionsHandler,
         get_curator_items_handler: GetCuratorItemsHandler
 ) -> APIRouter:
     router = APIRouter()
@@ -120,6 +123,22 @@ def get_router(
             for topic
             in response
         ]
+
+    @router.get("/{curator_id}/subscriptions",
+                responses={
+                    status.HTTP_401_UNAUTHORIZED: {'model': None},
+                    status.HTTP_404_NOT_FOUND: {'model': None}
+                })
+    async def find_curator_subscriptions(
+            curator_id: UUID,
+            session: Optional[Session] = Depends(get_session),
+    ) -> FullPage[SubscriptionSchema]:
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        subs = await get_curator_subscriptions_handler.handle(user_id=curator_id)
+
+        return FullPage.create([SubscriptionSchema.from_domain_subscription(sub) for sub in subs])
 
     @router.get("/{curator_id}/items",
                 responses={

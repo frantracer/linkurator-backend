@@ -128,6 +128,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             unfollow_curator_handler=handlers.unfollow_curator_handler,
             find_user_handler=handlers.find_user_handler,
             get_curator_topics_as_user=handlers.get_curator_topics_as_user_handler,
+            get_curator_subscriptions_handler=handlers.get_user_subscriptions,
             get_curator_items_handler=handlers.get_curator_items_handler
         ),
         prefix="/curators"

@@ -17,7 +17,7 @@ from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, InteractionFilterSchema, VALID_INTERACTIONS
-from linkurator_core.infrastructure.fastapi.models.page import Page
+from linkurator_core.infrastructure.fastapi.models.page import Page, FullPage
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 
 
@@ -38,35 +38,18 @@ def get_router(
                     status.HTTP_401_UNAUTHORIZED: {'model': None}
                 })
     async def get_all_subscriptions(
-            request: Request,
-            page_number: NonNegativeInt = 0,
-            page_size: PositiveInt = 50,
-            created_before_ts: Optional[float] = None,
             session: Optional[Session] = Depends(get_session)
-    ) -> Page[SubscriptionSchema]:
+    ) -> FullPage[SubscriptionSchema]:
         """
         Get the list of the user subscriptions
         """
         if session is None:
             raise default_responses.not_authenticated()
 
-        if created_before_ts is None:
-            created_before_ts = datetime.now(tz=timezone.utc).timestamp()
+        subscriptions = await get_user_subscriptions_handler.handle(session.user_id)
 
-        subscriptions = await get_user_subscriptions_handler.handle(
-            session.user_id, page_number, page_size, datetime.fromtimestamp(created_before_ts, tz=timezone.utc))
-
-        current_url = request.url.include_query_params(
-            page_number=page_number,
-            page_size=page_size,
-            created_before_ts=created_before_ts
-        )
-
-        return Page[SubscriptionSchema].create(
-            elements=[SubscriptionSchema.from_domain_subscription(subscription) for subscription in subscriptions],
-            page_number=page_number,
-            page_size=page_size,
-            current_url=current_url)
+        return FullPage.create([SubscriptionSchema.from_domain_subscription(subscription)
+                                for subscription in subscriptions])
 
     @router.get("/{sub_id}",
                 status_code=status.HTTP_200_OK,
