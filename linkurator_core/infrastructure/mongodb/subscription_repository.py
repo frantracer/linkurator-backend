@@ -7,13 +7,14 @@ from uuid import UUID
 
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
-from pydantic.main import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
+from pydantic.main import BaseModel
 from pymongo import DESCENDING
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.infrastructure.mongodb.common import normalize_text_search
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 
@@ -95,6 +96,10 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
         collection = await self._subscription_collection()
         await collection.delete_one({'uuid': subscription_id})
 
+    async def delete_all(self) -> None:
+        collection = await self._subscription_collection()
+        await collection.delete_many({})
+
     async def update(self, subscription: Subscription) -> None:
         collection = await self._subscription_collection()
         await collection.update_one({'uuid': subscription.uuid},
@@ -111,6 +116,14 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
         collection = await self._subscription_collection()
         subscriptions: List[dict[str, Any]] = await (collection.find({'scanned_at': {'$lt': datetime_limit}})
                                                      .sort('scanned_at', DESCENDING).to_list(length=None))
+        return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
+
+    async def find_by_name(self, name: str) -> List[Subscription]:
+        collection = await self._subscription_collection()
+
+        subscriptions: List[dict[str, Any]] = await (collection.find(
+            {'$text': {'$search': normalize_text_search(name)}}
+        ).sort('created_at', DESCENDING).to_list(length=None))
         return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
 
     async def _subscription_collection(self) -> AsyncIOMotorCollection[Any]:

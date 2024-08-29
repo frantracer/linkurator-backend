@@ -8,6 +8,7 @@ import pytest
 import pytest_asyncio
 
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.mock_factory import mock_sub
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
@@ -255,3 +256,34 @@ async def test_delete_subscription(subscription_repo: SubscriptionRepository) ->
     await subscription_repo.delete(subscription.uuid)
     deleted_subscription = await subscription_repo.get(subscription.uuid)
     assert deleted_subscription is None
+
+
+@pytest.mark.asyncio
+async def test_find_subscriptions_by_name(subscription_repo: SubscriptionRepository) -> None:
+    sub1 = mock_sub(name="Leyendas y videojuegos")
+    sub2 = mock_sub(name="Fútbol y más")
+    sub3 = mock_sub(name="leyendas del fútbol")
+
+    await subscription_repo.delete_all()
+    await subscription_repo.add(sub1)
+    await subscription_repo.add(sub2)
+    await subscription_repo.add(sub3)
+
+    found_subscriptions = await subscription_repo.find_by_name("videojuegos")
+    assert len(found_subscriptions) == 1
+    assert found_subscriptions[0].uuid == sub1.uuid
+
+    found_subscriptions = await subscription_repo.find_by_name("Leyendas")
+    assert len(found_subscriptions) == 2
+    assert {sub1.uuid, sub3.uuid} == {sub.uuid for sub in found_subscriptions}
+
+    found_subscriptions = await subscription_repo.find_by_name("futbol")
+    assert len(found_subscriptions) == 2
+    assert {sub2.uuid, sub3.uuid} == {sub.uuid for sub in found_subscriptions}
+
+    found_subscriptions = await subscription_repo.find_by_name("mas fútbol")
+    assert len(found_subscriptions) == 1
+    assert found_subscriptions[0].uuid == sub2.uuid
+
+    found_subscriptions = await subscription_repo.find_by_name("baloncesto")
+    assert len(found_subscriptions) == 0

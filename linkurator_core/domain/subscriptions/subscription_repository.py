@@ -27,6 +27,10 @@ class SubscriptionRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    async def delete_all(self) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     async def update(self, subscription: Subscription) -> None:
         raise NotImplementedError
 
@@ -36,4 +40,8 @@ class SubscriptionRepository(abc.ABC):
 
     @abc.abstractmethod
     async def find_latest_scan_before(self, datetime_limit: datetime) -> List[Subscription]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def find_by_name(self, name: str) -> List[Subscription]:
         raise NotImplementedError
