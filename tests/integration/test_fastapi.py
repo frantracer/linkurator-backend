@@ -36,6 +36,8 @@ def dummy_handlers() -> Handlers:
         google_client=AsyncMock(),
         get_subscription=AsyncMock(),
         get_user_subscriptions=AsyncMock(),
+        follow_subscription_handler=AsyncMock(),
+        unfollow_subscription_handler=AsyncMock(),
         get_subscription_items_handler=AsyncMock(),
         delete_subscription_items_handler=AsyncMock(),
         refresh_subscription_handler=AsyncMock(),

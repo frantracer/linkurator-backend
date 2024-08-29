@@ -8,9 +8,11 @@ from pydantic.types import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
+from linkurator_core.application.subscriptions.follow_subscription_handler import FollowSubscriptionHandler
 from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
+from linkurator_core.application.subscriptions.unfollow_subscription_handler import UnfollowSubscriptionHandler
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
@@ -23,6 +25,8 @@ def get_router(
         get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
         get_subscription_handler: GetSubscriptionHandler,
         get_user_subscriptions_handler: GetUserSubscriptionsHandler,
+        follow_subscription_handler: FollowSubscriptionHandler,
+        unfollow_subscription_handler: UnfollowSubscriptionHandler,
         get_subscription_items_handler: GetSubscriptionItemsHandler,
         delete_subscription_items_handler: DeleteSubscriptionItemsHandler,
         refresh_subscription_handler: RefreshSubscriptionHandler
@@ -82,6 +86,52 @@ def get_router(
             return SubscriptionSchema.from_domain_subscription(subscription)
         except SubscriptionNotFoundError as error:
             raise default_responses.not_found("Subscription not found") from error
+
+    @router.post("/{sub_id}/follow",
+                 status_code=status.HTTP_201_CREATED,
+                 responses={
+                     status.HTTP_401_UNAUTHORIZED: {"model": None},
+                     status.HTTP_404_NOT_FOUND: {"model": None}
+                 })
+    async def follow_subscription(
+            sub_id: UUID,
+            session: Optional[Session] = Depends(get_session)
+    ) -> None:
+        """
+        Follow a subscription
+        :param sub_id: UUID of the subscription included in the url
+        :param session: The session of the logged user
+        :return: UNAUTHORIZED status code if the session is invalid.
+        """
+
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        try:
+            await follow_subscription_handler.handle(user_id=session.user_id, subscription_id=sub_id)
+        except SubscriptionNotFoundError as error:
+            raise default_responses.not_found("Subscription not found") from error
+
+    @router.delete("/{sub_id}/follow",
+                   status_code=status.HTTP_204_NO_CONTENT,
+                   responses={
+                       status.HTTP_401_UNAUTHORIZED: {"model": None},
+                   })
+    async def unfollow_subscription(
+            sub_id: UUID,
+            session: Optional[Session] = Depends(get_session)
+    ) -> None:
+        """
+        Unfollow a subscription
+        :param sub_id: UUID of the subscription included in the url
+        :param session: The session of the logged user
+        :return: UNAUTHORIZED status code if the session is invalid.
+        """
+
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        await unfollow_subscription_handler.handle(user_id=session.user_id, subscription_id=sub_id)
 
     @router.get("/{sub_id}/items",
                 status_code=status.HTTP_200_OK,
