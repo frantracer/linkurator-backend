@@ -47,14 +47,18 @@ def mock_sub(uuid: Optional[UUID] = None) -> Subscription:
     )
 
 
-def mock_topic(uuid: Optional[UUID] = None, user_uuid: Optional[UUID] = None) -> Topic:
+def mock_topic(
+        uuid: Optional[UUID] = None,
+        user_uuid: Optional[UUID] = None,
+        subscription_uuids: list[UUID] | None = None
+) -> Topic:
     uuid = uuid or uuid4()
     user_uuid = user_uuid or uuid4()
     return Topic.new(
         uuid=uuid,
         name=f'Topic {uuid}',
         user_id=user_uuid,
-        subscription_ids=[],
+        subscription_ids=[] if subscription_uuids is None else subscription_uuids,
     )
 
 
