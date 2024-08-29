@@ -22,11 +22,19 @@ class TopicRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    async def find_topics_by_name(self, name: str) -> List[Topic]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     async def update(self, topic: Topic) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
     async def delete(self, topic_id: UUID) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def delete_all(self) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod

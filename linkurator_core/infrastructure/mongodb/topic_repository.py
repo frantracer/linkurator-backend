@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from linkurator_core.domain.common.exceptions import DuplicatedKeyError
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
-from linkurator_core.infrastructure.mongodb.common import MongoDBMapping
+from linkurator_core.infrastructure.mongodb.common import MongoDBMapping, normalize_text_search
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 
@@ -85,6 +85,13 @@ class MongoDBTopicRepository(TopicRepository):
         topics = await collection.find({'uuid': {'$in': topic_ids}}).to_list(length=None)
         return [MongoDBTopic(**topic).to_domain_topic() for topic in topics]
 
+    async def find_topics_by_name(self, name: str) -> List[Topic]:
+        collection = self._topic_collection()
+        topics: List[dict[str, Any]] = await (collection.find(
+            {'$text': {'$search': normalize_text_search(name)}}
+        ).sort('created_at', pymongo.DESCENDING).to_list(length=None))
+        return [MongoDBTopic(**topic).to_domain_topic() for topic in topics]
+
     async def update(self, topic: Topic) -> None:
         collection = self._topic_collection()
         await collection.update_one({'uuid': topic.uuid}, {'$set': MongoDBTopic.from_domain_topic(topic).model_dump()})
@@ -92,6 +99,10 @@ class MongoDBTopicRepository(TopicRepository):
     async def delete(self, topic_id: UUID) -> None:
         collection = self._topic_collection()
         await collection.delete_one({'uuid': topic_id})
+
+    async def delete_all(self) -> None:
+        collection = self._topic_collection()
+        await collection.delete_many({})
 
     async def get_by_user_id(self, user_id: UUID) -> List[Topic]:
         collection = self._topic_collection()

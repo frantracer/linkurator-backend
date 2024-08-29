@@ -1,6 +1,8 @@
 from typing import List, Optional
 from uuid import UUID
 
+from unidecode import unidecode
+
 from linkurator_core.domain.common.exceptions import DuplicatedKeyError
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
@@ -22,12 +24,23 @@ class InMemoryTopicRepository(TopicRepository):
     async def find_topics(self, topic_ids: List[UUID]) -> List[Topic]:
         return [topic for topic in self.topics.values() if topic.uuid in topic_ids]
 
+    async def find_topics_by_name(self, name: str) -> List[Topic]:
+        search_terms = unidecode(name.lower()).split(" ")
+        def search_terms_in_name(terms: list[str], topic_name: str) -> bool:
+            return all(term in topic_name for term in terms)
+
+        return [topic for topic in self.topics.values()
+                if search_terms_in_name(search_terms, unidecode(topic.name.lower()))]
+
     async def update(self, topic: Topic) -> None:
         self.topics[topic.uuid] = topic
 
     async def delete(self, topic_id: UUID) -> None:
         if topic_id in self.topics:
             del self.topics[topic_id]
+
+    async def delete_all(self) -> None:
+        self.topics.clear()
 
     async def get_by_user_id(self, user_id: UUID) -> List[Topic]:
         return [topic for topic in self.topics.values() if topic.user_id == user_id]

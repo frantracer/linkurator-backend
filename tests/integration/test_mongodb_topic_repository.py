@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from linkurator_core.domain.common.exceptions import DuplicatedKeyError
+from linkurator_core.domain.common.mock_factory import mock_topic
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.infrastructure.in_memory.topic_repository import InMemoryTopicRepository
@@ -159,3 +160,34 @@ async def test_find_one_existing_and_non_existing_topics_returns_only_one_topic(
 
     assert len(topics) == 1
     assert topics[0].uuid == topic1.uuid
+
+
+@pytest.mark.asyncio
+async def test_find_topics_by_name(topic_repo: TopicRepository) -> None:
+    topic1 = mock_topic(name="Leyendas y videojuegos")
+    topic2 = mock_topic(name="Fútbol y más")
+    topic3 = mock_topic(name="leyendas del fútbol")
+
+    await topic_repo.delete_all()
+    await topic_repo.add(topic1)
+    await topic_repo.add(topic2)
+    await topic_repo.add(topic3)
+
+    found_topics = await topic_repo.find_topics_by_name("videojuegos")
+    assert len(found_topics) == 1
+    assert found_topics[0].uuid == topic1.uuid
+
+    found_topics = await topic_repo.find_topics_by_name("Leyendas")
+    assert len(found_topics) == 2
+    assert {topic1.uuid, topic3.uuid} == {sub.uuid for sub in found_topics}
+
+    found_topics = await topic_repo.find_topics_by_name("futbol")
+    assert len(found_topics) == 2
+    assert {topic2.uuid, topic3.uuid} == {sub.uuid for sub in found_topics}
+
+    found_topics = await topic_repo.find_topics_by_name("mas fútbol")
+    assert len(found_topics) == 1
+    assert found_topics[0].uuid == topic2.uuid
+
+    found_topics = await topic_repo.find_topics_by_name("baloncesto")
+    assert len(found_topics) == 0
