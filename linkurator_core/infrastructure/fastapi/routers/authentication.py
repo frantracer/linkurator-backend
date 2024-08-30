@@ -6,8 +6,8 @@ from fastapi import Request, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.routing import APIRouter
 
-from linkurator_core.application.users.register_user_handler import RegisterUserHandler
-from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
+from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
+from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 

@@ -6,6 +6,8 @@ import os
 
 from fastapi.applications import FastAPI
 
+from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
+from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
@@ -40,9 +42,7 @@ from linkurator_core.application.users.follow_curator_handler import FollowCurat
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
-from linkurator_core.application.users.register_user_handler import RegisterUserHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
-from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings

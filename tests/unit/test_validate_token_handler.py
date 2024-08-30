@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 
-from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
+from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.session import Session
 

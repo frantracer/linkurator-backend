@@ -5,12 +5,12 @@ from unittest.mock import AsyncMock
 import pytest
 from fastapi.testclient import TestClient
 
+from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler, GetTopicResponse
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler, GetUserTopicsResponse
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
-from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
 from linkurator_core.domain.items.item import Item
@@ -96,7 +96,8 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         _youtube_subscriptions_uuids=set(),
         google_refresh_token="refresh token",
         is_admin=False,
-        curators=set()
+        curators=set(),
+        password_hash=None
     )
     handlers.get_user_profile_handler = dummy_get_user_profile_handler
 

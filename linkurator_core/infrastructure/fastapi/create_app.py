@@ -8,6 +8,8 @@ from fastapi import Request
 from fastapi.applications import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
+from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
@@ -42,9 +44,7 @@ from linkurator_core.application.users.follow_curator_handler import FollowCurat
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
-from linkurator_core.application.users.register_user_handler import RegisterUserHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
-from linkurator_core.application.users.validate_token_handler import ValidateTokenHandler
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items, \
     credentials, curators

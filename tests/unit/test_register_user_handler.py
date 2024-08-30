@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock
 
-from linkurator_core.application.users.register_user_handler import RegisterUserHandler
+from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
