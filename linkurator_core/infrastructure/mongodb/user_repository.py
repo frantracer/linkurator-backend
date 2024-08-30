@@ -12,10 +12,28 @@ from pydantic import BaseModel
 from pymongo.errors import DuplicateKeyError
 
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user import User, HashedPassword
 from linkurator_core.domain.users.user_repository import UserRepository, EmailAlreadyInUse
 from linkurator_core.infrastructure.mongodb.common import MongoDBMapping
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
+
+
+class MongoDBHashedPassword(BaseModel):
+    hashed_pass_plus_salt: str
+    salt: str
+
+    @staticmethod
+    def from_domain_password_hash(password_hash: HashedPassword) -> MongoDBHashedPassword:
+        return MongoDBHashedPassword(
+            hashed_pass_plus_salt=password_hash.hashed_pass_plus_salt,
+            salt=password_hash.salt
+        )
+
+    def to_domain_password_hash(self) -> HashedPassword:
+        return HashedPassword(
+            hashed_pass_plus_salt=self.hashed_pass_plus_salt,
+            salt=self.salt
+        )
 
 
 class MongoDBUser(BaseModel):
@@ -36,6 +54,7 @@ class MongoDBUser(BaseModel):
     youtube_subscription_uuids: List[UUID] = []
     is_admin: bool = False
     curators: list[UUID] = []
+    password_hash: MongoDBHashedPassword | None = None
 
     @staticmethod
     def from_domain_user(user: User) -> MongoDBUser:
@@ -55,7 +74,9 @@ class MongoDBUser(BaseModel):
             subscription_uuids=list(user.get_subscriptions(include_youtube=False)),
             youtube_subscription_uuids=list(user.get_youtube_subscriptions()),
             is_admin=user.is_admin,
-            curators=list(user.curators)
+            curators=list(user.curators),
+            password_hash=None if user.password_hash is None
+            else MongoDBHashedPassword.from_domain_password_hash(user.password_hash)
         )
 
     def to_domain_user(self) -> User:
@@ -75,7 +96,9 @@ class MongoDBUser(BaseModel):
             _subscription_uuids=set(self.subscription_uuids),
             _youtube_subscriptions_uuids=set(self.youtube_subscription_uuids),
             is_admin=self.is_admin,
-            curators=set(self.curators)
+            curators=set(self.curators),
+            password_hash=None if self.password_hash is None
+            else self.password_hash.to_domain_password_hash()
         )
 
 

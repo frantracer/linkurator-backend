@@ -32,3 +32,13 @@ def test_user_can_unfollow_curator_twice() -> None:
     user.unfollow_curator(curator_id=curator_id)
 
     assert user.curators == set()
+
+
+def test_create_password_and_validate_it() -> None:
+    user = mock_user()
+
+    password = "password"
+    user.set_password(password=password)
+
+    assert user.validate_password(password=password)
+    assert not user.validate_password(password="wrong_password")

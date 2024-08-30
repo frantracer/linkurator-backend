@@ -1,12 +1,46 @@
 from __future__ import annotations
 
+import hashlib
 from copy import copy
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Optional
-from uuid import UUID
+from typing import Optional, Callable
+from uuid import UUID, uuid4
 
 from pydantic import AnyUrl
+
+
+def default_salt_generator() -> str:
+    return uuid4().hex
+
+
+def default_hash_function(text_input: str) -> str:
+    return hashlib.sha512(text_input.encode('utf-8')).hexdigest()
+
+
+@dataclass
+class HashedPassword:
+    hashed_pass_plus_salt: str
+    salt: str
+
+    @classmethod
+    def new(cls,
+            input_hash: str,
+            salt_generator: Callable[[], str] = default_salt_generator,
+            hash_function: Callable[[str], str] = default_hash_function
+            ) -> HashedPassword:
+        salt = salt_generator()
+        pass_to_hash = input_hash + salt
+        return cls(
+            hashed_pass_plus_salt=hash_function(pass_to_hash),
+            salt=salt
+        )
+
+    def validate(self,
+                 input_hash: str,
+                 hash_function: Callable[[str], str] = default_hash_function
+                 ) -> bool:
+        return self.hashed_pass_plus_salt == hash_function(input_hash + self.salt)
 
 
 @dataclass
@@ -23,6 +57,7 @@ class User:
     scanned_at: datetime
     last_login_at: datetime
     google_refresh_token: Optional[str]
+    password_hash: Optional[HashedPassword]
     _youtube_subscriptions_uuids: set[UUID]
     _subscription_uuids: set[UUID]
     is_admin: bool
@@ -59,7 +94,8 @@ class User:
             _youtube_subscriptions_uuids=set(),
             _subscription_uuids=set() if subscription_uuids is None else subscription_uuids,
             is_admin=is_admin,
-            curators=set() if curators is None else curators
+            curators=set() if curators is None else curators,
+            password_hash=None
         )
 
     def follow_curator(self, curator_id: UUID) -> None:
@@ -87,3 +123,11 @@ class User:
         if include_youtube:
             uuids = uuids.union(self._youtube_subscriptions_uuids)
         return uuids
+
+    def set_password(self, password: str) -> None:
+        self.password_hash = HashedPassword.new(password)
+
+    def validate_password(self, password: str) -> bool:
+        if self.password_hash is None:
+            return False
+        return self.password_hash.validate(password)
