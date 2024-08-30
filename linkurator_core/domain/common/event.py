@@ -87,3 +87,15 @@ class ItemsBecameOutdatedEvent(Event):
             created_at=datetime.utcnow(),
             item_ids=item_ids
         )
+
+
+class UserRegisterRequestSentEvent(Event):
+    request_uuid: UUID
+
+    @classmethod
+    def new(cls, request_uuid: UUID) -> UserRegisterRequestSentEvent:
+        return cls(
+            id=uuid4(),
+            created_at=datetime.utcnow(),
+            request_uuid=request_uuid
+        )

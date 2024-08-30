@@ -17,15 +17,17 @@ def mock_user(
         subscribed_to: Optional[List[UUID]] = None,
         refresh_token: Optional[str] = None,
         is_admin: bool = False,
-        curators: Optional[set[UUID]] = None
+        curators: Optional[set[UUID]] = None,
+        email: Optional[str] = None,
+        username: Optional[str] = None
 ) -> User:
     uuid = uuid or uuid4()
     return User.new(
         uuid=uuid,
         last_name="name",
         first_name="user",
-        username=str(uuid),
-        email=f"{uuid}@email.com",
+        username=username or str(uuid),
+        email=email or f"{uuid}@email.com",
         locale="en",
         avatar_url=parse_url(f"https://avatar.com/{uuid}.png"),
         google_refresh_token=str(uuid) if refresh_token is None else refresh_token,
