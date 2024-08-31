@@ -5,10 +5,11 @@ from email.mime.text import MIMEText
 
 import aiohttp
 
+from linkurator_core.domain.notifications.email_sender import EmailSender
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
-class GmailEmailSender:
+class GmailEmailSender(EmailSender):
     def __init__(self, refresh_token: str, account_service: GoogleAccountService) -> None:
         self.refresh_token = refresh_token
         self.account_service = account_service
