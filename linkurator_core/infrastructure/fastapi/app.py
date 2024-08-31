@@ -6,7 +6,9 @@ import os
 
 from fastapi.applications import FastAPI
 
+from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
+from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
@@ -55,6 +57,7 @@ from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.followed_topics_repository import MongoDBFollowedTopicsRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
+from linkurator_core.infrastructure.mongodb.registration_request_repository import MongoDBRegistrationRequestRepository
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
@@ -93,6 +96,9 @@ def app_handlers() -> Handlers:
     credentials_repository = MongodDBExternalCredentialRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
+    registration_request_repository = MongoDBRegistrationRequestRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
 
     youtube_service = YoutubeService(
@@ -112,7 +118,15 @@ def app_handlers() -> Handlers:
 
     return Handlers(
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
-        register_user=RegisterUserHandler(user_repository, account_service, event_bus),
+        register_user_with_google=RegisterUserHandler(user_repository, account_service, event_bus),
+        register_user_with_email=RegisterNewUserWithEmail(
+            user_repository=user_repository,
+            registration_request_repository=registration_request_repository,
+            event_bus=event_bus),
+        validate_new_user_request=ValidateNewUserRequest(
+            user_repository=user_repository,
+            registration_request_repository=registration_request_repository,
+            event_bus=event_bus),
         google_client=account_service,
         get_user_subscriptions=GetUserSubscriptionsHandler(subscription_repository, user_repository),
         follow_subscription_handler=FollowSubscriptionHandler(subscription_repository, user_repository),

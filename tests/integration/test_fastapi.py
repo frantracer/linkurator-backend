@@ -32,7 +32,9 @@ def dummy_handlers() -> Handlers:
 
     return Handlers(
         validate_token=dummy_validate_token_handler,
-        register_user=AsyncMock(),
+        register_user_with_email=AsyncMock(),
+        register_user_with_google=AsyncMock(),
+        validate_new_user_request=AsyncMock(),
         google_client=AsyncMock(),
         get_subscription=AsyncMock(),
         get_user_subscriptions=AsyncMock(),

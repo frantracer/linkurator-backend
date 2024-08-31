@@ -1,13 +1,18 @@
 import http
 from typing import Any, Optional
 from urllib.parse import urljoin
+from uuid import UUID
 
 from fastapi import Request, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.routing import APIRouter
+from pydantic import BaseModel
 
+from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
+from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
+from linkurator_core.domain.common.exceptions import InvalidRegistrationRequestError
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
@@ -16,6 +21,14 @@ REDIRECT_URI_NAME = "redirect_uri"
 TOKEN_COOKIE_NAME = "token"
 
 YOUTUBE_CHANNEL_SCOPE = "https://www.googleapis.com/auth/youtube.readonly"
+
+
+class NewUserSchema(BaseModel):
+    email: str
+    password: str
+    first_name: str
+    last_name: str
+    username: str
 
 
 def unauthorized_error(error: str, redirect_uri: Optional[str]) -> RedirectResponse | JSONResponse:
@@ -69,9 +82,11 @@ def valid_login_response(token: str, redirect_uri: Optional[str]) -> RedirectRes
 
 
 def get_router(  # pylint: disable=too-many-statements
-        validate_token_handler: ValidateTokenHandler,
-        register_user_handler: RegisterUserHandler,
-        google_client: GoogleAccountService
+        google_client: GoogleAccountService,
+        validate_token: ValidateTokenHandler,
+        register_user_with_google: RegisterUserHandler,
+        register_user_with_email: RegisterNewUserWithEmail,
+        validate_new_user_request: ValidateNewUserRequest,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -94,7 +109,7 @@ def get_router(  # pylint: disable=too-many-statements
         valid_session: Optional[Session] = None
         token = request.cookies.get(TOKEN_COOKIE_NAME)
         if token is not None:
-            valid_session = await validate_token_handler.handle(access_token=token)
+            valid_session = await validate_token.handle(access_token=token)
 
         if valid_session is None:
             oauth_url = google_client.authorization_url(
@@ -119,7 +134,7 @@ def get_router(  # pylint: disable=too-many-statements
         if tokens is None:
             return unauthorized_error("Invalid code", redirect_uri)
 
-        session = await validate_token_handler.handle(access_token=tokens.access_token)
+        session = await validate_token.handle(access_token=tokens.access_token)
         if session is None:
             return unauthorized_error("Invalid access token", redirect_uri)
 
@@ -163,7 +178,7 @@ def get_router(  # pylint: disable=too-many-statements
                 auth_error = "Invalid scope access"
 
             else:
-                register_error = await register_user_handler.handle(
+                register_error = await register_user_with_google.handle(
                     access_token=tokens.access_token,
                     refresh_token=tokens.refresh_token)
 
@@ -173,6 +188,42 @@ def get_router(  # pylint: disable=too-many-statements
                 auth_error = f"Registration error {register_error}"
 
         return unauthorized_error(auth_error, redirect_uri)
+
+    @router.post("/register_email",
+                 status_code=status.HTTP_201_CREATED,
+                 responses={
+                     status.HTTP_400_BAD_REQUEST: {"description": "Invalid request"},
+                 })
+    async def register_email(new_user: NewUserSchema) -> Any:
+        """
+        Register email endpoint
+        """
+        errors = await register_user_with_email.handle(
+            email=new_user.email,
+            password=new_user.password,
+            first_name=new_user.first_name,
+            last_name=new_user.last_name,
+            username=new_user.username
+        )
+        if errors:
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                                content={"errors": ", ".join([str(e) for e in errors])})
+        return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Registration request sent"})
+
+    @router.get("/validate_email/{request_uuid}",
+                status_code=status.HTTP_200_OK,
+                responses={
+                    status.HTTP_400_BAD_REQUEST: {"description": "Invalid request"},
+                })
+    async def validate_email(request_uuid: UUID) -> Any:
+        """
+        Validate email endpoint
+        """
+        try:
+            await validate_new_user_request.handle(request_uuid)
+        except InvalidRegistrationRequestError:
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"error": "Invalid request"})
+        return JSONResponse(content={"message": "Email validated"})
 
     @router.get("/logout")
     async def logout(redirect_uri: Optional[str] = None) -> Any:

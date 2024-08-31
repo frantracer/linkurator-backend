@@ -8,7 +8,9 @@ from fastapi import Request
 from fastapi.applications import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
+from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
@@ -54,7 +56,9 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 @dataclass
 class Handlers:  # pylint: disable=too-many-instance-attributes
     validate_token: ValidateTokenHandler
-    register_user: RegisterUserHandler
+    register_user_with_google: RegisterUserHandler
+    register_user_with_email: RegisterNewUserWithEmail
+    validate_new_user_request: ValidateNewUserRequest
     google_client: GoogleAccountService
     get_subscription: GetSubscriptionHandler
     get_user_subscriptions: GetUserSubscriptionsHandler
@@ -111,9 +115,13 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
     app.include_router(
         tags=["Authentication"],
         router=authentication.get_router(
-            validate_token_handler=handlers.validate_token,
-            register_user_handler=handlers.register_user,
-            google_client=handlers.google_client))
+            google_client=handlers.google_client,
+            validate_token=handlers.validate_token,
+            register_user_with_google=handlers.register_user_with_google,
+            register_user_with_email=handlers.register_user_with_email,
+            validate_new_user_request=handlers.validate_new_user_request,
+        )
+    )
     app.include_router(
         tags=["Profile"],
         router=profile.get_router(

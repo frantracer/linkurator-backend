@@ -2,6 +2,8 @@ import asyncio
 import logging
 import os
 
+from linkurator_core.application.auth.send_validate_new_user_email import SendValidateNewUserEmail
+from linkurator_core.application.auth.send_welcome_email import SendWelcomeEmail
 from linkurator_core.application.common.event_handler import EventHandler
 from linkurator_core.application.items.find_deprecated_items_handler import FindDeprecatedItemsHandler
 from linkurator_core.application.items.find_zero_duration_items import FindZeroDurationItems
@@ -12,18 +14,20 @@ from linkurator_core.application.subscriptions.update_subscription_items_handler
 from linkurator_core.application.users.find_outdated_users_handler import FindOutdatedUsersHandler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent, SubscriptionBecameOutdatedEvent, \
-    ItemsBecameOutdatedEvent
+    ItemsBecameOutdatedEvent, UserRegisterRequestSentEvent, UserRegisteredEvent
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
+from linkurator_core.infrastructure.mongodb.registration_request_repository import MongoDBRegistrationRequestRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
@@ -34,8 +38,10 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=log
 async def main() -> None:  # pylint: disable=too-many-locals
     # Repositories
     db_settings = MongoDBSettings()
-    user_repository = MongoDBUserRepository(ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
-                                            username=db_settings.user, password=db_settings.password)
+    user_repository = MongoDBUserRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password
+    )
     subscription_repository = MongoDBSubscriptionRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password
@@ -46,7 +52,12 @@ async def main() -> None:  # pylint: disable=too-many-locals
     )
     credentials_repository = MongodDBExternalCredentialRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
-        username=db_settings.user, password=db_settings.password)
+        username=db_settings.user, password=db_settings.password
+    )
+    registration_request_repository = MongoDBRegistrationRequestRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password
+    )
 
     # Services
     google_client_secret_path = os.environ.get('LINKURATOR_GOOGLE_SECRET_PATH', "secrets/client_secret.json")
@@ -66,6 +77,9 @@ async def main() -> None:  # pylint: disable=too-many-locals
         youtube_client=youtube_client,
         youtube_rss_client=youtube_rss_client
     )
+    gmail_email_sender = GmailEmailSender(
+        refresh_token=google_secrets.gmail_refresh_token,
+        account_service=account_service)
 
     # Event bus
     rabbitmq_settings = RabbitMQSettings()
@@ -94,14 +108,30 @@ async def main() -> None:  # pylint: disable=too-many-locals
     find_zero_duration_items = FindZeroDurationItems(
         item_repository=item_repository,
         event_bus=event_bus)
+    send_validate_new_user_email = SendValidateNewUserEmail(
+        email_sender=gmail_email_sender,
+        registration_request_repository=registration_request_repository,
+        base_url="http://localhost:9000"
+    )
+    send_welcome_email = SendWelcomeEmail(
+        user_repository=user_repository,
+        email_sender=gmail_email_sender,
+        base_url="http://localhost:9000/docs"
+    )
+
     event_handler = EventHandler(
         update_user_subscriptions_handler=update_user_subscriptions,
         update_subscription_items_handler=update_subscriptions_items,
-        refresh_items_handler=refresh_items_handler)
+        refresh_items_handler=refresh_items_handler,
+        send_validate_new_user_email=send_validate_new_user_email,
+        send_welcome_email=send_welcome_email
+    )
 
     event_bus.subscribe(UserSubscriptionsBecameOutdatedEvent, event_handler.handle)
     event_bus.subscribe(SubscriptionBecameOutdatedEvent, event_handler.handle)
     event_bus.subscribe(ItemsBecameOutdatedEvent, event_handler.handle)
+    event_bus.subscribe(UserRegisterRequestSentEvent, event_handler.handle)
+    event_bus.subscribe(UserRegisteredEvent, event_handler.handle)
 
     # Task scheduler
     scheduler = TaskScheduler()
