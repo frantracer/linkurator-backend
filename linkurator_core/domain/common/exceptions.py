@@ -48,3 +48,7 @@ class CannotUnfollowAssignedSubscriptionError(Exception):
 
 class SubscriptionAlreadyUpdatedError(Exception):
     pass
+
+
+class InvalidRegistrationRequestError(Exception):
+    pass

@@ -99,3 +99,15 @@ class UserRegisterRequestSentEvent(Event):
             created_at=datetime.utcnow(),
             request_uuid=request_uuid
         )
+
+
+class UserRegisteredEvent(Event):
+    user_id: UUID
+
+    @classmethod
+    def new(cls, user_id: UUID) -> UserRegisteredEvent:
+        return cls(
+            id=uuid4(),
+            created_at=datetime.utcnow(),
+            user_id=user_id
+        )
