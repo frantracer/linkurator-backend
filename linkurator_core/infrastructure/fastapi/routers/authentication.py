@@ -6,14 +6,16 @@ from uuid import UUID
 from fastapi import Request, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.routing import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
+from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
 from linkurator_core.domain.common.exceptions import InvalidRegistrationRequestError
 from linkurator_core.domain.users.session import Session
+from linkurator_core.infrastructure.fastapi.models.authentication import PasswordWith64HexCharacters
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 COOKIE_EXPIRATION_IN_SECONDS = 3600 * 24 * 30
@@ -24,11 +26,16 @@ YOUTUBE_CHANNEL_SCOPE = "https://www.googleapis.com/auth/youtube.readonly"
 
 
 class NewUserSchema(BaseModel):
-    email: str
-    password: str
+    email: EmailStr
+    password: PasswordWith64HexCharacters
     first_name: str
     last_name: str
     username: str
+
+
+class LoginUserSchema(BaseModel):
+    email: EmailStr
+    password: PasswordWith64HexCharacters
 
 
 def unauthorized_error(error: str, redirect_uri: Optional[str]) -> RedirectResponse | JSONResponse:
@@ -84,6 +91,7 @@ def valid_login_response(token: str, redirect_uri: Optional[str]) -> RedirectRes
 def get_router(  # pylint: disable=too-many-statements
         google_client: GoogleAccountService,
         validate_token: ValidateTokenHandler,
+        validate_user_password: ValidateUserPassword,
         register_user_with_google: RegisterUserHandler,
         register_user_with_email: RegisterNewUserWithEmail,
         validate_new_user_request: ValidateNewUserRequest,
@@ -139,6 +147,22 @@ def get_router(  # pylint: disable=too-many-statements
             return unauthorized_error("Invalid access token", redirect_uri)
 
         return valid_auth_response(token=session.token, redirect_uri="/login")
+
+    @router.post("/login_email",
+                 status_code=status.HTTP_200_OK,
+                 responses={
+                     status.HTTP_400_BAD_REQUEST: {"description": "Invalid request"},
+                     status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
+                 })
+    async def login_email(credentials: LoginUserSchema) -> Any:
+        """
+        Login email endpoint
+        """
+        session = await validate_user_password.handle(email=credentials.email, password=str(credentials.password))
+        if session is None:
+            return unauthorized_error("Invalid credentials", None)
+
+        return valid_login_response(token=session.token, redirect_uri=None)
 
     @router.get("/register")
     async def register(request: Request, redirect_uri: str | None = None) -> Any:
@@ -200,7 +224,7 @@ def get_router(  # pylint: disable=too-many-statements
         """
         errors = await register_user_with_email.handle(
             email=new_user.email,
-            password=new_user.password,
+            password=str(new_user.password),
             first_name=new_user.first_name,
             last_name=new_user.last_name,
             username=new_user.username

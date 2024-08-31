@@ -10,6 +10,7 @@ from linkurator_core.application.auth.register_new_user_with_email import Regist
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
+from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
@@ -118,6 +119,7 @@ def app_handlers() -> Handlers:
 
     return Handlers(
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
+        validate_user_password=ValidateUserPassword(user_repository, session_repository),
         register_user_with_google=RegisterUserHandler(user_repository, account_service, event_bus),
         register_user_with_email=RegisterNewUserWithEmail(
             user_repository=user_repository,

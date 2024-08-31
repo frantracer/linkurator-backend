@@ -12,6 +12,7 @@ from linkurator_core.application.auth.register_new_user_with_email import Regist
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
+from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
@@ -56,6 +57,7 @@ from linkurator_core.infrastructure.google.account_service import GoogleAccountS
 @dataclass
 class Handlers:  # pylint: disable=too-many-instance-attributes
     validate_token: ValidateTokenHandler
+    validate_user_password: ValidateUserPassword
     register_user_with_google: RegisterUserHandler
     register_user_with_email: RegisterNewUserWithEmail
     validate_new_user_request: ValidateNewUserRequest
@@ -117,6 +119,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         router=authentication.get_router(
             google_client=handlers.google_client,
             validate_token=handlers.validate_token,
+            validate_user_password=handlers.validate_user_password,
             register_user_with_google=handlers.register_user_with_google,
             register_user_with_email=handlers.register_user_with_email,
             validate_new_user_request=handlers.validate_new_user_request,
