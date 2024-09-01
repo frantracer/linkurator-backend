@@ -48,7 +48,6 @@ class MongoDBUser(BaseModel):
     updated_at: datetime
     scanned_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
     last_login_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
-    deleted_at: Optional[datetime] = None
     google_refresh_token: Optional[str] = None
     subscription_uuids: List[UUID] = []
     youtube_subscription_uuids: List[UUID] = []
@@ -104,6 +103,7 @@ class MongoDBUser(BaseModel):
 
 class MongoDBUserRepository(UserRepository):
     _collection_name: str = 'users'
+    _deleted_users_collection_name: str = 'deleted_users'
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
@@ -115,10 +115,16 @@ class MongoDBUserRepository(UserRepository):
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
         return self.client.get_database(self.db_name, codec_options=codec_options).get_collection(self._collection_name)
 
+    def _collection_for_deleted_users(self) -> AsyncIOMotorCollection[MongoDBMapping]:
+        codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
+        return self.client.get_database(self.db_name, codec_options=codec_options).get_collection(
+            self._deleted_users_collection_name)
+
     async def check_connection(self) -> None:
-        if self._collection_name not in await self.client[self.db_name].list_collection_names():
-            raise CollectionIsNotInitialized(
-                f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
+        for collection_name in [self._collection_name, self._deleted_users_collection_name]:
+            if collection_name not in await self.client[self.db_name].list_collection_names():
+                raise CollectionIsNotInitialized(
+                    f"Collection '{collection_name}' is not initialized in database '{self.db_name}'")
 
     async def add(self, user: User) -> None:
         try:
@@ -128,30 +134,33 @@ class MongoDBUserRepository(UserRepository):
                 raise EmailAlreadyInUse(f"Email '{user.email}' is already in use") from error
 
     async def get(self, user_id: UUID) -> Optional[User]:
-        user = await self._collection().find_one({'uuid': user_id, 'deleted_at': None})
+        user = await self._collection().find_one({'uuid': user_id})
         if user is None:
             return None
         user.pop('_id', None)
         return MongoDBUser(**user).to_domain_user()
 
     async def get_by_email(self, email: str) -> Optional[User]:
-        user = await self._collection().find_one({'email': email, 'deleted_at': None})
+        user = await self._collection().find_one({'email': email})
         if user is None:
             return None
         user.pop('_id', None)
         return MongoDBUser(**user).to_domain_user()
 
     async def get_by_username(self, username: str) -> Optional[User]:
-        user = await self._collection().find_one({'username': username, 'deleted_at': None})
+        user = await self._collection().find_one({'username': username})
         if user is None:
             return None
         user.pop('_id', None)
         return MongoDBUser(**user).to_domain_user()
 
     async def delete(self, user_id: UUID) -> None:
-        await self._collection().update_one(
-            {'uuid': user_id},
-            {'$set': {'deleted_at': datetime.now(timezone.utc)}})
+        user = await self.get(user_id)
+        if user is not None:
+            user_dump = MongoDBUser.from_domain_user(user).model_dump()
+            user_dump['deleted_at'] = datetime.now(timezone.utc)
+            await self._collection_for_deleted_users().insert_one(user_dump)
+            await self._collection().delete_one({'uuid': user_id})
 
     async def update(self, user: User) -> None:
         await self._collection().update_one(
@@ -160,7 +169,7 @@ class MongoDBUserRepository(UserRepository):
 
     async def find_latest_scan_before(self, timestamp: datetime) -> List[User]:
         users = await self._collection().find(
-            {'scanned_at': {'$lt': timestamp}, 'deleted_at': None}
+            {'scanned_at': {'$lt': timestamp}}
         ).to_list(length=None)
         return [MongoDBUser(**user).to_domain_user() for user in users]
 
@@ -171,7 +180,6 @@ class MongoDBUserRepository(UserRepository):
                     {'subscription_uuids': subscription_id},
                     {'youtube_subscription_uuids': subscription_id}
                 ],
-                'deleted_at': None
             }
         ).to_list(length=None)
         return [MongoDBUser(**user).to_domain_user() for user in users]
