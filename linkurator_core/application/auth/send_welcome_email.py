@@ -8,7 +8,7 @@ class SendWelcomeEmail:
     def __init__(self,
                  user_repository: UserRepository,
                  email_sender: EmailSender,
-                 base_url: str = "https://linkurator.com"
+                 base_url: str
                  ) -> None:
         self.user_repository = user_repository
         self.email_sender = email_sender

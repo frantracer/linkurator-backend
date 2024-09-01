@@ -1,3 +1,4 @@
+from urllib.parse import urljoin
 from uuid import UUID
 
 from linkurator_core.domain.notifications.email_sender import EmailSender
@@ -8,7 +9,7 @@ class SendValidateNewUserEmail:
     def __init__(self,
                  email_sender: EmailSender,
                  registration_request_repository: RegistrationRequestRepository,
-                 base_url: str = "https://api.linkurator.com"
+                 base_url: str
                  ) -> None:
         self.registration_request_repository = registration_request_repository
         self.email_sender = email_sender
@@ -19,7 +20,7 @@ class SendValidateNewUserEmail:
         if request is None:
             return
 
-        link = f"{self.base_url}/validate_email/{request_uuid}"
+        link = urljoin(self.base_url + "/", str(request_uuid))
         subject = "Valida tu email para acceder a Linkurator"
         message_text = f"Para validar tu email, haz clic en el siguiente enlace: {link}"
         email = request.user.email

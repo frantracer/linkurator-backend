@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 
 from linkurator_core.application.auth.send_validate_new_user_email import SendValidateNewUserEmail
 from linkurator_core.application.auth.send_welcome_email import SendWelcomeEmail
@@ -17,6 +16,7 @@ from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedE
     ItemsBecameOutdatedEvent, UserRegisterRequestSentEvent, UserRegisteredEvent
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
+from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
@@ -36,8 +36,13 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=log
 
 
 async def main() -> None:  # pylint: disable=too-many-locals
-    # Repositories
+    # Read settings
+    env_settings = EnvSettings()
     db_settings = MongoDBSettings()
+    google_secrets = GoogleClientSecrets(env_settings.GOOGLE_SECRET_PATH)
+    rabbitmq_settings = RabbitMQSettings()
+
+    # Repositories
     user_repository = MongoDBUserRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password
@@ -60,8 +65,6 @@ async def main() -> None:  # pylint: disable=too-many-locals
     )
 
     # Services
-    google_client_secret_path = os.environ.get('LINKURATOR_GOOGLE_SECRET_PATH', "secrets/client_secret.json")
-    google_secrets = GoogleClientSecrets(google_client_secret_path)
     youtube_client = YoutubeApiClient()
     youtube_rss_client = YoutubeRssClient()
     account_service = GoogleAccountService(
@@ -82,7 +85,6 @@ async def main() -> None:  # pylint: disable=too-many-locals
         account_service=account_service)
 
     # Event bus
-    rabbitmq_settings = RabbitMQSettings()
     event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,
                                  username=rabbitmq_settings.user, password=rabbitmq_settings.password)
 
@@ -111,12 +113,12 @@ async def main() -> None:  # pylint: disable=too-many-locals
     send_validate_new_user_email = SendValidateNewUserEmail(
         email_sender=gmail_email_sender,
         registration_request_repository=registration_request_repository,
-        base_url="http://localhost:9000"
+        base_url=env_settings.VALIDATE_EMAIL_URL
     )
     send_welcome_email = SendWelcomeEmail(
         user_repository=user_repository,
         email_sender=gmail_email_sender,
-        base_url="http://localhost:9000/docs"
+        base_url=env_settings.WEBSITE_URL
     )
 
     event_handler = EventHandler(
