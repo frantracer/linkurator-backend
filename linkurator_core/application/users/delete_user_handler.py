@@ -1,3 +1,6 @@
+import logging
+
+from linkurator_core.domain.common.exceptions import FailToRevokeCredentialsError
 from linkurator_core.domain.users.account_service import AccountService
 from linkurator_core.domain.users.session import Session
 from linkurator_core.domain.users.session_repository import SessionRepository
@@ -13,11 +16,14 @@ class DeleteUserHandler:
 
     async def handle(self, user_session: Session) -> None:
         user_id = user_session.user_id
-        user = self.user_repository.get(user_id)
+        user = await self.user_repository.get(user_id)
         if user is None:
             return
 
-        self.account_service.revoke_credentials(user_session.token)
+        try:
+            self.account_service.revoke_credentials(user_session.token)
+        except FailToRevokeCredentialsError:
+            logging.warning('Failed to revoke credentials for user %s', user.username)
 
         self.session_repository.delete(user_session.token)
 

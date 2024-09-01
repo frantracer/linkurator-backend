@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 import requests
 from requests.auth import HTTPBasicAuth
 
+from linkurator_core.domain.common.exceptions import FailToRevokeCredentialsError
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.users.account_service import AccountService, UserInfo, CodeValidationResponse, UserDetails
 
@@ -55,7 +56,7 @@ class GoogleAccountService(AccountService):
                                         headers={'content-type': 'application/x-www-form-urlencoded'})
 
         if revoke_response.status_code != http.HTTPStatus.OK:
-            raise Exception(f'Failed to revoke token: {str(revoke_response.content)}')
+            raise FailToRevokeCredentialsError(f'Failed to revoke token: {str(revoke_response.content)}')
 
     def generate_access_token_from_refresh_token(self, refresh_token: str) -> Optional[str]:
         google_oauth_url = "https://oauth2.googleapis.com/token"

@@ -52,3 +52,7 @@ class SubscriptionAlreadyUpdatedError(Exception):
 
 class InvalidRegistrationRequestError(Exception):
     pass
+
+
+class FailToRevokeCredentialsError(Exception):
+    pass
