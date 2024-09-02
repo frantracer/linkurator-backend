@@ -111,7 +111,9 @@ pylint:
 	find ./scripts -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
 
 test:
-	./venv/bin/pytest -v tests
+	./venv/bin/coverage run -m pytest -v tests
+	./venv/bin/coverage xml
+	./venv/bin/coverage report --fail-under 90
 
 ####################
 # Docker
