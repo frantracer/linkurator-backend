@@ -25,31 +25,31 @@ install-requirements:
 	sudo apt install -y python3.10-venv python3-pip
 
 install:
-	python3.10 -m pip install virtualenv
-	rm -rf venv
-	python3.10 -m venv venv
-	./venv/bin/pip3 install -r requirements.txt
+	python3.10 -m pip install uv
+	rm -rf .venv
+	uv venv --python=python3.10 .venv
+	uv pip install -r requirements.txt
 	@echo
-	@echo "Run 'source venv/bin/activate' to activate the virtual environment."
+	@echo "Run 'source .venv/bin/activate' to activate the virtual environment."
 	@echo "Run 'deactivate' to disable the virtual environment."
 
 run-api: link-config
 	@if [ "${LINKURATOR_ENVIRONMENT}" = "DEVELOPMENT" ]; then \
-    	./venv/bin/python3.10 -m linkurator_core --reload --workers 1 --debug --without-gunicorn; \
+    	.venv/bin/python3.10 -m linkurator_core --reload --workers 1 --debug --without-gunicorn; \
 	else \
-		./venv/bin/python3.10 -m linkurator_core; \
+		.venv/bin/python3.10 -m linkurator_core; \
 	fi
 
 run-processor: link-config
-	PYTHONPATH='.' ./venv/bin/python3.10 ./linkurator_core/processor.py
+	PYTHONPATH='.' .venv/bin/python3.10 ./linkurator_core/processor.py
 
 local-run-api: docker-run-external-services
 	LINKURATOR_VAULT_PASSWORD=$(cat ./secrets/vault_password.txt) LINKURATOR_ENVIRONMENT=DEVELOPMENT \
-		./venv/bin/python3.10 -m linkurator_core --reload --workers 1 --debug --without-gunicorn
+		.venv/bin/python3.10 -m linkurator_core --reload --workers 1 --debug --without-gunicorn
 
 local-run-processor: docker-run-external-services
 	PYTHONPATH='.' LINKURATOR_VAULT_PASSWORD=$(cat ./secrets/vault_password.txt) LINKURATOR_ENVIRONMENT=DEVELOPMENT \
-		./venv/bin/python3.10 ./linkurator_core/processor.py
+		.venv/bin/python3.10 ./linkurator_core/processor.py
 
 ####################
 # Setup configuration
@@ -103,17 +103,17 @@ create-vault-pass: check-vault-pass-is-defined
 lint: mypy pylint
 
 mypy:
-	./venv/bin/mypy --config-file pyproject.toml linkurator_core tests scripts
+	.venv/bin/mypy --config-file pyproject.toml linkurator_core tests scripts
 
 pylint:
-	find ./linkurator_core -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
-	find ./tests -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
-	find ./scripts -name '*.py' | xargs ./venv/bin/pylint --rcfile=.pylintrc
+	find ./linkurator_core -name '*.py' | xargs .venv/bin/pylint --rcfile=.pylintrc
+	find ./tests -name '*.py' | xargs .venv/bin/pylint --rcfile=.pylintrc
+	find ./scripts -name '*.py' | xargs .venv/bin/pylint --rcfile=.pylintrc
 
 test:
-	./venv/bin/coverage run -m pytest -v tests
-	./venv/bin/coverage xml
-	./venv/bin/coverage report --fail-under 90
+	.venv/bin/coverage run -m pytest -v tests
+	.venv/bin/coverage xml
+	.venv/bin/coverage report --fail-under 90
 
 ####################
 # Docker
