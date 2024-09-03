@@ -8,8 +8,10 @@ from fastapi import Request
 from fastapi.applications import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
+from linkurator_core.application.auth.request_password_change import RequestPasswordChange
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
@@ -61,6 +63,8 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     register_user_with_google: RegisterUserHandler
     register_user_with_email: RegisterNewUserWithEmail
     validate_new_user_request: ValidateNewUserRequest
+    request_password_change: RequestPasswordChange
+    change_password_from_request: ChangePasswordFromRequest
     google_client: GoogleAccountService
     get_subscription: GetSubscriptionHandler
     get_user_subscriptions: GetUserSubscriptionsHandler
@@ -123,6 +127,8 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             register_user_with_google=handlers.register_user_with_google,
             register_user_with_email=handlers.register_user_with_email,
             validate_new_user_request=handlers.validate_new_user_request,
+            request_password_change=handlers.request_password_change,
+            change_password_from_request=handlers.change_password_from_request
         )
     )
     app.include_router(

@@ -2,12 +2,13 @@
 Main file of the application
 """
 import logging
-import os
 
 from fastapi.applications import FastAPI
 
+from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
+from linkurator_core.application.auth.request_password_change import RequestPasswordChange
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
@@ -46,11 +47,13 @@ from linkurator_core.application.users.get_curators_handler import GetCuratorsHa
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
+from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
@@ -58,6 +61,8 @@ from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.followed_topics_repository import MongoDBFollowedTopicsRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
+from linkurator_core.infrastructure.mongodb.password_change_request_repository import \
+    MongoDBPasswordChangeRequestRepository
 from linkurator_core.infrastructure.mongodb.registration_request_repository import MongoDBRegistrationRequestRepository
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
@@ -67,8 +72,9 @@ from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 
 
 def app_handlers() -> Handlers:
-    google_client_secret_path = os.environ.get('LINKURATOR_GOOGLE_SECRET_PATH', "secrets/client_secret.json")
-    google_secrets = GoogleClientSecrets(google_client_secret_path)
+    env_settings = EnvSettings()
+
+    google_secrets = GoogleClientSecrets(env_settings.GOOGLE_SECRET_PATH)
     account_service = GoogleAccountService(
         client_id=google_secrets.client_id,
         client_secret=google_secrets.client_secret)
@@ -100,6 +106,9 @@ def app_handlers() -> Handlers:
     registration_request_repository = MongoDBRegistrationRequestRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
+    password_change_request_repository = MongoDBPasswordChangeRequestRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
 
     youtube_service = YoutubeService(
@@ -117,6 +126,11 @@ def app_handlers() -> Handlers:
     event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,
                                  username=rabbitmq_settings.user, password=rabbitmq_settings.password)
 
+    email_sender = GmailEmailSender(
+        refresh_token=google_secrets.gmail_refresh_token,
+        account_service=account_service,
+    )
+
     return Handlers(
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
         validate_user_password=ValidateUserPassword(user_repository, session_repository),
@@ -129,6 +143,14 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             registration_request_repository=registration_request_repository,
             event_bus=event_bus),
+        request_password_change=RequestPasswordChange(
+            user_repository=user_repository,
+            password_change_request_repository=password_change_request_repository,
+            email_sender=email_sender,
+            base_url=env_settings.PASSWORD_CHANGE_URL),
+        change_password_from_request=ChangePasswordFromRequest(
+            user_repository=user_repository,
+            request_repository=password_change_request_repository),
         google_client=account_service,
         get_user_subscriptions=GetUserSubscriptionsHandler(subscription_repository, user_repository),
         follow_subscription_handler=FollowSubscriptionHandler(subscription_repository, user_repository),

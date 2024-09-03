@@ -36,6 +36,8 @@ def dummy_handlers() -> Handlers:
         register_user_with_email=AsyncMock(),
         register_user_with_google=AsyncMock(),
         validate_new_user_request=AsyncMock(),
+        request_password_change=AsyncMock(),
+        change_password_from_request=AsyncMock(),
         google_client=AsyncMock(),
         get_subscription=AsyncMock(),
         get_user_subscriptions=AsyncMock(),

@@ -3,13 +3,15 @@ from typing import Any, Optional
 from urllib.parse import urljoin
 from uuid import UUID
 
-from fastapi import Request, status
+from fastapi import Request, status, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, EmailStr
 
+from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
+from linkurator_core.application.auth.request_password_change import RequestPasswordChange
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
@@ -95,6 +97,8 @@ def get_router(  # pylint: disable=too-many-statements
         register_user_with_google: RegisterUserHandler,
         register_user_with_email: RegisterNewUserWithEmail,
         validate_new_user_request: ValidateNewUserRequest,
+        request_password_change: RequestPasswordChange,
+        change_password_from_request: ChangePasswordFromRequest
 ) -> APIRouter:
     router = APIRouter()
 
@@ -274,5 +278,31 @@ def get_router(  # pylint: disable=too-many-statements
         response = JSONResponse(content={"message": "Token revoked"})
         response.delete_cookie(key=TOKEN_COOKIE_NAME)
         return response
+
+    @router.post("/change_password",
+                 status_code=status.HTTP_204_NO_CONTENT
+                 )
+    async def request_change_password(email: EmailStr) -> None:
+        """
+        Request reset password endpoint
+        """
+        await request_password_change.handle(email=email)
+
+    @router.post("/change_password/{request_id}",
+                 status_code=status.HTTP_204_NO_CONTENT,
+                 responses={
+                     status.HTTP_400_BAD_REQUEST: {"description": "Invalid request"},
+                     status.HTTP_404_NOT_FOUND: {"description": "Request not found"},
+                 })
+    async def change_password_from_previous_request(
+            request_id: UUID,
+            new_password: PasswordWith64HexCharacters
+    ) -> None:
+        """
+        Change password from previous request
+        """
+        result = await change_password_from_request.handle(request_id=request_id, new_password=str(new_password))
+        if not result:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
 
     return router
