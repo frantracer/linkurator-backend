@@ -40,6 +40,10 @@ class LoginUserSchema(BaseModel):
     password: PasswordWith64HexCharacters
 
 
+class ChangePasswordSchema(BaseModel):
+    new_password: PasswordWith64HexCharacters
+
+
 def unauthorized_error(error: str, redirect_uri: Optional[str]) -> RedirectResponse | JSONResponse:
     if redirect_uri is not None:
         encoded_error = error.replace(" ", "%20")
@@ -296,12 +300,13 @@ def get_router(  # pylint: disable=too-many-statements
                  })
     async def change_password_from_previous_request(
             request_id: UUID,
-            new_password: PasswordWith64HexCharacters
+            change_pass_request: ChangePasswordSchema
     ) -> None:
         """
         Change password from previous request
         """
-        result = await change_password_from_request.handle(request_id=request_id, new_password=str(new_password))
+        new_password = str(change_pass_request.new_password)
+        result = await change_password_from_request.handle(request_id=request_id, new_password=new_password)
         if not result:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
 
