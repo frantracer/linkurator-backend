@@ -3,7 +3,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
-import uvicorn.server  # type: ignore
+import uvicorn.server
 
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.mongodb.repositories import run_mongodb_migrations
@@ -74,7 +74,7 @@ class ApiServer:
     async def start(self) -> None:
         if self.with_gunicorn:
             task = await asyncio.create_subprocess_shell(" ".join(
-                ['./venv/bin/gunicorn', self.app_path,
+                ['.venv/bin/gunicorn', self.app_path,
                  '--workers', f"{self.workers}",
                  '--worker-class', 'uvicorn.workers.UvicornWorker',
                  '--bind', f"0.0.0.0:{self.port}",
@@ -88,7 +88,7 @@ class ApiServer:
                     host="127.0.0.1",
                     port=self.port,
                     workers=self.workers,
-                    debug=self.debug,
+                    log_level=logging.DEBUG if self.debug else logging.INFO,
                     reload=self.reload,
                     factory=True)
 
