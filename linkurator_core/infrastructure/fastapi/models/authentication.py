@@ -14,4 +14,4 @@ class PasswordWith64HexCharacters(RootModel):  # type: ignore
     )
 
     def __str__(self) -> str:
-        return self.root
+        return str(self.root)

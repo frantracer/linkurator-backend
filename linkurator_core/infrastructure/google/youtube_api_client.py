@@ -19,6 +19,10 @@ from linkurator_core.domain.subscriptions.subscription import Subscription, Subs
 MAX_VIDEOS_PER_QUERY = 50
 
 
+class YoutubeApiError(Exception):
+    pass
+
+
 class LiveBroadcastContent(str, Enum):
     UPCOMING = "upcoming"
     LIVE = "live"
@@ -140,7 +144,7 @@ class YoutubeApiClient:
             subs_response_json, subs_status_code = await self._request_youtube_subscriptions(
                 access_token, next_page_token)
             if subs_status_code != 200:
-                raise Exception(f"Error getting youtube subscriptions: {subs_response_json}")
+                raise YoutubeApiError(f"Error getting youtube subscriptions: {subs_response_json}")
 
             next_page_token = subs_response_json.get("nextPageToken", None)
 
@@ -150,7 +154,7 @@ class YoutubeApiClient:
             channels_response_json, channels_status_code = await self._request_youtube_channels(
                 api_key, channel_ids)
             if channels_status_code != 200:
-                raise Exception(f"Error getting youtube channels: {channels_response_json}")
+                raise YoutubeApiError(f"Error getting youtube channels: {channels_response_json}")
 
             youtube_channels = list(channels_response_json["items"])
             youtube_channels.sort(key=lambda i: i["id"])
@@ -168,7 +172,7 @@ class YoutubeApiClient:
             api_key, [channel_id])
 
         if channel_status_code != 200:
-            raise Exception(f"Error getting youtube channel: {channel_response_json}")
+            raise YoutubeApiError(f"Error getting youtube channel: {channel_response_json}")
 
         return YoutubeChannel.from_dict(channel_response_json["items"][0])
 
@@ -180,7 +184,7 @@ class YoutubeApiClient:
                 api_key, video_ids[i:i + MAX_VIDEOS_PER_QUERY])
 
             if videos_status_code != 200:
-                raise Exception(f"Error getting youtube videos: {videos_response_json}")
+                raise YoutubeApiError(f"Error getting youtube videos: {videos_response_json}")
 
             youtube_videos = youtube_videos + [YoutubeVideo.from_dict(v) for v in videos_response_json["items"]]
 
@@ -201,7 +205,7 @@ class YoutubeApiClient:
                 logging.debug("Playlist %s not found", playlist_id)
                 break
             if playlist_status_code != 200:
-                raise Exception(f"Error getting youtube playlist items: {playlist_response_json}")
+                raise YoutubeApiError(f"Error getting youtube playlist items: {playlist_response_json}")
 
             next_page_token = playlist_response_json.get("nextPageToken", None)
 
@@ -216,7 +220,7 @@ class YoutubeApiClient:
                 videos_response_json, videos_status_code = await self._request_youtube_videos(
                     api_key, filtered_video_ids)
                 if videos_status_code != 200:
-                    raise Exception(f"Error getting youtube videos: {videos_response_json}")
+                    raise YoutubeApiError(f"Error getting youtube videos: {videos_response_json}")
 
                 youtube_videos = list(videos_response_json["items"])
                 youtube_videos.sort(key=lambda i: i["id"])

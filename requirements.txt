@@ -4,7 +4,7 @@ pytest==7.1.1
 uvicorn==0.30.6
 mypy==1.10.0
 pytest-asyncio==0.18.3
-pylint==2.13.5
+pylint==3.2.7
 pydantic[email]==2.5.3
 gunicorn==23.0.0
 pymongo==4.8.0

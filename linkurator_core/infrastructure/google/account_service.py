@@ -43,7 +43,7 @@ class GoogleAccountService(AccountService):
             "redirect_uri": redirect_uri
         }
         token_response = requests.post(google_oauth_url, auth=HTTPBasicAuth(self.client_id, self.client_secret),
-                                       data=query_params)
+                                       data=query_params, timeout=10)
 
         return CodeValidationResponse(
             access_token=token_response.json()['access_token'],
@@ -53,7 +53,8 @@ class GoogleAccountService(AccountService):
     def revoke_credentials(self, access_token: str) -> None:
         revoke_response = requests.post('https://oauth2.googleapis.com/revoke',
                                         params={'token': access_token},
-                                        headers={'content-type': 'application/x-www-form-urlencoded'})
+                                        headers={'content-type': 'application/x-www-form-urlencoded'},
+                                        timeout=10)
 
         if revoke_response.status_code != http.HTTPStatus.OK:
             raise FailToRevokeCredentialsError(f'Failed to revoke token: {str(revoke_response.content)}')
@@ -67,12 +68,14 @@ class GoogleAccountService(AccountService):
             'client_secret': self.client_secret
         }
         token_response = requests.post(google_oauth_url, auth=HTTPBasicAuth(self.client_id, self.client_secret),
-                                       data=query_params)
+                                       data=query_params, timeout=10)
         return token_response.json().get('access_token', None)
 
     def get_user_info(self, access_token: str) -> Optional[UserInfo]:
         user_info_url = "https://openidconnect.googleapis.com/v1/userinfo"
-        user_info_response = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
+        user_info_response = requests.get(user_info_url,
+                                          headers={"Authorization": f"Bearer {access_token}"},
+                                          timeout=10)
 
         if user_info_response.status_code != http.HTTPStatus.OK:
             return None
@@ -93,7 +96,9 @@ class GoogleAccountService(AccountService):
 
     def token_has_scope_access(self, access_token: str, scope: str) -> bool:
         scope_validation_url = "https://www.googleapis.com/oauth2/v1/tokeninfo"
-        scope_validation_response = requests.get(scope_validation_url, params={'access_token': access_token})
+        scope_validation_response = requests.get(scope_validation_url,
+                                                 params={'access_token': access_token},
+                                                 timeout=10)
 
         if scope_validation_response.status_code != http.HTTPStatus.OK:
             return False

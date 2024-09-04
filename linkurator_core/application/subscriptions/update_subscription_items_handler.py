@@ -57,7 +57,7 @@ class UpdateSubscriptionItemsHandler:
 
             subscription.scanned_at = now
             if len(new_items) > 0:
-                subscription.last_published_at = max([i.published_at for i in new_items])
+                subscription.last_published_at = max(i.published_at for i in new_items)
             await self.subscription_repository.update(subscription)
 
             logging.info("Updated %s items of subscription %s - %s",
