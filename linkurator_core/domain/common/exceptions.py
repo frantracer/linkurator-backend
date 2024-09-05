@@ -56,3 +56,7 @@ class InvalidRegistrationRequestError(Exception):
 
 class FailToRevokeCredentialsError(Exception):
     pass
+
+
+class UsernameAlreadyInUseError(Exception):
+    pass
