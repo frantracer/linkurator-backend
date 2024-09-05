@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Optional, Callable
 from uuid import UUID, uuid4
 
-from pydantic import AnyUrl
+from pydantic import AnyUrl, Field, RootModel
 
 
 def default_salt_generator() -> str:
@@ -16,6 +16,13 @@ def default_salt_generator() -> str:
 
 def default_hash_function(text_input: str) -> str:
     return hashlib.sha512(text_input.encode('utf-8')).hexdigest()
+
+
+class Username(RootModel[str]):
+    root: str = Field(min_length=3, max_length=50, pattern=r"^[a-z0-9_-]+$")
+
+    def __str__(self) -> str:
+        return str(self.root)
 
 
 @dataclass
@@ -48,7 +55,7 @@ class User:
     uuid: UUID
     first_name: str
     last_name: str
-    username: str
+    username: Username
     email: str
     avatar_url: AnyUrl
     locale: str
@@ -68,7 +75,7 @@ class User:
             uuid: UUID,
             first_name: str,
             last_name: str,
-            username: str,
+            username: Username,
             email: str,
             avatar_url: AnyUrl,
             locale: str,

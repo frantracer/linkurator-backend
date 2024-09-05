@@ -17,7 +17,7 @@ class CuratorSchema(BaseModel):
     def from_domain_user(cls, user: User, followed: bool) -> CuratorSchema:
         return cls(
             id=user.uuid,
-            username=user.username,
+            username=str(user.username),
             avatar_url=user.avatar_url,
             followed=followed
         )

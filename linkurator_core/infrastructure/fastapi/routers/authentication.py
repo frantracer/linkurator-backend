@@ -17,6 +17,8 @@ from linkurator_core.application.auth.validate_session_token import ValidateToke
 from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
 from linkurator_core.domain.common.exceptions import InvalidRegistrationRequestError
 from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.users.user import Username
+from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.authentication import PasswordWith64HexCharacters
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
@@ -230,17 +232,20 @@ def get_router(  # pylint: disable=too-many-statements
         """
         Register email endpoint
         """
-        errors = await register_user_with_email.handle(
-            email=new_user.email,
-            password=str(new_user.password),
-            first_name=new_user.first_name,
-            last_name=new_user.last_name,
-            username=new_user.username
-        )
-        if errors:
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
-                                content={"errors": ", ".join([str(e) for e in errors])})
-        return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Registration request sent"})
+        try:
+            errors = await register_user_with_email.handle(
+                email=new_user.email,
+                password=str(new_user.password),
+                first_name=new_user.first_name,
+                last_name=new_user.last_name,
+                username=Username(new_user.username)
+            )
+            if errors:
+                return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                                    content={"errors": ", ".join([str(e) for e in errors])})
+            return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Registration request sent"})
+        except ValueError as exc:
+            raise default_responses.bad_request(message=str(exc))
 
     @router.get("/validate_email/{request_uuid}",
                 status_code=status.HTTP_200_OK,

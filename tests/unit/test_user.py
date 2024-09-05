@@ -1,6 +1,9 @@
 from uuid import UUID
 
+import pytest
+
 from linkurator_core.domain.common.mock_factory import mock_user
+from linkurator_core.domain.users.user import Username
 
 
 def test_user_can_follow_and_unfollow_curator() -> None:
@@ -42,3 +45,8 @@ def test_create_password_and_validate_it() -> None:
 
     assert user.validate_password(password=password)
     assert not user.validate_password(password="wrong_password")
+
+
+def test_cannot_create_invalid_username() -> None:
+    with pytest.raises(ValueError):
+        Username("a a")

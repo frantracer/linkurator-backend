@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.status import HTTP_400_BAD_REQUEST
 
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
@@ -16,7 +17,7 @@ from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, 
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.session import Session
-from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user import User, Username
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 
 USER_UUID = uuid.UUID("8efe1fe3-906d-4aa4-8fbe-b47810c197d8")
@@ -89,7 +90,7 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         uuid=uuid.UUID("cb856f4f-8371-4648-af75-38fb34231092"),
         first_name="first name",
         last_name="last name",
-        username="username",
+        username=Username("username"),
         email="test@email.com",
         avatar_url=utils.parse_url('https://test.com/avatar.png'),
         locale="en-US",
@@ -476,3 +477,27 @@ def test_get_subscriptions_items_returns_200(handlers: Handlers) -> None:
         'http://testserver/subscriptions/df836d19-1e78-4880-bf5f-af1c18e4d57d/items?'
         'created_before_ts=999.0&page_number=1&page_size=1')
     assert response.json()['previous_page'] is None
+
+
+def test_find_by_invalid_username_returns_bad_request_error(handlers: Handlers) -> None:
+    client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
+
+    response = client.get("/curators/username/a%20a")
+
+    assert response.status_code == HTTP_400_BAD_REQUEST
+
+
+def test_register_new_user_with_invalid_username_returns_bad_request_error(handlers: Handlers) -> None:
+    client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
+
+    response = client.post(
+        "/register_email",
+        json={
+            "email": "johndoe@email.com",
+            "password": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "first_name": "John",
+            "last_name": "Doe",
+            "username": "a a"
+        })
+
+    assert response.status_code == HTTP_400_BAD_REQUEST

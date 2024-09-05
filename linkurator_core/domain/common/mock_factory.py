@@ -9,7 +9,7 @@ from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider, Subscription
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
-from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user import User, Username
 
 
 def mock_user(
@@ -19,14 +19,14 @@ def mock_user(
         is_admin: bool = False,
         curators: Optional[set[UUID]] = None,
         email: Optional[str] = None,
-        username: Optional[str] = None
+        username: Optional[Username] = None
 ) -> User:
     uuid = uuid or uuid4()
     return User.new(
         uuid=uuid,
         last_name="name",
         first_name="user",
-        username=username or str(uuid),
+        username=username or Username(str(uuid)),
         email=email or f"{uuid}@email.com",
         locale="en",
         avatar_url=parse_url(f"https://avatar.com/{uuid}.png"),

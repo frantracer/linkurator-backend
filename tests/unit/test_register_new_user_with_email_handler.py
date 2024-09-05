@@ -6,6 +6,7 @@ from linkurator_core.application.auth.register_new_user_with_email import Regist
 from linkurator_core.domain.common.event import UserRegisterRequestSentEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.mock_factory import mock_user
+from linkurator_core.domain.users.user import Username
 from linkurator_core.infrastructure.in_memory.registration_request_repository import \
     InMemoryRegistrationRequestRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
@@ -24,7 +25,7 @@ async def test_register_new_user_with_email() -> None:
         password="1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
         first_name="John",
         last_name="Doe",
-        username="johndoe"
+        username=Username("johndoe")
     )
 
     assert len(errors) == 0
@@ -54,7 +55,7 @@ async def test_register_new_user_with_email_email_already_registered() -> None:
         password="1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
         first_name="John",
         last_name="Doe",
-        username="johndoe"
+        username=Username("johndoe")
     )
 
     assert len(errors) == 1
@@ -71,7 +72,7 @@ async def test_register_new_user_with_all_errors() -> None:
 
     handler = RegisterNewUserWithEmail(user_repo, registration_request_repository, event_bus)
 
-    user = mock_user(email="test@email.com", username="johndoe")
+    user = mock_user(email="test@email.com", username=Username("johndoe"))
     await user_repo.add(user)
 
     errors = await handler.handle(
@@ -79,7 +80,7 @@ async def test_register_new_user_with_all_errors() -> None:
         password="2",
         first_name="John",
         last_name="Doe",
-        username="johndoe"
+        username=Username("johndoe")
     )
 
     assert len(errors) == 3

@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import AnyUrl, BaseModel
 
-from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user import User, Username
 from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
 
 
@@ -30,7 +30,7 @@ class ProfileSchema(BaseModel):
     uuid: UUID
     first_name: str
     last_name: str
-    username: str
+    username: Username
     email: str
     avatar_url: AnyUrl
     language: LanguageSchema

@@ -14,6 +14,7 @@ from linkurator_core.application.users.get_curators_handler import GetCuratorsHa
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
 from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.users.user import Username
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.curator import CuratorSchema
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
@@ -96,10 +97,13 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        response = await find_user_handler.handle(username, session.user_id)
-        if response.user is None:
-            raise default_responses.not_found("User not found")
-        return CuratorSchema.from_domain_user(user=response.user, followed=response.followed)
+        try:
+            response = await find_user_handler.handle(Username(username), session.user_id)
+            if response.user is None:
+                raise default_responses.not_found("User not found")
+            return CuratorSchema.from_domain_user(user=response.user, followed=response.followed)
+        except ValueError as exc:
+            raise default_responses.bad_request(message=str(exc))
 
     @router.get("/{curator_id}/topics",
                 responses={

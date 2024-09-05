@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from pymongo.errors import DuplicateKeyError
 
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.users.user import User, HashedPassword
+from linkurator_core.domain.users.user import User, HashedPassword, Username
 from linkurator_core.domain.users.user_repository import UserRepository, EmailAlreadyInUse
 from linkurator_core.infrastructure.mongodb.common import MongoDBMapping
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
@@ -61,7 +61,7 @@ class MongoDBUser(BaseModel):
             uuid=user.uuid,
             first_name=user.first_name,
             last_name=user.last_name,
-            username=user.username,
+            username=str(user.username),
             email=user.email,
             locale=user.locale,
             avatar_url=str(user.avatar_url),
@@ -83,7 +83,7 @@ class MongoDBUser(BaseModel):
             uuid=self.uuid,
             first_name=self.first_name,
             last_name=self.last_name,
-            username=self.username,
+            username=Username(self.username),
             email=self.email,
             locale=self.locale,
             avatar_url=utils.parse_url(self.avatar_url),
@@ -147,8 +147,8 @@ class MongoDBUserRepository(UserRepository):
         user.pop('_id', None)
         return MongoDBUser(**user).to_domain_user()
 
-    async def get_by_username(self, username: str) -> Optional[User]:
-        user = await self._collection().find_one({'username': username})
+    async def get_by_username(self, username: Username) -> Optional[User]:
+        user = await self._collection().find_one({'username': str(username)})
         if user is None:
             return None
         user.pop('_id', None)

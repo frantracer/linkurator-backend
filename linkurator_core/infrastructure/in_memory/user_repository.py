@@ -3,7 +3,7 @@ from copy import copy
 from typing import List, Optional
 from uuid import UUID
 
-from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user import User, Username
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
@@ -24,7 +24,7 @@ class InMemoryUserRepository(UserRepository):
                 return copy(user)
         return None
 
-    async def get_by_username(self, username: str) -> Optional[User]:
+    async def get_by_username(self, username: Username) -> Optional[User]:
         for user in self.users.values():
             if user.username == username:
                 return copy(user)

@@ -3,7 +3,7 @@ import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user import User, Username
 
 
 class EmailAlreadyInUse(Exception):
@@ -27,7 +27,7 @@ class UserRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def get_by_username(self, username: str) -> Optional[User]:
+    async def get_by_username(self, username: Username) -> Optional[User]:
         raise NotImplementedError
 
     @abc.abstractmethod

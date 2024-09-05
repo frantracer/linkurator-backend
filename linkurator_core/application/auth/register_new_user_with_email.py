@@ -9,7 +9,7 @@ from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.users.registration_request import RegistrationRequest
 from linkurator_core.domain.users.registration_requests_repository import RegistrationRequestRepository
-from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user import User, Username
 from linkurator_core.domain.users.user_repository import UserRepository
 
 ONE_DAY_IN_SECONDS = 60 * 60 * 24
@@ -49,7 +49,7 @@ class RegisterNewUserWithEmail:
             password: str,
             first_name: str,
             last_name: str,
-            username: str
+            username: Username
     ) -> list[RegistrationError]:
         errors: list[RegistrationError] = []
 

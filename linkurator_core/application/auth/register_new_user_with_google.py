@@ -5,25 +5,25 @@ from uuid import uuid4
 from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.users.account_service import AccountService
-from linkurator_core.domain.users.user import User
+from linkurator_core.domain.users.user import User, Username
 from linkurator_core.domain.users.user_repository import UserRepository
 
 RegistrationError = str
 
 
 class UsernameGenerator(Protocol):
-    def generate_username(self) -> str:
+    def generate_username(self) -> Username:
         ...
 
 
 class UsernameGeneratorFromFirstAndLastName:
-    def __init__(self, first_name: str, last_name: str):
+    def __init__(self, first_name: str, last_name: str) -> None:
         self.first_name = first_name
         self.last_name = last_name
 
-    def generate_username(self) -> str:
+    def generate_username(self) -> Username:
         random_number = str(uuid4().int)[:4]
-        return f"{self.first_name}{self.last_name}{random_number}".strip().replace(" ", "").lower()
+        return Username(f"{self.first_name}{self.last_name}{random_number}".strip().replace(" ", "").lower())
 
 
 class RegisterUserHandler:
@@ -46,7 +46,7 @@ class RegisterUserHandler:
             if refresh_token is None:
                 return "Refresh token is required for new users"
 
-            username: str
+            username: Username
             if self.username_generator is None:
                 username = UsernameGeneratorFromFirstAndLastName(
                     user_info.details.given_name,
