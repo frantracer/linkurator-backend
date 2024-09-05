@@ -41,6 +41,7 @@ from linkurator_core.application.topics.update_topic_handler import UpdateTopicH
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
 from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
+from linkurator_core.application.users.edit_user_profile import EditUserProfile
 from linkurator_core.application.users.find_user_handler import FindCuratorHandler
 from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
@@ -166,6 +167,7 @@ def app_handlers() -> Handlers:
             subscription_repository=subscription_repository,
             subscription_service=youtube_service),
         get_user_profile_handler=GetUserProfileHandler(user_repository),
+        edit_user_profile_handler=EditUserProfile(user_repository),
         find_user_handler=FindCuratorHandler(user_repository),
         delete_user_handler=DeleteUserHandler(user_repository, session_repository, account_service),
         get_curators_handler=GetCuratorsHandler(user_repository),

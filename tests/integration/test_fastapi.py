@@ -49,6 +49,7 @@ def dummy_handlers() -> Handlers:
         delete_subscription_items_handler=AsyncMock(),
         refresh_subscription_handler=AsyncMock(),
         get_user_profile_handler=AsyncMock(),
+        edit_user_profile_handler=AsyncMock(),
         find_user_handler=AsyncMock(),
         delete_user_handler=AsyncMock(),
         get_curators_handler=AsyncMock(),
