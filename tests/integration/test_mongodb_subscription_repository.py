@@ -89,7 +89,7 @@ async def test_find_a_subscription_that_already_exist(subscription_repo: Subscri
                             provider=SubscriptionProvider.YOUTUBE)
 
     await subscription_repo.add(sub1)
-    found_subscription = await subscription_repo.find(sub2)
+    found_subscription = await subscription_repo.find_by_url(sub2.url)
     assert found_subscription is not None
     assert found_subscription.uuid == sub1.uuid
 
@@ -102,7 +102,7 @@ async def test_find_a_subscription_that_does_not_exist(subscription_repo: Subscr
                             thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
                             provider=SubscriptionProvider.YOUTUBE)
 
-    found_subscription = await subscription_repo.find(sub1)
+    found_subscription = await subscription_repo.find_by_url(sub1.url)
     assert found_subscription is None
 
 

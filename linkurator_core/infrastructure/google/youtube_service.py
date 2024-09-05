@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError, InvalidCredentialError
+from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider

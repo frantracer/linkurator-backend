@@ -8,6 +8,7 @@ from uuid import UUID
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
+from pydantic import AnyUrl
 from pydantic.main import BaseModel
 from pymongo import DESCENDING
 
@@ -105,9 +106,9 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
         await collection.update_one({'uuid': subscription.uuid},
                                     {'$set': MongoDBSubscription.from_domain_subscription(subscription).model_dump()})
 
-    async def find(self, subscription: Subscription) -> Optional[Subscription]:
+    async def find_by_url(self, url: AnyUrl) -> Optional[Subscription]:
         collection = await self._subscription_collection()
-        found_subscription: Optional[dict[str, Any]] = await collection.find_one({'url': str(subscription.url)})
+        found_subscription: Optional[dict[str, Any]] = await collection.find_one({'url': str(url)})
         if found_subscription is None:
             return None
         return MongoDBSubscription(**found_subscription).to_domain_subscription()

@@ -26,7 +26,7 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
         thumbnail=parse_url("http://thumbnail.com"))
     subscription_service.get_subscriptions.return_value = [sub1]
     subscription_repository = MagicMock(spec=SubscriptionRepository)
-    subscription_repository.find.return_value = None
+    subscription_repository.find_by_url.return_value = None
     subscription_repository.add.return_value = None
 
     user_repository = MagicMock(spec=UserRepository)
@@ -41,7 +41,7 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
 
     assert subscription_service.get_subscriptions.call_count == 1
     assert subscription_service.get_subscriptions.call_args[0][0] == user.uuid
-    assert subscription_repository.find.call_count == 1
+    assert subscription_repository.find_by_url.call_count == 1
     assert subscription_repository.add.call_count == 1
     assert subscription_repository.add.call_args[0][0] == sub1
     assert user_repository.update.call_count == 1
@@ -68,7 +68,7 @@ async def test_update_user_subscription_with_subscription_that_is_already_regist
         thumbnail=parse_url("http://thumbnail.com"))
     subscription_service.get_subscriptions.return_value = [sub1]
     subscription_repository = MagicMock(spec=SubscriptionRepository)
-    subscription_repository.find.return_value = sub2
+    subscription_repository.find_by_url.return_value = sub2
     subscription_repository.add.return_value = None
 
     user_repository = MagicMock(spec=UserRepository)
@@ -83,7 +83,7 @@ async def test_update_user_subscription_with_subscription_that_is_already_regist
 
     assert subscription_service.get_subscriptions.call_count == 1
     assert subscription_service.get_subscriptions.call_args[0][0] == user.uuid
-    assert subscription_repository.find.call_count == 1
+    assert subscription_repository.find_by_url.call_count == 1
     assert subscription_repository.add.call_count == 0
     assert user_repository.update.call_count == 1
     user_input: User = user_repository.update.call_args[0][0]

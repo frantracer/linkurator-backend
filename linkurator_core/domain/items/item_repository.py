@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional, Dict
 from uuid import UUID
 
-from pydantic.networks import AnyUrl
+from pydantic import AnyUrl
 
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic.networks import AnyUrl
+from pydantic import AnyUrl
 from unidecode import unidecode
 
 from linkurator_core.domain.subscriptions.subscription import Subscription
@@ -36,8 +36,8 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
         if existing_sub is None or (existing_sub is not None and existing_sub.uuid == subscription.uuid):
             self.subscriptions[subscription.uuid] = subscription
 
-    async def find(self, subscription: Subscription) -> Optional[Subscription]:
-        return self._find_by_url(subscription.url)
+    async def find_by_url(self, url: AnyUrl) -> Optional[Subscription]:
+        return self._find_by_url(url)
 
     async def find_latest_scan_before(self, datetime_limit: datetime) -> List[Subscription]:
         subs = [subscription for subscription in self.subscriptions.values() if

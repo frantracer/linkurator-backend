@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from pydantic.networks import AnyUrl
+from pydantic import AnyUrl
 
 
 def parse_url(url: str) -> AnyUrl:

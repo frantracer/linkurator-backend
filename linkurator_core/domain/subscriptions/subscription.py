@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Dict, Optional
 from uuid import UUID
 
-from pydantic.networks import AnyUrl
+from pydantic import AnyUrl
 
 
 class SubscriptionProvider(str, Enum):

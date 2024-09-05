@@ -3,6 +3,8 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
+from pydantic import AnyUrl
+
 from linkurator_core.domain.subscriptions.subscription import Subscription
 
 
@@ -35,7 +37,7 @@ class SubscriptionRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def find(self, subscription: Subscription) -> Optional[Subscription]:
+    async def find_by_url(self, url: AnyUrl) -> Optional[Subscription]:
         raise NotImplementedError
 
     @abc.abstractmethod

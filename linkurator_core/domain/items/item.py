@@ -7,7 +7,7 @@ from math import floor
 from typing import Optional, Any
 from uuid import UUID
 
-from pydantic.networks import AnyUrl
+from pydantic import AnyUrl
 
 from linkurator_core.domain.common.units import Seconds
 

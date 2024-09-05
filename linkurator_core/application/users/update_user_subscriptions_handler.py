@@ -35,7 +35,7 @@ class UpdateUserSubscriptionsHandler:
         await self.user_repository.update(user)
 
     async def _get_or_create_subscription(self, subscription: Subscription) -> Subscription:
-        registered_subscription = await self.subscription_repository.find(subscription)
+        registered_subscription = await self.subscription_repository.find_by_url(subscription.url)
         if registered_subscription is None:
             await self.subscription_repository.add(subscription)
             return subscription
