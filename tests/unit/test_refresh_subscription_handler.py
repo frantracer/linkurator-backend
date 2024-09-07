@@ -60,4 +60,4 @@ async def test_an_already_updated_subscription_returns_error() -> None:
 
     with pytest.raises(SubscriptionAlreadyUpdatedError) as exc:
         await handler.handle(subscription_id=sub.uuid)
-        assert "3600 seconds" in str(exc)
+    assert "3600 seconds" in str(exc)

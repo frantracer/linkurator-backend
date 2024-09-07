@@ -31,7 +31,7 @@ class RefreshSubscriptionHandler:
             wait_time_in_seconds = (subscription.updated_at + timedelta(
                 seconds=MIN_REFRESH_INTERVAL_IN_SECONDS) - now).total_seconds()
             raise SubscriptionAlreadyUpdatedError(
-                f"Subscription updated too recently. Wait {wait_time_in_seconds} seconds"
+                f"Subscription updated too recently. Wait {int(wait_time_in_seconds)} seconds"
             )
 
         updated_sub = await self._subscription_service.get_subscription(sub_id=subscription_id)
