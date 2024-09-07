@@ -3,6 +3,8 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
+from pydantic import AnyUrl
+
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
@@ -40,4 +42,12 @@ class SubscriptionService(abc.ABC):
             from_date: datetime,
             credential: Optional[ExternalServiceCredential] = None
     ) -> List[Item]:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def get_subscription_from_url(
+            self,
+            url: AnyUrl,
+            credential: Optional[ExternalServiceCredential] = None
+    ) -> Subscription | None:
         raise NotImplementedError()

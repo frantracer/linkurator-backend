@@ -5,6 +5,8 @@ from datetime import datetime
 from random import randint
 from typing import Dict, List, Optional
 
+from pydantic import AnyUrl
+
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError, InvalidCredentialError
 from linkurator_core.domain.common.utils import parse_url
@@ -17,7 +19,7 @@ from linkurator_core.domain.users.external_service_credential import ExternalSer
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
-from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
+from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient, YoutubeChannel
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 
 
@@ -161,6 +163,44 @@ class YoutubeService(SubscriptionService):
                          for v in updated_videos}
 
         return updated_items
+
+    async def get_subscription_from_url(
+            self,
+            url: AnyUrl,
+            credential: Optional[ExternalServiceCredential] = None
+    ) -> Subscription | None:
+        if not url.host in ["www.youtube.com", "youtube.com"]:
+            return None
+
+        youtube_channel: YoutubeChannel | None = None
+        path = "" if url.path is None else url.path
+        path_segments = path.split("/")
+        if len(path_segments) == 2 and path_segments[1] != "":
+            channel_name = path_segments[1]
+            youtube_channel = await self.youtube_client.get_youtube_channel_from_name(
+                api_key=self._get_api_key() if credential is None else credential.credential_value,
+                channel_name=channel_name)
+        elif len(path_segments) == 3 and path_segments[1] == "channel" and path_segments[2] != "":
+            channel_id = path_segments[2]
+            youtube_channel = await self.youtube_client.get_youtube_channel(
+                api_key=self._get_api_key() if credential is None else credential.credential_value,
+                channel_id=channel_id)
+
+        if youtube_channel is not None:
+            existing_sub = await self.subscription_repository.find_by_url(parse_url(youtube_channel.url))
+            if existing_sub is not None:
+                return existing_sub
+
+            return Subscription.new(
+                uuid=uuid.uuid4(),
+                name=youtube_channel.title,
+                provider=SubscriptionProvider.YOUTUBE,
+                url=parse_url(youtube_channel.url),
+                thumbnail=utils.parse_url(youtube_channel.thumbnail_url),
+                external_data={"channel_id": youtube_channel.channel_id},
+            )
+
+        return None
 
     async def _get_api_key_for_sub(self, sub_id: uuid.UUID) -> str:
         subscribed_users = await self.user_repository.find_users_subscribed_to_subscription(sub_id)

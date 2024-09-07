@@ -167,6 +167,16 @@ class YoutubeApiClient:
 
         return subscriptions
 
+    async def get_youtube_channel_from_name(self, api_key: str, channel_name: str) -> YoutubeChannel | None:
+        channel_response_json, channel_status_code = await self._request_youtube_channels_from_name(
+            api_key, channel_name)
+
+        if channel_status_code != 200:
+            raise YoutubeApiError(f"Error getting youtube channel: {channel_response_json}")
+
+        items = channel_response_json.get("items", [])
+        return YoutubeChannel.from_dict(items[0]) if len(items) > 0 else None
+
     async def get_youtube_channel(self, api_key: str, channel_id: str) -> Optional[YoutubeChannel]:
         channel_response_json, channel_status_code = await self._request_youtube_channels(
             api_key, [channel_id])
@@ -174,7 +184,8 @@ class YoutubeApiClient:
         if channel_status_code != 200:
             raise YoutubeApiError(f"Error getting youtube channel: {channel_response_json}")
 
-        return YoutubeChannel.from_dict(channel_response_json["items"][0])
+        items = channel_response_json.get("items", [])
+        return YoutubeChannel.from_dict(items[0]) if len(items) > 0 else None
 
     async def get_youtube_videos(self, api_key: str, video_ids: List[str]) -> List[YoutubeVideo]:
         youtube_videos: List[YoutubeVideo] = []
@@ -277,6 +288,31 @@ class YoutubeApiClient:
         url = f"{youtube_api_url}?{urlencode(subs_query_params)}"
 
         async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {access_token}"}) as session:
+            async with session.get(url) as resp:
+                resp_body = await resp.json()
+                resp_status = resp.status
+
+        return resp_body, resp_status
+
+    @backoff.on_exception(backoff.expo,
+                          aiohttp.ClientConnectorError,
+                          max_time=60,
+                          jitter=None)
+    async def _request_youtube_channels_from_name(
+            self, api_key: str, channel_name: str
+    ) -> Tuple[Dict[str, Any], int]:
+        youtube_api_channels_url = f"{self.base_url}/channels"
+
+        channels_query_params: Dict[str, Any] = {
+            "part": "snippet,contentDetails",
+            "forHandle": channel_name,
+            "maxResults": 50,
+            "key": api_key
+        }
+
+        url = f"{youtube_api_channels_url}?{urlencode(channels_query_params)}"
+
+        async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 resp_body = await resp.json()
                 resp_status = resp.status

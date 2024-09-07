@@ -37,13 +37,13 @@ def mock_user(
     )
 
 
-def mock_sub(uuid: Optional[UUID] = None, name: str = 'Test') -> Subscription:
+def mock_sub(uuid: Optional[UUID] = None, name: str = 'Test', url: str | None = None) -> Subscription:
     uuid = uuid or uuid4()
     return Subscription.new(
         uuid=uuid,
         provider=SubscriptionProvider.YOUTUBE,
         name=name,
-        url=parse_url(f'https://www.youtube.com/channel/{uuid}'),
+        url=parse_url(f'https://www.youtube.com/channel/{uuid}') if url is None else parse_url(url),
         thumbnail=parse_url(f'https://www.youtube.com/channel/{uuid}/thumbnail'),
         external_data={},
     )
