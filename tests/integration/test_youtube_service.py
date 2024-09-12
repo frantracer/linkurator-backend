@@ -318,7 +318,13 @@ async def test_youtube_service_returns_subscription_by_channel_url_with_id_and_e
     assert client_mock.get_youtube_channel.call_count == 1
     assert client_mock.get_youtube_channel.call_args[1]['channel_id'] == channel_id
     assert subscription is not None
-    assert subscription == sub
+    assert subscription.name == youtube_channel.title
+    assert subscription.url == parse_url(channel_url)
+    assert subscription.thumbnail == parse_url(youtube_channel.thumbnail_url)
+    assert subscription.external_data == {
+        "channel_id": youtube_channel.channel_id,
+        "playlist_id": youtube_channel.playlist_id
+    }
 
 
 @pytest.mark.asyncio

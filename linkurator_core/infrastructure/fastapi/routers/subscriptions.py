@@ -8,7 +8,8 @@ from pydantic.types import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
-from linkurator_core.application.subscriptions.find_subscription_by_name_handler import FindSubscriptionsByNameHandler
+from linkurator_core.application.subscriptions.find_subscription_by_name_handler import \
+    FindSubscriptionsByNameOrUrlHandler
 from linkurator_core.application.subscriptions.follow_subscription_handler import FollowSubscriptionHandler
 from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
@@ -26,7 +27,7 @@ def get_router(
         get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
         get_subscription_handler: GetSubscriptionHandler,
         get_user_subscriptions_handler: GetUserSubscriptionsHandler,
-        find_subscriptions_by_name_handler: FindSubscriptionsByNameHandler,
+        find_subscriptions_by_name_or_url: FindSubscriptionsByNameOrUrlHandler,
         follow_subscription_handler: FollowSubscriptionHandler,
         unfollow_subscription_handler: UnfollowSubscriptionHandler,
         get_subscription_items_handler: GetSubscriptionItemsHandler,
@@ -53,6 +54,22 @@ def get_router(
         return FullPage.create([SubscriptionSchema.from_domain_subscription(subscription)
                                 for subscription in subscriptions])
 
+    @router.get("/search",
+                status_code=status.HTTP_200_OK
+                )
+    async def get_subscriptions_by_name_or_url(
+            name_or_url: str,
+    ) -> FullPage[SubscriptionSchema]:
+        """
+        Get the subscription information by name or URL
+        :param name_or_url: Name of the subscription or URL of the subscription
+        :return: The list of subscriptions that contains the given name
+        """
+        subs = await find_subscriptions_by_name_or_url.handle(name_or_url)
+        return FullPage[SubscriptionSchema].create(
+            elements=[SubscriptionSchema.from_domain_subscription(sub) for sub in subs]
+        )
+
     @router.get("/{sub_id}",
                 status_code=status.HTTP_200_OK,
                 responses={
@@ -71,22 +88,6 @@ def get_router(
             return SubscriptionSchema.from_domain_subscription(subscription)
         except SubscriptionNotFoundError as error:
             raise default_responses.not_found("Subscription not found") from error
-
-    @router.get("/name/{name}",
-                status_code=status.HTTP_200_OK
-                )
-    async def get_subscription_by_name(
-            name: str,
-    ) -> FullPage[SubscriptionSchema]:
-        """
-        Get the subscription information by name
-        :param name: Name of the subscription included in the url
-        :return: The list of subscriptions that contains the given name
-        """
-        subs = await find_subscriptions_by_name_handler.handle(name)
-        return FullPage[SubscriptionSchema].create(
-            elements=[SubscriptionSchema.from_domain_subscription(sub) for sub in subs]
-        )
 
     @router.post("/{sub_id}/follow",
                  status_code=status.HTTP_201_CREATED,

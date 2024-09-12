@@ -1,10 +1,41 @@
+from pydantic import AnyUrl, ValidationError
+
+from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 
 
-class FindSubscriptionsByNameHandler:
-    def __init__(self, subscription_repository: SubscriptionRepository):
+class FindSubscriptionsByNameOrUrlHandler:
+    def __init__(self,
+                 subscription_repository: SubscriptionRepository,
+                 subscription_service: SubscriptionService
+                 ):
         self.subscription_repository = subscription_repository
+        self.subscription_service = subscription_service
 
-    async def handle(self, name: str) -> list[Subscription]:
-        return await self.subscription_repository.find_by_name(name)
+    async def handle(self, name_or_url: str) -> list[Subscription]:
+        url = _try_parse_url(name_or_url)
+        if url is None:
+            return await self.subscription_repository.find_by_name(name=name_or_url)
+
+        sub = await self.subscription_service.get_subscription_from_url(url)
+        if sub is not None:
+            existing_sub = await self.subscription_repository.get(sub.uuid)
+            if existing_sub is None:
+                await self.subscription_repository.add(sub)
+                return  [sub]
+
+            return [existing_sub]
+
+        return []
+
+
+def _try_parse_url(url: str) -> AnyUrl | None:
+    parsed_url: AnyUrl | None = None
+    try:
+        parsed_url = parse_url(url)
+    except ValidationError:
+        pass
+
+    return parsed_url

@@ -19,7 +19,8 @@ from linkurator_core.application.items.get_curator_items_handler import GetCurat
 from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
-from linkurator_core.application.subscriptions.find_subscription_by_name_handler import FindSubscriptionsByNameHandler
+from linkurator_core.application.subscriptions.find_subscription_by_name_handler import \
+    FindSubscriptionsByNameOrUrlHandler
 from linkurator_core.application.subscriptions.follow_subscription_handler import FollowSubscriptionHandler
 from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
@@ -171,7 +172,10 @@ def app_handlers() -> Handlers:
         find_user_handler=FindCuratorHandler(user_repository),
         delete_user_handler=DeleteUserHandler(user_repository, session_repository, account_service),
         get_curators_handler=GetCuratorsHandler(user_repository),
-        find_subscriptions_by_name_handler=FindSubscriptionsByNameHandler(subscription_repository),
+        find_subscriptions_by_name_handler=FindSubscriptionsByNameOrUrlHandler(
+            subscription_repository=subscription_repository,
+            subscription_service=youtube_service
+        ),
         follow_curator_handler=FollowCuratorHandler(user_repository),
         unfollow_curator_handler=UnfollowCuratorHandler(user_repository),
         get_user_topics_handler=GetUserTopicsHandler(
