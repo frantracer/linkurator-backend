@@ -8,7 +8,7 @@ from pydantic.types import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
-from linkurator_core.application.subscriptions.find_subscription_by_name_handler import \
+from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import \
     FindSubscriptionsByNameOrUrlHandler
 from linkurator_core.application.subscriptions.follow_subscription_handler import FollowSubscriptionHandler
 from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
