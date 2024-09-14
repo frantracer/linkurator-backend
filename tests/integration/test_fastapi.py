@@ -101,6 +101,7 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         last_login_at=datetime.fromtimestamp(0, tz=timezone.utc),
         _subscription_uuids=set(),
         _youtube_subscriptions_uuids=set(),
+        _unfollowed_youtube_subscriptions_uuids=set(),
         google_refresh_token="refresh token",
         is_admin=False,
         curators=set(),

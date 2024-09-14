@@ -66,6 +66,7 @@ class User:
     google_refresh_token: Optional[str]
     password_hash: Optional[HashedPassword]
     _youtube_subscriptions_uuids: set[UUID]
+    _unfollowed_youtube_subscriptions_uuids: set[UUID]
     _subscription_uuids: set[UUID]
     is_admin: bool
     curators: set[UUID]
@@ -100,6 +101,7 @@ class User:
             google_refresh_token=google_refresh_token,
             _youtube_subscriptions_uuids=set(),
             _subscription_uuids=set() if subscription_uuids is None else subscription_uuids,
+            _unfollowed_youtube_subscriptions_uuids=set(),
             is_admin=is_admin,
             curators=set() if curators is None else curators,
             password_hash=None
@@ -114,10 +116,14 @@ class User:
 
     def follow_subscription(self, subscription_id: UUID) -> None:
         self._subscription_uuids.add(subscription_id)
+        if subscription_id in self._unfollowed_youtube_subscriptions_uuids:
+            self._unfollowed_youtube_subscriptions_uuids.remove(subscription_id)
 
     def unfollow_subscription(self, subscription_id: UUID) -> None:
         if subscription_id in self._subscription_uuids:
             self._subscription_uuids.remove(subscription_id)
+        if subscription_id in self._youtube_subscriptions_uuids:
+            self._unfollowed_youtube_subscriptions_uuids.add(subscription_id)
 
     def set_youtube_subscriptions(self, subscription_ids: set[UUID]) -> None:
         self._youtube_subscriptions_uuids = subscription_ids
@@ -125,10 +131,15 @@ class User:
     def get_youtube_subscriptions(self) -> set[UUID]:
         return copy(self._youtube_subscriptions_uuids)
 
+    def get_youtube_unfollowed_subscriptions(self) -> set[UUID]:
+        return copy(self._unfollowed_youtube_subscriptions_uuids)
+
     def get_subscriptions(self, include_youtube: bool = True) -> set[UUID]:
         uuids = copy(self._subscription_uuids)
         if include_youtube:
-            uuids = uuids.union(self._youtube_subscriptions_uuids)
+            uuids = (uuids
+                     .union(self._youtube_subscriptions_uuids)
+                     .difference(self._unfollowed_youtube_subscriptions_uuids))
         return uuids
 
     def set_password(self, password: str) -> None:

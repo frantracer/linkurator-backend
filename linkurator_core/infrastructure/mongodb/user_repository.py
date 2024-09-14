@@ -51,6 +51,7 @@ class MongoDBUser(BaseModel):
     google_refresh_token: Optional[str] = None
     subscription_uuids: List[UUID] = []
     youtube_subscription_uuids: List[UUID] = []
+    youtube_unfollowed_subscription_uuids: List[UUID] = []
     is_admin: bool = False
     curators: list[UUID] = []
     password_hash: MongoDBHashedPassword | None = None
@@ -72,6 +73,7 @@ class MongoDBUser(BaseModel):
             google_refresh_token=user.google_refresh_token,
             subscription_uuids=list(user.get_subscriptions(include_youtube=False)),
             youtube_subscription_uuids=list(user.get_youtube_subscriptions()),
+            youtube_unfollowed_subscription_uuids=list(user.get_youtube_unfollowed_subscriptions()),
             is_admin=user.is_admin,
             curators=list(user.curators),
             password_hash=None if user.password_hash is None
@@ -94,6 +96,7 @@ class MongoDBUser(BaseModel):
             google_refresh_token=self.google_refresh_token,
             _subscription_uuids=set(self.subscription_uuids),
             _youtube_subscriptions_uuids=set(self.youtube_subscription_uuids),
+            _unfollowed_youtube_subscriptions_uuids=set(self.youtube_unfollowed_subscription_uuids),
             is_admin=self.is_admin,
             curators=set(self.curators),
             password_hash=None if self.password_hash is None

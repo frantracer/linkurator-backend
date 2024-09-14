@@ -50,3 +50,14 @@ def test_create_password_and_validate_it() -> None:
 def test_cannot_create_invalid_username() -> None:
     with pytest.raises(ValueError):
         Username("a a")
+
+
+def test_unfollow_and_follow_youtube_subscription() -> None:
+    sub_id = UUID('82ef95e0-c9d5-4a9f-8130-39502fade902')
+    user = mock_user()
+    user.set_youtube_subscriptions({sub_id})
+    user.unfollow_subscription(sub_id)
+    assert user.get_subscriptions() == set()
+
+    user.follow_subscription(sub_id)
+    assert user.get_subscriptions() == {sub_id}
