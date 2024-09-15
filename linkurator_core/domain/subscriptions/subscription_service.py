@@ -16,24 +16,21 @@ class SubscriptionService(abc.ABC):
             self,
             user_id: uuid.UUID,
             credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Subscription]:
-        raise NotImplementedError()
+    ) -> List[Subscription]: ...
 
     @abc.abstractmethod
     async def get_subscription(
             self,
             sub_id: uuid.UUID,
             credential: Optional[ExternalServiceCredential] = None
-    ) -> Optional[Subscription]:
-        raise NotImplementedError()
+    ) -> Optional[Subscription]: ...
 
     @abc.abstractmethod
     async def get_items(
             self,
             item_ids: set[uuid.UUID],
             credential: Optional[ExternalServiceCredential] = None
-    ) -> set[Item]:
-        raise NotImplementedError()
+    ) -> set[Item]: ...
 
     @abc.abstractmethod
     async def get_subscription_items(
@@ -41,13 +38,18 @@ class SubscriptionService(abc.ABC):
             sub_id: uuid.UUID,
             from_date: datetime,
             credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Item]:
-        raise NotImplementedError()
+    ) -> List[Item]: ...
 
     @abc.abstractmethod
     async def get_subscription_from_url(
             self,
             url: AnyUrl,
             credential: Optional[ExternalServiceCredential] = None
-    ) -> Subscription | None:
-        raise NotImplementedError()
+    ) -> Subscription | None: ...
+
+    @abc.abstractmethod
+    async def get_subscription_from_name(
+            self,
+            name: str,
+            credential: Optional[ExternalServiceCredential] = None
+    ) -> Subscription | None: ...

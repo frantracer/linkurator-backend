@@ -1,3 +1,5 @@
+import asyncio
+
 from pydantic import AnyUrl, ValidationError
 
 from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
@@ -21,19 +23,34 @@ class FindSubscriptionsByNameOrUrlHandler:
     async def handle(self, name_or_url: str) -> list[Subscription]:
         url = _try_parse_url(name_or_url)
         if url is None:
-            return await self.subscription_repository.find_by_name(name=name_or_url)
+            results = await asyncio.gather(
+                self.subscription_repository.find_by_name(name=name_or_url),
+                self.subscription_service.get_subscription_from_name(name=name_or_url)
+            )
+            existing_subs = results[0]
+            service_sub = results[1]
+
+            existing_subs_uuids = [sub.uuid for sub in existing_subs]
+            if service_sub is not None and service_sub.uuid not in existing_subs_uuids:
+                existing_service_sub = await self.get_or_create_subscription(service_sub)
+                existing_subs.append(existing_service_sub)
+
+            return existing_subs
 
         sub = await self.subscription_service.get_subscription_from_url(url)
         if sub is not None:
-            existing_sub = await self.subscription_repository.get(sub.uuid)
-            if existing_sub is None:
-                await self.subscription_repository.add(sub)
-                await self.event_bus.publish(SubscriptionBecameOutdatedEvent.new(sub.uuid))
-                return  [sub]
-
-            return [existing_sub]
+            return [await self.get_or_create_subscription(sub)]
 
         return []
+
+    async def get_or_create_subscription(self, sub: Subscription) -> Subscription:
+        existing_sub = await self.subscription_repository.get(sub.uuid)
+        if existing_sub is None:
+            await self.subscription_repository.add(sub)
+            await self.event_bus.publish(SubscriptionBecameOutdatedEvent.new(sub.uuid))
+            return sub
+
+        return existing_sub
 
 
 def _try_parse_url(url: str) -> AnyUrl | None:
