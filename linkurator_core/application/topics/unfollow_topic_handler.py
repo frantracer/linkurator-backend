@@ -1,11 +1,17 @@
 from uuid import UUID
 
-from linkurator_core.domain.topics.followed_topics_repository import FollowedTopicsRepository
+from linkurator_core.domain.users.user_repository import UserRepository
 
 
 class UnfollowTopicHandler:
-    def __init__(self, followed_topics_repository: FollowedTopicsRepository):
-        self.followed_topics_repository = followed_topics_repository
+    def __init__(self, user_repository: UserRepository) -> None:
+        self.user_repository = user_repository
 
     async def handle(self, user_id: UUID, topic_id: UUID) -> None:
-        await self.followed_topics_repository.unfollow_topic(user_id, topic_id)
+        user = await self.user_repository.get(user_id)
+        if user is None:
+            return
+
+        user.unfollow_topic(topic_id)
+
+        await self.user_repository.update(user)

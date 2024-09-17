@@ -54,6 +54,7 @@ class MongoDBUser(BaseModel):
     youtube_unfollowed_subscription_uuids: List[UUID] = []
     is_admin: bool = False
     curators: list[UUID] = []
+    followed_topics: list[UUID] = []
     password_hash: MongoDBHashedPassword | None = None
 
     @staticmethod
@@ -74,6 +75,7 @@ class MongoDBUser(BaseModel):
             subscription_uuids=list(user.get_subscriptions(include_youtube=False)),
             youtube_subscription_uuids=list(user.get_youtube_subscriptions()),
             youtube_unfollowed_subscription_uuids=list(user.get_youtube_unfollowed_subscriptions()),
+            followed_topics=list(user.get_followed_topics()),
             is_admin=user.is_admin,
             curators=list(user.curators),
             password_hash=None if user.password_hash is None
@@ -97,6 +99,7 @@ class MongoDBUser(BaseModel):
             _subscription_uuids=set(self.subscription_uuids),
             _youtube_subscriptions_uuids=set(self.youtube_subscription_uuids),
             _unfollowed_youtube_subscriptions_uuids=set(self.youtube_unfollowed_subscription_uuids),
+            _followed_topics=set(self.followed_topics),
             is_admin=self.is_admin,
             curators=set(self.curators),
             password_hash=None if self.password_hash is None

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Any, Callable, Coroutine, Optional
 from uuid import UUID
@@ -7,10 +8,11 @@ from pydantic import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.items.get_curator_items_handler import GetCuratorItemsHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
-from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsAsUserHandler
+from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsHandler
 from linkurator_core.application.users.find_user_handler import FindCuratorHandler
 from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
+from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
 from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.domain.users.session import Session
@@ -25,11 +27,12 @@ from linkurator_core.infrastructure.fastapi.models.topic import TopicSchema
 
 def get_router(
         get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
+        get_user_profile_handler: GetUserProfileHandler,
         find_user_handler: FindCuratorHandler,
         get_curators_handler: GetCuratorsHandler,
         follow_curator_handler: FollowCuratorHandler,
         unfollow_curator_handler: UnfollowCuratorHandler,
-        get_curator_topics_as_user: GetCuratorTopicsAsUserHandler,
+        get_curator_topics_handler: GetCuratorTopicsHandler,
         get_curator_subscriptions_handler: GetUserSubscriptionsHandler,
         get_curator_items_handler: GetCuratorItemsHandler
 ) -> APIRouter:
@@ -117,16 +120,13 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        response = await get_curator_topics_as_user.handle(curator_id, session.user_id)
-
-        return [
-            TopicSchema.from_domain_topic(
-                topic=topic.topic,
-                current_user_id=session.user_id,
-                followed=topic.followed)
-            for topic
-            in response
-        ]
+        results = await asyncio.gather(
+            get_curator_topics_handler.handle(curator_id),
+            get_user_profile_handler.handle(session.user_id)
+        )
+        topics = results[0]
+        user = results[1]
+        return [TopicSchema.from_domain_topic(topic=topic, user=user) for topic in topics]
 
     @router.get("/{curator_id}/subscriptions",
                 responses={
@@ -140,9 +140,16 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        subs = await get_curator_subscriptions_handler.handle(user_id=curator_id)
+        results = await asyncio.gather(
+            get_curator_subscriptions_handler.handle(user_id=curator_id),
+            get_user_profile_handler.handle(session.user_id)
+        )
+        curator_subs = results[0]
+        user = results[1]
 
-        return FullPage.create([SubscriptionSchema.from_domain_subscription(sub) for sub in subs])
+        return FullPage.create(
+            [SubscriptionSchema.from_domain_subscription(sub, user)
+             for sub in curator_subs])
 
     @router.get("/{curator_id}/items",
                 responses={

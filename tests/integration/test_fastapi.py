@@ -9,8 +9,8 @@ from starlette.status import HTTP_400_BAD_REQUEST
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
-from linkurator_core.application.topics.get_topic_handler import GetTopicHandler, GetTopicResponse
-from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler, GetUserTopicsResponse
+from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
+from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
@@ -59,7 +59,7 @@ def dummy_handlers() -> Handlers:
         get_topic_items_handler=AsyncMock(),
         get_user_topics_handler=AsyncMock(),
         find_topics_by_name_handler=AsyncMock(),
-        get_curator_topics_as_user_handler=AsyncMock(),
+        get_curator_topics_handler=AsyncMock(),
         get_curator_items_handler=AsyncMock(),
         create_topic_handler=AsyncMock(),
         assign_subscription_to_topic_handler=AsyncMock(),
@@ -102,6 +102,7 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         _subscription_uuids=set(),
         _youtube_subscriptions_uuids=set(),
         _unfollowed_youtube_subscriptions_uuids=set(),
+        _followed_topics=set(),
         google_refresh_token="refresh token",
         is_admin=False,
         curators=set(),
@@ -246,17 +247,16 @@ def test_delete_non_existing_topic_returns_404(handlers: Handlers) -> None:
 
 
 def test_get_topics_returns_200(handlers: Handlers) -> None:
-    dummy_handler = AsyncMock(spec=GetUserTopicsHandler)
-    dummy_handler.handle.return_value = GetUserTopicsResponse(
-        topics=[Topic.new(
-            uuid=uuid.UUID("f22b92da-5b90-455f-8141-fb4a37f07805"),
-            name="topic1",
-            user_id=uuid.UUID("24060726-9ee6-450e-bec2-0edf8e7b33b2"),
-            subscription_ids=[]
-        )],
-        followed_topics_ids=set()
-    )
-    handlers.get_user_topics_handler = dummy_handler
+    handlers.get_user_topics_handler = AsyncMock(spec=GetUserTopicsHandler)
+    handlers.get_user_topics_handler.handle.return_value = [Topic.new(
+        uuid=uuid.UUID("f22b92da-5b90-455f-8141-fb4a37f07805"),
+        name="topic1",
+        user_id=uuid.UUID("24060726-9ee6-450e-bec2-0edf8e7b33b2"),
+        subscription_ids=[]
+    )]
+
+    handlers.get_user_profile_handler = AsyncMock(spec=GetUserProfileHandler)
+    handlers.get_user_profile_handler.handle.return_value = None
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
 
@@ -268,17 +268,16 @@ def test_get_topics_returns_200(handlers: Handlers) -> None:
 
 
 def test_get_topic_returns_200(handlers: Handlers) -> None:
-    dummy_handler = AsyncMock(spec=GetTopicHandler)
-    dummy_handler.handle.return_value = GetTopicResponse(
-        topic=Topic.new(
-            uuid=uuid.UUID("f8be01d6-98b3-4ba7-a540-d2f008d1adbc"),
-            name="topic1",
-            user_id=uuid.UUID("f5b11947-0203-45b5-9c55-f3bd391ed150"),
-            subscription_ids=[uuid.UUID("00ff1b4a-aeed-4321-8e40-53e78c13685d")]
-        ),
-        followed=False
+    handlers.get_topic_handler = AsyncMock(spec=GetTopicHandler)
+    handlers.get_topic_handler.handle.return_value = Topic.new(
+        uuid=uuid.UUID("f8be01d6-98b3-4ba7-a540-d2f008d1adbc"),
+        name="topic1",
+        user_id=uuid.UUID("f5b11947-0203-45b5-9c55-f3bd391ed150"),
+        subscription_ids=[uuid.UUID("00ff1b4a-aeed-4321-8e40-53e78c13685d")]
     )
-    handlers.get_topic_handler = dummy_handler
+
+    handlers.get_user_profile_handler = AsyncMock(spec=GetUserProfileHandler)
+    handlers.get_user_profile_handler.handle.return_value = None
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
 

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional, Coroutine, Annotated
 from uuid import UUID
@@ -15,16 +16,24 @@ from linkurator_core.application.subscriptions.get_subscription_handler import G
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.application.subscriptions.unfollow_subscription_handler import UnfollowSubscriptionHandler
+from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, SubscriptionAlreadyUpdatedError
 from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.users.user import User
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, InteractionFilterSchema, VALID_INTERACTIONS
 from linkurator_core.infrastructure.fastapi.models.page import Page, FullPage
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 
 
-def get_router(
+async def get_user_profile(session: Session | None, handler: GetUserProfileHandler) -> User | None:
+    if session is None:
+        return None
+    return await handler.handle(session.user_id)
+
+def get_router(  # pylint: disable=too-many-statements
         get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
+        get_user_profile_handler: GetUserProfileHandler,
         get_subscription_handler: GetSubscriptionHandler,
         get_user_subscriptions_handler: GetUserSubscriptionsHandler,
         find_subscriptions_by_name_or_url: FindSubscriptionsByNameOrUrlHandler,
@@ -49,9 +58,14 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        subscriptions = await get_user_subscriptions_handler.handle(session.user_id)
+        results = await asyncio.gather(
+            get_user_profile_handler.handle(session.user_id),
+            get_user_subscriptions_handler.handle(session.user_id)
+        )
+        user = results[0]
+        subscriptions = results[1]
 
-        return FullPage.create([SubscriptionSchema.from_domain_subscription(subscription)
+        return FullPage.create([SubscriptionSchema.from_domain_subscription(subscription, user)
                                 for subscription in subscriptions])
 
     @router.get("/search",
@@ -59,15 +73,22 @@ def get_router(
                 )
     async def get_subscriptions_by_name_or_url(
             name_or_url: str,
+            session: Optional[Session] = Depends(get_session)
     ) -> FullPage[SubscriptionSchema]:
         """
         Get the subscription information by name or URL
         :param name_or_url: Name of the subscription or URL of the subscription
         :return: The list of subscriptions that contains the given name
         """
-        subs = await find_subscriptions_by_name_or_url.handle(name_or_url)
+        results = await asyncio.gather(
+            find_subscriptions_by_name_or_url.handle(name_or_url),
+            get_user_profile(session, get_user_profile_handler)
+        )
+        subs = results[0]
+        user = results[1]
+
         return FullPage[SubscriptionSchema].create(
-            elements=[SubscriptionSchema.from_domain_subscription(sub) for sub in subs]
+            elements=[SubscriptionSchema.from_domain_subscription(sub, user) for sub in subs]
         )
 
     @router.get("/{sub_id}",
@@ -77,6 +98,7 @@ def get_router(
                 })
     async def get_subscription(
             sub_id: UUID,
+            session: Optional[Session] = Depends(get_session)
     ) -> SubscriptionSchema:
         """
         Get the subscription information
@@ -84,8 +106,14 @@ def get_router(
         :return: The subscription information. UNAUTHORIZED status code if the session is invalid.
         """
         try:
-            subscription = await get_subscription_handler.handle(sub_id)
-            return SubscriptionSchema.from_domain_subscription(subscription)
+            results = await asyncio.gather(
+                get_subscription_handler.handle(sub_id),
+                get_user_profile(session, get_user_profile_handler)
+            )
+            subscription = results[0]
+            user = results[1]
+
+            return SubscriptionSchema.from_domain_subscription(subscription, user)
         except SubscriptionNotFoundError as error:
             raise default_responses.not_found("Subscription not found") from error
 

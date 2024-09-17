@@ -32,7 +32,7 @@ from linkurator_core.application.topics.create_topic_handler import CreateTopicH
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.topics.find_topics_by_name_handler import FindTopicsByNameHandler
 from linkurator_core.application.topics.follow_topic_handler import FollowTopicHandler
-from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsAsUserHandler
+from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
@@ -61,7 +61,6 @@ from linkurator_core.infrastructure.google.youtube_api_key_checker import Youtub
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
-from linkurator_core.infrastructure.mongodb.followed_topics_repository import MongoDBFollowedTopicsRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.password_change_request_repository import \
     MongoDBPasswordChangeRequestRepository
@@ -97,9 +96,6 @@ def app_handlers() -> Handlers:
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
     topic_repository = MongoDBTopicRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
-        username=db_settings.user, password=db_settings.password)
-    followed_topics_repository = MongoDBFollowedTopicsRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
     credentials_repository = MongodDBExternalCredentialRepository(
@@ -182,12 +178,10 @@ def app_handlers() -> Handlers:
         get_user_topics_handler=GetUserTopicsHandler(
             topic_repo=topic_repository,
             user_repo=user_repository,
-            followed_topics_repo=followed_topics_repository
         ),
-        get_curator_topics_as_user_handler=GetCuratorTopicsAsUserHandler(
+        get_curator_topics_handler=GetCuratorTopicsHandler(
             user_repository=user_repository,
-            topic_repository=topic_repository,
-            followed_topics_repository=followed_topics_repository),
+            topic_repository=topic_repository),
         find_topics_by_name_handler=FindTopicsByNameHandler(topic_repository),
         get_curator_items_handler=GetCuratorItemsHandler(
             item_repository=item_repository
@@ -206,15 +200,14 @@ def app_handlers() -> Handlers:
         delete_topic_handler=DeleteUserTopicHandler(topic_repository=topic_repository),
         get_topic_handler=GetTopicHandler(
             topic_repository=topic_repository,
-            followed_topics_repository=followed_topics_repository
         ),
         unassign_subscription_from_topic_handler=UnassignSubscriptionFromUserTopicHandler(
             topic_repository=topic_repository),
         follow_topic_handler=FollowTopicHandler(
-            followed_topics_repository=followed_topics_repository,
+            user_repository=user_repository,
             topic_repository=topic_repository),
         unfollow_topic_handler=UnfollowTopicHandler(
-            followed_topics_repository=followed_topics_repository),
+            user_repository=user_repository,),
         get_item_handler=GetItemHandler(
             item_repository=item_repository),
         create_item_interaction_handler=CreateItemInteractionHandler(

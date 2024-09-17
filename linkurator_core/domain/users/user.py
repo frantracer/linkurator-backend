@@ -68,6 +68,7 @@ class User:
     _youtube_subscriptions_uuids: set[UUID]
     _unfollowed_youtube_subscriptions_uuids: set[UUID]
     _subscription_uuids: set[UUID]
+    _followed_topics: set[UUID]
     is_admin: bool
     curators: set[UUID]
 
@@ -83,7 +84,8 @@ class User:
             google_refresh_token: Optional[str],
             subscription_uuids: Optional[set[UUID]] = None,
             is_admin: bool = False,
-            curators: Optional[set[UUID]] = None
+            curators: Optional[set[UUID]] = None,
+            followed_topics: Optional[set[UUID]] = None
             ) -> User:
         now = datetime.now(timezone.utc)
         return cls(
@@ -102,10 +104,21 @@ class User:
             _youtube_subscriptions_uuids=set(),
             _subscription_uuids=set() if subscription_uuids is None else subscription_uuids,
             _unfollowed_youtube_subscriptions_uuids=set(),
+            _followed_topics=set() if followed_topics is None else followed_topics,
             is_admin=is_admin,
             curators=set() if curators is None else curators,
             password_hash=None
         )
+
+    def follow_topic(self, topic_id: UUID) -> None:
+        self._followed_topics.add(topic_id)
+
+    def unfollow_topic(self, topic_id: UUID) -> None:
+        if topic_id in self._followed_topics:
+            self._followed_topics.remove(topic_id)
+
+    def get_followed_topics(self) -> set[UUID]:
+        return self._followed_topics
 
     def follow_curator(self, curator_id: UUID) -> None:
         self.curators.add(curator_id)

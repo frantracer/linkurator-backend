@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Any, Callable, Coroutine, Optional, Annotated
 from uuid import UUID
@@ -19,9 +20,11 @@ from linkurator_core.application.topics.unassign_subscription_from_user_topic_ha
     UnassignSubscriptionFromUserTopicHandler
 from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
+from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.users.user import User
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, InteractionFilterSchema, VALID_INTERACTIONS
 from linkurator_core.infrastructure.fastapi.models.page import Page, FullPage
@@ -30,6 +33,7 @@ from linkurator_core.infrastructure.fastapi.models.topic import NewTopicSchema, 
 
 def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-statements
         get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
+        get_user_profile_handler: GetUserProfileHandler,
         create_topic_handler: CreateTopicHandler,
         get_user_topics_handler: GetUserTopicsHandler,
         get_topic_handler: GetTopicHandler,
@@ -128,28 +132,42 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         if session is None:
             raise default_responses.not_authenticated()
 
-        response = await get_user_topics_handler.handle(user_id=session.user_id)
+        results = await asyncio.gather(
+            get_user_profile_handler.handle(session.user_id),
+            get_user_topics_handler.handle(user_id=session.user_id)
+        )
+        user = results[0]
+        topics = results[1]
 
         return Page[TopicSchema].create(
-            elements=[TopicSchema.from_domain_topic(topic, session.user_id, topic.uuid in response.followed_topics_ids)
-                      for topic
-                      in response.topics],
+            elements=[TopicSchema.from_domain_topic(topic, user) for topic in topics],
             page_number=0,
-            page_size=len(response.topics) + 1,
+            page_size=len(topics) + 1,
             current_url=request.url)
 
     @router.get("/name/{name}",
                 responses={
                 })
     async def find_topics_by_name(
-            name: str
+            name: str,
+            session: Optional[Session] = Depends(get_session)
     ) -> FullPage[TopicSchema]:
         """
         Find topics by name
         """
-        topics = await find_topics_by_name_handler.handle(name=name)
+        async def get_user_profile(session: Optional[Session]) -> Optional[User]:
+            if session is None:
+                return None
+            return await get_user_profile_handler.handle(session.user_id)
+
+        results = await asyncio.gather(
+            get_user_profile(session),
+            find_topics_by_name_handler.handle(name=name)
+        )
+        user = results[0]
+        topics = results[1]
         return FullPage[TopicSchema].create(
-            elements=[TopicSchema.from_domain_topic(topic, None, False) for topic in topics]
+            elements=[TopicSchema.from_domain_topic(topic, user) for topic in topics]
         )
 
     @router.get("/{topic_id}",
@@ -163,13 +181,19 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         """
         Get a topic information from a user
         """
-        user_id: Optional[UUID] = None
-        if session is not None:
-            user_id = session.user_id
+        async def get_user_profile(session: Optional[Session]) -> Optional[User]:
+            if session is None:
+                return None
+            return await get_user_profile_handler.handle(session.user_id)
 
         try:
-            response = await get_topic_handler.handle(topic_id=topic_id, user_id=user_id)
-            return TopicSchema.from_domain_topic(response.topic, user_id, response.followed)
+            results = await asyncio.gather(
+                get_user_profile(session),
+                get_topic_handler.handle(topic_id=topic_id)
+            )
+            user = results[0]
+            topic = results[1]
+            return TopicSchema.from_domain_topic(topic, user)
         except TopicNotFoundError as error:
             raise default_responses.not_found('Topic not found') from error
 

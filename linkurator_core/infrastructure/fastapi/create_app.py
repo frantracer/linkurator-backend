@@ -35,7 +35,7 @@ from linkurator_core.application.topics.create_topic_handler import CreateTopicH
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.topics.find_topics_by_name_handler import FindTopicsByNameHandler
 from linkurator_core.application.topics.follow_topic_handler import FollowTopicHandler
-from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsAsUserHandler
+from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
@@ -85,7 +85,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     unfollow_curator_handler: UnfollowCuratorHandler
     create_topic_handler: CreateTopicHandler
     get_user_topics_handler: GetUserTopicsHandler
-    get_curator_topics_as_user_handler: GetCuratorTopicsAsUserHandler
+    get_curator_topics_handler: GetCuratorTopicsHandler
     get_curator_items_handler: GetCuratorItemsHandler
     get_topic_handler: GetTopicHandler
     find_topics_by_name_handler: FindTopicsByNameHandler
@@ -148,11 +148,12 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         tags=["Curators"],
         router=curators.get_router(
             get_session=get_current_session,
+            get_user_profile_handler=handlers.get_user_profile_handler,
             get_curators_handler=handlers.get_curators_handler,
             follow_curator_handler=handlers.follow_curator_handler,
             unfollow_curator_handler=handlers.unfollow_curator_handler,
             find_user_handler=handlers.find_user_handler,
-            get_curator_topics_as_user=handlers.get_curator_topics_as_user_handler,
+            get_curator_topics_handler=handlers.get_curator_topics_handler,
             get_curator_subscriptions_handler=handlers.get_user_subscriptions,
             get_curator_items_handler=handlers.get_curator_items_handler
         ),
@@ -162,6 +163,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         tags=["Topics"],
         router=topics.get_router(
             get_session=get_current_session,
+            get_user_profile_handler=handlers.get_user_profile_handler,
             create_topic_handler=handlers.create_topic_handler,
             get_topic_items_handler=handlers.get_topic_items_handler,
             get_topic_handler=handlers.get_topic_handler,
@@ -179,6 +181,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         tags=["Subscriptions"],
         router=subscriptions.get_router(
             get_session=get_current_session,
+            get_user_profile_handler=handlers.get_user_profile_handler,
             get_subscription_handler=handlers.get_subscription,
             get_user_subscriptions_handler=handlers.get_user_subscriptions,
             find_subscriptions_by_name_or_url=handlers.find_subscriptions_by_name_handler,
