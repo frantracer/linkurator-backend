@@ -137,12 +137,13 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             get_user_topics_handler.handle(user_id=session.user_id)
         )
         user = results[0]
-        topics = results[1]
+        response = results[1]
 
         return Page[TopicSchema].create(
-            elements=[TopicSchema.from_domain_topic(topic, user) for topic in topics],
+            elements=[TopicSchema.from_domain_topic(element.topic, element.curator, user)
+                      for element in response],
             page_number=0,
-            page_size=len(topics) + 1,
+            page_size=len(response) + 1,
             current_url=request.url)
 
     @router.get("/name/{name}",
@@ -155,6 +156,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         """
         Find topics by name
         """
+
         async def get_user_profile(session: Optional[Session]) -> Optional[User]:
             if session is None:
                 return None
@@ -165,9 +167,10 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             find_topics_by_name_handler.handle(name=name)
         )
         user = results[0]
-        topics = results[1]
+        response = results[1]
         return FullPage[TopicSchema].create(
-            elements=[TopicSchema.from_domain_topic(topic, user) for topic in topics]
+            elements=[TopicSchema.from_domain_topic(element.topic, element.curator, user)
+                      for element in response]
         )
 
     @router.get("/{topic_id}",
@@ -181,6 +184,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         """
         Get a topic information from a user
         """
+
         async def get_user_profile(session: Optional[Session]) -> Optional[User]:
             if session is None:
                 return None
@@ -192,8 +196,9 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
                 get_topic_handler.handle(topic_id=topic_id)
             )
             user = results[0]
-            topic = results[1]
-            return TopicSchema.from_domain_topic(topic, user)
+            topic = results[1].topic
+            curator = results[1].curator
+            return TopicSchema.from_domain_topic(topic, curator, user)
         except TopicNotFoundError as error:
             raise default_responses.not_found('Topic not found') from error
 

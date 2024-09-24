@@ -18,6 +18,7 @@ def mock_user(
         refresh_token: Optional[str] = None,
         is_admin: bool = False,
         curators: Optional[set[UUID]] = None,
+        topics: Optional[set[UUID]] = None,
         email: Optional[str] = None,
         username: Optional[Username] = None
 ) -> User:
@@ -33,7 +34,8 @@ def mock_user(
         google_refresh_token=str(uuid) if refresh_token is None else refresh_token,
         subscription_uuids=set(subscribed_to) if subscribed_to is not None else set(),
         is_admin=is_admin,
-        curators=set() if curators is None else curators
+        curators=set() if curators is None else curators,
+        followed_topics=set() if topics is None else topics
     )
 
 

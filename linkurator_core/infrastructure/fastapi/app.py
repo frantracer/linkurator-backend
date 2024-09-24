@@ -182,9 +182,12 @@ def app_handlers() -> Handlers:
         get_curator_topics_handler=GetCuratorTopicsHandler(
             user_repository=user_repository,
             topic_repository=topic_repository),
-        find_topics_by_name_handler=FindTopicsByNameHandler(topic_repository),
+        find_topics_by_name_handler=FindTopicsByNameHandler(
+            topic_repository=topic_repository,
+            user_repository=user_repository,
+        ),
         get_curator_items_handler=GetCuratorItemsHandler(
-            item_repository=item_repository
+            item_repository=item_repository,
         ),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
         get_topic_items_handler=GetTopicItemsHandler(
@@ -200,6 +203,7 @@ def app_handlers() -> Handlers:
         delete_topic_handler=DeleteUserTopicHandler(topic_repository=topic_repository),
         get_topic_handler=GetTopicHandler(
             topic_repository=topic_repository,
+            user_repository=user_repository
         ),
         unassign_subscription_from_topic_handler=UnassignSubscriptionFromUserTopicHandler(
             topic_repository=topic_repository),

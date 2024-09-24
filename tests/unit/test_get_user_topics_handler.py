@@ -1,4 +1,3 @@
-from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
@@ -6,37 +5,36 @@ import pytest
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
 from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.domain.common.mock_factory import mock_user, mock_topic
-from linkurator_core.domain.topics.topic_repository import TopicRepository
-from linkurator_core.domain.users.user_repository import UserRepository
+from linkurator_core.infrastructure.in_memory.topic_repository import InMemoryTopicRepository
+from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
 @pytest.mark.asyncio
 async def test_get_user_topics_handler() -> None:
-    user_repo_mock = AsyncMock(spec=UserRepository)
+    user_repo_mock = InMemoryUserRepository()
     user = mock_user(uuid=UUID('ac32894a-d568-4def-9cfd-08779845018f'))
-    user_repo_mock.get.return_value = user
-    topic_repo_mock = AsyncMock(spec=TopicRepository)
+    await user_repo_mock.add(user)
+    topic_repo_mock = InMemoryTopicRepository()
     topic1 = mock_topic(
         uuid=UUID('ac32894a-d568-4def-9cfd-08779845018f'),
         user_uuid=user.uuid
     )
-    topic_repo_mock.get_by_user_id.return_value = [topic1]
-    topic_repo_mock.find_topics.return_value = []
+    await topic_repo_mock.add(topic1)
 
     handler = GetUserTopicsHandler(user_repo_mock, topic_repo_mock)
 
-    topics = await handler.handle(user.uuid)
+    curator_topics = await handler.handle(user.uuid)
 
-    assert len(topics) == 1
-    assert topics[0] == topic1
+    assert len(curator_topics) == 1
+    assert curator_topics[0].topic == topic1
+    assert curator_topics[0].curator == user
 
 
 @pytest.mark.asyncio
 async def test_get_user_topics_handler_user_not_found() -> None:
-    user_repo_mock = AsyncMock(spec=UserRepository)
-    user_repo_mock.get.return_value = None
+    user_repo_mock = InMemoryUserRepository()
 
-    topic_repo_mock = AsyncMock(spec=TopicRepository)
+    topic_repo_mock = InMemoryTopicRepository()
 
     handler = GetUserTopicsHandler(user_repo_mock, topic_repo_mock)
 
@@ -46,12 +44,9 @@ async def test_get_user_topics_handler_user_not_found() -> None:
 
 @pytest.mark.asyncio
 async def test_get_user_topics_with_followed_topics() -> None:
-    user_repo_mock = AsyncMock(spec=UserRepository)
-    user1 = mock_user(uuid=UUID('f437675d-e21e-4b79-af95-1d33ccfd7cc6'))
-    user2 = mock_user(uuid=UUID('ead32543-3ab0-41a3-81de-a7cf751bcbcf'))
-    user_repo_mock.get.return_value = user1
+    user1 = mock_user()
+    user2 = mock_user()
 
-    topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic1 = mock_topic(
         uuid=UUID('6c2483d0-a811-479c-8234-441686690c47'),
         user_uuid=user1.uuid
@@ -61,12 +56,20 @@ async def test_get_user_topics_with_followed_topics() -> None:
         user_uuid=user2.uuid
     )
 
-    topic_repo_mock.get_by_user_id.return_value = [topic1]
-    topic_repo_mock.find_topics.return_value = [topic2]
+    user1.follow_topic(topic2.uuid)
+
+    user_repo_mock = InMemoryUserRepository()
+    await user_repo_mock.add(user1)
+    await user_repo_mock.add(user2)
+
+    topic_repo_mock = InMemoryTopicRepository()
+    await topic_repo_mock.add(topic1)
+    await topic_repo_mock.add(topic2)
 
     handler = GetUserTopicsHandler(user_repo_mock, topic_repo_mock)
 
-    topics = await handler.handle(user1.uuid)
+    curator_topics = await handler.handle(user1.uuid)
 
-    assert len(topics) == 2
-    assert {topic.uuid for topic in topics} == {topic1.uuid, topic2.uuid}
+    assert len(curator_topics) == 2
+    assert {element.topic.uuid for element in curator_topics} == {topic1.uuid, topic2.uuid}
+    assert {element.curator.uuid for element in curator_topics} == {user1.uuid, user2.uuid}

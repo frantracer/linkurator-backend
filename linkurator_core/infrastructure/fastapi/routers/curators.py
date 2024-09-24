@@ -124,9 +124,10 @@ def get_router(
             get_curator_topics_handler.handle(curator_id),
             get_user_profile_handler.handle(session.user_id)
         )
-        topics = results[0]
+        response = results[0]
         user = results[1]
-        return [TopicSchema.from_domain_topic(topic=topic, user=user) for topic in topics]
+        return [TopicSchema.from_domain_topic(topic=topic, curator=response.curator, user=user)
+                for topic in response.topics]
 
     @router.get("/{curator_id}/subscriptions",
                 responses={

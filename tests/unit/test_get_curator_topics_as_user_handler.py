@@ -23,8 +23,9 @@ async def test_get_curator_topics_handler() -> None:
         topic_repository=topic_repo_mock,
     )
 
-    topics = await handler.handle(curator_id=curator.uuid)
+    response = await handler.handle(curator_id=curator.uuid)
 
-    assert len(topics) == 2
-    assert topics[0] == mocked_topic_1
-    assert topics[1] == mocked_topic_2
+    assert len(response.topics) == 2
+    assert response.topics[0] == mocked_topic_1
+    assert response.topics[1] == mocked_topic_2
+    assert response.curator == curator
