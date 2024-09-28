@@ -35,6 +35,7 @@ def get_router(
         return ProfileSchema.from_domain_user(user)
 
     @router.patch("/",
+                  status_code=status.HTTP_204_NO_CONTENT,
                   responses={
                       status.HTTP_401_UNAUTHORIZED: {'model': None},
                   })
