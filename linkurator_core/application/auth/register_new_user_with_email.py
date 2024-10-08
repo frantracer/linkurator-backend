@@ -49,7 +49,8 @@ class RegisterNewUserWithEmail:
             password: str,
             first_name: str,
             last_name: str,
-            username: Username
+            username: Username,
+            validation_base_url: AnyUrl
     ) -> list[RegistrationError]:
         errors: list[RegistrationError] = []
 
@@ -79,7 +80,8 @@ class RegisterNewUserWithEmail:
         )
         new_user.set_password(password)
 
-        request = RegistrationRequest.new(user=new_user, seconds_to_expire=ONE_DAY_IN_SECONDS)
+        request = RegistrationRequest.new(user=new_user, seconds_to_expire=ONE_DAY_IN_SECONDS,
+                                          validation_base_url=validation_base_url)
         await self.registration_request_repository.add_request(request=request)
 
         event = UserRegisterRequestSentEvent.new(request_uuid=request.uuid)

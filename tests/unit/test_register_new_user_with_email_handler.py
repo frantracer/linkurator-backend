@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock
 
 import pytest
+from pydantic import AnyUrl
 
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail, RegistrationError
 from linkurator_core.domain.common.event import UserRegisterRequestSentEvent
@@ -25,7 +26,8 @@ async def test_register_new_user_with_email() -> None:
         password="1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
         first_name="John",
         last_name="Doe",
-        username=Username("johndoe")
+        username=Username("johndoe"),
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
     )
 
     assert len(errors) == 0
@@ -55,7 +57,8 @@ async def test_register_new_user_with_email_email_already_registered() -> None:
         password="1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
         first_name="John",
         last_name="Doe",
-        username=Username("johndoe")
+        username=Username("johndoe"),
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
     )
 
     assert len(errors) == 1
@@ -80,7 +83,8 @@ async def test_register_new_user_with_all_errors() -> None:
         password="2",
         first_name="John",
         last_name="Doe",
-        username=Username("johndoe")
+        username=Username("johndoe"),
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
     )
 
     assert len(errors) == 3

@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
+from pydantic import AnyUrl
 
 from linkurator_core.application.auth.request_password_change import RequestPasswordChange
 from linkurator_core.domain.common.mock_factory import mock_user
@@ -17,7 +18,7 @@ async def test_request_password_change_handler() -> None:
     password_change_request_repository = InMemoryPasswordChangeRequestRepository()
     email_sender = AsyncMock(spec=EmailSender)
     email_sender.send_email.return_value = True
-    base_url = "https://linkurator.com/change-password"
+    base_url = AnyUrl("https://linkurator-test.com/change-password")
 
     user = mock_user()
     await user_repo.add(user)
@@ -27,11 +28,10 @@ async def test_request_password_change_handler() -> None:
         user_repository=user_repo,
         password_change_request_repository=password_change_request_repository,
         email_sender=email_sender,
-        base_url=base_url,
         uuid_generator=lambda: request_uuid
     )
 
-    await handler.handle(email=user.email)
+    await handler.handle(email=user.email, validate_base_url=base_url)
 
     assert len(email_sender.send_email.call_args_list) == 1
     assert f"{base_url}/{str(request_uuid)}" in email_sender.send_email.call_args_list[0][0][2]

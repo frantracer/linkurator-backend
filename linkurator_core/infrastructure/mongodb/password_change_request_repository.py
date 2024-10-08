@@ -7,7 +7,7 @@ from uuid import UUID
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
-from pydantic import BaseModel
+from pydantic import BaseModel, AnyUrl
 
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.password_change_request_repository import PasswordChangeRequestRepository
@@ -19,20 +19,23 @@ class MongoDBPasswordChangeRequest(BaseModel):
     uuid: UUID
     user_id: UUID
     valid_until: int
+    validation_base_url: str
 
     @staticmethod
     def from_domain_password_change_request(request: PasswordChangeRequest) -> MongoDBPasswordChangeRequest:
         return MongoDBPasswordChangeRequest(
             uuid=request.uuid,
             user_id=request.user_id,
-            valid_until=int(request.valid_until.timestamp())
+            valid_until=int(request.valid_until.timestamp()),
+            validation_base_url=str(request.validation_base_url)
         )
 
     def to_domain_password_change_request(self) -> PasswordChangeRequest:
         return PasswordChangeRequest(
             uuid=self.uuid,
             user_id=self.user_id,
-            valid_until=datetime.fromtimestamp(self.valid_until, tz=timezone.utc)
+            valid_until=datetime.fromtimestamp(self.valid_until, tz=timezone.utc),
+            validation_base_url=AnyUrl(self.validation_base_url)
         )
 
 

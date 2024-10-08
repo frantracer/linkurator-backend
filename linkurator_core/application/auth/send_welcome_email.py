@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from pydantic import AnyUrl
+
 from linkurator_core.domain.notifications.email_sender import EmailSender
 from linkurator_core.domain.users.user_repository import UserRepository
 
@@ -8,7 +10,7 @@ class SendWelcomeEmail:
     def __init__(self,
                  user_repository: UserRepository,
                  email_sender: EmailSender,
-                 base_url: str
+                 base_url: AnyUrl
                  ) -> None:
         self.user_repository = user_repository
         self.email_sender = email_sender

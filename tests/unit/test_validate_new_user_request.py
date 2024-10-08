@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
+from pydantic import AnyUrl
 
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.domain.common.event_bus_service import EventBusService
@@ -21,7 +22,8 @@ async def test_validate_new_user_request() -> None:
 
     request = RegistrationRequest.new(
         user=mock_user(),
-        seconds_to_expire=60
+        seconds_to_expire=60,
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
     )
     await reg_request_repo.add_request(request)
 
@@ -46,7 +48,8 @@ async def test_expired_registration_request() -> None:
 
     request = RegistrationRequest.new(
         user=mock_user(),
-        seconds_to_expire=-60
+        seconds_to_expire=-60,
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
     )
     await reg_request_repo.add_request(request)
 

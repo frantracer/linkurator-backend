@@ -112,8 +112,7 @@ async def main() -> None:  # pylint: disable=too-many-locals
         event_bus=event_bus)
     send_validate_new_user_email = SendValidateNewUserEmail(
         email_sender=gmail_email_sender,
-        registration_request_repository=registration_request_repository,
-        base_url=env_settings.VALIDATE_EMAIL_URL
+        registration_request_repository=registration_request_repository
     )
     send_welcome_email = SendWelcomeEmail(
         user_repository=user_repository,

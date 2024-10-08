@@ -521,7 +521,8 @@ def test_register_new_user_with_invalid_username_returns_bad_request_error(handl
             "password": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
             "first_name": "John",
             "last_name": "Doe",
-            "username": "a a"
+            "username": "a a",
+            "validation_base_url": "https://linkurator-test.com/validate"
         })
 
     assert response.status_code == HTTP_400_BAD_REQUEST

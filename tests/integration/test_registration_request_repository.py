@@ -4,6 +4,7 @@ from typing import Any
 from uuid import uuid4, UUID
 
 import pytest
+from pydantic import AnyUrl
 
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.registration_request import RegistrationRequest
@@ -35,7 +36,8 @@ async def test_add_request(reg_request_repo: RegistrationRequestRepository) -> N
     request = RegistrationRequest(
         uuid=UUID("647e918e-658f-4372-9da5-98c2354e287f"),
         user=mock_user(),
-        valid_until=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc)
+        valid_until=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
     )
 
     await reg_request_repo.add_request(request)
@@ -57,7 +59,8 @@ async def test_delete_request(reg_request_repo: RegistrationRequestRepository) -
     request = RegistrationRequest(
         uuid=UUID("530a57f4-8648-4f83-9ad5-c4d02ffd08ae"),
         user=mock_user(),
-        valid_until=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc)
+        valid_until=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
     )
 
     await reg_request_repo.add_request(request)

@@ -7,7 +7,7 @@ from uuid import UUID
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
-from pydantic import BaseModel
+from pydantic import BaseModel, AnyUrl
 
 from linkurator_core.domain.users.registration_request import RegistrationRequest
 from linkurator_core.domain.users.registration_requests_repository import RegistrationRequestRepository
@@ -20,20 +20,23 @@ class MongoDBRegistrationRequest(BaseModel):
     uuid: UUID
     user: MongoDBUser
     valid_until: datetime
+    validation_base_url: str
 
     @staticmethod
     def from_domain_registration_request(request: RegistrationRequest) -> MongoDBRegistrationRequest:
         return MongoDBRegistrationRequest(
             uuid=request.uuid,
             user=MongoDBUser.from_domain_user(request.user),
-            valid_until=request.valid_until
+            valid_until=request.valid_until,
+            validation_base_url=str(request.validation_base_url)
         )
 
     def to_domain_registration_request(self) -> RegistrationRequest:
         return RegistrationRequest(
             uuid=self.uuid,
             user=self.user.to_domain_user(),
-            valid_until=self.valid_until
+            valid_until=self.valid_until,
+            validation_base_url=AnyUrl(self.validation_base_url)
         )
 
 

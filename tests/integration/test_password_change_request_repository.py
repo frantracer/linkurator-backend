@@ -4,6 +4,7 @@ from typing import Any
 from uuid import uuid4, UUID
 
 import pytest
+from pydantic import AnyUrl
 
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.password_change_request_repository import PasswordChangeRequestRepository
@@ -35,7 +36,8 @@ async def test_add_request(pass_change_request_repo: PasswordChangeRequestReposi
     request = PasswordChangeRequest(
         uuid=UUID("fae509b1-4b54-4c9a-84bb-b8f05ae48bb2"),
         user_id=UUID("e76c71f3-1717-48d5-9f7c-d0cc4b3a0a6a"),
-        valid_until=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc)
+        valid_until=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
+        validation_base_url=AnyUrl("http://localhost")
     )
 
     await pass_change_request_repo.add_request(request)
@@ -57,7 +59,8 @@ async def test_delete_request(pass_change_request_repo: PasswordChangeRequestRep
     request = PasswordChangeRequest(
         uuid=UUID("d3b97d65-3f5b-4f93-8932-bfa162bf1480"),
         user_id=UUID("71d701ec-dd9e-4018-ad13-bc14b261e46f"),
-        valid_until=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc)
+        valid_until=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
+        validation_base_url=AnyUrl("http://localhost")
     )
 
     await pass_change_request_repo.add_request(request)

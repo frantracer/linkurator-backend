@@ -49,6 +49,8 @@ from linkurator_core.application.users.get_curators_handler import GetCuratorsHa
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
+from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
+from linkurator_core.domain.users.registration_request import RegistrationRequest
 from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
@@ -129,6 +131,9 @@ def app_handlers() -> Handlers:
         account_service=account_service,
     )
 
+    RegistrationRequest.valid_domains = env_settings.VALID_DOMAINS
+    PasswordChangeRequest.valid_domains = env_settings.VALID_DOMAINS
+
     return Handlers(
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
         validate_user_password=ValidateUserPassword(user_repository, session_repository),
@@ -144,8 +149,7 @@ def app_handlers() -> Handlers:
         request_password_change=RequestPasswordChange(
             user_repository=user_repository,
             password_change_request_repository=password_change_request_repository,
-            email_sender=email_sender,
-            base_url=env_settings.PASSWORD_CHANGE_URL),
+            email_sender=email_sender),
         change_password_from_request=ChangePasswordFromRequest(
             user_repository=user_repository,
             request_repository=password_change_request_repository),
@@ -211,7 +215,7 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             topic_repository=topic_repository),
         unfollow_topic_handler=UnfollowTopicHandler(
-            user_repository=user_repository,),
+            user_repository=user_repository, ),
         get_item_handler=GetItemHandler(
             item_repository=item_repository),
         create_item_interaction_handler=CreateItemInteractionHandler(

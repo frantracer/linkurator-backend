@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 import pytest
+from pydantic import AnyUrl
 
 from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.domain.common.mock_factory import mock_user
@@ -14,12 +15,13 @@ from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUse
 async def test_change_password_from_request() -> None:
     user_repo = InMemoryUserRepository()
     password_change_request_repository = InMemoryPasswordChangeRequestRepository()
+    base_url = AnyUrl("https://linkurator-test.com/change-password")
 
     user = mock_user()
     user.set_password("2222222222222222222222222222222222222222222222222222222222222222")
     await user_repo.add(user)
 
-    request = PasswordChangeRequest.new(user_id=user.uuid, seconds_to_expire=600)
+    request = PasswordChangeRequest.new(user_id=user.uuid, seconds_to_expire=600, validation_base_url=base_url)
     await password_change_request_repository.add_request(request)
 
     handler = ChangePasswordFromRequest(
@@ -40,13 +42,14 @@ async def test_change_password_from_request() -> None:
 async def test_change_password_from_expired_request() -> None:
     user_repo = InMemoryUserRepository()
     password_change_request_repository = InMemoryPasswordChangeRequestRepository()
+    base_url = AnyUrl("https://linkurator-test.com/change-password")
 
     user = mock_user()
     initial_password = "2222222222222222222222222222222222222222222222222222222222222222"
     user.set_password(initial_password)
     await user_repo.add(user)
 
-    request = PasswordChangeRequest.new(user_id=user.uuid, seconds_to_expire=60,
+    request = PasswordChangeRequest.new(user_id=user.uuid, seconds_to_expire=60, validation_base_url=base_url,
                                         now_function=lambda: datetime.fromtimestamp(0, tz=timezone.utc))
 
     await password_change_request_repository.add_request(request)

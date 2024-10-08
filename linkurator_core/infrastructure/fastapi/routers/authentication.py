@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import Request, status, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.routing import APIRouter
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, AnyUrl
 
 from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
@@ -35,6 +35,7 @@ class NewUserSchema(BaseModel):
     first_name: str
     last_name: str
     username: str
+    validation_base_url: AnyUrl
 
 
 class LoginUserSchema(BaseModel):
@@ -238,7 +239,8 @@ def get_router(  # pylint: disable=too-many-statements
                 password=str(new_user.password),
                 first_name=new_user.first_name,
                 last_name=new_user.last_name,
-                username=Username(new_user.username)
+                username=Username(new_user.username),
+                validation_base_url=new_user.validation_base_url
             )
             if errors:
                 return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
@@ -291,11 +293,11 @@ def get_router(  # pylint: disable=too-many-statements
     @router.post("/change_password",
                  status_code=status.HTTP_204_NO_CONTENT
                  )
-    async def request_change_password(email: EmailStr) -> None:
+    async def request_change_password(email: EmailStr, validate_url: AnyUrl) -> None:
         """
         Request reset password endpoint
         """
-        await request_password_change.handle(email=email)
+        await request_password_change.handle(email=email, validate_base_url=validate_url)
 
     @router.post("/change_password/{request_id}",
                  status_code=status.HTTP_204_NO_CONTENT,
