@@ -43,6 +43,11 @@ class LoginUserSchema(BaseModel):
     password: PasswordWith64HexCharacters
 
 
+class RequestPasswordChangeSchema(BaseModel):
+    email: EmailStr
+    validate_url: AnyUrl
+
+
 class ChangePasswordSchema(BaseModel):
     new_password: PasswordWith64HexCharacters
 
@@ -293,11 +298,13 @@ def get_router(  # pylint: disable=too-many-statements
     @router.post("/change_password",
                  status_code=status.HTTP_204_NO_CONTENT
                  )
-    async def request_change_password(email: EmailStr, validate_url: AnyUrl) -> None:
+    async def request_change_password(password_change: RequestPasswordChangeSchema) -> None:
         """
         Request reset password endpoint
         """
-        await request_password_change.handle(email=email, validate_base_url=validate_url)
+        await request_password_change.handle(
+            email=password_change.email,
+            validate_base_url=password_change.validate_url)
 
     @router.post("/change_password/{request_id}",
                  status_code=status.HTTP_204_NO_CONTENT,
