@@ -23,9 +23,17 @@ def parse_arguments() -> InputArguments:
                         help="The subject of the email")
     parser.add_argument("--message_text", default="Email sent with Gmail API",
                         help="The body of the email")
+    parser.add_argument("--html-path", default="",
+                        help="Html path to be sent")
 
     args = parser.parse_args()
-    return InputArguments(email=args.email, subject=args.subject, message_text=args.message_text)
+
+    body = args.message_text
+    if args.html_path != "":
+        with open(args.html_path, 'r', encoding='utf-8') as fd:
+            body = fd.read()
+
+    return InputArguments(email=args.email, subject=args.subject, message_text=body)
 
 
 async def main() -> None:

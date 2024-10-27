@@ -60,3 +60,7 @@ class FailToRevokeCredentialsError(Exception):
 
 class UsernameAlreadyInUseError(Exception):
     pass
+
+
+class NonExistingFileError(Exception):
+    pass

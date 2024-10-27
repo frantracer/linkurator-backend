@@ -33,7 +33,7 @@ class GmailEmailSender(EmailSender):
         message = MIMEMultipart()
         message['to'] = user_email
         message['subject'] = subject
-        message.attach(MIMEText(message_text))
+        message.attach(MIMEText(message_text, 'html'))
 
         raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
 

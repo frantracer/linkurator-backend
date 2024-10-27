@@ -1,9 +1,17 @@
+import logging
+from pathlib import Path
 from uuid import UUID
 
+import jinja2
 from pydantic import AnyUrl
 
+from linkurator_core.domain.common.exceptions import NonExistingFileError
 from linkurator_core.domain.notifications.email_sender import EmailSender
 from linkurator_core.domain.users.user_repository import UserRepository
+
+WELCOME_EMAIL_TEMPLATE_PATH = Path(__file__).parent.parent.parent / "templates" / "bienvenida_linkurator.html"
+if not WELCOME_EMAIL_TEMPLATE_PATH.exists():
+    raise NonExistingFileError(str(WELCOME_EMAIL_TEMPLATE_PATH))
 
 
 class SendWelcomeEmail:
@@ -21,8 +29,13 @@ class SendWelcomeEmail:
         if user is None:
             return
 
+        environment = jinja2.Environment()
+        template = environment.from_string(WELCOME_EMAIL_TEMPLATE_PATH.read_text())
+        message_text = template.render(name=user.first_name, web_url=self.base_url)
+
         subject = "Linkurator te da la bienvenida"
-        message_text = f"¡Hola {user.first_name}!\n\nTe damos la bienvenida a Linkurator: {self.base_url}"
         email = user.email
 
         await self.email_sender.send_email(email, subject, message_text)
+
+        logging.info("Welcome email sent to %s", email)
