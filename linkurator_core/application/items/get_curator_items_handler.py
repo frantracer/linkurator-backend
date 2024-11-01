@@ -25,7 +25,7 @@ class GetCuratorItemsHandler:
             page_number: int,
             page_size: int,
             curator_id: UUID,
-            user_id: UUID,
+            user_id: UUID | None = None,
             text_filter: str | None = None,
             min_duration: int | None = None,
             max_duration: int | None = None,
@@ -45,6 +45,14 @@ class GetCuratorItemsHandler:
 
         items_ids = {interaction.item_uuid for interaction in curator_items_interactions}
 
+        async def get_user_interactions_if_user_id_provided() -> dict[UUID, list[Interaction]]:
+            if user_id is not None:
+                return await self.item_repository.get_user_interactions_by_item_id(
+                    user_id=user_id,
+                    item_ids=list(items_ids)
+                )
+            return {}
+
         results = await asyncio.gather(
             self.item_repository.find_items(
                 criteria=ItemFilterCriteria(
@@ -53,10 +61,7 @@ class GetCuratorItemsHandler:
                 page_number=0,
                 limit=len(items_ids)
             ),
-            self.item_repository.get_user_interactions_by_item_id(
-                user_id=user_id,
-                item_ids=list(items_ids)
-            )
+            get_user_interactions_if_user_id_provided()
         )
         curator_items = results[0]
         user_items_interactions = results[1]

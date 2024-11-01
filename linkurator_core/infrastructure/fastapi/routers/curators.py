@@ -97,11 +97,10 @@ def get_router(
             username: str,
             session: Optional[Session] = Depends(get_session),
     ) -> CuratorSchema:
-        if session is None:
-            raise default_responses.not_authenticated()
-
         try:
-            response = await find_user_handler.handle(Username(username), session.user_id)
+            response = await find_user_handler.handle(
+                username=Username(username),
+                current_user_id=session.user_id if session is not None else None)
             if response.user is None:
                 raise default_responses.not_found("User not found")
             return CuratorSchema.from_domain_user(user=response.user, followed=response.followed)
@@ -168,14 +167,11 @@ def get_router(
             max_duration: Optional[int] = None,
             session: Optional[Session] = Depends(get_session),
     ) -> Page[ItemSchema]:
-        if session is None:
-            raise default_responses.not_authenticated()
-
         if created_before_ts is None:
             created_before_ts = datetime.now(tz=timezone.utc).timestamp()
 
         response = await get_curator_items_handler.handle(
-            user_id=session.user_id,
+            user_id=session.user_id if session is not None else None,
             curator_id=curator_id,
             created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
             page_size=page_size,

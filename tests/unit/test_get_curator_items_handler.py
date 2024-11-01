@@ -40,3 +40,32 @@ async def test_get_curator_items_handlers_returns_items_and_interactions_for_cur
     assert response[0].item.uuid == item.uuid
     assert response[0].user_interactions[0].type == InteractionType.DISCOURAGED
     assert response[0].curator_interactions[0].type == InteractionType.RECOMMENDED
+
+
+@pytest.mark.asyncio
+async def test_get_curator_items_handlers_returns_items_for_curator_with_no_interactions_if_user_is_none() -> None:
+    curator = mock_user()
+    item = mock_item()
+
+    curator_recommendation = mock_interaction(
+        user_id=curator.uuid,
+        item_id=item.uuid,
+        interaction_type=InteractionType.RECOMMENDED)
+
+    item_repo = InMemoryItemRepository()
+    await item_repo.upsert_items([item])
+    await item_repo.add_interaction(curator_recommendation)
+
+    handler = GetCuratorItemsHandler(item_repo)
+
+    now = datetime.now(tz=timezone.utc)
+    response = await handler.handle(
+        created_before=now,
+        page_number=0,
+        page_size=10,
+        curator_id=curator.uuid,
+    )
+
+    assert len(response) == 1
+    assert response[0].item.uuid == item.uuid
+    assert len(response[0].user_interactions) == 0
