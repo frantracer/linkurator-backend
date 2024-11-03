@@ -159,7 +159,10 @@ def app_handlers() -> Handlers:
         unfollow_subscription_handler=UnfollowSubscriptionHandler(
             subscription_repository, user_repository, topic_repository),
         get_subscription=GetSubscriptionHandler(subscription_repository),
-        get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository),
+        get_subscription_items_handler=GetSubscriptionItemsHandler(
+            item_repository=item_repository,
+            subscription_repository=subscription_repository
+        ),
         delete_subscription_items_handler=DeleteSubscriptionItemsHandler(
             item_repository=item_repository,
             subscription_repository=subscription_repository,
