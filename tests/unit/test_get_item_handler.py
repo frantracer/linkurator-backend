@@ -1,55 +1,39 @@
-from datetime import timezone, datetime
-from unittest.mock import MagicMock
 from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.items.get_item_handler import GetItemHandler
-from linkurator_core.domain.common import utils
+from linkurator_core.application.items.get_item_handler import GetItemHandler, GetItemResponse
 from linkurator_core.domain.common.exceptions import ItemNotFoundError
-from linkurator_core.domain.items.interaction import Interaction, InteractionType
-from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.items.item_repository import ItemRepository
-from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
+from linkurator_core.domain.common.mock_factory import mock_item, mock_interaction, mock_sub
+from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
+from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 
 
 @pytest.mark.asyncio
 async def test_get_item_with_interaction() -> None:
-    item1 = Item.new(
-        uuid=UUID("e730d42d-a5e6-4705-9850-22b91df95429"),
-        subscription_uuid=UUID("cec49f90-444c-477b-9fa8-96a5f772f2f5"),
-        thumbnail=utils.parse_url("https://example.com/thumbnail1.jpg"),
-        description="Description 1",
-        name="Item 1",
-        url=utils.parse_url("https://example.com/item1"),
-        published_at=datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc),
-    )
-    interaction1 = Interaction.new(
-        uuid=UUID("e730d42d-a5e6-4705-9850-22b91df95429"),
-        item_uuid=item1.uuid,
-        interaction_type=InteractionType.VIEWED,
-        user_uuid=UUID("0cb96f09-6b77-4351-a9f9-331026091c86")
-    )
+    sub = mock_sub()
+    subscription_repository = InMemorySubscriptionRepository()
+    await subscription_repository.add(sub)
 
-    mock_item_repository = MagicMock(spec=ItemRepository)
-    mock_item_repository.get_item.return_value = item1
-    mock_item_repository.get_user_interactions_by_item_id.return_value = {
-        item1.uuid: [interaction1]
-    }
+    item1 = mock_item(sub_uuid=sub.uuid)
+    interaction1 = mock_interaction(item_id=item1.uuid)
+    item_repository = InMemoryItemRepository()
+    await item_repository.upsert_items([item1])
+    await item_repository.add_interaction(interaction1)
 
-    handler = GetItemHandler(item_repository=mock_item_repository)
+    handler = GetItemHandler(item_repository=item_repository, subscription_repository=subscription_repository)
 
     result = await handler.handle(item_id=item1.uuid, user_id=interaction1.user_uuid)
 
-    assert result == ItemWithInteractions(item1, [interaction1])
+    assert result == GetItemResponse(item=item1, interactions=[interaction1], subscription=sub)
 
 
 @pytest.mark.asyncio
 async def test_get_not_existing_item_returns_error() -> None:
-    mock_item_repository = MagicMock(spec=ItemRepository)
-    mock_item_repository.get_item.return_value = None
+    subscription_repository = InMemorySubscriptionRepository()
+    item_repository = InMemoryItemRepository()
 
-    handler = GetItemHandler(item_repository=mock_item_repository)
+    handler = GetItemHandler(item_repository=item_repository, subscription_repository=subscription_repository)
 
     with pytest.raises(ItemNotFoundError):
         await handler.handle(item_id=UUID("e730d42d-a5e6-4705-9850-22b91df95429"),

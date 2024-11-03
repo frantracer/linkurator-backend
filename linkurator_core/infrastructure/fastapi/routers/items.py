@@ -79,8 +79,11 @@ def get_router(
             raise default_responses.not_authenticated()
 
         try:
-            item_detail = await get_item_handler.handle(user_id=session.user_id, item_id=item_id)
-            return ItemSchema.from_domain_item(item_detail.item, item_detail.interactions)
+            response = await get_item_handler.handle(user_id=session.user_id, item_id=item_id)
+            return ItemSchema.from_domain_item(
+                item=response.item,
+                subscription=response.subscription,
+                interactions=response.interactions)
         except ItemNotFoundError as error:
             raise default_responses.not_found("Item not found") from error
 

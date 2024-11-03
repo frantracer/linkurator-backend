@@ -220,7 +220,9 @@ def app_handlers() -> Handlers:
         unfollow_topic_handler=UnfollowTopicHandler(
             user_repository=user_repository, ),
         get_item_handler=GetItemHandler(
-            item_repository=item_repository),
+            item_repository=item_repository,
+            subscription_repository=subscription_repository
+        ),
         create_item_interaction_handler=CreateItemInteractionHandler(
             item_repository=item_repository),
         delete_item_interaction_handler=DeleteItemInteractionHandler(
