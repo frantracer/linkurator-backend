@@ -159,7 +159,10 @@ def app_handlers() -> Handlers:
         unfollow_subscription_handler=UnfollowSubscriptionHandler(
             subscription_repository, user_repository, topic_repository),
         get_subscription=GetSubscriptionHandler(subscription_repository),
-        get_subscription_items_handler=GetSubscriptionItemsHandler(item_repository),
+        get_subscription_items_handler=GetSubscriptionItemsHandler(
+            item_repository=item_repository,
+            subscription_repository=subscription_repository
+        ),
         delete_subscription_items_handler=DeleteSubscriptionItemsHandler(
             item_repository=item_repository,
             subscription_repository=subscription_repository,
@@ -192,10 +195,12 @@ def app_handlers() -> Handlers:
         ),
         get_curator_items_handler=GetCuratorItemsHandler(
             item_repository=item_repository,
+            subscription_repository=subscription_repository
         ),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
         get_topic_items_handler=GetTopicItemsHandler(
             topic_repository=topic_repository,
+            subscription_repository=subscription_repository,
             item_repository=item_repository),
         assign_subscription_to_topic_handler=AssignSubscriptionToTopicHandler(
             subscription_repository=subscription_repository,
@@ -217,7 +222,9 @@ def app_handlers() -> Handlers:
         unfollow_topic_handler=UnfollowTopicHandler(
             user_repository=user_repository, ),
         get_item_handler=GetItemHandler(
-            item_repository=item_repository),
+            item_repository=item_repository,
+            subscription_repository=subscription_repository
+        ),
         create_item_interaction_handler=CreateItemInteractionHandler(
             item_repository=item_repository),
         delete_item_interaction_handler=DeleteItemInteractionHandler(

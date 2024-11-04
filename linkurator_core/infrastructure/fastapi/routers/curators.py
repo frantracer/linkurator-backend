@@ -188,8 +188,14 @@ def get_router(
         )
 
         return Page[ItemSchema].create(
-            elements=[ItemSchema.from_domain_item(item.item, item.user_interactions)
-                      for item in response],
+            elements=[
+                ItemSchema.from_domain_item(
+                    item=item.item,
+                    subscription=item.subscription,
+                    interactions=item.user_interactions
+                )
+                for item in response
+            ],
             page_number=page_number,
             page_size=page_size,
             current_url=current_url)

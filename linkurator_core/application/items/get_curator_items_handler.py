@@ -6,18 +6,22 @@ from uuid import UUID
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria, InteractionFilterCriteria
+from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 
 
 @dataclass
 class ItemWithInteractions:
     item: Item
+    subscription: Subscription
     user_interactions: list[Interaction]
     curator_interactions: list[Interaction]
 
 
 class GetCuratorItemsHandler:
-    def __init__(self, item_repository: ItemRepository):
+    def __init__(self, item_repository: ItemRepository, subscription_repository: SubscriptionRepository):
         self.item_repository = item_repository
+        self.subscription_repository = subscription_repository
 
     async def handle(
             self,
@@ -66,6 +70,10 @@ class GetCuratorItemsHandler:
         curator_items = results[0]
         user_items_interactions = results[1]
 
+        subscriptions_ids = {item.subscription_uuid for item in curator_items}
+        subscriptions = await self.subscription_repository.get_list(list(subscriptions_ids))
+        subscriptions_index = {sub.uuid: sub for sub in subscriptions}
+
         curator_items_index = {item.uuid: item for item in curator_items}
         curator_items_interactions_index = {
             interaction.item_uuid: [interaction]
@@ -75,6 +83,7 @@ class GetCuratorItemsHandler:
         return [
             ItemWithInteractions(
                 item=curator_items_index[interaction.item_uuid],
+                subscription=subscriptions_index[curator_items_index[interaction.item_uuid].subscription_uuid],
                 user_interactions=user_items_interactions.get(interaction.item_uuid, []),
                 curator_interactions=curator_items_interactions_index.get(interaction.item_uuid, [])
             )

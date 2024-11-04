@@ -9,7 +9,9 @@ from pydantic import AnyUrl, BaseModel
 from linkurator_core.domain.common.units import Seconds
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
+from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 
 
 class ItemSchema(BaseModel):
@@ -18,6 +20,7 @@ class ItemSchema(BaseModel):
     """
     uuid: UUID
     subscription_uuid: UUID
+    subscription: SubscriptionSchema
     name: str
     description: str
     url: AnyUrl
@@ -32,7 +35,12 @@ class ItemSchema(BaseModel):
     hidden: bool
 
     @classmethod
-    def from_domain_item(cls, item: Item, interactions: Optional[List[Interaction]] = None) -> ItemSchema:
+    def from_domain_item(
+            cls,
+            item: Item,
+            subscription: Subscription,
+            interactions: Optional[List[Interaction]] = None
+    ) -> ItemSchema:
         recommended = False
         discouraged = False
         viewed = False
@@ -45,6 +53,7 @@ class ItemSchema(BaseModel):
 
         return cls(uuid=item.uuid,
                    subscription_uuid=item.subscription_uuid,
+                   subscription=SubscriptionSchema.from_domain_subscription(subscription, None),
                    name=item.name,
                    description=item.description,
                    url=item.url,
