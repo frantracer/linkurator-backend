@@ -195,6 +195,7 @@ def app_handlers() -> Handlers:
         ),
         get_curator_items_handler=GetCuratorItemsHandler(
             item_repository=item_repository,
+            subscription_repository=subscription_repository
         ),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
         get_topic_items_handler=GetTopicItemsHandler(
