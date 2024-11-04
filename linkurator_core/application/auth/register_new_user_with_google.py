@@ -16,14 +16,14 @@ class UsernameGenerator(Protocol):
         ...
 
 
-class UsernameGeneratorFromFirstAndLastName:
-    def __init__(self, first_name: str, last_name: str) -> None:
-        self.first_name = first_name
-        self.last_name = last_name
+class UsernameGeneratorFromEmail:
+    def __init__(self, email: str) -> None:
+        self.email = email
 
     def generate_username(self) -> Username:
         random_number = str(uuid4().int)[:4]
-        return Username(f"{self.first_name}{self.last_name}{random_number}".strip().replace(" ", "").lower())
+        email_user = self.email.split("@")[0]
+        return Username(f"{email_user}{random_number}".lower())
 
 
 class RegisterUserHandler:
@@ -48,9 +48,8 @@ class RegisterUserHandler:
 
             username: Username
             if self.username_generator is None:
-                username = UsernameGeneratorFromFirstAndLastName(
-                    user_info.details.given_name,
-                    user_info.details.family_name
+                username = UsernameGeneratorFromEmail(
+                    user_info.email
                 ).generate_username()
             else:
                 username = self.username_generator.generate_username()
