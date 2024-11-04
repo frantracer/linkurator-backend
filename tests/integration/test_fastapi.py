@@ -7,16 +7,19 @@ from fastapi.testclient import TestClient
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
-from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
-from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler, \
+    GetSubscriptionItemsResponse
+from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler, \
+    ItemWithInteractionsAndSubscription
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler, GetTopicResponse
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler, CuratorTopic
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError, \
     CannotUnfollowAssignedSubscriptionError
-from linkurator_core.domain.common.mock_factory import mock_user, mock_topic
+from linkurator_core.domain.common.mock_factory import mock_user, mock_topic, mock_sub
 from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
 from linkurator_core.domain.users.session import Session
 from linkurator_core.domain.users.user import User, Username
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
@@ -136,34 +139,35 @@ def test_user_profile_returns_404_when_user_not_found(handlers: Handlers) -> Non
 
 
 def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
+    sub = mock_sub()
     item1 = Item.new(name="item1",
                      description="",
                      uuid=uuid.UUID("ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8"),
-                     subscription_uuid=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
+                     subscription_uuid=sub.uuid,
                      url=utils.parse_url('https://ae1b82ee.com'),
                      thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
                      published_at=datetime.fromtimestamp(0, tz=timezone.utc))
     dummy_get_subscription_items_handler = AsyncMock(spec=GetSubscriptionItemsHandler)
-    dummy_get_subscription_items_handler.handle.return_value = [(item1, [])]
+    dummy_get_subscription_items_handler.handle.return_value = GetSubscriptionItemsResponse(
+        items=[ItemWithInteractions(item=item1, interactions=[])], subscription=sub
+    )
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
 
-    response = client.get(
-        '/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
-        'created_before_ts=777.0&page_number=0&page_size=1')
+    response = client.get(f'/subscriptions/{sub.uuid}/items?created_before_ts=777.0&page_number=0&page_size=1')
     assert response.status_code == 200
     assert len(response.json()['elements']) == 1
     assert response.json()['next_page'] == (
-        "http://testserver/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?"
+        f"http://testserver/subscriptions/{sub.uuid}/items?"
         "created_before_ts=777.0&page_number=1&page_size=1")
     assert response.json()['previous_page'] is None
 
 
 def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> None:
-    dummy_get_subscription_items_handler = AsyncMock(spec=GetSubscriptionItemsHandler)
-    dummy_get_subscription_items_handler.handle.return_value = []
-    handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
+    dummy_handler = AsyncMock(spec=GetSubscriptionItemsHandler)
+    dummy_handler.handle.return_value = GetSubscriptionItemsResponse(items=[], subscription=mock_sub())
+    handlers.get_subscription_items_handler = dummy_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
 
@@ -172,7 +176,7 @@ def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> N
         'page_number=0&page_size=1&search=test&created_before_ts=0&'
         'max_duration=100&min_duration=10&'
         'include_interactions=without_interactions,recommended,viewed,hidden,discouraged')
-    dummy_get_subscription_items_handler.handle.assert_called_once_with(
+    dummy_handler.handle.assert_called_once_with(
         user_id=USER_UUID,
         subscription_id=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
         created_before=datetime.fromtimestamp(0, tz=timezone.utc),
@@ -189,19 +193,22 @@ def test_get_subscription_items_parses_query_parameters(handlers: Handlers) -> N
 
 
 def test_get_subscription_items_recommended_and_without_interactions(handlers: Handlers) -> None:
+    sub = mock_sub()
     dummy_get_subscription_items_handler = AsyncMock(spec=GetSubscriptionItemsHandler)
-    dummy_get_subscription_items_handler.handle.return_value = []
+    dummy_get_subscription_items_handler.handle.return_value = GetSubscriptionItemsResponse(
+        items=[], subscription=sub
+    )
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
 
     client.get(
-        '/subscriptions/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
+        f'/subscriptions/{sub.uuid}/items?'
         'page_number=0&page_size=1&search=test&created_before_ts=0&'
         'include_interactions=without_interactions,recommended')
     dummy_get_subscription_items_handler.handle.assert_called_once_with(
         user_id=USER_UUID,
-        subscription_id=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
+        subscription_id=sub.uuid,
         created_before=datetime.fromtimestamp(0, tz=timezone.utc),
         page_number=0,
         page_size=1,
@@ -326,15 +333,18 @@ def test_get_topic_returns_404_when_topic_not_found(handlers: Handlers) -> None:
 
 def test_get_topic_items_returns_200(handlers: Handlers) -> None:
     dummy_handler = AsyncMock(spec=GetTopicItemsHandler)
+    sub = mock_sub()
     item1 = Item.new(
         uuid=uuid.UUID("1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac"),
         name="item1",
         description="",
-        subscription_uuid=uuid.UUID("df836d19-1e78-4880-bf5f-af1c18e4d57d"),
+        subscription_uuid=sub.uuid,
         url=utils.parse_url('https://ae1b82ee.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    dummy_handler.handle.return_value = [(item1, [])]
+    dummy_handler.handle.return_value = [
+        ItemWithInteractionsAndSubscription(item=item1, interactions=[], subscription=sub)
+    ]
     handlers.get_topic_items_handler = dummy_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
@@ -478,27 +488,29 @@ def test_unassign_subscription_from_non_existing_topic_returns_404(handlers: Han
 
 
 def test_get_subscriptions_items_returns_200(handlers: Handlers) -> None:
+    sub = mock_sub()
     dummy_handler = AsyncMock(spec=GetSubscriptionItemsHandler)
     item1 = Item.new(
         uuid=uuid.UUID("1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac"),
         name="item1",
         description="",
-        subscription_uuid=uuid.UUID("df836d19-1e78-4880-bf5f-af1c18e4d57d"),
+        subscription_uuid=sub.uuid,
         url=utils.parse_url('https://ae1b82ee.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
-    dummy_handler.handle.return_value = [(item1, [])]
+    dummy_handler.handle.return_value = GetSubscriptionItemsResponse(
+        items=[ItemWithInteractions(item=item1, interactions=[])], subscription=sub)
     handlers.get_subscription_items_handler = dummy_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={'token': 'token'})
 
     response = client.get(
-        '/subscriptions/df836d19-1e78-4880-bf5f-af1c18e4d57d/items?'
+        f'/subscriptions/{sub.uuid}/items?'
         'created_before_ts=999.0&page_number=0&page_size=1')
     assert response.status_code == 200
     assert len(response.json()['elements']) == 1
     assert response.json()['next_page'] == (
-        'http://testserver/subscriptions/df836d19-1e78-4880-bf5f-af1c18e4d57d/items?'
+        f'http://testserver/subscriptions/{sub.uuid}/items?'
         'created_before_ts=999.0&page_number=1&page_size=1')
     assert response.json()['previous_page'] is None
 
