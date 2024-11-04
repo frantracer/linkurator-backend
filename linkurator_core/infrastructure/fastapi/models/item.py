@@ -10,7 +10,6 @@ from linkurator_core.domain.common.units import Seconds
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.subscriptions.subscription import Subscription
-from linkurator_core.domain.users.user import User
 from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 

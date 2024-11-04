@@ -1,5 +1,4 @@
 from datetime import datetime, timezone, timedelta
-from unittest.mock import MagicMock
 from uuid import UUID
 
 import pytest
@@ -8,8 +7,6 @@ from linkurator_core.application.items.get_topic_items_handler import GetTopicIt
     ItemWithInteractionsAndSubscription
 from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.domain.common.mock_factory import mock_item, mock_user, mock_sub, mock_topic, mock_interaction
-from linkurator_core.domain.items.item_repository import ItemRepository
-from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.in_memory.topic_repository import InMemoryTopicRepository
