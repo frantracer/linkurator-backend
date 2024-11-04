@@ -44,13 +44,16 @@ class GetTopicItemsHandler:
             include_discouraged_items: bool = True,
             include_viewed_items: bool = True,
             include_hidden_items: bool = True,
+            excluded_subscriptions: set[UUID] | None = None,
     ) -> list[ItemWithInteractionsAndSubscription]:
         topic = await self.topic_repository.get(topic_id)
         if topic is None:
             raise TopicNotFoundError(topic_id)
 
+        subscriptions_ids = set(topic.subscriptions_ids) - (excluded_subscriptions or set())
+
         filter_criteria = ItemFilterCriteria(
-            subscription_ids=topic.subscriptions_ids,
+            subscription_ids=list(subscriptions_ids),
             published_after=datetime.fromtimestamp(0, tz=timezone.utc),
             created_before=created_before,
             text=text_filter,

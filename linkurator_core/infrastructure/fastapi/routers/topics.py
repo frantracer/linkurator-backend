@@ -67,6 +67,8 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             max_duration: Optional[int] = None,
             include_interactions: Annotated[str | None, Query(
                 description=f"Comma separated values. Valid values: {VALID_INTERACTIONS}")] = None,
+            excluded_subscriptions: Annotated[str | None, Query(
+                description="Comma separated subscriptions UUIDs")] = None,
             session: Optional[Session] = Depends(get_session)
     ) -> Page[ItemSchema]:
         """
@@ -85,6 +87,10 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         def _include_interaction(interaction: InteractionFilterSchema) -> bool:
             return interactions is None or interaction in interactions
 
+        excluded_subscriptions_uuids: set[UUID] | None = None
+        if excluded_subscriptions is not None:
+            excluded_subscriptions_uuids = {UUID(sub_id) for sub_id in excluded_subscriptions.split(',')}
+
         try:
             items = await get_topic_items_handler.handle(
                 user_id=session.user_id if session is not None else None,
@@ -100,6 +106,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
                 include_discouraged_items=_include_interaction(InteractionFilterSchema.DISCOURAGED),
                 include_viewed_items=_include_interaction(InteractionFilterSchema.VIEWED),
                 include_hidden_items=_include_interaction(InteractionFilterSchema.HIDDEN),
+                excluded_subscriptions=excluded_subscriptions_uuids
             )
 
             current_url = request.url.include_query_params(

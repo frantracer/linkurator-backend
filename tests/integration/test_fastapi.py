@@ -381,7 +381,9 @@ def test_get_topic_items_parses_query_parameters(handlers: Handlers) -> None:
         '/topics/3e9232e7-fa87-4e14-a642-9df94d619c1a/items?'
         'page_number=0&page_size=1&search=test&created_before_ts=0&'
         'max_duration=100&min_duration=10&'
-        'include_interactions=without_interactions,recommended,viewed,hidden,discouraged')
+        'include_interactions=without_interactions,recommended,viewed,hidden,discouraged&'
+        'excluded_subscriptions=1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac,0fe0fb76-6312-4468-b61d-e0834bf99ff2'
+    )
     dummy_get_topic_items_handler.handle.assert_called_once_with(
         user_id=USER_UUID,
         topic_id=uuid.UUID("3e9232e7-fa87-4e14-a642-9df94d619c1a"),
@@ -395,7 +397,10 @@ def test_get_topic_items_parses_query_parameters(handlers: Handlers) -> None:
         include_recommended_items=True,
         include_discouraged_items=True,
         include_viewed_items=True,
-        include_hidden_items=True)
+        include_hidden_items=True,
+        excluded_subscriptions={uuid.UUID("1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac"),
+                                uuid.UUID("0fe0fb76-6312-4468-b61d-e0834bf99ff2")}
+    )
 
 
 def test_get_topic_items_recommended_and_without_interactions(handlers: Handlers) -> None:
@@ -422,7 +427,9 @@ def test_get_topic_items_recommended_and_without_interactions(handlers: Handlers
         include_recommended_items=True,
         include_discouraged_items=False,
         include_viewed_items=False,
-        include_hidden_items=False)
+        include_hidden_items=False,
+        excluded_subscriptions=None
+    )
 
 
 def test_assign_subscription_to_topic_returns_200(handlers: Handlers) -> None:
