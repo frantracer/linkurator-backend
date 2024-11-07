@@ -2,7 +2,7 @@
 
 secrets
 .venv
-data
+/data
 
 .mypy_cache
 .pytest_cache
