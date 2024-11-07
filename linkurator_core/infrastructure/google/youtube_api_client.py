@@ -97,7 +97,7 @@ class YoutubeVideo:
             channel_id=video["snippet"]["channelId"],
             channel_url=f'https://www.youtube.com/channel/{video["snippet"]["channelId"]}',
             country=video['snippet'].get('country', ''),
-            duration=video['contentDetails']['duration'],
+            duration=video['contentDetails'].get('duration', 'PT0S'),
             live_broadcast_content=LiveBroadcastContent(video["snippet"]["liveBroadcastContent"])
         )
 
