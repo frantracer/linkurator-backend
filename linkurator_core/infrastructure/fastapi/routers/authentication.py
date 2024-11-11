@@ -185,7 +185,7 @@ def get_router(  # pylint: disable=too-many-statements
         """
         Login endpoint
         """
-        scopes = ['profile', 'email', 'openid', YOUTUBE_CHANNEL_SCOPE]
+        scopes = ['profile', 'email', 'openid']
         oauth_url = google_client.authorization_url(
             scopes=scopes,
             redirect_uri=urljoin(str(request.base_url), "/register_auth")
@@ -213,10 +213,6 @@ def get_router(  # pylint: disable=too-many-statements
                 redirect_uri=urljoin(str(request.base_url), "/register_auth"))
             if tokens is None:
                 auth_error = "Invalid code"
-
-            elif not google_client.token_has_scope_access(tokens.access_token, YOUTUBE_CHANNEL_SCOPE):
-                auth_error = "Invalid scope access"
-
             else:
                 register_error = await register_user_with_google.handle(
                     access_token=tokens.access_token,
