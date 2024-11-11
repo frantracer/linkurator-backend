@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent, UserRegisteredEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.account_service import UserDetails, UserInfo
@@ -43,8 +43,9 @@ class TestRegisterUserHandler(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(created_user.email, "john@email.com")
         self.assertEqual(created_user.google_refresh_token, "myrefreshtoken")
 
-        self.assertEqual(event_bus_mock.publish.call_count, 1)
-        self.assertEqual(type(event_bus_mock.publish.call_args[0][0]), UserSubscriptionsBecameOutdatedEvent)
+        self.assertEqual(event_bus_mock.publish.call_count, 2)
+        self.assertEqual(type(event_bus_mock.publish.call_args_list[0][0][0]), UserRegisteredEvent)
+        self.assertEqual(type(event_bus_mock.publish.call_args_list[1][0][0]), UserSubscriptionsBecameOutdatedEvent)
 
     async def test_register_user_with_no_refresh_token_returns_an_error(self) -> None:
         user_repo_mock = AsyncMock(spec=UserRepository)

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional, Protocol
 from uuid import uuid4
 
-from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent, UserRegisteredEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.users.account_service import AccountService
 from linkurator_core.domain.users.user import User, Username
@@ -66,6 +66,8 @@ class RegisterUserHandler:
                 username=username,
                 google_refresh_token=refresh_token)
             await self.user_repository.add(user)
+
+            await self.event_bus.publish(UserRegisteredEvent.new(user_id=user.uuid))
 
         else:
             user.avatar_url = user_info.details.picture
