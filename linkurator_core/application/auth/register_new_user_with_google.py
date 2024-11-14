@@ -43,9 +43,6 @@ class RegisterUserHandler:
 
         user = await self.user_repository.get_by_email(user_info.email)
         if user is None:
-            if refresh_token is None:
-                return "Refresh token is required for new users"
-
             username: Username
             if self.username_generator is None:
                 username = UsernameGeneratorFromEmail(
