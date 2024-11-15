@@ -52,6 +52,11 @@ def test_cannot_create_invalid_username() -> None:
         Username("a a")
 
 
+def test_valid_username_characters() -> None:
+    username = Username("azAZ09.!#$%&'*+/=?^_`{|}~-")
+    assert str(username) == "azAZ09.!#$%&'*+/=?^_`{|}~-"
+
+
 def test_unfollow_and_follow_youtube_subscription() -> None:
     sub_id = UUID('82ef95e0-c9d5-4a9f-8130-39502fade902')
     user = mock_user()

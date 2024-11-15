@@ -19,7 +19,7 @@ def default_hash_function(text_input: str) -> str:
 
 
 class Username(RootModel[str]):
-    root: str = Field(min_length=3, max_length=50, pattern=r"^[a-z0-9_-]+$")
+    root: str = Field(min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+$")
 
     def __str__(self) -> str:
         return str(self.root)
