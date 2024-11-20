@@ -25,15 +25,16 @@ class FindSubscriptionsByNameOrUrlHandler:
         if url is None:
             results = await asyncio.gather(
                 self.subscription_repository.find_by_name(name=name_or_url),
-                self.subscription_service.get_subscription_from_name(name=name_or_url)
+                self.subscription_service.get_subscriptions_from_name(name=name_or_url)
             )
             existing_subs = results[0]
-            service_sub = results[1]
+            service_subs = results[1]
 
             existing_subs_uuids = [sub.uuid for sub in existing_subs]
-            if service_sub is not None and service_sub.uuid not in existing_subs_uuids:
-                existing_service_sub = await self.get_or_create_subscription(service_sub)
-                existing_subs.append(existing_service_sub)
+            for service_sub in service_subs:
+                if service_sub.uuid not in existing_subs_uuids:
+                    existing_service_sub = await self.get_or_create_subscription(service_sub)
+                    existing_subs.append(existing_service_sub)
 
             return existing_subs
 

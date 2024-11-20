@@ -17,9 +17,10 @@ from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedE
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
 from linkurator_core.infrastructure.config.env_settings import EnvSettings
-from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
+from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets, SpotifyClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
+from linkurator_core.infrastructure.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService, GoogleDomainAccountService
 from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
@@ -31,6 +32,8 @@ from linkurator_core.infrastructure.mongodb.registration_request_repository impo
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
+from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient
+from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscriptionService
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -40,6 +43,7 @@ async def main() -> None:  # pylint: disable=too-many-locals
     env_settings = EnvSettings()
     db_settings = MongoDBSettings()
     google_secrets = GoogleClientSecrets(env_settings.GOOGLE_SECRET_PATH)
+    spotify_secrets = SpotifyClientSecrets(env_settings.SPOTIFY_SECRET_PATH)
     rabbitmq_settings = RabbitMQSettings()
 
     # Repositories
@@ -80,6 +84,22 @@ async def main() -> None:  # pylint: disable=too-many-locals
         youtube_client=youtube_client,
         youtube_rss_client=youtube_rss_client
     )
+    spotify_client = SpotifyApiClient(
+        client_id=spotify_secrets.client_id,
+        client_secret=spotify_secrets.client_secret
+    )
+    spotify_service = SpotifySubscriptionService(
+        spotify_client=spotify_client,
+        user_repository=user_repository,
+        item_repository=item_repository,
+        subscription_repository=subscription_repository
+    )
+
+    general_subscription_service = GeneralSubscriptionService(
+        spotify_service=spotify_service,
+        youtube_service=youtube_service
+    )
+
     google_domain_service = GoogleDomainAccountService(
         service_credentials_path=google_secrets.email_service_credentials_path,
         email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL
@@ -92,14 +112,14 @@ async def main() -> None:  # pylint: disable=too-many-locals
 
     # Event handlers
     update_user_subscriptions = UpdateUserSubscriptionsHandler(
-        youtube_service, user_repository, subscription_repository)
+        general_subscription_service, user_repository, subscription_repository)
     update_subscriptions_items = UpdateSubscriptionItemsHandler(
         subscription_repository=subscription_repository,
         item_repository=item_repository,
-        subscription_service=youtube_service)
+        subscription_service=general_subscription_service)
     refresh_items_handler = RefreshItemsHandler(
         item_repository=item_repository,
-        subscription_service=youtube_service)
+        subscription_service=general_subscription_service)
     find_outdated_users = FindOutdatedUsersHandler(user_repository, event_bus)
     find_outdated_subscriptions = FindOutdatedSubscriptionsHandler(
         subscription_repository=subscription_repository,

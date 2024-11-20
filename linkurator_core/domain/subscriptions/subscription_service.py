@@ -48,8 +48,8 @@ class SubscriptionService(abc.ABC):
     ) -> Subscription | None: ...
 
     @abc.abstractmethod
-    async def get_subscription_from_name(
+    async def get_subscriptions_from_name(
             self,
             name: str,
             credential: Optional[ExternalServiceCredential] = None
-    ) -> Subscription | None: ...
+    ) -> List[Subscription]: ...

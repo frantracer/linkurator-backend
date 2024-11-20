@@ -11,6 +11,7 @@ from pydantic import AnyUrl
 
 class SubscriptionProvider(str, Enum):
     YOUTUBE = "youtube"
+    SPOTIFY = "spotify"
 
 
 @dataclass

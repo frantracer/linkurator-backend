@@ -30,3 +30,19 @@ class GoogleClientSecrets:
             self.email_service_credentials_path = Path(f'{secrets_path}/domain_service_credentials.json')
         if not self.email_service_credentials_path.exists():
             raise InvalidFileException(f"File {email_service_credentials_path} does not exist")
+
+
+class SpotifyClientSecrets:
+    client_id: str
+    client_secret: str
+
+    def __init__(self, file_path: str = '') -> None:
+        current_path = Path(__file__).parent.absolute()
+        secrets_path = Path(f'{current_path}/../../../secrets')
+
+        if file_path == '':
+            file_path = f'{secrets_path}/spotify_credentials.json'
+        with open(file_path, "r", encoding='UTF-8') as secrets_file:
+            secrets = json.loads(secrets_file.read())
+        self.client_id = secrets["client_id"]
+        self.client_secret = secrets["client_secret"]

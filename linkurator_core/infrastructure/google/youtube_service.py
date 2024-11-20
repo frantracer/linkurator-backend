@@ -203,19 +203,23 @@ class YoutubeService(SubscriptionService):
 
         return None
 
-    async def get_subscription_from_name(
+    async def get_subscriptions_from_name(
             self,
             name: str,
             credential: Optional[ExternalServiceCredential] = None
-    ) -> Subscription | None:
+    ) -> List[Subscription]:
         def name_is_normalized(input_name: str) -> bool:
             return len(input_name) > 2 and not any(character in input_name for character in [" ", "\\", "/"])
 
         if not name_is_normalized(name):
-            return None
+            return []
 
         url = f"https://www.youtube.com/{name}"
-        return await self.get_subscription_from_url(parse_url(url), credential)
+        sub = await self.get_subscription_from_url(parse_url(url), credential)
+        if sub is not None:
+            return [sub]
+
+        return []
 
     async def _get_api_key_for_sub(self, sub_id: uuid.UUID) -> str:
         subscribed_users = await self.user_repository.find_users_subscribed_to_subscription(sub_id)

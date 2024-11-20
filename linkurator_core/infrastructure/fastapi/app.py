@@ -52,10 +52,11 @@ from linkurator_core.application.users.unfollow_curator_handler import UnfollowC
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
 from linkurator_core.infrastructure.config.env_settings import EnvSettings
-from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
+from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets, SpotifyClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
+from linkurator_core.infrastructure.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService, GoogleDomainAccountService
 from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
@@ -72,11 +73,14 @@ from linkurator_core.infrastructure.mongodb.subscription_repository import Mongo
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
+from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient
+from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscriptionService
 
 
 def app_handlers() -> Handlers:
     env_settings = EnvSettings()
 
+    spotify_secrets = SpotifyClientSecrets(env_settings.SPOTIFY_SECRET_PATH)
     google_secrets = GoogleClientSecrets(env_settings.GOOGLE_SECRET_PATH)
     account_service = GoogleAccountService(
         client_id=google_secrets.client_id,
@@ -120,6 +124,23 @@ def app_handlers() -> Handlers:
         youtube_client=YoutubeApiClient(),
         youtube_rss_client=YoutubeRssClient(),
         api_keys=google_secrets.api_keys,
+    )
+
+    spotify_client = SpotifyApiClient(
+        client_id=spotify_secrets.client_id,
+        client_secret=spotify_secrets.client_secret
+    )
+
+    spotify_service = SpotifySubscriptionService(
+        spotify_client=spotify_client,
+        subscription_repository=subscription_repository,
+        user_repository=user_repository,
+        item_repository=item_repository
+    )
+
+    general_subscription_service = GeneralSubscriptionService(
+        spotify_service=spotify_service,
+        youtube_service=youtube_service
     )
 
     rabbitmq_settings = RabbitMQSettings()
@@ -170,7 +191,7 @@ def app_handlers() -> Handlers:
             user_repository=user_repository),
         refresh_subscription_handler=RefreshSubscriptionHandler(
             subscription_repository=subscription_repository,
-            subscription_service=youtube_service),
+            subscription_service=general_subscription_service),
         get_user_profile_handler=GetUserProfileHandler(user_repository),
         edit_user_profile_handler=EditUserProfile(user_repository),
         find_user_handler=FindCuratorHandler(user_repository),
@@ -178,7 +199,7 @@ def app_handlers() -> Handlers:
         get_curators_handler=GetCuratorsHandler(user_repository),
         find_subscriptions_by_name_handler=FindSubscriptionsByNameOrUrlHandler(
             subscription_repository=subscription_repository,
-            subscription_service=youtube_service,
+            subscription_service=general_subscription_service,
             event_bus=event_bus
         ),
         follow_curator_handler=FollowCuratorHandler(user_repository),

@@ -52,7 +52,7 @@ async def test_find_subscription_by_name() -> None:
 
     sub_service = AsyncMock(spec=SubscriptionService)
     sub_service.get_subscription_from_url.return_value = None
-    sub_service.get_subscription_from_name.return_value = None
+    sub_service.get_subscriptions_from_name.return_value = []
 
     event_bus = AsyncMock(spec=EventBusService)
 
@@ -98,7 +98,7 @@ async def test_find_subscription_by_non_existing_name() -> None:
     sub_repo = InMemorySubscriptionRepository()
     sub_service = AsyncMock(spec=SubscriptionService)
     sub_service.get_subscription_from_url.return_value = None
-    sub_service.get_subscription_from_name.return_value = None
+    sub_service.get_subscriptions_from_name.return_value = []
 
     event_bus = AsyncMock(spec=EventBusService)
 
@@ -137,7 +137,7 @@ async def test_find_subscription_by_name_that_does_not_exist_in_the_repository_b
 
     sub_service = AsyncMock(spec=SubscriptionService)
     sub_service.get_subscription_from_url.return_value = None
-    sub_service.get_subscription_from_name.return_value = sub
+    sub_service.get_subscriptions_from_name.return_value = [sub]
 
     event_bus = AsyncMock(spec=EventBusService)
 

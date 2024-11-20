@@ -64,6 +64,7 @@ encrypt-secrets: create-vault-pass
 	cp secrets/docker_token.txt config/docker_token.txt.enc
 	cp secrets/google_api_key.txt config/google_api_key.txt.enc
 	cp secrets/domain_service_credentials.json config/domain_service_credentials.json.enc
+	cp secrets/spotify_credentials.json config/spotify_credentials.json.enc
 
 	ansible-vault encrypt --vault-password-file=secrets/vault_password.txt config/*.enc
 
@@ -76,6 +77,7 @@ decrypt-secrets: create-vault-pass
 	mv -f secrets/docker_token.txt.enc secrets/docker_token.txt
 	mv -f secrets/google_api_key.txt.enc secrets/google_api_key.txt
 	mv -f secrets/domain_service_credentials.json.enc secrets/domain_service_credentials.json
+	mv -f secrets/spotify_credentials.json.enc secrets/spotify_credentials.json
 
 link-config:
 	@if [ "${LINKURATOR_ENVIRONMENT}" = "PRODUCTION" ]; then \
