@@ -20,7 +20,7 @@ from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
-from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+from linkurator_core.infrastructure.google.account_service import GoogleAccountService, GoogleDomainAccountService
 from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
@@ -80,9 +80,11 @@ async def main() -> None:  # pylint: disable=too-many-locals
         youtube_client=youtube_client,
         youtube_rss_client=youtube_rss_client
     )
-    gmail_email_sender = GmailEmailSender(
-        refresh_token=google_secrets.gmail_refresh_token,
-        account_service=account_service)
+    google_domain_service = GoogleDomainAccountService(
+        service_credentials_path=google_secrets.email_service_credentials_path,
+        email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL
+    )
+    gmail_email_sender = GmailEmailSender(account_service=google_domain_service)
 
     # Event bus
     event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,

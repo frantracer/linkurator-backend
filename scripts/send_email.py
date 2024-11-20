@@ -1,11 +1,15 @@
 import argparse
 import asyncio
+import logging
 from dataclasses import dataclass
 from uuid import uuid4
 
+from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
-from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+from linkurator_core.infrastructure.google.account_service import GoogleDomainAccountService
 from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
+
+logging.basicConfig(level=logging.INFO)
 
 
 @dataclass
@@ -44,17 +48,17 @@ async def main() -> None:
     message_text = input_arguments.message_text + f"\n{uuid4()}"
 
     google_client_secrets = GoogleClientSecrets()
-    google_account_service = GoogleAccountService(
-        client_id=google_client_secrets.client_id,
-        client_secret=google_client_secrets.client_secret)
-    email_sender = GmailEmailSender(refresh_token=google_client_secrets.gmail_refresh_token,
-                                    account_service=google_account_service)
+    env_settings = EnvSettings()
+    google_account_service = GoogleDomainAccountService(
+        email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        service_credentials_path=google_client_secrets.email_service_credentials_path)
+    email_sender = GmailEmailSender(account_service=google_account_service)
 
     result = await email_sender.send_email(user_email, subject, message_text)
     if result:
-        print(f"Email sent to {user_email} successfully")
+        logging.info("Email sent to successfully %s", user_email)
     else:
-        print("Failed to send email")
+        logging.error("Failed to send email")
 
 
 if __name__ == "__main__":

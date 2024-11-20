@@ -1,8 +1,12 @@
 import http
+import json
+from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.parse import urlencode
 
+import google.auth.transport.requests
 import requests
+from google.oauth2.service_account import Credentials
 from requests.auth import HTTPBasicAuth
 
 from linkurator_core.domain.common.exceptions import FailToRevokeCredentialsError
@@ -104,3 +108,20 @@ class GoogleAccountService(AccountService):
             return False
 
         return scope in scope_validation_response.json().get('scope', '').split(" ")
+
+
+class GoogleDomainAccountService:
+    def __init__(self, service_credentials_path: Path, email: str) -> None:
+        self.service_credentials_path = service_credentials_path
+        self.email = email
+
+    def generate_access_token_from_service_credentials(self) -> str | None:
+        service_account_info = json.loads(self.service_credentials_path.read_text())
+        credentials = Credentials.from_service_account_info(
+            service_account_info,
+            scopes=["https://www.googleapis.com/auth/gmail.send"]
+        ).with_subject(self.email)
+
+        request = google.auth.transport.requests.Request()
+        credentials.refresh(request)
+        return credentials.token

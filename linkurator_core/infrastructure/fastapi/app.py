@@ -56,7 +56,7 @@ from linkurator_core.infrastructure.config.google_secrets import GoogleClientSec
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
-from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+from linkurator_core.infrastructure.google.account_service import GoogleAccountService, GoogleDomainAccountService
 from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
@@ -126,10 +126,11 @@ def app_handlers() -> Handlers:
     event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,
                                  username=rabbitmq_settings.user, password=rabbitmq_settings.password)
 
-    email_sender = GmailEmailSender(
-        refresh_token=google_secrets.gmail_refresh_token,
-        account_service=account_service,
+    google_domain_service = GoogleDomainAccountService(
+        service_credentials_path=google_secrets.email_service_credentials_path,
+        email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL
     )
+    email_sender = GmailEmailSender(account_service=google_domain_service)
 
     RegistrationRequest.valid_domains = env_settings.VALID_DOMAINS
     PasswordChangeRequest.valid_domains = env_settings.VALID_DOMAINS
