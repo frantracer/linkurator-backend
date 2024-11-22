@@ -7,6 +7,7 @@ from linkurator_core.application.subscriptions.find_outdated_subscriptions_handl
 from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.mock_factory import mock_user, mock_sub, mock_credential
+from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
 from linkurator_core.domain.users.user_repository import UserRepository
@@ -119,3 +120,22 @@ async def test_calculate_subscription_refresh_period_is_24_hours_if_there_is_no_
                                                external_credentials_repository=credentials_repository_mock)
 
     assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 60 * 24
+
+
+@pytest.mark.asyncio
+async def test_calculate_subscription_period_is_6_hours_for_spotify() -> None:
+    sub = mock_sub(provider=SubscriptionProvider.SPOTIFY)
+    user = mock_user(subscribed_to=[sub.uuid])
+
+    sub_repo_mock = MagicMock(spec=SubscriptionRepository)
+    event_bus_mock = MagicMock(spec=EventBusService)
+    user_repository_mock = MagicMock(spec=UserRepository)
+    user_repository_mock.find_users_subscribed_to_subscription.return_value = [user]
+    credentials_repository_mock = MagicMock(spec=ExternalCredentialRepository)
+
+    handler = FindOutdatedSubscriptionsHandler(subscription_repository=sub_repo_mock,
+                                               event_bus=event_bus_mock,
+                                               user_repository=user_repository_mock,
+                                               external_credentials_repository=credentials_repository_mock)
+
+    assert await handler.calculate_subscription_refresh_period_in_minutes(sub) == 60 * 6

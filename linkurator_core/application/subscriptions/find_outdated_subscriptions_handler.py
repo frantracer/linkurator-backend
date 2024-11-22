@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.external_service_credential import ExternalServiceType
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
@@ -12,6 +12,7 @@ from linkurator_core.domain.users.user_repository import UserRepository
 REFRESH_PERIOD_WITH_NO_SUBSCRIBERS_IN_MINUTES = 60 * 24
 REFRESH_PERIOD_WITH_NO_CREDENTIALS_IN_MINUTES = 5
 REFRESH_PERIOD_WITH_CREDENTIALS_IN_MINUTES = 1
+REFRESH_PERIOD_FOR_SPOTIFY_IN_MINUTES = 60 * 6
 
 
 class FindOutdatedSubscriptionsHandler:
@@ -43,6 +44,9 @@ class FindOutdatedSubscriptionsHandler:
         subscribed_users = await self.user_repository.find_users_subscribed_to_subscription(subscription.uuid)
         if len(subscribed_users) == 0:
             return REFRESH_PERIOD_WITH_NO_SUBSCRIBERS_IN_MINUTES
+
+        if subscription.provider == SubscriptionProvider.SPOTIFY:
+            return REFRESH_PERIOD_FOR_SPOTIFY_IN_MINUTES
 
         user_ids = [user.uuid for user in subscribed_users]
         credentials = await self.external_credentials_repository.find_by_users_and_type(
