@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import AnyUrl, BaseModel
 
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.users.user import User
 from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
 
@@ -17,6 +17,7 @@ class SubscriptionSchema(BaseModel):
     name: str
     url: AnyUrl
     thumbnail: AnyUrl
+    provider: SubscriptionProvider
     created_at: Iso8601Datetime
     scanned_at: Iso8601Datetime
     followed: bool
@@ -26,4 +27,4 @@ class SubscriptionSchema(BaseModel):
         followed = False if user is None else subscription.uuid in user.get_subscriptions()
         return cls(uuid=subscription.uuid, name=subscription.name, url=subscription.url,
                    thumbnail=subscription.thumbnail, created_at=subscription.created_at,
-                   scanned_at=subscription.scanned_at, followed=followed)
+                   scanned_at=subscription.scanned_at, followed=followed, provider=subscription.provider)
