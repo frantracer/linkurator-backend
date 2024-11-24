@@ -67,8 +67,6 @@ class SpotifySubscriptionService(SubscriptionService):
             page_number=0,
             limit=len(item_ids))
 
-        items = [item for item in items if item.provider == ItemProvider.SPOTIFY]
-
         episode_index: dict[str, Item] = {
             episode_id_from_url(item.url): item
             for item in items
