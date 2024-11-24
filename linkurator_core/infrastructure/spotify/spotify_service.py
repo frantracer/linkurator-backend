@@ -44,6 +44,9 @@ class SpotifySubscriptionService(SubscriptionService):
         if subscription is None:
             return None
 
+        if subscription.provider != SubscriptionProvider.SPOTIFY:
+            return None
+
         show_id = subscription.external_data.get(SHOW_ID_KEY)
         if show_id is None:
             return None
@@ -63,6 +66,8 @@ class SpotifySubscriptionService(SubscriptionService):
             criteria=ItemFilterCriteria(item_ids=item_ids, provider=ItemProvider.SPOTIFY),
             page_number=0,
             limit=len(item_ids))
+
+        items = [item for item in items if item.provider == ItemProvider.SPOTIFY]
 
         episode_index: dict[str, Item] = {
             episode_id_from_url(item.url): item
@@ -93,6 +98,9 @@ class SpotifySubscriptionService(SubscriptionService):
         if subscription is None:
             return []
 
+        if subscription.provider != SubscriptionProvider.SPOTIFY:
+            return []
+
         show_id = str(subscription.external_data.get(SHOW_ID_KEY))
         if show_id is None:
             return []
@@ -117,6 +125,9 @@ class SpotifySubscriptionService(SubscriptionService):
             url: AnyUrl,
             credential: Optional[ExternalServiceCredential] = None
     ) -> Subscription | None:
+        if url.host != 'open.spotify.com':
+            return None
+
         split_url = url.path.split('/') if url.path else []
         if len(split_url) < 3:
             return None

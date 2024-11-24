@@ -11,7 +11,7 @@ from pydantic import AnyUrl
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError, InvalidCredentialError
 from linkurator_core.domain.common.utils import parse_url, datetime_now
-from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -149,6 +149,8 @@ class YoutubeService(SubscriptionService):
             criteria=ItemFilterCriteria(item_ids=item_ids),
             page_number=0,
             limit=len(item_ids))
+
+        items = [item for item in items if item.provider == ItemProvider.YOUTUBE]
 
         video_id_to_item: Dict[str, Item] = {link_to_video_id(str(item.url)): item for item in items}
 

@@ -136,7 +136,7 @@ async def test_get_subscription_from_id() -> None:
     spotify_api_client.get_shows.return_value = [spotify_show]
 
     sub_repo = InMemorySubscriptionRepository()
-    sub = mock_sub()
+    sub = mock_sub(provider=SubscriptionProvider.SPOTIFY)
     sub.external_data = {
         "show_id": spotify_show.id,
     }
