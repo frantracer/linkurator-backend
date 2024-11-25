@@ -5,6 +5,7 @@ from typing import Any
 
 import aiohttp
 from pydantic import AnyUrl, BaseModel
+from unidecode import unidecode
 
 
 class ReleaseDataPrecision(str, Enum):
@@ -82,7 +83,8 @@ class SpotifyApiClient:
         params = {
             'q': query,
             'type': 'show',
-            'limit': 1,
+            'limit': 5,
+            'offset': 0,
             'market': 'ES'
         }
 
@@ -91,6 +93,10 @@ class SpotifyApiClient:
                 if response.status == 200:
                     body = await response.json()
                     shows = body.get('shows', {}).get('items', [])
+
+                    for show in shows:
+                        if unidecode(show['name'].lower()) == unidecode(query.lower()):
+                            return map_json_to_show(show)
 
                     if len(shows) > 0:
                         return map_json_to_show(shows[0])
