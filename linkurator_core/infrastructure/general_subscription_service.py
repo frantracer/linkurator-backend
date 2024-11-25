@@ -6,7 +6,7 @@ from typing import Optional, List
 from pydantic import AnyUrl
 
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
@@ -61,16 +61,12 @@ class GeneralSubscriptionService(SubscriptionService):
             from_date: datetime,
             credential: Optional[ExternalServiceCredential] = None
     ) -> List[Item]:
-        subscription = await self.get_subscription(sub_id, credential)
-        if subscription is None:
-            return []
+        results = await asyncio.gather(
+            self.spotify_service.get_subscription_items(sub_id, from_date, credential),
+            self.youtube_service.get_subscription_items(sub_id, from_date, credential)
+        )
 
-        if subscription.provider == SubscriptionProvider.SPOTIFY:
-            return await self.spotify_service.get_subscription_items(sub_id, from_date, credential)
-        if subscription.provider == SubscriptionProvider.YOUTUBE:
-            return await self.youtube_service.get_subscription_items(sub_id, from_date, credential)
-
-        return []
+        return results[0] + results[1]
 
     async def get_subscription_from_url(
             self,
