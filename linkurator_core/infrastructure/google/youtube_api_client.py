@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 import aiohttp
 import backoff
 import isodate  # type: ignore
+from unidecode import unidecode
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.items.item import Item, YOUTUBE_ITEM_VERSION
@@ -301,6 +302,8 @@ class YoutubeApiClient:
     async def _request_youtube_channels_from_name(
             self, api_key: str, channel_name: str
     ) -> Tuple[Dict[str, Any], int]:
+        channel_name = unidecode(channel_name.replace(" ", "").lower())
+
         youtube_api_channels_url = f"{self.base_url}/channels"
 
         channels_query_params: Dict[str, Any] = {
