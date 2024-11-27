@@ -63,7 +63,7 @@ async def test_add_subscriptions_stores_any_external_data(subscription_repo: Sub
     subscription = Subscription.new(
         name="test",
         uuid=uuid.UUID("31a2ba8e-e3a5-405a-ae41-43eaaab56fdf"),
-        url=utils.parse_url('https://test.com'),
+        url=utils.parse_url('https://31a2ba8e-e3a5-405a-ae41-43eaaab56fdf.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         external_data={"test": "test"},
         provider=SubscriptionProvider.YOUTUBE)
@@ -156,7 +156,7 @@ async def test_get_list_of_subscriptions_ordered_by_created_at(
     sub1 = Subscription(
         name="test",
         uuid=uuid.UUID("83ea331c-fa87-4654-89d0-055972a64e5b"),
-        url=utils.parse_url('https://url.com'),
+        url=utils.parse_url('https://83ea331c-fa87-4654-89d0-055972a64e5b.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         provider=SubscriptionProvider.YOUTUBE,
         external_data={},
@@ -168,7 +168,7 @@ async def test_get_list_of_subscriptions_ordered_by_created_at(
     sub2 = Subscription(
         name="test",
         uuid=uuid.UUID("5745b75b-9a0a-49ff-85c5-b69c03bd1ba2"),
-        url=utils.parse_url('https://url.com'),
+        url=utils.parse_url('https://5745b75b-9a0a-49ff-85c5-b69c03bd1ba2.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         provider=SubscriptionProvider.YOUTUBE,
         external_data={},
@@ -180,7 +180,7 @@ async def test_get_list_of_subscriptions_ordered_by_created_at(
     sub3 = Subscription(
         name="test",
         uuid=uuid.UUID("d30ca1c8-40c4-4bcd-8b4f-81f0e315c975"),
-        url=utils.parse_url('https://url.com'),
+        url=utils.parse_url('https://d30ca1c8-40c4-4bcd-8b4f-81f0e315c975.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         provider=SubscriptionProvider.YOUTUBE,
         external_data={},
@@ -206,7 +206,7 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
     sub = Subscription(
         name="test",
         uuid=uuid.UUID("1515c810-e22a-4b13-bf34-329f8ebe2491"),
-        url=utils.parse_url('https://url.com'),
+        url=utils.parse_url('https://1515c810-e22a-4b13-bf34-329f8ebe2491.com'),
         thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
         provider=SubscriptionProvider.YOUTUBE,
         external_data={},
@@ -245,7 +245,7 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
 async def test_delete_subscription(subscription_repo: SubscriptionRepository) -> None:
     subscription = Subscription.new(name="test",
                                     uuid=uuid.UUID("5f0430b3-6044-4cca-b739-d63c75794b3c"),
-                                    url=utils.parse_url('https://test.com'),
+                                    url=utils.parse_url('https://5f0430b3-6044-4cca-b739-d63c75794b3c.com'),
                                     thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
                                     provider=SubscriptionProvider.YOUTUBE)
 
