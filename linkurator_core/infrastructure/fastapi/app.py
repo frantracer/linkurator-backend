@@ -191,7 +191,9 @@ def app_handlers() -> Handlers:
             user_repository=user_repository),
         refresh_subscription_handler=RefreshSubscriptionHandler(
             subscription_repository=subscription_repository,
-            subscription_service=general_subscription_service),
+            subscription_service=general_subscription_service,
+            event_bus=event_bus
+        ),
         get_user_profile_handler=GetUserProfileHandler(user_repository),
         edit_user_profile_handler=EditUserProfile(user_repository),
         find_user_handler=FindCuratorHandler(user_repository),
