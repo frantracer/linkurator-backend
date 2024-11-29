@@ -214,16 +214,25 @@ class YoutubeService(SubscriptionService):
             name: str,
             credential: Optional[ExternalServiceCredential] = None
     ) -> List[Subscription]:
-        def name_is_normalized(input_name: str) -> bool:
-            return len(input_name) > 2 and not any(character in input_name for character in [" ", "\\", "/"])
+        api_key = self._get_api_key() if credential is None else credential.credential_value
 
-        if not name_is_normalized(name):
-            return []
+        channel = await self.youtube_client.get_youtube_channel_from_name(channel_name=name, api_key=api_key)
+        if channel is not None:
+            existing_sub = await self.subscription_repository.find_by_url(parse_url(channel.url))
+            if existing_sub is not None:
+                return [update_sub_info(existing_sub, channel)]
 
-        url = f"https://www.youtube.com/{name}"
-        sub = await self.get_subscription_from_url(parse_url(url), credential)
-        if sub is not None:
-            return [sub]
+            return [Subscription.new(
+                uuid=uuid.uuid4(),
+                name=channel.title,
+                provider=SubscriptionProvider.YOUTUBE,
+                url=parse_url(channel.url),
+                thumbnail=utils.parse_url(channel.thumbnail_url),
+                external_data={
+                    "channel_id": channel.channel_id,
+                    "playlist_id": channel.playlist_id
+                },
+            )]
 
         return []
 
