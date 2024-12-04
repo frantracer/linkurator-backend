@@ -63,6 +63,6 @@ class UpdateSubscriptionItemsHandler:
             logging.info("Updated %s items of subscription %s - %s",
                          len(new_filtered_items), subscription.uuid, subscription.name)
         except Exception as err:  # pylint: disable=broad-except
-            logging.error("Cannot update items of subscription %s because %s", subscription_id, err)
+            logging.error("Cannot update items of subscription %s because %s", subscription_id, err, exc_info=True)
         finally:
             self.subscriptions_being_updated.pop(subscription_id, None)
