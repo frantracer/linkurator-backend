@@ -39,12 +39,13 @@ async def main() -> None:
     assert show == shows[0]
 
     if show is not None:
+        limit = 50
         offset = 0
         while offset < show.total_episodes:
-            response = await client.get_show_episodes(show_id=show.id, offset=offset)
+            response = await client.get_show_episodes(show_id=show.id, offset=offset, limit=limit)
             for episode in response.items:
                 print(episode)
-            offset += len(response.items)
+            offset += limit
 
             same_response = await client.get_episodes(episode_ids=[episode.id for episode in response.items])
             assert response.items == same_response

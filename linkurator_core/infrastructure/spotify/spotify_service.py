@@ -104,9 +104,10 @@ class SpotifySubscriptionService(SubscriptionService):
             return []
 
         items: list[Item] = []
+        limit = 50
         offset = 0
         while True:
-            response = await self.spotify_client.get_show_episodes(show_id, offset)
+            response = await self.spotify_client.get_show_episodes(show_id, offset, limit)
             new_items = [map_episode_to_item(episode, sub_id) for episode in response.items]
             filtered_new_items = [item for item in new_items if item.published_at >= from_date]
             items += filtered_new_items
@@ -114,7 +115,7 @@ class SpotifySubscriptionService(SubscriptionService):
             if len(filtered_new_items) == 0 or len(new_items) != len(filtered_new_items):
                 break
 
-            offset += len(response.items)
+            offset += limit
 
         return [item for item in items if item.published_at >= from_date]
 

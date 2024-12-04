@@ -134,7 +134,10 @@ class SpotifyApiClient:
 
                 raise SpotifyApiHttpError(f"Failed to retrieve shows: {response.status} -> {await response.text()}")
 
-    async def get_show_episodes(self, show_id: str, offset: int = 0) -> GetEpisodesResponse:
+    async def get_show_episodes(self, show_id: str, offset: int = 0, limit: int = 50) -> GetEpisodesResponse:
+        if limit > 50:
+            raise SpotifyApiHttpError("Cannot retrieve more than 50 episodes at once")
+
         token = await self.get_access_token()
         if token is None:
             raise SpotifyApiHttpError("Failed to retrieve token")
@@ -144,7 +147,7 @@ class SpotifyApiClient:
             'Authorization': f'Bearer {token}'
         }
         params = {
-            'limit': 50,
+            'limit': limit,
             'offset': offset
         }
 
