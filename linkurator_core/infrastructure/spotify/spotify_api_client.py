@@ -156,7 +156,7 @@ class SpotifyApiClient:
                     total_items = body.get('total', 0)
                     episodes = [map_json_to_episode(episode_json)
                                 for episode_json in episodes_json
-                                if episodes_json is not None]
+                                if episode_json is not None]
                     return GetEpisodesResponse(items=episodes, total=total_items)
 
                 raise SpotifyApiHttpError(f"Failed to retrieve episodes: {response.status} -> {await response.text()}")
