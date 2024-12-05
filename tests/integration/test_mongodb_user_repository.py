@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from ipaddress import IPv4Address
 from math import floor
 from unittest import mock
@@ -296,3 +296,36 @@ async def test_get_user_by_username(user_repo: MongoDBUserRepository) -> None:
 @pytest.mark.asyncio
 async def test_get_non_existing_username(user_repo: MongoDBUserRepository) -> None:
     assert await user_repo.get_by_username(Username("non_existent")) is None
+
+
+@pytest.mark.asyncio
+async def test_count_registered_and_active_users(user_repo: MongoDBUserRepository) -> None:
+    user1 = User.new(first_name="test",
+                     last_name="test",
+                     username=Username("cc74dcf5"),
+                     email="cc74dcf5@email.com",
+                     locale="en",
+                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+                     uuid=uuid.UUID("cc74dcf5-2f9d-40cd-a0b4-b06a154699c2"),
+                     google_refresh_token="token",
+                     subscription_uuids=set())
+    user1.last_login_at = datetime.now(timezone.utc)
+
+    user2 = User.new(first_name="test",
+                     last_name="test",
+                     username=Username("7cfc3dd0"),
+                     email="7cfc3dd0@email.com",
+                     locale="en",
+                     avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+                     uuid=uuid.UUID("7cfc3dd0-b20b-462f-b474-0f2f5159a325"),
+                     google_refresh_token="token",
+                     subscription_uuids=set())
+    user2.last_login_at = datetime.now(timezone.utc) - timedelta(hours=25)
+
+    await user_repo.delete_all()
+
+    await user_repo.add(user1)
+    await user_repo.add(user2)
+
+    assert await user_repo.count_registered_users() == 2
+    assert await user_repo.count_active_users() == 1

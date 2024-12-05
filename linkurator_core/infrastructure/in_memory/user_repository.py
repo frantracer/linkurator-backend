@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone, timedelta
 from copy import copy
 from typing import List, Optional
 from uuid import UUID
@@ -18,6 +18,9 @@ class InMemoryUserRepository(UserRepository):
     async def get(self, user_id: UUID) -> Optional[User]:
         return copy(self.users.get(user_id))
 
+    async def get_all(self) -> List[User]:
+        return [copy(user) for user in self.users.values()]
+
     async def get_by_email(self, email: str) -> Optional[User]:
         for user in self.users.values():
             if user.email == email:
@@ -34,10 +37,13 @@ class InMemoryUserRepository(UserRepository):
         if user_id in self.users:
             del self.users[user_id]
 
+    async def delete_all(self) -> None:
+        self.users = {}
+
     async def update(self, user: User) -> None:
         self.users[user.uuid] = user
 
-    async def find_latest_scan_before(self, timestamp: datetime.datetime) -> List[User]:
+    async def find_latest_scan_before(self, timestamp: datetime) -> List[User]:
         found_users = []
         for user in self.users.values():
             if user.scanned_at < timestamp:
@@ -52,3 +58,10 @@ class InMemoryUserRepository(UserRepository):
                 found_users.append(copy(user))
 
         return found_users
+
+    async def count_registered_users(self) -> int:
+        return len(self.users)
+
+    async def count_active_users(self) -> int:
+        logged_after = datetime.now(tz=timezone.utc) - timedelta(days=1)
+        return len([user for user in self.users.values() if user.last_login_at > logged_after])

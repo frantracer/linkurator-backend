@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from ipaddress import IPv4Address
 from typing import List, Optional
 from uuid import UUID
@@ -146,6 +146,10 @@ class MongoDBUserRepository(UserRepository):
         user.pop('_id', None)
         return MongoDBUser(**user).to_domain_user()
 
+    async def get_all(self) -> List[User]:
+        users = await self._collection().find({}).to_list(length=None)
+        return [MongoDBUser(**user).to_domain_user() for user in users]
+
     async def get_by_email(self, email: str) -> Optional[User]:
         user = await self._collection().find_one({'email': email})
         if user is None:
@@ -168,6 +172,11 @@ class MongoDBUserRepository(UserRepository):
             await self._collection_for_deleted_users().insert_one(user_dump)
             await self._collection().delete_one({'uuid': user_id})
 
+    async def delete_all(self) -> None:
+        users = await self.get_all()
+        for user in users:
+            await self.delete(user.uuid)
+
     async def update(self, user: User) -> None:
         await self._collection().update_one(
             {'uuid': user.uuid},
@@ -189,3 +198,10 @@ class MongoDBUserRepository(UserRepository):
             }
         ).to_list(length=None)
         return [MongoDBUser(**user).to_domain_user() for user in users]
+
+    async def count_registered_users(self) -> int:
+        return await self._collection().count_documents({})
+
+    async def count_active_users(self) -> int:
+        logged_after = datetime.now(tz=timezone.utc) - timedelta(days=1)
+        return await self._collection().count_documents({'last_login_at': {"$gt": logged_after}})
