@@ -30,9 +30,14 @@ class ValidateTokenHandler:
         if user is None:
             return None
 
+        now = datetime.now(timezone.utc)
+
         session = Session(user_id=user.uuid,
                           token=access_token,
-                          expires_at=datetime.now(timezone.utc) + timedelta(days=SESSION_DURATION_IN_DAYS))
+                          expires_at=now + timedelta(days=SESSION_DURATION_IN_DAYS))
         self.session_repository.add(session)
+
+        user.last_login_at = now
+        await self.user_repository.update(user)
 
         return session
