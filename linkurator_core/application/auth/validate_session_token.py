@@ -2,11 +2,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from linkurator_core.domain.users.account_service import AccountService
-from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.users.session import Session, SESSION_DURATION_IN_SECONDS
 from linkurator_core.domain.users.session_repository import SessionRepository
 from linkurator_core.domain.users.user_repository import UserRepository
-
-SESSION_DURATION_IN_DAYS: int = 30
 
 
 class ValidateTokenHandler:
@@ -34,7 +32,7 @@ class ValidateTokenHandler:
 
         session = Session(user_id=user.uuid,
                           token=access_token,
-                          expires_at=now + timedelta(days=SESSION_DURATION_IN_DAYS))
+                          expires_at=now + timedelta(seconds=SESSION_DURATION_IN_SECONDS))
         self.session_repository.add(session)
 
         user.last_login_at = now

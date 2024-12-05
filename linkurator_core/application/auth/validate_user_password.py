@@ -1,10 +1,8 @@
 from datetime import datetime, timezone
 
-from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.users.session import Session, SESSION_DURATION_IN_SECONDS
 from linkurator_core.domain.users.session_repository import SessionRepository
 from linkurator_core.domain.users.user_repository import UserRepository
-
-EXPIRATION_TIME_IN_SECONDS = 60 * 60 * 24 * 30  # 30 days
 
 
 class ValidateUserPassword:
@@ -21,7 +19,7 @@ class ValidateUserPassword:
         if not password_is_valid:
             return None
 
-        session = Session.new(user_id=user.uuid, seconds_to_expire=EXPIRATION_TIME_IN_SECONDS)
+        session = Session.new(user_id=user.uuid, seconds_to_expire=SESSION_DURATION_IN_SECONDS)
         self.session_repository.add(session)
 
         user.last_login_at = datetime.now(timezone.utc)

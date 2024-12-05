@@ -4,6 +4,8 @@ from datetime import datetime, timezone, timedelta
 from typing import Callable
 from uuid import UUID
 
+SESSION_DURATION_IN_SECONDS = 60 * 60 * 24 * 30  # 30 days
+
 
 def generate_random_token_128_chars() -> str:
     return secrets.token_hex(64)

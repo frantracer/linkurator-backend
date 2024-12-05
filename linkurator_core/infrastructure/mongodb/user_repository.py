@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from pymongo.errors import DuplicateKeyError
 
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.users.session import SESSION_DURATION_IN_SECONDS
 from linkurator_core.domain.users.user import User, HashedPassword, Username
 from linkurator_core.domain.users.user_repository import UserRepository, EmailAlreadyInUse
 from linkurator_core.infrastructure.mongodb.common import MongoDBMapping
@@ -203,5 +204,5 @@ class MongoDBUserRepository(UserRepository):
         return await self._collection().count_documents({})
 
     async def count_active_users(self) -> int:
-        logged_after = datetime.now(tz=timezone.utc) - timedelta(days=1)
+        logged_after = datetime.now(tz=timezone.utc) - timedelta(seconds=SESSION_DURATION_IN_SECONDS)
         return await self._collection().count_documents({'last_login_at': {"$gt": logged_after}})

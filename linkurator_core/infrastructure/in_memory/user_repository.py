@@ -3,6 +3,7 @@ from copy import copy
 from typing import List, Optional
 from uuid import UUID
 
+from linkurator_core.domain.users.session import SESSION_DURATION_IN_SECONDS
 from linkurator_core.domain.users.user import User, Username
 from linkurator_core.domain.users.user_repository import UserRepository
 
@@ -63,5 +64,5 @@ class InMemoryUserRepository(UserRepository):
         return len(self.users)
 
     async def count_active_users(self) -> int:
-        logged_after = datetime.now(tz=timezone.utc) - timedelta(days=1)
+        logged_after = datetime.now(tz=timezone.utc) - timedelta(seconds=SESSION_DURATION_IN_SECONDS)
         return len([user for user in self.users.values() if user.last_login_at > logged_after])
