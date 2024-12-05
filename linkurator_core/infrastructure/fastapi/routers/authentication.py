@@ -1,11 +1,13 @@
+import hashlib
 import http
-from typing import Any, Optional
+from typing import Any, Optional, Annotated
 from urllib.parse import urljoin
 from uuid import UUID
 
-from fastapi import Request, status, HTTPException
+from fastapi import Request, status, HTTPException, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.routing import APIRouter
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, EmailStr, AnyUrl
 
 from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
@@ -50,6 +52,18 @@ class RequestPasswordChangeSchema(BaseModel):
 
 class ChangePasswordSchema(BaseModel):
     new_password: PasswordWith64HexCharacters
+
+
+def check_basic_auth(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]) -> None:
+    hasher = hashlib.sha256()
+    hasher.update(f"{credentials.username}:{credentials.password}".encode("utf-8"))
+    digest = hasher.hexdigest()
+    if digest != "f9faf149ff01da006b1d90c28047b2e8a0aab2eccfe4c0f9f1c2ab6f8e25e9e3":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect user or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
 
 def unauthorized_error(error: str, redirect_uri: Optional[str]) -> RedirectResponse | JSONResponse:

@@ -19,6 +19,7 @@ from linkurator_core.application.items.get_curator_items_handler import GetCurat
 from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.application.statistics.get_platform_statistics import GetPlatformStatisticsHandler
 from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import \
     FindSubscriptionsByNameOrUrlHandler
 from linkurator_core.application.subscriptions.follow_subscription_handler import FollowSubscriptionHandler
@@ -260,6 +261,7 @@ def app_handlers() -> Handlers:
             credentials_repository=credentials_repository),
         delete_external_credential_handler=DeleteExternalCredentialHandler(
             credentials_repository=credentials_repository),
+        get_platform_statistics=GetPlatformStatisticsHandler(user_repository),
     )
 
 

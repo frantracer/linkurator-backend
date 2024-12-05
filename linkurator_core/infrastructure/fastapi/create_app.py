@@ -4,7 +4,7 @@ Main file of the application
 from dataclasses import dataclass
 from typing import Optional
 
-from fastapi import Request
+from fastapi import Request, Depends
 from fastapi.applications import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -22,6 +22,8 @@ from linkurator_core.application.items.get_curator_items_handler import GetCurat
 from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.application.statistics.get_platform_statistics import GetPlatformStatisticsHandler, \
+    PlatformStatistics
 from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import \
     FindSubscriptionsByNameOrUrlHandler
 from linkurator_core.application.subscriptions.follow_subscription_handler import FollowSubscriptionHandler
@@ -55,6 +57,7 @@ from linkurator_core.application.users.unfollow_curator_handler import UnfollowC
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items, \
     credentials, curators
+from linkurator_core.infrastructure.fastapi.routers.authentication import check_basic_auth
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 
@@ -102,6 +105,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     add_external_credentials_handler: AddExternalCredentialsHandler
     get_user_external_credentials_handler: GetUserExternalCredentialsHandler
     delete_external_credential_handler: DeleteExternalCredentialHandler
+    get_platform_statistics: GetPlatformStatisticsHandler
 
 
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
@@ -120,6 +124,15 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         Health endpoint returns a 200 if the service is alive
         """
         return "OK"
+
+    @app.get("/statistics", tags=["API Status"])
+    async def statistics(
+            _: None = Depends(check_basic_auth),
+    ) -> PlatformStatistics:
+        """
+        Returns platform statistics
+        """
+        return await handlers.get_platform_statistics.handle()
 
     app.include_router(
         tags=["Authentication"],

@@ -77,7 +77,8 @@ def dummy_handlers() -> Handlers:
         add_external_credentials_handler=AsyncMock(),
         delete_external_credential_handler=AsyncMock(),
         follow_topic_handler=AsyncMock(),
-        unfollow_topic_handler=AsyncMock()
+        unfollow_topic_handler=AsyncMock(),
+        get_platform_statistics=AsyncMock(),
     )
 
 
