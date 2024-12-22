@@ -23,7 +23,7 @@ class UsernameGeneratorFromEmail:
     def generate_username(self) -> Username:
         random_number = str(uuid4().int)[:4]
         email_user = self.email.split("@")[0]
-        return Username(f"{email_user}{random_number}".lower())
+        return Username.transform(f"{email_user}{random_number}")
 
 
 class RegisterUserHandler:

@@ -99,7 +99,7 @@ def get_router(
     ) -> CuratorSchema:
         try:
             response = await find_user_handler.handle(
-                username=Username(username),
+                username=Username.transform(username),
                 current_user_id=session.user_id if session is not None else None)
             if response.user is None:
                 raise default_responses.not_found("User not found")

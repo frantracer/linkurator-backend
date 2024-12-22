@@ -53,8 +53,8 @@ def test_cannot_create_invalid_username() -> None:
 
 
 def test_valid_username_characters() -> None:
-    username = Username("azAZ09.!#$%&'*+/=?^_`{|}~-")
-    assert str(username) == "azAZ09.!#$%&'*+/=?^_`{|}~-"
+    username = Username("az09.!#$%&'*+/=?^_`{|}~-")
+    assert str(username) == "az09.!#$%&'*+/=?^_`{|}~-"
 
 
 def test_unfollow_and_follow_youtube_subscription() -> None:
@@ -66,3 +66,9 @@ def test_unfollow_and_follow_youtube_subscription() -> None:
 
     user.follow_subscription(sub_id)
     assert user.get_subscriptions() == {sub_id}
+
+
+def test_transform_username() -> None:
+    assert str(Username.transform("Test User")) == "test_user"
+
+    assert str(Username.transform("Test User 1")) == "test_user_1"
