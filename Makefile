@@ -167,10 +167,13 @@ check-ssh-connection:
 provision: check-ssh-connection
 	@echo "Provisioning"
 	@ssh root@$(SSH_IP_ADDRESS) "apt update && apt install -y docker.io nginx certbot python3-certbot-nginx"
+	@scp config/docker_daemon.json root@$(SSH_IP_ADDRESS):/etc/docker/daemon.json
+	@ssh root@$(SSH_IP_ADDRESS) "systemctl restart docker"
 	@ssh root@$(SSH_IP_ADDRESS) "rm -rf /etc/nginx/sites-enabled/default"
 	@scp config/linkurator-api.conf root@$(SSH_IP_ADDRESS):/etc/nginx/sites-enabled/linkurator-api.conf
-	@ssh root@$(SSH_IP_ADDRESS) "certbot --nginx -d $(SSH_IP_ADDRESS) -n --redirect"
+	@ssh root@$(SSH_IP_ADDRESS) "certbot --nginx -d $(DOMAIN) -n --redirect"
 	@ssh root@$(SSH_IP_ADDRESS) "systemctl restart nginx"
+	@ssh root@$(SSH_IP_ADDRESS) "apt autoremove -y"
 
 ####################
 # Deploy
