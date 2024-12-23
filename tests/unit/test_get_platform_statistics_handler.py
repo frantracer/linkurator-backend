@@ -10,11 +10,12 @@ from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUse
 @pytest.mark.asyncio
 async def test_get_platform_statistics_handler() -> None:
     # Given
+    now = datetime.now(timezone.utc)
     user_repository = InMemoryUserRepository()
     user1 = mock_user()
-    user1.last_login_at = datetime.now(timezone.utc) - timedelta(days=29)
+    user1.last_login_at = now - timedelta(hours=23)
     user2 = mock_user()
-    user2.last_login_at = datetime.now(timezone.utc) - timedelta(days=31)
+    user2.last_login_at = now - timedelta(hours=24)
     await user_repository.add(user1)
     await user_repository.add(user2)
 

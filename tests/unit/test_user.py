@@ -1,9 +1,10 @@
+from datetime import timedelta
 from uuid import UUID
 
 import pytest
 
 from linkurator_core.domain.common.mock_factory import mock_user
-from linkurator_core.domain.users.user import Username
+from linkurator_core.domain.users.user import User, Username
 
 
 def test_user_can_follow_and_unfollow_curator() -> None:
@@ -72,3 +73,16 @@ def test_transform_username() -> None:
     assert str(Username.transform("Test User")) == "test_user"
 
     assert str(Username.transform("Test User 1")) == "test_user_1"
+
+
+def test_user_is_active() -> None:
+    user = mock_user()
+
+    assert user.is_active()
+
+
+def test_user_is_not_active() -> None:
+    user = mock_user()
+    user.last_login_at = User.time_since_last_active() - timedelta(minutes=1)
+
+    assert not user.is_active()

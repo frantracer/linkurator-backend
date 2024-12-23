@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from ipaddress import IPv4Address
 from typing import List, Optional
 from uuid import UUID
@@ -12,11 +12,12 @@ from pydantic import BaseModel
 from pymongo.errors import DuplicateKeyError
 
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.users.session import SESSION_DURATION_IN_SECONDS
-from linkurator_core.domain.users.user import User, HashedPassword, Username
-from linkurator_core.domain.users.user_repository import UserRepository, EmailAlreadyInUse
+from linkurator_core.domain.users.user import HashedPassword, User, Username
+from linkurator_core.domain.users.user_repository import (EmailAlreadyInUse,
+                                                          UserRepository)
 from linkurator_core.infrastructure.mongodb.common import MongoDBMapping
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
+from linkurator_core.infrastructure.mongodb.repositories import \
+    CollectionIsNotInitialized
 
 
 class MongoDBHashedPassword(BaseModel):
@@ -204,5 +205,5 @@ class MongoDBUserRepository(UserRepository):
         return await self._collection().count_documents({})
 
     async def count_active_users(self) -> int:
-        logged_after = datetime.now(tz=timezone.utc) - timedelta(seconds=SESSION_DURATION_IN_SECONDS)
+        logged_after = User.time_since_last_active()
         return await self._collection().count_documents({'last_login_at': {"$gt": logged_after}})

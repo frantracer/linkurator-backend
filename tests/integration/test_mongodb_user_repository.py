@@ -309,7 +309,7 @@ async def test_count_registered_and_active_users(user_repo: MongoDBUserRepositor
                      uuid=uuid.UUID("cc74dcf5-2f9d-40cd-a0b4-b06a154699c2"),
                      google_refresh_token="token",
                      subscription_uuids=set())
-    user1.last_login_at = datetime.now(timezone.utc) - timedelta(days=29)
+    user1.last_login_at = datetime.now(timezone.utc) - timedelta(hours=23)
 
     user2 = User.new(first_name="test",
                      last_name="test",
@@ -320,7 +320,7 @@ async def test_count_registered_and_active_users(user_repo: MongoDBUserRepositor
                      uuid=uuid.UUID("7cfc3dd0-b20b-462f-b474-0f2f5159a325"),
                      google_refresh_token="token",
                      subscription_uuids=set())
-    user2.last_login_at = datetime.now(timezone.utc) - timedelta(days=31)
+    user2.last_login_at = datetime.now(timezone.utc) - timedelta(hours=24)
 
     await user_repo.delete_all()
 

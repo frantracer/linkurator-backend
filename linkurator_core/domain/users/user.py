@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 from copy import copy
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Callable
 from uuid import UUID, uuid4
 
@@ -167,3 +167,10 @@ class User:
         if self.password_hash is None:
             return False
         return self.password_hash.validate(password)
+
+    def is_active(self) -> bool:
+        return self.last_login_at > self.time_since_last_active()
+
+    @classmethod
+    def time_since_last_active(cls) -> datetime:
+        return datetime.now(timezone.utc) - timedelta(days=1)
