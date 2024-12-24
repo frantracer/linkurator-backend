@@ -261,7 +261,9 @@ def app_handlers() -> Handlers:
             credentials_repository=credentials_repository),
         delete_external_credential_handler=DeleteExternalCredentialHandler(
             credentials_repository=credentials_repository),
-        get_platform_statistics=GetPlatformStatisticsHandler(user_repository),
+        get_platform_statistics=GetPlatformStatisticsHandler(
+            user_repository=user_repository,
+            subscription_repository=subscription_repository),
     )
 
 

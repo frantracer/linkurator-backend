@@ -13,10 +13,17 @@ from pydantic.main import BaseModel
 from pymongo import DESCENDING
 
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
-from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.subscriptions.subscription import (
+    Subscription,
+    SubscriptionProvider,
+)
+from linkurator_core.domain.subscriptions.subscription_repository import (
+    SubscriptionRepository,
+)
 from linkurator_core.infrastructure.mongodb.common import normalize_text_search
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
+from linkurator_core.infrastructure.mongodb.repositories import (
+    CollectionIsNotInitialized,
+)
 
 
 class MongoDBSubscription(BaseModel):
@@ -43,7 +50,7 @@ class MongoDBSubscription(BaseModel):
             created_at=subscription.created_at,
             updated_at=subscription.updated_at,
             scanned_at=subscription.scanned_at,
-            last_published_at=subscription.last_published_at
+            last_published_at=subscription.last_published_at,
         )
 
     def to_domain_subscription(self) -> Subscription:
@@ -57,45 +64,63 @@ class MongoDBSubscription(BaseModel):
             created_at=self.created_at,
             updated_at=self.updated_at,
             scanned_at=self.scanned_at,
-            last_published_at=self.last_published_at
+            last_published_at=self.last_published_at,
         )
 
 
 class MongoDBSubscriptionRepository(SubscriptionRepository):
     client: AsyncIOMotorClient[Any]
     db_name: str
-    _collection_name: str = 'subscriptions'
+    _collection_name: str = "subscriptions"
 
-    def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
+    def __init__(
+        self, ip: IPv4Address, port: int, db_name: str, username: str, password: str
+    ) -> None:
         super().__init__()
-        self.client = AsyncIOMotorClient(f'mongodb://{str(ip)}:{port}/', username=username, password=password)
+        self.client = AsyncIOMotorClient(
+            f"mongodb://{str(ip)}:{port}/", username=username, password=password
+        )
         self.db_name = db_name
 
     async def check_connection(self) -> None:
-        if self._collection_name not in await self.client[self.db_name].list_collection_names():
+        if (
+            self._collection_name
+            not in await self.client[self.db_name].list_collection_names()
+        ):
             raise CollectionIsNotInitialized(
-                f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
+                f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'"
+            )
 
     async def add(self, subscription: Subscription) -> None:
         collection = await self._subscription_collection()
-        await collection.insert_one(MongoDBSubscription.from_domain_subscription(subscription).model_dump())
+        await collection.insert_one(
+            MongoDBSubscription.from_domain_subscription(subscription).model_dump()
+        )
 
     async def get(self, subscription_id: UUID) -> Optional[Subscription]:
         collection = await self._subscription_collection()
-        subscription: Optional[dict[str, Any]] = await collection.find_one({'uuid': subscription_id})
+        subscription: Optional[dict[str, Any]] = await collection.find_one(
+            {"uuid": subscription_id}
+        )
         if subscription is None:
             return None
         return MongoDBSubscription(**subscription).to_domain_subscription()
 
     async def get_list(self, subscription_ids: List[UUID]) -> List[Subscription]:
         collection = await self._subscription_collection()
-        subscriptions: List[dict[str, Any]] = await collection.find(
-            {'uuid': {'$in': subscription_ids}}).sort('created_at', DESCENDING).to_list(length=None)
-        return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
+        subscriptions: List[dict[str, Any]] = (
+            await collection.find({"uuid": {"$in": subscription_ids}})
+            .sort("created_at", DESCENDING)
+            .to_list(length=None)
+        )
+        return [
+            MongoDBSubscription(**subscription).to_domain_subscription()
+            for subscription in subscriptions
+        ]
 
     async def delete(self, subscription_id: UUID) -> None:
         collection = await self._subscription_collection()
-        await collection.delete_one({'uuid': subscription_id})
+        await collection.delete_one({"uuid": subscription_id})
 
     async def delete_all(self) -> None:
         collection = await self._subscription_collection()
@@ -103,30 +128,62 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
 
     async def update(self, subscription: Subscription) -> None:
         collection = await self._subscription_collection()
-        await collection.update_one({'uuid': subscription.uuid},
-                                    {'$set': MongoDBSubscription.from_domain_subscription(subscription).model_dump()})
+        await collection.update_one(
+            {"uuid": subscription.uuid},
+            {
+                "$set": MongoDBSubscription.from_domain_subscription(
+                    subscription
+                ).model_dump()
+            },
+        )
 
     async def find_by_url(self, url: AnyUrl) -> Optional[Subscription]:
         collection = await self._subscription_collection()
-        found_subscription: Optional[dict[str, Any]] = await collection.find_one({'url': str(url)})
+        found_subscription: Optional[dict[str, Any]] = await collection.find_one(
+            {"url": str(url)}
+        )
         if found_subscription is None:
             return None
         return MongoDBSubscription(**found_subscription).to_domain_subscription()
 
-    async def find_latest_scan_before(self, datetime_limit: datetime) -> List[Subscription]:
+    async def find_latest_scan_before(
+        self, datetime_limit: datetime
+    ) -> List[Subscription]:
         collection = await self._subscription_collection()
-        subscriptions: List[dict[str, Any]] = await (collection.find({'scanned_at': {'$lt': datetime_limit}})
-                                                     .sort('scanned_at', DESCENDING).to_list(length=None))
-        return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
+        subscriptions: List[dict[str, Any]] = await (
+            collection.find({"scanned_at": {"$lt": datetime_limit}})
+            .sort("scanned_at", DESCENDING)
+            .to_list(length=None)
+        )
+        return [
+            MongoDBSubscription(**subscription).to_domain_subscription()
+            for subscription in subscriptions
+        ]
 
     async def find_by_name(self, name: str) -> List[Subscription]:
         collection = await self._subscription_collection()
 
-        subscriptions: List[dict[str, Any]] = await (collection.find(
-            {'$text': {'$search': normalize_text_search(name)}}
-        ).sort('created_at', DESCENDING).to_list(length=None))
-        return [MongoDBSubscription(**subscription).to_domain_subscription() for subscription in subscriptions]
+        subscriptions: List[dict[str, Any]] = await (
+            collection.find({"$text": {"$search": normalize_text_search(name)}})
+            .sort("created_at", DESCENDING)
+            .to_list(length=None)
+        )
+        return [
+            MongoDBSubscription(**subscription).to_domain_subscription()
+            for subscription in subscriptions
+        ]
 
     async def _subscription_collection(self) -> AsyncIOMotorCollection[Any]:
-        codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
-        return self.client.get_database(self.db_name).get_collection(self._collection_name, codec_options=codec_options)
+        codec_options = CodecOptions(
+            tz_aware=True, uuid_representation=UuidRepresentation.STANDARD
+        )  # type: ignore
+        return self.client.get_database(self.db_name).get_collection(
+            self._collection_name, codec_options=codec_options
+        )
+
+    async def count_subscriptions(
+        self, provider: Optional[SubscriptionProvider] = None
+    ) -> int:
+        collection = await self._subscription_collection()
+        query = {} if provider is None else {"provider": provider.value}
+        return await collection.count_documents(query)

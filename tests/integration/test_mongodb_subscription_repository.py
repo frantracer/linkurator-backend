@@ -287,3 +287,19 @@ async def test_find_subscriptions_by_name(subscription_repo: SubscriptionReposit
 
     found_subscriptions = await subscription_repo.find_by_name("baloncesto")
     assert len(found_subscriptions) == 0
+
+
+@pytest.mark.asyncio
+async def test_count_subscriptions(subscription_repo: SubscriptionRepository) -> None:
+    sub1 = mock_sub(name="Leyendas y videojuegos")
+    sub2 = mock_sub(name="Fútbol y más")
+    sub3 = mock_sub(name="leyendas del fútbol", provider=SubscriptionProvider.SPOTIFY)
+
+    await subscription_repo.delete_all()
+    await subscription_repo.add(sub1)
+    await subscription_repo.add(sub2)
+    await subscription_repo.add(sub3)
+
+    assert await subscription_repo.count_subscriptions() == 3
+    assert await subscription_repo.count_subscriptions(SubscriptionProvider.YOUTUBE) == 2
+    assert await subscription_repo.count_subscriptions(SubscriptionProvider.SPOTIFY) == 1
