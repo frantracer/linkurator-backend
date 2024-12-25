@@ -23,11 +23,12 @@ class GeneralSubscriptionService(SubscriptionService):
     async def get_subscriptions(
             self,
             user_id: uuid.UUID,
+            access_token: str,
             credential: Optional[ExternalServiceCredential] = None
     ) -> List[Subscription]:
         results = await asyncio.gather(
-            self.spotify_service.get_subscriptions(user_id, credential),
-            self.youtube_service.get_subscriptions(user_id, credential)
+            self.spotify_service.get_subscriptions(user_id=user_id, credential=credential, access_token=access_token),
+            self.youtube_service.get_subscriptions(user_id=user_id, credential=credential, access_token=access_token)
         )
         return results[0] + results[1]
 

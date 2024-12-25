@@ -60,6 +60,7 @@ check-vault-pass-is-defined:
 encrypt-secrets: create-vault-pass
 	rm -f config/*.enc
 	cp secrets/client_secret.json config/client_secret.json.enc
+	cp secrets/client_secret_youtube.json config/client_secret_youtube.json.enc
 	cp secrets/app_config_production.ini config/app_config_production.ini.enc
 	cp secrets/docker_token.txt config/docker_token.txt.enc
 	cp secrets/google_api_key.txt config/google_api_key.txt.enc
@@ -73,6 +74,7 @@ decrypt-secrets: create-vault-pass
 	ansible-vault decrypt --vault-password-file=secrets/vault_password.txt secrets/*.enc
 
 	mv -f secrets/client_secret.json.enc secrets/client_secret.json
+	mv -f secrets/client_secret_youtube.json.enc secrets/client_secret_youtube.json
 	mv -f secrets/app_config_production.ini.enc secrets/app_config_production.ini
 	mv -f secrets/docker_token.txt.enc secrets/docker_token.txt
 	mv -f secrets/google_api_key.txt.enc secrets/google_api_key.txt

@@ -1,12 +1,23 @@
 from dataclasses import dataclass
 
-from linkurator_core.application.auth.send_validate_new_user_email import SendValidateNewUserEmail
+from linkurator_core.application.auth.send_validate_new_user_email import (
+    SendValidateNewUserEmail,
+)
 from linkurator_core.application.auth.send_welcome_email import SendWelcomeEmail
 from linkurator_core.application.items.refresh_items_handler import RefreshItemsHandler
-from linkurator_core.application.subscriptions.update_subscription_items_handler import UpdateSubscriptionItemsHandler
-from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
-from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent, UserSubscriptionsBecameOutdatedEvent, \
-    ItemsBecameOutdatedEvent, Event, UserRegisterRequestSentEvent, UserRegisteredEvent
+from linkurator_core.application.subscriptions.update_subscription_items_handler import (
+    UpdateSubscriptionItemsHandler,
+)
+from linkurator_core.application.users.update_user_subscriptions_handler import (
+    UpdateUserSubscriptionsHandler,
+)
+from linkurator_core.domain.common.event import (
+    Event,
+    ItemsBecameOutdatedEvent,
+    SubscriptionBecameOutdatedEvent,
+    UserRegisteredEvent,
+    UserRegisterRequestSentEvent,
+)
 
 
 @dataclass
@@ -18,9 +29,7 @@ class EventHandler:
     send_welcome_email: SendWelcomeEmail
 
     async def handle(self, event: Event) -> None:
-        if isinstance(event, UserSubscriptionsBecameOutdatedEvent):
-            await self.update_user_subscriptions_handler.handle(event.user_id)
-        elif isinstance(event, SubscriptionBecameOutdatedEvent):
+        if isinstance(event, SubscriptionBecameOutdatedEvent):
             await self.update_subscription_items_handler.handle(event.subscription_id)
         elif isinstance(event, ItemsBecameOutdatedEvent):
             await self.refresh_items_handler.handle(event.item_ids)
@@ -29,4 +38,4 @@ class EventHandler:
         elif isinstance(event, UserRegisteredEvent):
             await self.send_welcome_email.handle(event.user_id)
         else:
-            print(f'Unhandled event: {event}')
+            print(f"Unhandled event: {event}")

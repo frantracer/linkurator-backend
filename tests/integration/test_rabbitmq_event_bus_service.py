@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent
+from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 
@@ -13,11 +13,11 @@ from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 async def test_publish_and_subscribe() -> None:
     event_bus = RabbitMQEventBus(host='localhost', port=5672, username='develop', password='develop')
     dummy_function = AsyncMock()
-    event_bus.subscribe(UserSubscriptionsBecameOutdatedEvent, dummy_function)
-    event = UserSubscriptionsBecameOutdatedEvent(
+    event_bus.subscribe(SubscriptionBecameOutdatedEvent, dummy_function)
+    event = SubscriptionBecameOutdatedEvent(
         id=uuid.uuid4(),
         created_at=datetime.now(),
-        user_id=uuid.uuid4())
+        subscription_id=uuid.uuid4())
 
     results = await run_parallel(
         event_bus.start(),

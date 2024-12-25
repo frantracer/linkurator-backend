@@ -13,6 +13,8 @@ from linkurator_core.domain.subscriptions.subscription_repository import Subscri
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
+from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
+from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
 @pytest.mark.asyncio
@@ -25,27 +27,21 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"))
     subscription_service.get_subscriptions.return_value = [sub1]
-    subscription_repository = MagicMock(spec=SubscriptionRepository)
-    subscription_repository.find_by_url.return_value = None
-    subscription_repository.add.return_value = None
+    subscription_repository = InMemorySubscriptionRepository()
 
-    user_repository = MagicMock(spec=UserRepository)
+    user_repository = InMemoryUserRepository()
     user = mock_user()
-    user_repository.get.return_value = deepcopy(user)
-    user_repository.update.return_value = None
+    await user_repository.add(user)
 
     handler = UpdateUserSubscriptionsHandler(subscription_service=subscription_service,
                                              user_repository=user_repository,
                                              subscription_repository=subscription_repository)
-    await handler.handle(user.uuid)
+    await handler.handle(user_id=user.uuid, access_token="access_token")
 
-    assert subscription_service.get_subscriptions.call_count == 1
-    assert subscription_service.get_subscriptions.call_args[0][0] == user.uuid
-    assert subscription_repository.find_by_url.call_count == 1
-    assert subscription_repository.add.call_count == 1
-    assert subscription_repository.add.call_args[0][0] == sub1
-    assert user_repository.update.call_count == 1
-    user_input: User = user_repository.update.call_args[0][0]
+    assert await subscription_repository.get(sub1.uuid) == sub1
+
+    user_input = await user_repository.get(user.uuid)
+    assert user_input is not None
     assert user_input.uuid == user.uuid
     assert user_input.get_subscriptions() == {sub1.uuid}
     assert user_input.scanned_at > user.scanned_at
@@ -67,28 +63,23 @@ async def test_update_user_subscription_with_subscription_that_is_already_regist
         url=parse_url("http://url.com"),
         thumbnail=parse_url("http://thumbnail.com"))
     subscription_service.get_subscriptions.return_value = [sub1]
-    subscription_repository = MagicMock(spec=SubscriptionRepository)
-    subscription_repository.find_by_url.return_value = sub2
-    subscription_repository.add.return_value = None
+    subscription_repository = InMemorySubscriptionRepository()
+    await subscription_repository.add(sub2)
 
-    user_repository = MagicMock(spec=UserRepository)
+    user_repository = InMemoryUserRepository()
     user = mock_user()
-    user_repository.get.return_value = user
-    user_repository.update.return_value = None
+    await user_repository.add(user)
 
     handler = UpdateUserSubscriptionsHandler(subscription_service=subscription_service,
                                              user_repository=user_repository,
                                              subscription_repository=subscription_repository)
-    await handler.handle(user.uuid)
+    await handler.handle(user_id=user.uuid, access_token="access_token")
 
-    assert subscription_service.get_subscriptions.call_count == 1
-    assert subscription_service.get_subscriptions.call_args[0][0] == user.uuid
-    assert subscription_repository.find_by_url.call_count == 1
-    assert subscription_repository.add.call_count == 0
-    assert user_repository.update.call_count == 1
-    user_input: User = user_repository.update.call_args[0][0]
-    assert user_input.uuid == user.uuid
-    assert user_input.get_youtube_subscriptions() == {sub2.uuid}
+    assert await subscription_repository.get(sub1.uuid) is None
+
+    user_input = await user_repository.get(user.uuid)
+    assert user_input is not None
+    assert user_input.get_subscriptions() == {sub2.uuid}
 
 
 @pytest.mark.asyncio
@@ -102,7 +93,7 @@ async def test_update_subscriptions_for_non_existing_user_does_nothing() -> None
                                              user_repository=user_repository,
                                              subscription_repository=subscription_repository)
     user_id = uuid.UUID("3577da9f-2d85-4475-9aaf-5f38cd01bc2a")
-    await handler.handle(user_id)
+    await handler.handle(user_id=user_id, access_token="access_token")
 
     assert subscription_service.get_subscriptions.call_count == 0
     assert user_repository.update.call_count == 0
@@ -122,7 +113,7 @@ async def test_update_subscriptions_for_user_with_invalid_refresh_token_only_upd
     handler = UpdateUserSubscriptionsHandler(subscription_service=subscription_service,
                                              user_repository=user_repository,
                                              subscription_repository=subscription_repository)
-    await handler.handle(user.uuid)
+    await handler.handle(user_id=user.uuid, access_token="access_token")
 
     assert subscription_service.get_subscriptions.call_count == 1
     assert user_repository.update.call_count == 1

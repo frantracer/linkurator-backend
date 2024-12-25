@@ -50,6 +50,7 @@ from linkurator_core.application.users.get_curators_handler import GetCuratorsHa
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
+from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
 from linkurator_core.infrastructure.config.env_settings import EnvSettings
@@ -86,6 +87,11 @@ def app_handlers() -> Handlers:
     account_service = GoogleAccountService(
         client_id=google_secrets.client_id,
         client_secret=google_secrets.client_secret)
+    google_secrets_youtube = GoogleClientSecrets(env_settings.GOOGLE_YOUTUBE_SECRET_PATH)
+    youtube_account_service = GoogleAccountService(
+        client_id=google_secrets_youtube.client_id,
+        client_secret=google_secrets_youtube.client_secret,
+    )
 
     logging.getLogger('pymongo').setLevel(logging.INFO)
 
@@ -117,7 +123,6 @@ def app_handlers() -> Handlers:
     credentials_checker = YoutubeApiKeyChecker()
 
     youtube_service = YoutubeService(
-        google_account_service=account_service,
         subscription_repository=subscription_repository,
         user_repository=user_repository,
         item_repository=item_repository,
@@ -177,6 +182,7 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             request_repository=password_change_request_repository),
         google_client=account_service,
+        google_youtube_client=youtube_account_service,
         get_user_subscriptions=GetUserSubscriptionsHandler(subscription_repository, user_repository),
         follow_subscription_handler=FollowSubscriptionHandler(subscription_repository, user_repository),
         unfollow_subscription_handler=UnfollowSubscriptionHandler(
@@ -262,6 +268,10 @@ def app_handlers() -> Handlers:
         delete_external_credential_handler=DeleteExternalCredentialHandler(
             credentials_repository=credentials_repository),
         get_platform_statistics=GetPlatformStatisticsHandler(
+            user_repository=user_repository,
+            subscription_repository=subscription_repository),
+        update_user_subscriptions_handler=UpdateUserSubscriptionsHandler(
+            subscription_service=youtube_service,
             user_repository=user_repository,
             subscription_repository=subscription_repository),
     )

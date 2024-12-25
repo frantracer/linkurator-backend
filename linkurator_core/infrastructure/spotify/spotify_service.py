@@ -31,6 +31,7 @@ class SpotifySubscriptionService(SubscriptionService):
     async def get_subscriptions(
             self,
             user_id: UUID,
+            access_token: str,
             credential: Optional[ExternalServiceCredential] = None
     ) -> List[Subscription]:
         return []

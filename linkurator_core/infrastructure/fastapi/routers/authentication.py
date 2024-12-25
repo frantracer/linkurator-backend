@@ -28,8 +28,6 @@ COOKIE_EXPIRATION_IN_SECONDS = 3600 * 24 * 30
 REDIRECT_URI_NAME = "redirect_uri"
 TOKEN_COOKIE_NAME = "token"
 
-YOUTUBE_CHANNEL_SCOPE = "https://www.googleapis.com/auth/youtube.readonly"
-
 
 class NewUserSchema(BaseModel):
     email: EmailStr
@@ -93,7 +91,6 @@ def valid_auth_response(token: str, redirect_uri: Optional[str]) -> RedirectResp
 
 
 def google_redirect_response(oauth_uri: str, redirect_uri: Optional[str]) -> RedirectResponse:
-    print(oauth_uri)
     response = RedirectResponse(
         url=oauth_uri,
         status_code=http.HTTPStatus.FOUND)
@@ -229,8 +226,7 @@ def get_router(  # pylint: disable=too-many-statements
                 auth_error = "Invalid code"
             else:
                 register_error = await register_user_with_google.handle(
-                    access_token=tokens.access_token,
-                    refresh_token=tokens.refresh_token)
+                    access_token=tokens.access_token)
 
                 if register_error is None:
                     return valid_auth_response(token=tokens.access_token, redirect_uri="/login")

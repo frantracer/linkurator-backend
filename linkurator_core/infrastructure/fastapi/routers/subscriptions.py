@@ -1,9 +1,11 @@
 import asyncio
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional, Coroutine, Annotated
+from urllib.parse import urljoin
 from uuid import UUID
 
 from fastapi import Depends, Request, status, Query
+from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
@@ -17,6 +19,7 @@ from linkurator_core.application.subscriptions.get_user_subscriptions_handler im
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.application.subscriptions.unfollow_subscription_handler import UnfollowSubscriptionHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
+from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, SubscriptionAlreadyUpdatedError, \
     CannotUnfollowAssignedSubscriptionError
 from linkurator_core.domain.users.session import Session
@@ -25,6 +28,10 @@ from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, InteractionFilterSchema, VALID_INTERACTIONS
 from linkurator_core.infrastructure.fastapi.models.page import Page, FullPage
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
+from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+
+
+REDIRECT_URI_COOKIE_NAME = "redirect_uri_youtube_sync"
 
 
 async def get_user_profile(session: Session | None, handler: GetUserProfileHandler) -> User | None:
@@ -34,6 +41,7 @@ async def get_user_profile(session: Session | None, handler: GetUserProfileHandl
 
 
 def get_router(  # pylint: disable=too-many-statements
+        google_client: GoogleAccountService,
         get_session: Callable[[Request], Coroutine[Any, Any, Optional[Session]]],
         get_user_profile_handler: GetUserProfileHandler,
         get_subscription_handler: GetSubscriptionHandler,
@@ -43,7 +51,8 @@ def get_router(  # pylint: disable=too-many-statements
         unfollow_subscription_handler: UnfollowSubscriptionHandler,
         get_subscription_items_handler: GetSubscriptionItemsHandler,
         delete_subscription_items_handler: DeleteSubscriptionItemsHandler,
-        refresh_subscription_handler: RefreshSubscriptionHandler
+        refresh_subscription_handler: RefreshSubscriptionHandler,
+        update_user_subscriptions_handler: UpdateUserSubscriptionsHandler
 ) -> APIRouter:
     router = APIRouter()
 
@@ -308,5 +317,58 @@ def get_router(  # pylint: disable=too-many-statements
             raise default_responses.not_found("Subscription not found") from error
         except SubscriptionAlreadyUpdatedError as error:
             raise default_responses.too_many_requests("Subscription already updated") from error
+
+    @router.get("/sync/youtube",
+                status_code=status.HTTP_204_NO_CONTENT)
+    async def sync_youtube_subscriptions(
+        request: Request,
+        redirect_uri: str | None = None,
+        session: Optional[Session] = Depends(get_session)
+    ) -> RedirectResponse:
+        """
+        Sync the youtube subscriptions
+        """
+        if session is None:
+            return RedirectResponse(url=redirect_uri or '/login')
+
+        youtube_channel_scope = "https://www.googleapis.com/auth/youtube.readonly"
+        oauth_url = google_client.authorization_url(
+            scopes=[youtube_channel_scope],
+            redirect_uri=urljoin(str(request.base_url), "/subscriptions/sync/youtube_auth")
+        )
+
+        response = RedirectResponse(url=oauth_url)
+        response.set_cookie(REDIRECT_URI_COOKIE_NAME, redirect_uri or '/')
+        return response
+
+
+    @router.get("/sync/youtube_auth",
+                status_code=status.HTTP_204_NO_CONTENT)
+    async def sync_youtube_auth(
+        request: Request,
+        code: str | None = None,
+        error: str | None = None,
+        session: Optional[Session] = Depends(get_session)
+    ) -> RedirectResponse:
+        """
+        Sync the youtube subscriptions
+        """
+        redirect_uri = request.cookies.get(REDIRECT_URI_COOKIE_NAME, '')
+
+        if session is None:
+            return RedirectResponse(url=redirect_uri or '/login')
+
+        if error is None and code is not None:
+            tokens = google_client.validate_code(
+                code=code,
+                redirect_uri=urljoin(str(request.base_url), "/subscriptions/sync/youtube_auth"))
+            if tokens is not None and tokens.access_token is not None:
+                await update_user_subscriptions_handler.handle(
+                    user_id=session.user_id, access_token=tokens.access_token)
+                google_client.revoke_credentials(tokens.access_token)
+
+        response = RedirectResponse(url=redirect_uri or '/subscriptions')
+        response.delete_cookie(REDIRECT_URI_COOKIE_NAME)
+        return response
 
     return router

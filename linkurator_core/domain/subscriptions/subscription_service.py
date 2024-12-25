@@ -15,6 +15,7 @@ class SubscriptionService(abc.ABC):
     async def get_subscriptions(
             self,
             user_id: uuid.UUID,
+            access_token: str,
             credential: Optional[ExternalServiceCredential] = None
     ) -> List[Subscription]: ...
 

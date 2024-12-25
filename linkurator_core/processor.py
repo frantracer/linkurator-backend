@@ -10,9 +10,8 @@ from linkurator_core.application.items.refresh_items_handler import RefreshItems
 from linkurator_core.application.subscriptions.find_outdated_subscriptions_handler import \
     FindOutdatedSubscriptionsHandler
 from linkurator_core.application.subscriptions.update_subscription_items_handler import UpdateSubscriptionItemsHandler
-from linkurator_core.application.users.find_outdated_users_handler import FindOutdatedUsersHandler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
-from linkurator_core.domain.common.event import UserSubscriptionsBecameOutdatedEvent, SubscriptionBecameOutdatedEvent, \
+from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent, \
     ItemsBecameOutdatedEvent, UserRegisterRequestSentEvent, UserRegisteredEvent
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
@@ -21,7 +20,7 @@ from linkurator_core.infrastructure.config.google_secrets import GoogleClientSec
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.general_subscription_service import GeneralSubscriptionService
-from linkurator_core.infrastructure.google.account_service import GoogleAccountService, GoogleDomainAccountService
+from linkurator_core.infrastructure.google.account_service import GoogleDomainAccountService
 from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
@@ -71,11 +70,7 @@ async def main() -> None:  # pylint: disable=too-many-locals
     # Services
     youtube_client = YoutubeApiClient()
     youtube_rss_client = YoutubeRssClient()
-    account_service = GoogleAccountService(
-        client_id=google_secrets.client_id,
-        client_secret=google_secrets.client_secret)
     youtube_service = YoutubeService(
-        google_account_service=account_service,
         user_repository=user_repository,
         subscription_repository=subscription_repository,
         item_repository=item_repository,
@@ -120,7 +115,6 @@ async def main() -> None:  # pylint: disable=too-many-locals
     refresh_items_handler = RefreshItemsHandler(
         item_repository=item_repository,
         subscription_service=general_subscription_service)
-    find_outdated_users = FindOutdatedUsersHandler(user_repository, event_bus)
     find_outdated_subscriptions = FindOutdatedSubscriptionsHandler(
         subscription_repository=subscription_repository,
         event_bus=event_bus,
@@ -150,7 +144,6 @@ async def main() -> None:  # pylint: disable=too-many-locals
         send_welcome_email=send_welcome_email
     )
 
-    event_bus.subscribe(UserSubscriptionsBecameOutdatedEvent, event_handler.handle)
     event_bus.subscribe(SubscriptionBecameOutdatedEvent, event_handler.handle)
     event_bus.subscribe(ItemsBecameOutdatedEvent, event_handler.handle)
     event_bus.subscribe(UserRegisterRequestSentEvent, event_handler.handle)
@@ -158,7 +151,6 @@ async def main() -> None:  # pylint: disable=too-many-locals
 
     # Task scheduler
     scheduler = TaskScheduler()
-    scheduler.schedule_recurring_task(task=find_outdated_users.handle, interval_seconds=60 * 5)
     scheduler.schedule_recurring_task(task=find_outdated_subscriptions.handle, interval_seconds=60)
     scheduler.schedule_recurring_task(task=find_deprecated_items.handle, interval_seconds=60 * 5)
     scheduler.schedule_recurring_task(task=find_zero_duration_items.handle, interval_seconds=60 * 5)

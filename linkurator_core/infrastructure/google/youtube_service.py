@@ -10,7 +10,7 @@ from typing import Dict, List, Optional
 from pydantic import AnyUrl
 
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError, InvalidCredentialError
+from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
 from linkurator_core.domain.common.utils import parse_url, datetime_now
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
@@ -20,13 +20,12 @@ from linkurator_core.domain.subscriptions.subscription_service import Subscripti
 from linkurator_core.domain.users.external_service_credential import ExternalServiceType, ExternalServiceCredential
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
 from linkurator_core.domain.users.user_repository import UserRepository
-from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient, YoutubeChannel, YoutubeApiError
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 
 
 class YoutubeService(SubscriptionService):
-    def __init__(self, google_account_service: GoogleAccountService,
+    def __init__(self,
                  user_repository: UserRepository,
                  subscription_repository: SubscriptionRepository,
                  item_repository: ItemRepository,
@@ -34,7 +33,6 @@ class YoutubeService(SubscriptionService):
                  youtube_client: YoutubeApiClient,
                  youtube_rss_client: YoutubeRssClient,
                  api_keys: list[str]):
-        self.google_account_service = google_account_service
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
@@ -49,6 +47,7 @@ class YoutubeService(SubscriptionService):
     async def get_subscriptions(
             self,
             user_id: uuid.UUID,
+            access_token: str,
             credential: Optional[ExternalServiceCredential] = None
     ) -> List[Subscription]:
         """
@@ -59,7 +58,6 @@ class YoutubeService(SubscriptionService):
         :return: list of subscriptions
 
         :raises InvalidCredentialTypeError: if the credential type is not YOUTUBE_API_KEY
-        :raises InvalidCredentialError: if the user refresh token is invalid
         """
 
         user = await self.user_repository.get(user_id)
@@ -71,13 +69,7 @@ class YoutubeService(SubscriptionService):
                 raise InvalidCredentialTypeError("Invalid credential type")
             api_key = credential.credential_value
 
-        if user is not None and user.google_refresh_token is not None:
-            access_token = self.google_account_service.generate_access_token_from_refresh_token(
-                user.google_refresh_token)
-
-            if access_token is None:
-                raise InvalidCredentialError("Invalid refresh token")
-
+        if user is not None:
             channels = await self.youtube_client.get_youtube_subscriptions(access_token=access_token,
                                                                            api_key=api_key)
             youtube_channels = [c.to_subscription(sub_id=uuid.uuid4()) for c in channels]

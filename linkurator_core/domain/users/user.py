@@ -86,7 +86,7 @@ class User:
             email: str,
             avatar_url: AnyUrl,
             locale: str,
-            google_refresh_token: Optional[str],
+            google_refresh_token: Optional[str] = None,
             subscription_uuids: Optional[set[UUID]] = None,
             is_admin: bool = False,
             curators: Optional[set[UUID]] = None,

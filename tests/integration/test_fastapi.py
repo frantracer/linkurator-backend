@@ -44,6 +44,7 @@ def dummy_handlers() -> Handlers:
         request_password_change=AsyncMock(),
         change_password_from_request=AsyncMock(),
         google_client=AsyncMock(),
+        google_youtube_client=AsyncMock(),
         get_subscription=AsyncMock(),
         get_user_subscriptions=AsyncMock(),
         find_subscriptions_by_name_handler=AsyncMock(),
@@ -79,6 +80,7 @@ def dummy_handlers() -> Handlers:
         follow_topic_handler=AsyncMock(),
         unfollow_topic_handler=AsyncMock(),
         get_platform_statistics=AsyncMock(),
+        update_user_subscriptions_handler=AsyncMock(),
     )
 
 

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, call
 import pytest
 
 from linkurator_core.application.common.event_handler import EventHandler
-from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent, UserSubscriptionsBecameOutdatedEvent, \
+from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent, \
     UserRegisterRequestSentEvent, UserRegisteredEvent
 
 
@@ -16,23 +16,6 @@ def dummy_event_handler() -> EventHandler:
         refresh_items_handler=AsyncMock(),
         send_validate_new_user_email=AsyncMock(),
         send_welcome_email=AsyncMock())
-
-
-@pytest.mark.asyncio
-async def test_user_became_obsolete_event_triggers_update_user_subscriptions_handler() -> None:
-    update_user_subscriptions_handler = AsyncMock()
-    update_user_subscriptions_handler.handle.return_value = None
-    event_handler = dummy_event_handler()
-    event_handler.update_user_subscriptions_handler = update_user_subscriptions_handler
-
-    await event_handler.handle(UserSubscriptionsBecameOutdatedEvent(
-        id=uuid.UUID("416db0f0-d66f-4f47-9924-25c234615cc7"),
-        created_at=datetime.datetime.utcnow(),
-        user_id=uuid.UUID("5b71a7fa-0664-47b9-a28c-d43f2190c693")))
-
-    handle_calls = update_user_subscriptions_handler.handle.call_args_list
-    assert len(handle_calls) == 1
-    assert handle_calls[0] == call(uuid.UUID("5b71a7fa-0664-47b9-a28c-d43f2190c693"))
 
 
 @pytest.mark.asyncio

@@ -54,6 +54,7 @@ from linkurator_core.application.users.get_curators_handler import GetCuratorsHa
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
+from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items, \
     credentials, curators
@@ -71,6 +72,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     request_password_change: RequestPasswordChange
     change_password_from_request: ChangePasswordFromRequest
     google_client: GoogleAccountService
+    google_youtube_client: GoogleAccountService
     get_subscription: GetSubscriptionHandler
     get_user_subscriptions: GetUserSubscriptionsHandler
     find_subscriptions_by_name_handler: FindSubscriptionsByNameOrUrlHandler
@@ -106,6 +108,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_user_external_credentials_handler: GetUserExternalCredentialsHandler
     delete_external_credential_handler: DeleteExternalCredentialHandler
     get_platform_statistics: GetPlatformStatisticsHandler
+    update_user_subscriptions_handler: UpdateUserSubscriptionsHandler
 
 
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
@@ -193,6 +196,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
     app.include_router(
         tags=["Subscriptions"],
         router=subscriptions.get_router(
+            google_client=handlers.google_youtube_client,
             get_session=get_current_session,
             get_user_profile_handler=handlers.get_user_profile_handler,
             get_subscription_handler=handlers.get_subscription,
@@ -202,7 +206,9 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             unfollow_subscription_handler=handlers.unfollow_subscription_handler,
             get_subscription_items_handler=handlers.get_subscription_items_handler,
             delete_subscription_items_handler=handlers.delete_subscription_items_handler,
-            refresh_subscription_handler=handlers.refresh_subscription_handler),
+            refresh_subscription_handler=handlers.refresh_subscription_handler,
+            update_user_subscriptions_handler=handlers.update_user_subscriptions_handler
+        ),
         prefix="/subscriptions")
     app.include_router(
         tags=["Items"],
