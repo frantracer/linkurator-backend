@@ -365,7 +365,6 @@ def get_router(  # pylint: disable=too-many-statements
             if tokens is not None and tokens.access_token is not None:
                 await update_user_subscriptions_handler.handle(
                     user_id=session.user_id, access_token=tokens.access_token)
-                google_client.revoke_credentials(tokens.access_token)
 
         response = RedirectResponse(url=redirect_uri or '/subscriptions')
         response.delete_cookie(REDIRECT_URI_COOKIE_NAME)
