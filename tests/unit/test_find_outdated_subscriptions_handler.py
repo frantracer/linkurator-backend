@@ -4,7 +4,7 @@ import pytest
 
 from linkurator_core.application.subscriptions.find_outdated_subscriptions_handler import \
     FindOutdatedSubscriptionsHandler
-from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
+from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.mock_factory import mock_user, mock_sub, mock_credential
 from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider
@@ -35,8 +35,8 @@ async def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions(
     arg1 = event_bus_mock.publish.call_args_list[0][0][0]
     arg2 = event_bus_mock.publish.call_args_list[1][0][0]
 
-    assert isinstance(arg1, SubscriptionBecameOutdatedEvent)
-    assert isinstance(arg2, SubscriptionBecameOutdatedEvent)
+    assert isinstance(arg1, SubscriptionItemsBecameOutdatedEvent)
+    assert isinstance(arg2, SubscriptionItemsBecameOutdatedEvent)
 
     assert {sub1.uuid, sub2.uuid}.issubset({arg1.subscription_id, arg2.subscription_id})
 

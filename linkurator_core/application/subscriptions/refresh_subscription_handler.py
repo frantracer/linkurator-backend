@@ -2,7 +2,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Callable
 from uuid import UUID
 
-from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
+from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, SubscriptionAlreadyUpdatedError
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -32,7 +32,7 @@ class RefreshSubscriptionHandler:
             raise SubscriptionNotFoundError("No subscription found")
 
         if now > subscription.scanned_at + timedelta(seconds=MIN_REFRESH_INTERVAL_IN_SECONDS):
-            await self._event_bus.publish(SubscriptionBecameOutdatedEvent.new(subscription_id=subscription.uuid))
+            await self._event_bus.publish(SubscriptionItemsBecameOutdatedEvent.new(subscription_id=subscription.uuid))
 
         if now < subscription.updated_at + timedelta(seconds=MIN_REFRESH_INTERVAL_IN_SECONDS):
             wait_time_in_seconds = (subscription.updated_at + timedelta(

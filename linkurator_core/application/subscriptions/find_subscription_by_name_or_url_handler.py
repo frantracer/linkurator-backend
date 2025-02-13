@@ -2,7 +2,7 @@ import asyncio
 
 from pydantic import AnyUrl, ValidationError
 
-from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
+from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.subscriptions.subscription import Subscription
@@ -48,7 +48,7 @@ class FindSubscriptionsByNameOrUrlHandler:
         existing_sub = await self.subscription_repository.get(sub.uuid)
         if existing_sub is None:
             await self.subscription_repository.add(sub)
-            await self.event_bus.publish(SubscriptionBecameOutdatedEvent.new(sub.uuid))
+            await self.event_bus.publish(SubscriptionItemsBecameOutdatedEvent.new(sub.uuid))
             return sub
 
         return existing_sub

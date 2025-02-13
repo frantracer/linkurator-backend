@@ -11,7 +11,7 @@ from linkurator_core.application.subscriptions.find_outdated_subscriptions_handl
     FindOutdatedSubscriptionsHandler
 from linkurator_core.application.subscriptions.update_subscription_items_handler import UpdateSubscriptionItemsHandler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
-from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent, \
+from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent, \
     ItemsBecameOutdatedEvent, UserRegisterRequestSentEvent, UserRegisteredEvent
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
@@ -144,7 +144,7 @@ async def main() -> None:  # pylint: disable=too-many-locals
         send_welcome_email=send_welcome_email
     )
 
-    event_bus.subscribe(SubscriptionBecameOutdatedEvent, event_handler.handle)
+    event_bus.subscribe(SubscriptionItemsBecameOutdatedEvent, event_handler.handle)
     event_bus.subscribe(ItemsBecameOutdatedEvent, event_handler.handle)
     event_bus.subscribe(UserRegisterRequestSentEvent, event_handler.handle)
     event_bus.subscribe(UserRegisteredEvent, event_handler.handle)

@@ -48,11 +48,11 @@ class Event(abc.ABC, BaseModel):
         return instance
 
 
-class SubscriptionBecameOutdatedEvent(Event):
+class SubscriptionItemsBecameOutdatedEvent(Event):
     subscription_id: UUID
 
     @classmethod
-    def new(cls, subscription_id: UUID) -> SubscriptionBecameOutdatedEvent:
+    def new(cls, subscription_id: UUID) -> SubscriptionItemsBecameOutdatedEvent:
         return cls(
             id=uuid4(),
             created_at=datetime.utcnow(),

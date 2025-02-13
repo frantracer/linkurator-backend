@@ -6,7 +6,7 @@ from pydantic import AnyUrl
 
 from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import \
     FindSubscriptionsByNameOrUrlHandler
-from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
+from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
@@ -90,7 +90,7 @@ async def test_find_subscription_by_url_is_added_to_repo_if_not_exists() -> None
     assert await sub_repo.get(sub.uuid) == sub
 
     assert len(event_bus.publish.call_args_list) == 1
-    assert isinstance(event_bus.publish.call_args_list[0].args[0], SubscriptionBecameOutdatedEvent)
+    assert isinstance(event_bus.publish.call_args_list[0].args[0], SubscriptionItemsBecameOutdatedEvent)
 
 
 @pytest.mark.asyncio
@@ -151,4 +151,4 @@ async def test_find_subscription_by_name_that_does_not_exist_in_the_repository_b
     assert await sub_repo.get(sub.uuid) == sub
 
     assert len(event_bus.publish.call_args_list) == 1
-    assert isinstance(event_bus.publish.call_args_list[0].args[0], SubscriptionBecameOutdatedEvent)
+    assert isinstance(event_bus.publish.call_args_list[0].args[0], SubscriptionItemsBecameOutdatedEvent)

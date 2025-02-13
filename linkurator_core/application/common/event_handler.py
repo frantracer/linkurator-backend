@@ -14,7 +14,7 @@ from linkurator_core.application.users.update_user_subscriptions_handler import 
 from linkurator_core.domain.common.event import (
     Event,
     ItemsBecameOutdatedEvent,
-    SubscriptionBecameOutdatedEvent,
+    SubscriptionItemsBecameOutdatedEvent,
     UserRegisteredEvent,
     UserRegisterRequestSentEvent,
 )
@@ -29,7 +29,7 @@ class EventHandler:
     send_welcome_email: SendWelcomeEmail
 
     async def handle(self, event: Event) -> None:
-        if isinstance(event, SubscriptionBecameOutdatedEvent):
+        if isinstance(event, SubscriptionItemsBecameOutdatedEvent):
             await self.update_subscription_items_handler.handle(event.subscription_id)
         elif isinstance(event, ItemsBecameOutdatedEvent):
             await self.refresh_items_handler.handle(event.item_ids)

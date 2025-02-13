@@ -7,7 +7,7 @@ import pytest
 
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler, \
     MIN_REFRESH_INTERVAL_IN_SECONDS
-from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
+from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.exceptions import SubscriptionAlreadyUpdatedError, SubscriptionNotFoundError
 from linkurator_core.domain.common.mock_factory import mock_sub
@@ -49,7 +49,7 @@ async def test_refresh_an_outdated_subscription() -> None:
     assert updated_sub.name == new_sub.name
 
     assert len(event_bus.publish.mock_calls) == 1
-    assert isinstance(event_bus.publish.mock_calls[0][1][0], SubscriptionBecameOutdatedEvent)
+    assert isinstance(event_bus.publish.mock_calls[0][1][0], SubscriptionItemsBecameOutdatedEvent)
 
 
 @pytest.mark.asyncio

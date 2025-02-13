@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, call
 import pytest
 
 from linkurator_core.application.common.event_handler import EventHandler
-from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent, \
+from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent, \
     UserRegisterRequestSentEvent, UserRegisteredEvent
 
 
@@ -25,7 +25,7 @@ async def test_subscription_became_obsolete_event_triggers_update_subscriptions_
     event_handler = dummy_event_handler()
     event_handler.update_subscription_items_handler = update_subscription_items_handler
 
-    await event_handler.handle(SubscriptionBecameOutdatedEvent(
+    await event_handler.handle(SubscriptionItemsBecameOutdatedEvent(
         id=uuid.UUID("f71fcaa6-0baf-43f3-863d-292bea2989e9"),
         created_at=datetime.datetime.utcnow(),
         subscription_id=uuid.UUID("4d00e658-2947-4781-a045-691f0ef57831")))

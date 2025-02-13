@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta, timezone
 
-from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
+from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -38,7 +38,7 @@ class FindOutdatedSubscriptionsHandler:
             refresh_period = await self.calculate_subscription_refresh_period_in_minutes(subscription)
             if subscription.scanned_at + timedelta(minutes=refresh_period) < now:
                 logging.info('Found outdated subscription: %s - %s', subscription.uuid, subscription.name)
-                await self.event_bus.publish(SubscriptionBecameOutdatedEvent.new(subscription.uuid))
+                await self.event_bus.publish(SubscriptionItemsBecameOutdatedEvent.new(subscription.uuid))
 
     async def calculate_subscription_refresh_period_in_minutes(self, subscription: Subscription) -> int:
         subscribed_users = await self.user_repository.find_users_subscribed_to_subscription(subscription.uuid)
