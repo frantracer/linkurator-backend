@@ -18,7 +18,7 @@ from linkurator_core.domain.subscriptions.subscription import (
     SubscriptionProvider,
 )
 from linkurator_core.domain.subscriptions.subscription_repository import (
-    SubscriptionRepository,
+    SubscriptionRepository, SubscriptionFilterCriteria,
 )
 from linkurator_core.infrastructure.mongodb.common import normalize_text_search
 from linkurator_core.infrastructure.mongodb.repositories import (
@@ -167,6 +167,19 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
             collection.find({"$text": {"$search": normalize_text_search(name)}})
             .sort("created_at", DESCENDING)
             .to_list(length=None)
+        )
+        return [
+            MongoDBSubscription(**subscription).to_domain_subscription()
+            for subscription in subscriptions
+        ]
+
+    async def find(self, criteria: SubscriptionFilterCriteria) -> List[Subscription]:
+        collection = await self._subscription_collection()
+        query = {}
+        if criteria.updated_before is not None:
+            query["updated_at"] = {"$lt": criteria.updated_before}
+        subscriptions: List[dict[str, Any]] = await collection.find(query).to_list(
+            length=None
         )
         return [
             MongoDBSubscription(**subscription).to_domain_subscription()

@@ -10,7 +10,8 @@ import pytest_asyncio
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.mock_factory import mock_sub
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
-from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository, \
+    SubscriptionFilterCriteria
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
@@ -140,6 +141,36 @@ async def test_find_subscriptions_scanned_before_a_date(subscription_repo: Subsc
     updated_subscriptions = await subscription_repo.find_latest_scan_before(
         datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc))
 
+    assert len(updated_subscriptions) - len(current_subscriptions) == 1
+
+
+@pytest.mark.asyncio
+async def test_find_subspcriptions_updated_before_a_date(subscription_repo: SubscriptionRepository) -> None:
+    sub1 = Subscription.new(
+        name="test",
+        uuid=uuid.UUID("ee17d49f-2e7d-4439-b563-7eba54623e5c"),
+        url=utils.parse_url('https://ee17d49f-2e7d-4439-b563-7eba54623e5c.com'),
+        provider=SubscriptionProvider.YOUTUBE,
+        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        external_data={},
+    )
+    sub1.updated_at = datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc)
+    sub2 = Subscription.new(
+        name="test",
+        uuid=uuid.UUID("f3b1b3b4-1b3b-4b3b-8b3b-3b3b3b3b3b3b"),
+        url=utils.parse_url('https://f3b1b3b4-1b3b-4b3b-8b3b-3b3b3b3b3b3b.com'),
+        provider=SubscriptionProvider.YOUTUBE,
+        thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+        external_data={},
+    )
+    sub2.updated_at = datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+
+    filter_criteria = SubscriptionFilterCriteria(updated_before=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc))
+    current_subscriptions = await subscription_repo.find(filter_criteria)
+    await subscription_repo.add(sub1)
+    await subscription_repo.add(sub2)
+
+    updated_subscriptions = await subscription_repo.find(filter_criteria)
     assert len(updated_subscriptions) - len(current_subscriptions) == 1
 
 

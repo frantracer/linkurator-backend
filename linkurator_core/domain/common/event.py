@@ -60,6 +60,17 @@ class SubscriptionItemsBecameOutdatedEvent(Event):
         )
 
 
+class SubscriptionBecameOutdatedEvent(Event):
+    subscription_id: UUID
+
+    @classmethod
+    def new(cls, subscription_id: UUID) -> SubscriptionBecameOutdatedEvent:
+        return cls(
+            id=uuid4(),
+            created_at=datetime.utcnow(),
+            subscription_id=subscription_id
+        )
+
 class ItemsBecameOutdatedEvent(Event):
     item_ids: set[UUID]
 

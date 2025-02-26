@@ -6,20 +6,22 @@ import pytest
 
 from linkurator_core.application.common.event_handler import EventHandler
 from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent, \
-    UserRegisterRequestSentEvent, UserRegisteredEvent
+    UserRegisterRequestSentEvent, UserRegisteredEvent, SubscriptionBecameOutdatedEvent
 
 
 def dummy_event_handler() -> EventHandler:
     return EventHandler(
         update_user_subscriptions_handler=AsyncMock(),
         update_subscription_items_handler=AsyncMock(),
+        update_subscription_handler=AsyncMock(),
         refresh_items_handler=AsyncMock(),
         send_validate_new_user_email=AsyncMock(),
-        send_welcome_email=AsyncMock())
+        send_welcome_email=AsyncMock()
+    )
 
 
 @pytest.mark.asyncio
-async def test_subscription_became_obsolete_event_triggers_update_subscriptions_items_handler() -> None:
+async def test_subscription_items_became_obsolete_event_triggers_update_subscriptions_items_handler() -> None:
     update_subscription_items_handler = AsyncMock()
     update_subscription_items_handler.handle.return_value = None
     event_handler = dummy_event_handler()
@@ -27,10 +29,27 @@ async def test_subscription_became_obsolete_event_triggers_update_subscriptions_
 
     await event_handler.handle(SubscriptionItemsBecameOutdatedEvent(
         id=uuid.UUID("f71fcaa6-0baf-43f3-863d-292bea2989e9"),
-        created_at=datetime.datetime.utcnow(),
+        created_at=datetime.datetime.now(tz=datetime.timezone.utc),
         subscription_id=uuid.UUID("4d00e658-2947-4781-a045-691f0ef57831")))
 
     handle_calls = update_subscription_items_handler.handle.call_args_list
+    assert len(handle_calls) == 1
+    assert handle_calls[0] == call(uuid.UUID("4d00e658-2947-4781-a045-691f0ef57831"))
+
+
+@pytest.mark.asyncio
+async def test_subscription_became_obsolete_event_triggers_update_subscription_handler() -> None:
+    update_subscription_handler = AsyncMock()
+    update_subscription_handler.handle.return_value = None
+    event_handler = dummy_event_handler()
+    event_handler.update_subscription_handler = update_subscription_handler
+
+    await event_handler.handle(SubscriptionBecameOutdatedEvent(
+        id=uuid.UUID("1f1aebb5-51ba-4a08-9b63-697ea49c5512"),
+        created_at=datetime.datetime.now(tz=datetime.timezone.utc),
+        subscription_id=uuid.UUID("4d00e658-2947-4781-a045-691f0ef57831")))
+
+    handle_calls = update_subscription_handler.handle.call_args_list
     assert len(handle_calls) == 1
     assert handle_calls[0] == call(uuid.UUID("4d00e658-2947-4781-a045-691f0ef57831"))
 

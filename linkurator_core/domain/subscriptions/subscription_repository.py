@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
@@ -9,6 +10,11 @@ from linkurator_core.domain.subscriptions.subscription import (
     Subscription,
     SubscriptionProvider,
 )
+
+
+@dataclass
+class SubscriptionFilterCriteria:
+    updated_before: Optional[datetime] = None
 
 
 class SubscriptionRepository(ABC):
@@ -38,11 +44,14 @@ class SubscriptionRepository(ABC):
 
     @abstractmethod
     async def find_latest_scan_before(
-        self, datetime_limit: datetime
+            self, datetime_limit: datetime
     ) -> List[Subscription]: ...
 
     @abstractmethod
     async def find_by_name(self, name: str) -> List[Subscription]: ...
+
+    @abstractmethod
+    async def find(self, criteria: SubscriptionFilterCriteria) -> List[Subscription]: ...
 
     @abstractmethod
     async def count_subscriptions(self, provider: SubscriptionProvider | None = None) -> int: ...

@@ -7,7 +7,7 @@ from unidecode import unidecode
 
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import (
-    SubscriptionRepository,
+    SubscriptionRepository, SubscriptionFilterCriteria,
 )
 
 
@@ -67,6 +67,15 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
             subscription
             for subscription in self.subscriptions.values()
             if search_terms_in_name(search_terms, unidecode(subscription.name.lower()))
+        ]
+        return sorted(subs, key=lambda x: x.created_at, reverse=True)
+
+    async def find(self, criteria: SubscriptionFilterCriteria) -> List[Subscription]:
+        subs = [
+            subscription
+            for subscription in self.subscriptions.values()
+            if criteria.updated_before is None
+            or subscription.updated_at < criteria.updated_before
         ]
         return sorted(subs, key=lambda x: x.created_at, reverse=True)
 

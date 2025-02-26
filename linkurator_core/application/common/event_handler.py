@@ -5,6 +5,7 @@ from linkurator_core.application.auth.send_validate_new_user_email import (
 )
 from linkurator_core.application.auth.send_welcome_email import SendWelcomeEmail
 from linkurator_core.application.items.refresh_items_handler import RefreshItemsHandler
+from linkurator_core.application.subscriptions.update_subscription_handler import UpdateSubscriptionHandler
 from linkurator_core.application.subscriptions.update_subscription_items_handler import (
     UpdateSubscriptionItemsHandler,
 )
@@ -16,7 +17,7 @@ from linkurator_core.domain.common.event import (
     ItemsBecameOutdatedEvent,
     SubscriptionItemsBecameOutdatedEvent,
     UserRegisteredEvent,
-    UserRegisterRequestSentEvent,
+    UserRegisterRequestSentEvent, SubscriptionBecameOutdatedEvent,
 )
 
 
@@ -24,6 +25,7 @@ from linkurator_core.domain.common.event import (
 class EventHandler:
     update_user_subscriptions_handler: UpdateUserSubscriptionsHandler
     update_subscription_items_handler: UpdateSubscriptionItemsHandler
+    update_subscription_handler: UpdateSubscriptionHandler
     refresh_items_handler: RefreshItemsHandler
     send_validate_new_user_email: SendValidateNewUserEmail
     send_welcome_email: SendWelcomeEmail
@@ -31,6 +33,8 @@ class EventHandler:
     async def handle(self, event: Event) -> None:
         if isinstance(event, SubscriptionItemsBecameOutdatedEvent):
             await self.update_subscription_items_handler.handle(event.subscription_id)
+        elif isinstance(event, SubscriptionBecameOutdatedEvent):
+            await self.update_subscription_handler.handle(event.subscription_id)
         elif isinstance(event, ItemsBecameOutdatedEvent):
             await self.refresh_items_handler.handle(event.item_ids)
         elif isinstance(event, UserRegisterRequestSentEvent):
