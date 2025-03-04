@@ -51,7 +51,7 @@ The project is composed of two services: the API and the processor:
 
 Run the API with your local python venv:
 ```bash
-make local-run-api
+make run-api
 ```
 
 Or with docker:
@@ -66,7 +66,7 @@ Once you have the API running, you can access the documentation at http://localh
 
 Run the processor with your local python venv:
 ```bash
-make local-run-procesor
+make run-procesor
 ```
 
 Or with docker:
