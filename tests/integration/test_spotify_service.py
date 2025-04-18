@@ -129,14 +129,15 @@ async def test_get_subscription_from_url() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_subscription_from_id() -> None:
+async def test_get_existing_subscription_from_id() -> None:
     spotify_show = mock_spotify_show()
 
     spotify_api_client = AsyncMock(spec=SpotifyApiClient)
     spotify_api_client.get_shows.return_value = [spotify_show]
 
     sub_repo = InMemorySubscriptionRepository()
-    sub = mock_sub(provider=SubscriptionProvider.SPOTIFY)
+    sub = mock_sub(provider=SubscriptionProvider.SPOTIFY,
+                   url=f"https://open.spotify.com/show/{spotify_show.id}")
     sub.external_data = {
         "show_id": spotify_show.id,
     }
@@ -152,7 +153,7 @@ async def test_get_subscription_from_id() -> None:
     assert subscription.uuid == sub.uuid
     assert subscription.name == spotify_show.name
     assert subscription.provider == SubscriptionProvider.SPOTIFY
-    assert subscription.url == AnyUrl(f"https://open.spotify.com/show/{spotify_show.id}")
+    assert subscription.url == sub.url
     assert subscription.thumbnail == AnyUrl("https://show.com/image/medium.jpg")
     assert subscription.external_data == {
         "show_id": spotify_show.id,

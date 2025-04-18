@@ -1,4 +1,5 @@
 import math
+from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Optional, List
 from uuid import UUID, uuid4
@@ -56,7 +57,7 @@ class SpotifySubscriptionService(SubscriptionService):
         if len(spotify_shows) == 0:
             return None
 
-        return map_spotify_show_to_subscription(spotify_shows[0], sub_id)
+        return map_spotify_show_to_subscription(spotify_shows[0], subscription)
 
     async def get_items(
             self,
@@ -137,11 +138,9 @@ class SpotifySubscriptionService(SubscriptionService):
         if len(spotify_shows) == 0:
             return None
 
-        sub_uuid = uuid4()
-        if exiting_sub := await self.subscription_repository.find_by_url(url):
-            sub_uuid = exiting_sub.uuid
+        existing_sub = await self.subscription_repository.find_by_url(url)
 
-        return map_spotify_show_to_subscription(spotify_shows[0], sub_uuid)
+        return map_spotify_show_to_subscription(spotify_shows[0], existing_sub)
 
     async def get_subscriptions_from_name(
             self,
@@ -153,32 +152,33 @@ class SpotifySubscriptionService(SubscriptionService):
             return []
 
         show_url = AnyUrl(f"https://open.spotify.com/show/{spotify_show.id}")
-        sub_uuid = uuid4()
-        if exiting_sub := await self.subscription_repository.find_by_url(show_url):
-            sub_uuid = exiting_sub.uuid
+        exiting_sub = await self.subscription_repository.find_by_url(show_url)
 
-        sub = map_spotify_show_to_subscription(spotify_show, sub_uuid)
+        sub = map_spotify_show_to_subscription(spotify_show, exiting_sub)
         return [sub]
 
 
-def map_spotify_show_to_subscription(spotify_show: Show, sub_uuid: UUID | None = None) -> Subscription:
-    sub_uuid = sub_uuid or uuid4()
+def map_spotify_show_to_subscription(spotify_show: Show, sub: Subscription | None = None) -> Subscription:
     thumbnail = get_most_similar_image(spotify_show.images, 320, 200)
     if thumbnail is None:
         raise ValueError("No thumbnail found")
 
-    show_url = AnyUrl(f"https://open.spotify.com/show/{spotify_show.id}")
+    if sub is None:
+        return Subscription.new(
+            uuid=uuid4(),
+            name=spotify_show.name,
+            provider=SubscriptionProvider.SPOTIFY,
+            url=AnyUrl(f"https://open.spotify.com/show/{spotify_show.id}"),
+            thumbnail=thumbnail.url,
+            external_data={
+                SHOW_ID_KEY: spotify_show.id
+            }
+        )
 
-    return Subscription.new(
-        uuid=sub_uuid,
-        name=spotify_show.name,
-        provider=SubscriptionProvider.SPOTIFY,
-        url=show_url,
-        thumbnail=thumbnail.url,
-        external_data={
-            SHOW_ID_KEY: spotify_show.id
-        }
-    )
+    updated_sub = deepcopy(sub)
+    updated_sub.name = spotify_show.name
+    updated_sub.thumbnail = thumbnail.url
+    return updated_sub
 
 
 def map_episode_to_item(episode: Episode, sub_id: UUID, item_id: UUID | None = None) -> Item:
