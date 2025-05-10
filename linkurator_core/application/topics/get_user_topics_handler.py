@@ -42,7 +42,8 @@ class GetUserTopicsHandler:
         followed_curators = await self._get_curators(followed_topics)
 
         followed_curator_topics = [CuratorTopic(topic=topic, curator=followed_curators[topic.user_id])
-                                   for topic in followed_topics]
+                                   for topic in followed_topics
+                                   if topic.user_id in followed_curators]
         user_curator_topics = [CuratorTopic(topic=topic, curator=user)
                                for topic in user_topics]
 
