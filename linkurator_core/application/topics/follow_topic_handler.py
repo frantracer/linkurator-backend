@@ -7,7 +7,7 @@ from linkurator_core.domain.users.user_repository import UserRepository
 
 class FollowTopicHandler:
     def __init__(self, topic_repository: TopicRepository,
-                 user_repository: UserRepository):
+                 user_repository: UserRepository) -> None:
         self.topic_repository = topic_repository
         self.user_repository = user_repository
 

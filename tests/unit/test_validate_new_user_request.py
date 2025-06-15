@@ -9,12 +9,13 @@ from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.exceptions import InvalidRegistrationRequestError
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.registration_request import RegistrationRequest
-from linkurator_core.infrastructure.in_memory.registration_request_repository import \
-    InMemoryRegistrationRequestRepository
+from linkurator_core.infrastructure.in_memory.registration_request_repository import (
+    InMemoryRegistrationRequestRepository,
+)
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_validate_new_user_request() -> None:
     reg_request_repo = InMemoryRegistrationRequestRepository()
     user_repo = InMemoryUserRepository()
@@ -23,14 +24,14 @@ async def test_validate_new_user_request() -> None:
     request = RegistrationRequest.new(
         user=mock_user(),
         seconds_to_expire=60,
-        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate"),
     )
     await reg_request_repo.add_request(request)
 
     handler = ValidateNewUserRequest(
         registration_request_repository=reg_request_repo,
         user_repository=user_repo,
-        event_bus=event_bus
+        event_bus=event_bus,
     )
 
     await handler.handle(request.uuid)
@@ -40,7 +41,7 @@ async def test_validate_new_user_request() -> None:
     assert len(event_bus.publish.call_args_list) == 1
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_expired_registration_request() -> None:
     reg_request_repo = InMemoryRegistrationRequestRepository()
     user_repo = InMemoryUserRepository()
@@ -49,14 +50,14 @@ async def test_expired_registration_request() -> None:
     request = RegistrationRequest.new(
         user=mock_user(),
         seconds_to_expire=-60,
-        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate"),
     )
     await reg_request_repo.add_request(request)
 
     handler = ValidateNewUserRequest(
         registration_request_repository=reg_request_repo,
         user_repository=user_repo,
-        event_bus=event_bus
+        event_bus=event_bus,
     )
 
     with pytest.raises(InvalidRegistrationRequestError):
@@ -67,7 +68,7 @@ async def test_expired_registration_request() -> None:
     assert len(event_bus.publish.call_args_list) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_non_existent_registration_request() -> None:
     reg_request_repo = InMemoryRegistrationRequestRepository()
     user_repo = InMemoryUserRepository()
@@ -76,7 +77,7 @@ async def test_non_existent_registration_request() -> None:
     handler = ValidateNewUserRequest(
         registration_request_repository=reg_request_repo,
         user_repository=user_repo,
-        event_bus=event_bus
+        event_bus=event_bus,
     )
 
     with pytest.raises(InvalidRegistrationRequestError):

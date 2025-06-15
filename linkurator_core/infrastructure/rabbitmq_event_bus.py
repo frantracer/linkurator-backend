@@ -1,23 +1,25 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Type, Callable, Coroutine, Any, Optional
+from typing import Any, Callable, Coroutine
 
 import aio_pika
 
 from linkurator_core.domain.common.event import Event
 from linkurator_core.domain.common.event_bus_service import EventBusService
 
-STOP_PAYLOAD = 'STOP'
+STOP_PAYLOAD = "STOP"
 
 
 class RabbitMQEventBus(EventBusService):
-    def __init__(self, host: str, port: int, username: str, password: str, queue_name: str = 'event_queue',
-                 loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
+    def __init__(self, host: str, port: int, username: str, password: str, queue_name: str = "event_queue",
+                 loop: asyncio.AbstractEventLoop | None = None) -> None:
         self.host = host
         self.port = port
         self.username = username
         self.password = password
-        self.event_handlers: dict[Type[Event], list[Callable[[Event], Coroutine[Any, Any, None]]]] = {}
-        self.connection: Optional[aio_pika.abc.AbstractRobustConnection] = None
+        self.event_handlers: dict[type[Event], list[Callable[[Event], Coroutine[Any, Any, None]]]] = {}
+        self.connection: aio_pika.abc.AbstractRobustConnection | None = None
         self.queue_name = queue_name
         self._is_running = False
         self.loop = loop or asyncio.get_event_loop()
@@ -34,11 +36,11 @@ class RabbitMQEventBus(EventBusService):
         channel = await self.connection.channel()
         await channel.default_exchange.publish(
             aio_pika.Message(body=data.encode()),
-            routing_key=self.queue_name
+            routing_key=self.queue_name,
         )
         await channel.close()
 
-    def subscribe(self, event_type: Type[Event], callback: Callable[[Event], Coroutine[Any, Any, None]]) -> None:
+    def subscribe(self, event_type: type[Event], callback: Callable[[Event], Coroutine[Any, Any, None]]) -> None:
         if event_type not in self.event_handlers:
             self.event_handlers[event_type] = []
 
@@ -48,7 +50,8 @@ class RabbitMQEventBus(EventBusService):
         self.connection = await aio_pika.connect_robust(self.url, loop=self.loop)
 
         if self.connection is None:
-            raise ValueError('Connection is not established')
+            msg = "Connection is not established"
+            raise ValueError(msg)
 
         async with self.connection:
             channel = await self.connection.channel()
@@ -76,7 +79,8 @@ class RabbitMQEventBus(EventBusService):
 
     async def stop(self) -> None:
         if self.connection is None:
-            raise ValueError('Connection is not established')
+            msg = "Connection is not established"
+            raise ValueError(msg)
 
         await self._publish(STOP_PAYLOAD)
 

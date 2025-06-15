@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
-from typing import Optional, Protocol
+from typing import Protocol
 from uuid import uuid4
 
 from linkurator_core.domain.common.event import UserRegisteredEvent
@@ -30,13 +32,13 @@ class RegisterUserHandler:
     def __init__(self, user_repository: UserRepository,
                  account_service: AccountService,
                  event_bus: EventBusService,
-                 username_generator: UsernameGenerator | None = None):
+                 username_generator: UsernameGenerator | None = None) -> None:
         self.user_repository = user_repository
         self.account_service = account_service
         self.event_bus = event_bus
         self.username_generator = username_generator
 
-    async def handle(self, access_token: str) -> Optional[RegistrationError]:
+    async def handle(self, access_token: str) -> RegistrationError | None:
         user_info = self.account_service.get_user_info(access_token)
         if user_info is None or user_info.details is None:
             return "Failed to get user info"
@@ -46,7 +48,7 @@ class RegisterUserHandler:
             username: Username
             if self.username_generator is None:
                 username = UsernameGeneratorFromEmail(
-                    user_info.email
+                    user_info.email,
                 ).generate_username()
             else:
                 username = self.username_generator.generate_username()

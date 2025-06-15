@@ -1,12 +1,12 @@
 import pytest
 
 from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsHandler
-from linkurator_core.domain.common.mock_factory import mock_user, mock_topic
+from linkurator_core.domain.common.mock_factory import mock_topic, mock_user
 from linkurator_core.infrastructure.in_memory.topic_repository import InMemoryTopicRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_curator_topics_handler() -> None:
     user_repo_mock = InMemoryUserRepository()
     curator = mock_user()

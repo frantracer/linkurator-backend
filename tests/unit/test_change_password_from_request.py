@@ -6,12 +6,13 @@ from pydantic import AnyUrl
 from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
-from linkurator_core.infrastructure.in_memory.password_change_request_repository import \
-    InMemoryPasswordChangeRequestRepository
+from linkurator_core.infrastructure.in_memory.password_change_request_repository import (
+    InMemoryPasswordChangeRequestRepository,
+)
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_change_password_from_request() -> None:
     user_repo = InMemoryUserRepository()
     password_change_request_repository = InMemoryPasswordChangeRequestRepository()
@@ -38,7 +39,7 @@ async def test_change_password_from_request() -> None:
     assert updated_user.validate_password(new_password) is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_change_password_from_expired_request() -> None:
     user_repo = InMemoryUserRepository()
     password_change_request_repository = InMemoryPasswordChangeRequestRepository()
@@ -68,7 +69,7 @@ async def test_change_password_from_expired_request() -> None:
     assert updated_user.validate_password(initial_password) is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_change_password_from_non_existing_request() -> None:
     user_repo = InMemoryUserRepository()
     password_change_request_repository = InMemoryPasswordChangeRequestRepository()

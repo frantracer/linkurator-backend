@@ -8,7 +8,7 @@ import uvicorn.server
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.mongodb.repositories import run_mongodb_migrations
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 
 
 @dataclass
@@ -29,7 +29,7 @@ class Settings:
 async def main() -> None:
     settings = Settings(
         api=parse_args(),
-        db=MongoDBSettings()
+        db=MongoDBSettings(),
     )
 
     # Migrations
@@ -37,7 +37,7 @@ async def main() -> None:
                            settings.db.password)
 
     # API
-    api_server = ApiServer(app_path='linkurator_core.infrastructure.fastapi.app:create_app',
+    api_server = ApiServer(app_path="linkurator_core.infrastructure.fastapi.app:create_app",
                            port=settings.api.port, workers=settings.api.workers, debug=settings.api.debug,
                            reload=settings.api.reload, with_gunicorn=settings.api.with_gunicorn)
 
@@ -58,7 +58,7 @@ def parse_args() -> ApiArguments:
         workers=args.workers,
         debug=args.debug,
         reload=args.reload,
-        with_gunicorn=not args.without_gunicorn
+        with_gunicorn=not args.without_gunicorn,
     )
 
 
@@ -74,11 +74,11 @@ class ApiServer:
     async def start(self) -> None:
         if self.with_gunicorn:
             task = await asyncio.create_subprocess_shell(" ".join(
-                ['.venv/bin/gunicorn', self.app_path,
-                 '--workers', f"{self.workers}",
-                 '--worker-class', 'uvicorn.workers.UvicornWorker',
-                 '--bind', f"0.0.0.0:{self.port}",
-                 '--access-logfile', '-']))
+                [".venv/bin/gunicorn", self.app_path,
+                 "--workers", f"{self.workers}",
+                 "--worker-class", "uvicorn.workers.UvicornWorker",
+                 "--bind", f"0.0.0.0:{self.port}",
+                 "--access-logfile", "-"]))
 
             await task.wait()
         else:

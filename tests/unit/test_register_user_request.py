@@ -5,7 +5,7 @@ from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.registration_request import RegistrationRequest
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_create_registration_request_with_invalid_domain_raises_an_error() -> None:
     with pytest.raises(ValueError):
         RegistrationRequest.new(

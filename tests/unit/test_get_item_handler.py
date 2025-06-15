@@ -4,12 +4,12 @@ import pytest
 
 from linkurator_core.application.items.get_item_handler import GetItemHandler, GetItemResponse
 from linkurator_core.domain.common.exceptions import ItemNotFoundError
-from linkurator_core.domain.common.mock_factory import mock_item, mock_interaction, mock_sub
+from linkurator_core.domain.common.mock_factory import mock_interaction, mock_item, mock_sub
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_item_with_interaction() -> None:
     sub = mock_sub()
     subscription_repository = InMemorySubscriptionRepository()
@@ -28,7 +28,7 @@ async def test_get_item_with_interaction() -> None:
     assert result == GetItemResponse(item=item1, interactions=[interaction1], subscription=sub)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_not_existing_item_returns_error() -> None:
     subscription_repository = InMemorySubscriptionRepository()
     item_repository = InMemoryItemRepository()

@@ -22,10 +22,16 @@ install-requirements:
 	sudo apt-get remove docker docker-engine docker.io containerd runc
 	sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-	sudo apt install -y python3.10-venv python3-pip
+	sudo add-apt-repository --yes --update ppa:ansible/ansible
+	sudo apt install -y ansible
+
+	sudo usermod -aG docker ${USER}
+
+	curl -LsSf https://astral.sh/uv/install.sh | sh
+
+	@echo "Installation complete. Please restart your computer."
 
 install:
-	python3.10 -m pip install uv
 	rm -rf .venv
 	uv venv --python=python3.10 .venv
 	uv pip install -r requirements.txt
@@ -97,15 +103,16 @@ create-vault-pass: check-vault-pass-is-defined
 ####################
 # Test
 ####################
-lint: mypy pylint
+lint: mypy ruff
 
 mypy:
 	.venv/bin/mypy --config-file pyproject.toml linkurator_core tests scripts
 
-pylint:
-	find ./linkurator_core -name '*.py' | xargs .venv/bin/pylint --rcfile=.pylintrc
-	find ./tests -name '*.py' | xargs .venv/bin/pylint --rcfile=.pylintrc
-	find ./scripts -name '*.py' | xargs .venv/bin/pylint --rcfile=.pylintrc
+ruff:
+	.venv/bin/ruff check linkurator_core tests scripts
+
+format:
+	.venv/bin/ruff check linkurator_core tests scripts --fix
 
 test:
 	.venv/bin/coverage run -m pytest -v tests

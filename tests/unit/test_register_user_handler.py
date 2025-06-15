@@ -25,7 +25,7 @@ class TestRegisterUserHandler(unittest.IsolatedAsyncioTestCase):
                 given_name="John",
                 family_name="Doe",
                 picture=utils.parse_url("https://example.com/john.jpg"),
-                locale="en"
+                locale="en",
             ),
         )
 
@@ -35,21 +35,21 @@ class TestRegisterUserHandler(unittest.IsolatedAsyncioTestCase):
 
         error = await handler.handle(access_token="mytoken")
 
-        self.assertIsNone(error)
+        assert error is None
 
-        self.assertEqual(user_repo_mock.add.call_count, 1)
+        assert user_repo_mock.add.call_count == 1
         created_user: User = user_repo_mock.add.call_args[0][0]
-        self.assertEqual(created_user.first_name, "John")
-        self.assertEqual(created_user.last_name, "Doe")
-        self.assertEqual(created_user.email, "john@email.com")
+        assert created_user.first_name == "John"
+        assert created_user.last_name == "Doe"
+        assert created_user.email == "john@email.com"
 
-        self.assertEqual(event_bus_mock.publish.call_count, 1)
-        self.assertEqual(type(event_bus_mock.publish.call_args_list[0][0][0]), UserRegisteredEvent)
+        assert event_bus_mock.publish.call_count == 1
+        assert type(event_bus_mock.publish.call_args_list[0][0][0]) == UserRegisteredEvent
 
     async def test_registering_existing_user_updates_the_user_data(self) -> None:
         user_repo_mock = InMemoryUserRepository()
         new_user = mock_user(
-            email="john@email.com"
+            email="john@email.com",
         )
         await user_repo_mock.add(new_user)
 
@@ -62,19 +62,19 @@ class TestRegisterUserHandler(unittest.IsolatedAsyncioTestCase):
                 given_name="John",
                 family_name="Doe",
                 picture=utils.parse_url("https://example.com/john.jpg"),
-                locale="en"
+                locale="en",
             ),
         )
 
         handler = RegisterUserHandler(user_repo_mock, account_service_mock, event_bus_mock)
 
         error = await handler.handle(access_token="mytoken")
-        self.assertIsNone(error)
+        assert error is None
 
         updated_user = await user_repo_mock.get(new_user.uuid)
         assert updated_user is not None
-        self.assertEqual(updated_user.first_name, "John")
-        self.assertEqual(updated_user.last_name, "Doe")
-        self.assertEqual(updated_user.email, "john@email.com")
+        assert updated_user.first_name == "John"
+        assert updated_user.last_name == "Doe"
+        assert updated_user.email == "john@email.com"
 
-        self.assertEqual(event_bus_mock.publish.call_count, 0)
+        assert event_bus_mock.publish.call_count == 0

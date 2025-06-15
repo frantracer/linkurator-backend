@@ -1,4 +1,5 @@
-from typing import List, Optional
+from __future__ import annotations
+
 from uuid import UUID
 
 from unidecode import unidecode
@@ -15,16 +16,17 @@ class InMemoryTopicRepository(TopicRepository):
 
     async def add(self, topic: Topic) -> None:
         if topic.uuid in self.topics:
-            raise DuplicatedKeyError(f"Topic with id {topic.uuid} already exists")
+            msg = f"Topic with id {topic.uuid} already exists"
+            raise DuplicatedKeyError(msg)
         self.topics[topic.uuid] = topic
 
-    async def get(self, topic_id: UUID) -> Optional[Topic]:
+    async def get(self, topic_id: UUID) -> Topic | None:
         return self.topics.get(topic_id)
 
-    async def find_topics(self, topic_ids: List[UUID]) -> List[Topic]:
+    async def find_topics(self, topic_ids: list[UUID]) -> list[Topic]:
         return [topic for topic in self.topics.values() if topic.uuid in topic_ids]
 
-    async def find_topics_by_name(self, name: str) -> List[Topic]:
+    async def find_topics_by_name(self, name: str) -> list[Topic]:
         search_terms = unidecode(name.lower()).split(" ")
         def search_terms_in_name(terms: list[str], topic_name: str) -> bool:
             return all(term in topic_name for term in terms)
@@ -42,5 +44,5 @@ class InMemoryTopicRepository(TopicRepository):
     async def delete_all(self) -> None:
         self.topics.clear()
 
-    async def get_by_user_id(self, user_id: UUID) -> List[Topic]:
+    async def get_by_user_id(self, user_id: UUID) -> list[Topic]:
         return [topic for topic in self.topics.values() if topic.user_id == user_id]

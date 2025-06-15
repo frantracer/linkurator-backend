@@ -1,29 +1,35 @@
+from __future__ import annotations
+
 import math
 from copy import deepcopy
 from datetime import datetime, timezone
-from typing import Optional, List
 from uuid import UUID, uuid4
 
 from pydantic import AnyUrl
 
 from linkurator_core.domain.items.item import Item, ItemProvider
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
 from linkurator_core.domain.users.user_repository import UserRepository
-from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient, ShowImage, Show, \
-    Episode, ReleaseDataPrecision
+from linkurator_core.infrastructure.spotify.spotify_api_client import (
+    Episode,
+    ReleaseDataPrecision,
+    Show,
+    ShowImage,
+    SpotifyApiClient,
+)
 
-SHOW_ID_KEY = 'show_id'
+SHOW_ID_KEY = "show_id"
 
 
 class SpotifySubscriptionService(SubscriptionService):
     def __init__(self, spotify_client: SpotifyApiClient,
                  user_repository: UserRepository,
                  item_repository: ItemRepository,
-                 subscription_repository: SubscriptionRepository):
+                 subscription_repository: SubscriptionRepository) -> None:
         self.user_repository = user_repository
         self.item_repository = item_repository
         self.subscription_repository = subscription_repository
@@ -31,17 +37,17 @@ class SpotifySubscriptionService(SubscriptionService):
 
     async def get_subscriptions(
             self,
-            user_id: UUID,
-            access_token: str,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Subscription]:
+            user_id: UUID, # noqa: ARG002
+            access_token: str, # noqa: ARG002
+            credential: ExternalServiceCredential | None = None, # noqa: ARG002
+    ) -> list[Subscription]:
         return []
 
     async def get_subscription(
             self,
             sub_id: UUID,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> Optional[Subscription]:
+            credential: ExternalServiceCredential | None = None, # noqa: ARG002
+    ) -> Subscription | None:
         subscription = await self.subscription_repository.get(sub_id)
         if subscription is None:
             return None
@@ -62,7 +68,7 @@ class SpotifySubscriptionService(SubscriptionService):
     async def get_items(
             self,
             item_ids: set[UUID],
-            credential: Optional[ExternalServiceCredential] = None
+            credential: ExternalServiceCredential | None = None, # noqa: ARG002
     ) -> set[Item]:
         items = await self.item_repository.find_items(
             criteria=ItemFilterCriteria(item_ids=item_ids, provider=ItemProvider.SPOTIFY),
@@ -83,7 +89,7 @@ class SpotifySubscriptionService(SubscriptionService):
             map_episode_to_item(
                 episode=episode,
                 sub_id=episode_index[episode.id].subscription_uuid,
-                item_id=episode_index[episode.id].uuid
+                item_id=episode_index[episode.id].uuid,
             )
             for episode in episodes
         }
@@ -92,8 +98,8 @@ class SpotifySubscriptionService(SubscriptionService):
             self,
             sub_id: UUID,
             from_date: datetime,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Item]:
+            credential: ExternalServiceCredential | None = None, # noqa: ARG002
+    ) -> list[Item]:
         subscription = await self.subscription_repository.get(sub_id)
         if subscription is None:
             return []
@@ -124,12 +130,12 @@ class SpotifySubscriptionService(SubscriptionService):
     async def get_subscription_from_url(
             self,
             url: AnyUrl,
-            credential: Optional[ExternalServiceCredential] = None
+            credential: ExternalServiceCredential | None = None, # noqa: ARG002
     ) -> Subscription | None:
-        if url.host != 'open.spotify.com':
+        if url.host != "open.spotify.com":
             return None
 
-        split_url = url.path.split('/') if url.path else []
+        split_url = url.path.split("/") if url.path else []
         if len(split_url) < 3:
             return None
 
@@ -145,8 +151,8 @@ class SpotifySubscriptionService(SubscriptionService):
     async def get_subscriptions_from_name(
             self,
             name: str,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Subscription]:
+            credential: ExternalServiceCredential | None = None, # noqa: ARG002
+    ) -> list[Subscription]:
         spotify_show = await self.spotify_client.find_show(name)
         if spotify_show is None:
             return []
@@ -161,7 +167,8 @@ class SpotifySubscriptionService(SubscriptionService):
 def map_spotify_show_to_subscription(spotify_show: Show, sub: Subscription | None = None) -> Subscription:
     thumbnail = get_most_similar_image(spotify_show.images, 320, 200)
     if thumbnail is None:
-        raise ValueError("No thumbnail found")
+        msg = "No thumbnail found"
+        raise ValueError(msg)
 
     if sub is None:
         return Subscription.new(
@@ -171,8 +178,8 @@ def map_spotify_show_to_subscription(spotify_show: Show, sub: Subscription | Non
             url=AnyUrl(f"https://open.spotify.com/show/{spotify_show.id}"),
             thumbnail=thumbnail.url,
             external_data={
-                SHOW_ID_KEY: spotify_show.id
-            }
+                SHOW_ID_KEY: spotify_show.id,
+            },
         )
 
     updated_sub = deepcopy(sub)
@@ -184,7 +191,8 @@ def map_spotify_show_to_subscription(spotify_show: Show, sub: Subscription | Non
 def map_episode_to_item(episode: Episode, sub_id: UUID, item_id: UUID | None = None) -> Item:
     thumbnail = get_most_similar_image(episode.images, 320, 200)
     if thumbnail is None:
-        raise ValueError("No thumbnail found")
+        msg = "No thumbnail found"
+        raise ValueError(msg)
 
     return Item.new(
         uuid=item_id or uuid4(),
@@ -211,8 +219,9 @@ def get_most_similar_image(images: list[ShowImage], width: int, height: int) -> 
 
 def episode_id_from_url(url: AnyUrl) -> str:
     if url.path:
-        return url.path.split('/')[-1]
-    raise ValueError(f"Invalid spotify URL: {url}")
+        return url.path.split("/")[-1]
+    msg = f"Invalid spotify URL: {url}"
+    raise ValueError(msg)
 
 
 def calculate_duration(duration_ms: int) -> int:
@@ -226,4 +235,5 @@ def calculate_date(date: str, precision: ReleaseDataPrecision) -> datetime:
         return datetime.strptime(date, "%Y-%m").replace(tzinfo=timezone.utc)
     if precision == ReleaseDataPrecision.YEAR:
         return datetime.strptime(date, "%Y").replace(tzinfo=timezone.utc)
-    raise ValueError(f"Invalid precision: {precision}")
+    msg = f"Invalid precision: {precision}"
+    raise ValueError(msg)

@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
@@ -9,7 +9,7 @@ from linkurator_core.domain.items.item_repository import ItemRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_refresh_items_handler_updates_items_with_latest_info() -> None:
     item_repository = MagicMock(spec=ItemRepository)
     subscription_service = AsyncMock(spec=SubscriptionService)
@@ -27,7 +27,7 @@ async def test_refresh_items_handler_updates_items_with_latest_info() -> None:
     subscription_service.get_items.assert_called_once_with({items[0].uuid, items[1].uuid})
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_refresh_items_handler_deletes_items_that_are_not_returned_by_subscription_service() -> None:
     item_repository = MagicMock(spec=ItemRepository)
     subscription_service = AsyncMock(spec=SubscriptionService)

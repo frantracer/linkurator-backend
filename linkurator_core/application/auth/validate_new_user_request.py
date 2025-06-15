@@ -11,7 +11,7 @@ class ValidateNewUserRequest:
     def __init__(self,
                  registration_request_repository: RegistrationRequestRepository,
                  user_repository: UserRepository,
-                 event_bus: EventBusService
+                 event_bus: EventBusService,
                  ) -> None:
         self.registration_request_repository = registration_request_repository
         self.user_repository = user_repository

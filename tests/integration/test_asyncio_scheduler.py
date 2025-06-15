@@ -1,22 +1,19 @@
-from time import strftime, gmtime
 
 import pytest
 
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_scheduler() -> None:
     corroutine_2_seconds_called_times = 0
     corroutine_3_seconds_called_times = 0
 
     async def print_coroutine_2_seconds() -> None:
-        print(f'{strftime("%Y-%m-%d %H:%M:%S", gmtime())} Every 2 seconds')
         nonlocal corroutine_2_seconds_called_times
         corroutine_2_seconds_called_times += 1
 
     async def print_coroutine_3_seconds() -> None:
-        print(f'{strftime("%Y-%m-%d %H:%M:%S", gmtime())} Every 3 seconds')
         nonlocal corroutine_3_seconds_called_times
         corroutine_3_seconds_called_times += 1
 
@@ -29,7 +26,6 @@ async def test_scheduler() -> None:
         interval_seconds=3)
 
     async def stop_scheduler() -> None:
-        print(f'{strftime("%Y-%m-%d %H:%M:%S", gmtime())} Stop')
         await scheduler.stop()
 
     scheduler.schedule_recurring_task(

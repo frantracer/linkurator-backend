@@ -3,15 +3,16 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from linkurator_core.application.subscriptions.find_outdated_subscriptions_handler import \
-    FindOutdatedSubscriptionsHandler
+from linkurator_core.application.subscriptions.find_outdated_subscriptions_handler import (
+    FindOutdatedSubscriptionsHandler,
+)
 from linkurator_core.domain.common.event import SubscriptionBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.mock_factory import mock_sub
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_handler_sends_two_events_if_there_are_two_outdated_subscriptions() -> None:
     sub_repo_mock = InMemorySubscriptionRepository()
     sub1 = mock_sub()

@@ -9,5 +9,5 @@ def convert_datetime_to_iso_8601_string(date: datetime) -> str:
 
 
 Iso8601Datetime = Annotated[
-    datetime, PlainSerializer(convert_datetime_to_iso_8601_string, return_type=str, when_used='json')
+    datetime, PlainSerializer(convert_datetime_to_iso_8601_string, return_type=str, when_used="json"),
 ]

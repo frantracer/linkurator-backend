@@ -12,7 +12,7 @@ LOG_CONFIG = {
             "class": "logging.StreamHandler",
             "stream": "ext://sys.stdout",
             "level": LOG_LEVEL,
-        }
+        },
     },
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
     "loggers": {

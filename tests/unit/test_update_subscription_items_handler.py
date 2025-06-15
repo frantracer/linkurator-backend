@@ -10,14 +10,14 @@ import pytest
 from linkurator_core.application.subscriptions.update_subscription_items_handler import UpdateSubscriptionItemsHandler
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_subscriptions_items_with_an_item_that_is_not_registered() -> None:
     sub1 = Subscription(
         uuid=uuid.UUID("b6cae596-4526-4ab7-b5da-bd803f04980b"),
@@ -68,7 +68,7 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered() 
     assert updated_sub.scanned_at > sub1.scanned_at
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_subscriptions_items_with_items_that_are_already_registered() -> None:
     sub1 = Subscription(
         uuid=uuid.UUID("b6cae596-4526-4ab7-b5da-bd803f04980b"),
@@ -132,7 +132,7 @@ async def test_update_subscriptions_items_with_items_that_are_already_registered
     assert updated_sub.scanned_at > sub1.scanned_at
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription() -> None:
     sub1 = Subscription(
         uuid=uuid.UUID("547d692c-d2a2-49ef-bfd6-97cb02fb03d1"),
@@ -147,7 +147,7 @@ async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription() -
         external_data={})
 
     async def wait_2_second_and_return_no_items(
-            sub_id: uuid.UUID, from_date: datetime  # pylint: disable=unused-argument
+            sub_id: uuid.UUID, from_date: datetime,  # pylint: disable=unused-argument
     ) -> List[Item]:
         await asyncio.sleep(2)
         return []
@@ -167,8 +167,8 @@ async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription() -
         handler.handle(sub1.uuid),
         run_sequence(
             asyncio.sleep(1),
-            handler.handle(sub1.uuid)
-        )
+            handler.handle(sub1.uuid),
+        ),
     )
 
     assert subscription_repository.update.call_count == 1

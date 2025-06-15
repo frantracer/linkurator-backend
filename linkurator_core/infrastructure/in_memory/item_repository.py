@@ -1,18 +1,16 @@
-from typing import List, Dict, Optional
+from __future__ import annotations
+
 from uuid import UUID
 
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.items.item_repository import ItemRepository, InteractionFilterCriteria, ItemFilterCriteria
+from linkurator_core.domain.items.item_repository import InteractionFilterCriteria, ItemFilterCriteria, ItemRepository
 
 
 def _item_contains_text(text: str, item: Item) -> bool:
-    text_inputs = text.lower().strip("\"").strip("\'").split()
+    text_inputs = text.lower().strip('"').strip("'").split()
     item_text = item.name.lower()
-    for text_input in text_inputs:
-        if text_input not in item_text:
-            return False
-    return True
+    return all(text_input in item_text for text_input in text_inputs)
 
 
 class InMemoryItemRepository(ItemRepository):
@@ -21,11 +19,11 @@ class InMemoryItemRepository(ItemRepository):
         self.items: dict[UUID, Item] = {}
         self.interactions: dict[UUID, Interaction] = {}
 
-    async def upsert_items(self, items: List[Item]) -> None:
+    async def upsert_items(self, items: list[Item]) -> None:
         for item in items:
             self.items[item.uuid] = item
 
-    async def get_item(self, item_id: UUID) -> Optional[Item]:
+    async def get_item(self, item_id: UUID) -> Item | None:
         return self.items.get(item_id)
 
     async def delete_item(self, item_id: UUID) -> None:
@@ -36,8 +34,8 @@ class InMemoryItemRepository(ItemRepository):
             self,
             criteria: ItemFilterCriteria,
             page_number: int,
-            limit: int
-    ) -> List[Item]:
+            limit: int,
+    ) -> list[Item]:
         found_items = []
         for item in self.items.values():
             if item.deleted_at is not None:
@@ -58,9 +56,8 @@ class InMemoryItemRepository(ItemRepository):
                 continue
             if criteria.provider and item.provider != criteria.provider:
                 continue
-            if criteria.text is not None:
-                if not _item_contains_text(criteria.text, item):
-                    continue
+            if criteria.text is not None and not _item_contains_text(criteria.text, item):
+                continue
             if item.duration is None and not (criteria.min_duration is None and criteria.max_duration is None):
                 continue
             if item.duration is not None:
@@ -98,7 +95,7 @@ class InMemoryItemRepository(ItemRepository):
     async def add_interaction(self, interaction: Interaction) -> None:
         self.interactions[interaction.uuid] = interaction
 
-    async def get_interaction(self, interaction_id: UUID) -> Optional[Interaction]:
+    async def get_interaction(self, interaction_id: UUID) -> Interaction | None:
         return self.interactions.get(interaction_id)
 
     async def delete_interaction(self, interaction_id: UUID) -> None:
@@ -109,8 +106,8 @@ class InMemoryItemRepository(ItemRepository):
         self.interactions.clear()
 
     async def get_user_interactions_by_item_id(
-            self, user_id: UUID, item_ids: List[UUID]
-    ) -> Dict[UUID, List[Interaction]]:
+            self, user_id: UUID, item_ids: list[UUID],
+    ) -> dict[UUID, list[Interaction]]:
         interactions: dict[UUID, list[Interaction]] = {item_id: [] for item_id in item_ids}
         for interaction in self.interactions.values():
             if interaction.user_uuid == user_id and interaction.item_uuid in item_ids:
@@ -118,8 +115,8 @@ class InMemoryItemRepository(ItemRepository):
         return interactions
 
     async def find_interactions(
-            self, criteria: InteractionFilterCriteria, page_number: int, limit: int
-    ) -> List[Interaction]:
+            self, criteria: InteractionFilterCriteria, page_number: int, limit: int,
+    ) -> list[Interaction]:
         found_interactions: list[Interaction] = []
         for interaction in self.interactions.values():
             if criteria.item_ids is not None and interaction.item_uuid not in criteria.item_ids:

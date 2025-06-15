@@ -1,20 +1,20 @@
 import uuid
 from copy import copy
-from datetime import timezone, datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, call
 
 import pytest
 
-from linkurator_core.domain.common.exceptions import TopicNotFoundError, SubscriptionNotFoundError
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_topic_name() -> None:
     topic = Topic(
         uuid=uuid.UUID("37e47030-5f82-4b17-a5c6-a9667bbff1be"),
@@ -41,7 +41,7 @@ async def test_update_topic_name() -> None:
     assert updated_topic.subscriptions_ids == topic.subscriptions_ids
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_topic_subscriptions() -> None:
     topic = Topic(
         uuid=uuid.UUID("08ec8a7e-b433-4c70-971e-d52d1e3ffcc0"),
@@ -60,7 +60,7 @@ async def test_update_topic_subscriptions() -> None:
         provider=SubscriptionProvider.YOUTUBE,
         thumbnail=utils.parse_url("https://example.com/thumbnail.png"),
         external_data={},
-        url=utils.parse_url("https://url.com")
+        url=utils.parse_url("https://url.com"),
     ))
 
     handler = UpdateTopicHandler(
@@ -85,7 +85,7 @@ async def test_update_topic_subscriptions() -> None:
     assert updated_topic.subscriptions_ids == [uuid.UUID("8cfb4561-6fc5-4cc0-914d-cc91737cb316")]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_non_existing_topic_returns_error() -> None:
     topic_repository = MagicMock(spec=TopicRepository)
     topic_repository.get.return_value = None
@@ -101,7 +101,7 @@ async def test_update_non_existing_topic_returns_error() -> None:
             subscriptions_ids=None)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_topic_with_non_existing_topic_returns_error() -> None:
     topic_repository = MagicMock(spec=TopicRepository)
     topic_repository.get.return_value = Topic(

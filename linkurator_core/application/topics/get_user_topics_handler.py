@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from uuid import UUID
 
@@ -33,7 +35,7 @@ class GetUserTopicsHandler:
 
         results = await asyncio.gather(
             self.topic_repo.find_topics(list(user.get_followed_topics())),
-            self.topic_repo.get_by_user_id(user_id)
+            self.topic_repo.get_by_user_id(user_id),
         )
 
         followed_topics = results[0]

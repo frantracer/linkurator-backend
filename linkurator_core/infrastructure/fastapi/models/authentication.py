@@ -9,7 +9,7 @@ class PasswordWith64HexCharacters(RootModel):  # type: ignore
         max_length=64,
         pattern="^[0-9a-fA-F]*$",
         json_schema_extra={"examples": [
-            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
         ]},
     )
 

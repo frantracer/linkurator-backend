@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from pydantic import BaseModel, AnyUrl
+from pydantic import AnyUrl, BaseModel
 
 from linkurator_core.domain.users.user import User
 
@@ -19,5 +19,5 @@ class CuratorSchema(BaseModel):
             id=user.uuid,
             username=str(user.username),
             avatar_url=user.avatar_url,
-            followed=followed
+            followed=followed,
         )

@@ -2,13 +2,13 @@ import pytest
 
 from linkurator_core.application.subscriptions.unfollow_subscription_handler import UnfollowSubscriptionHandler
 from linkurator_core.domain.common.exceptions import CannotUnfollowAssignedSubscriptionError
-from linkurator_core.domain.common.mock_factory import mock_user, mock_sub, mock_topic
+from linkurator_core.domain.common.mock_factory import mock_sub, mock_topic, mock_user
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.in_memory.topic_repository import InMemoryTopicRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_unfollow_subscription() -> None:
     user_repo = InMemoryUserRepository()
     subscription_repo = InMemorySubscriptionRepository()
@@ -16,7 +16,7 @@ async def test_unfollow_subscription() -> None:
 
     sub = mock_sub()
     user = mock_user(
-        subscribed_to=[sub.uuid]
+        subscribed_to=[sub.uuid],
     )
 
     await user_repo.add(user)
@@ -34,7 +34,7 @@ async def test_unfollow_subscription() -> None:
     assert updated_user.get_subscriptions() == set()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_unfollow_subscription_that_does_not_exist() -> None:
     user_repo = InMemoryUserRepository()
     subscription_repo = InMemorySubscriptionRepository()
@@ -56,7 +56,7 @@ async def test_unfollow_subscription_that_does_not_exist() -> None:
     assert updated_user.get_subscriptions() == set()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_unfollow_subscription_included_in_a_topic_returns_an_error() -> None:
     user_repo = InMemoryUserRepository()
     subscription_repo = InMemorySubscriptionRepository()
@@ -64,11 +64,11 @@ async def test_unfollow_subscription_included_in_a_topic_returns_an_error() -> N
 
     sub = mock_sub()
     user = mock_user(
-        subscribed_to=[sub.uuid]
+        subscribed_to=[sub.uuid],
     )
     topic = mock_topic(
         user_uuid=user.uuid,
-        subscription_uuids=[sub.uuid]
+        subscription_uuids=[sub.uuid],
     )
 
     await user_repo.add(user)

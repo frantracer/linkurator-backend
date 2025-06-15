@@ -11,7 +11,6 @@ class HttpResponse:
 
 class AsyncHttpClient:
     async def get(self, url: str) -> HttpResponse:
-        async with ClientSession() as session:
-            async with session.get(url) as response:
-                text = await response.text()
-                return HttpResponse(text=text, status=response.status)
+        async with ClientSession() as session, session.get(url) as response:
+            text = await response.text()
+            return HttpResponse(text=text, status=response.status)

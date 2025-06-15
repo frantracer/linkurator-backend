@@ -5,7 +5,7 @@ from linkurator_core.domain.users.user_repository import UserRepository
 
 
 class FollowCuratorHandler:
-    def __init__(self, user_repository: UserRepository):
+    def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
 
     async def handle(self, user_id: UUID, curator_id: UUID) -> None:

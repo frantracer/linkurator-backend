@@ -1,15 +1,15 @@
-from datetime import timezone, datetime
+from datetime import datetime, timezone
 
 import pytest
 
 from linkurator_core.application.items.get_curator_items_handler import GetCuratorItemsHandler
-from linkurator_core.domain.common.mock_factory import mock_user, mock_item, mock_interaction, mock_sub
+from linkurator_core.domain.common.mock_factory import mock_interaction, mock_item, mock_sub, mock_user
 from linkurator_core.domain.items.interaction import InteractionType
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_curator_items_handlers_returns_items_and_interactions_for_curator_and_user() -> None:
     user = mock_user()
     curator = mock_user()
@@ -48,7 +48,7 @@ async def test_get_curator_items_handlers_returns_items_and_interactions_for_cur
     assert response[0].curator_interactions[0].type == InteractionType.RECOMMENDED
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_curator_items_handlers_returns_items_for_curator_with_no_interactions_if_user_is_none() -> None:
     curator = mock_user()
     sub = mock_sub()

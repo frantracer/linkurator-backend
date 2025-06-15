@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from linkurator_core.domain.users.account_service import AccountService
-from linkurator_core.domain.users.session import Session, SESSION_DURATION_IN_SECONDS
+from linkurator_core.domain.users.session import SESSION_DURATION_IN_SECONDS, Session
 from linkurator_core.domain.users.session_repository import SessionRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 
@@ -10,13 +11,13 @@ from linkurator_core.domain.users.user_repository import UserRepository
 class ValidateTokenHandler:
     def __init__(self, user_repository: UserRepository,
                  session_repository: SessionRepository,
-                 account_service: AccountService):
+                 account_service: AccountService) -> None:
         self.user_repository = user_repository
         self.session_repository = session_repository
         self.account_service = account_service
 
-    async def handle(self, access_token: str) -> Optional[Session]:
-        session: Optional[Session] = self.session_repository.get(access_token)
+    async def handle(self, access_token: str) -> Session | None:
+        session = self.session_repository.get(access_token)
         if session is not None and not session.is_expired():
             return session
 

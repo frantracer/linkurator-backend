@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from base64 import b64encode
 from enum import Enum
@@ -9,9 +11,9 @@ from unidecode import unidecode
 
 
 class ReleaseDataPrecision(str, Enum):
-    DAY = 'day'
-    MONTH = 'month'
-    YEAR = 'year'
+    DAY = "day"
+    MONTH = "month"
+    YEAR = "year"
 
 
 class ShowImage(BaseModel):
@@ -47,27 +49,27 @@ class SpotifyApiHttpError(Exception):
 
 
 class SpotifyApiClient:
-    def __init__(self, client_id: str, client_secret: str):
+    def __init__(self, client_id: str, client_secret: str) -> None:
         self.client_id = client_id
         self.client_secret = client_secret
 
     async def get_access_token(self) -> str | None:
-        auth_url = 'https://accounts.spotify.com/api/token'
+        auth_url = "https://accounts.spotify.com/api/token"
 
         # Encode client_id and client_secret in base64
-        auth_header = b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode('utf-8')
+        auth_header = b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode("utf-8")
         headers = {
-            'Authorization': f'Basic {auth_header}'
+            "Authorization": f"Basic {auth_header}",
         }
         data = {
-            'grant_type': 'client_credentials'
+            "grant_type": "client_credentials",
         }
 
         async with aiohttp.ClientSession() as session:
             async with session.post(auth_url, headers=headers, data=data) as response:
                 if response.status == 200:
                     body = await response.json()
-                    return body['access_token']
+                    return body["access_token"]
                 logging.error("Failed to retrieve token: %s -> %s", response.status, await response.text())
                 return None
 
@@ -76,26 +78,26 @@ class SpotifyApiClient:
         if token is None:
             return None
 
-        search_url = 'https://api.spotify.com/v1/search'
+        search_url = "https://api.spotify.com/v1/search"
         headers = {
-            'Authorization': f'Bearer {token}'
+            "Authorization": f"Bearer {token}",
         }
         params = {
-            'q': query,
-            'type': 'show',
-            'limit': 5,
-            'offset': 0,
-            'market': 'ES'
+            "q": query,
+            "type": "show",
+            "limit": 5,
+            "offset": 0,
+            "market": "ES",
         }
 
         async with aiohttp.ClientSession() as session:
             async with session.get(search_url, headers=headers, params=params) as response:
                 if response.status == 200:
                     body = await response.json()
-                    shows = body.get('shows', {}).get('items', [])
+                    shows = body.get("shows", {}).get("items", [])
 
                     for show in shows:
-                        if unidecode(show['name'].lower()) == unidecode(query.lower()):
+                        if unidecode(show["name"].lower()) == unidecode(query.lower()):
                             return map_json_to_show(show)
 
                     if len(shows) > 0:
@@ -110,118 +112,125 @@ class SpotifyApiClient:
             return []
 
         if len(show_ids) > 50:
-            raise SpotifyApiHttpError("Cannot retrieve more than 50 shows at once")
+            msg = "Cannot retrieve more than 50 shows at once"
+            raise SpotifyApiHttpError(msg)
 
         token = await self.get_access_token()
         if token is None:
-            raise SpotifyApiHttpError("Failed to retrieve token")
+            msg = "Failed to retrieve token"
+            raise SpotifyApiHttpError(msg)
 
-        shows_url = 'https://api.spotify.com/v1/shows'
+        shows_url = "https://api.spotify.com/v1/shows"
         headers = {
-            'Authorization': f'Bearer {token}'
+            "Authorization": f"Bearer {token}",
         }
         params = {
-            'ids': ','.join(show_ids)
+            "ids": ",".join(show_ids),
         }
 
         async with aiohttp.ClientSession() as session:
             async with session.get(shows_url, headers=headers, params=params) as response:
                 if response.status == 200:
                     body = await response.json()
-                    shows_json = body.get('shows', [])
-                    shows = [map_json_to_show(show_json) for show_json in shows_json]
-                    return shows
+                    shows_json = body.get("shows", [])
+                    return [map_json_to_show(show_json) for show_json in shows_json]
 
-                raise SpotifyApiHttpError(f"Failed to retrieve shows: {response.status} -> {await response.text()}")
+                msg = f"Failed to retrieve shows: {response.status} -> {await response.text()}"
+                raise SpotifyApiHttpError(msg)
 
     async def get_show_episodes(self, show_id: str, offset: int = 0, limit: int = 50) -> GetEpisodesResponse:
         if limit > 50:
-            raise SpotifyApiHttpError("Cannot retrieve more than 50 episodes at once")
+            msg = "Cannot retrieve more than 50 episodes at once"
+            raise SpotifyApiHttpError(msg)
 
         token = await self.get_access_token()
         if token is None:
-            raise SpotifyApiHttpError("Failed to retrieve token")
+            msg = "Failed to retrieve token"
+            raise SpotifyApiHttpError(msg)
 
-        episodes_url = f'https://api.spotify.com/v1/shows/{show_id}/episodes'
+        episodes_url = f"https://api.spotify.com/v1/shows/{show_id}/episodes"
         headers = {
-            'Authorization': f'Bearer {token}'
+            "Authorization": f"Bearer {token}",
         }
         params = {
-            'limit': limit,
-            'offset': offset
+            "limit": limit,
+            "offset": offset,
         }
 
         async with aiohttp.ClientSession() as session:
             async with session.get(episodes_url, headers=headers, params=params) as response:
                 if response.status == 200:
                     body = await response.json()
-                    episodes_json = body.get('items', [])
-                    total_items = body.get('total', 0)
+                    episodes_json = body.get("items", [])
+                    total_items = body.get("total", 0)
                     episodes = [map_json_to_episode(episode_json)
                                 for episode_json in episodes_json
                                 if episode_json is not None]
                     return GetEpisodesResponse(items=episodes, total=total_items)
 
-                raise SpotifyApiHttpError(f"Failed to retrieve episodes: {response.status} -> {await response.text()}")
+                msg = f"Failed to retrieve episodes: {response.status} -> {await response.text()}"
+                raise SpotifyApiHttpError(msg)
 
     async def get_episodes(self, episode_ids: list[str]) -> list[Episode]:
         if len(episode_ids) == 0:
             return []
 
         if len(episode_ids) > 50:
-            raise SpotifyApiHttpError("Cannot retrieve more than 50 episodes at once")
+            msg = "Cannot retrieve more than 50 episodes at once"
+            raise SpotifyApiHttpError(msg)
 
         token = await self.get_access_token()
         if token is None:
-            raise SpotifyApiHttpError("Failed to retrieve token")
+            msg = "Failed to retrieve token"
+            raise SpotifyApiHttpError(msg)
 
-        episodes_url = 'https://api.spotify.com/v1/episodes'
+        episodes_url = "https://api.spotify.com/v1/episodes"
         headers = {
-            'Authorization': f'Bearer {token}'
+            "Authorization": f"Bearer {token}",
         }
         params = {
-            'ids': ','.join(episode_ids)
+            "ids": ",".join(episode_ids),
         }
 
         async with aiohttp.ClientSession() as session:
             async with session.get(episodes_url, headers=headers, params=params) as response:
                 if response.status == 200:
                     body = await response.json()
-                    episodes_json = body.get('episodes', [])
-                    episodes = [map_json_to_episode(episode_json) for episode_json in episodes_json]
-                    return episodes
+                    episodes_json = body.get("episodes", [])
+                    return [map_json_to_episode(episode_json) for episode_json in episodes_json]
 
-                raise SpotifyApiHttpError(f"Failed to retrieve episodes: {response.status} -> {await response.text()}")
+                msg = f"Failed to retrieve episodes: {response.status} -> {await response.text()}"
+                raise SpotifyApiHttpError(msg)
 
 
 def map_json_to_show(json: dict[str, Any]) -> Show:
     return Show(
-        id=json['id'],
+        id=json["id"],
         images=[
             ShowImage(
-                url=image['url'],
-                height=image['height'],
-                width=image['width']
-            ) for image in json['images']
+                url=image["url"],
+                height=image["height"],
+                width=image["width"],
+            ) for image in json["images"]
         ],
-        name=json['name'],
-        total_episodes=json['total_episodes']
+        name=json["name"],
+        total_episodes=json["total_episodes"],
     )
 
 
 def map_json_to_episode(json: dict[str, Any]) -> Episode:
     return Episode(
-        id=json['id'],
-        name=json['name'],
-        description=json['description'],
-        release_date=json['release_date'],
-        release_date_precision=ReleaseDataPrecision(json['release_date_precision']),
-        duration_ms=json['duration_ms'],
+        id=json["id"],
+        name=json["name"],
+        description=json["description"],
+        release_date=json["release_date"],
+        release_date_precision=ReleaseDataPrecision(json["release_date_precision"]),
+        duration_ms=json["duration_ms"],
         images=[
             ShowImage(
-                url=image['url'],
-                height=image['height'],
-                width=image['width']
-            ) for image in json['images']
-        ]
+                url=image["url"],
+                height=image["height"],
+                width=image["width"],
+            ) for image in json["images"]
+        ],
     )

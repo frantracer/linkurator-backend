@@ -9,8 +9,8 @@ from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiC
 async def main() -> None:
     args = argparse.ArgumentParser()
     args.add_argument("--playlist-id", required=True, help="Playlist ID of the youtube channel main playlist")
-    args.add_argument('--from-date', required=True, help='From date in format YYYY-MM-DD:HH:MM:SSZ',
-                      type=lambda s: datetime.strptime(s, '%Y-%m-%d:%H:%M:%S'))
+    args.add_argument("--from-date", required=True, help="From date in format YYYY-MM-DD:HH:MM:SSZ",
+                      type=lambda s: datetime.strptime(s, "%Y-%m-%d:%H:%M:%S"))
     parsed_args = args.parse_args()
     playlist_id = parsed_args.playlist_id
     from_date = parsed_args.from_date
@@ -23,11 +23,10 @@ async def main() -> None:
         playlist_id=playlist_id,
         from_date=from_date)
 
-    for video in videos:
-        print(f'* [{video.published_at}] {video.video_id} {video.title} -> {video.url}')
-
-    print(f"Total {len(videos)} videos")
+    for _video in videos:
+        pass
 
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     asyncio.run(main())

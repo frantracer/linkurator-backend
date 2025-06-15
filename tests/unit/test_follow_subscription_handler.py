@@ -7,7 +7,7 @@ from linkurator_core.infrastructure.in_memory.subscription_repository import InM
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_follow_subscription() -> None:
     user_repo = InMemoryUserRepository()
     subscription_repo = InMemorySubscriptionRepository()
@@ -20,7 +20,7 @@ async def test_follow_subscription() -> None:
 
     handler = FollowSubscriptionHandler(
         subscription_repository=subscription_repo,
-        user_repository=user_repo
+        user_repository=user_repo,
     )
 
     await handler.handle(user.uuid, sub.uuid)
@@ -30,7 +30,7 @@ async def test_follow_subscription() -> None:
     assert sub.uuid in updated_user.get_subscriptions()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_follow_subscription_that_does_not_exist() -> None:
     user_repo = InMemoryUserRepository()
     subscription_repo = InMemorySubscriptionRepository()
@@ -41,7 +41,7 @@ async def test_follow_subscription_that_does_not_exist() -> None:
 
     handler = FollowSubscriptionHandler(
         subscription_repository=subscription_repo,
-        user_repository=user_repo
+        user_repository=user_repo,
     )
 
     with pytest.raises(SubscriptionNotFoundError):

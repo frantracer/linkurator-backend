@@ -1,6 +1,7 @@
-from datetime import datetime
+from __future__ import annotations
+
 from copy import copy
-from typing import List, Optional
+from datetime import datetime
 from uuid import UUID
 
 from linkurator_core.domain.users.user import User, Username
@@ -15,19 +16,19 @@ class InMemoryUserRepository(UserRepository):
     async def add(self, user: User) -> None:
         self.users[user.uuid] = user
 
-    async def get(self, user_id: UUID) -> Optional[User]:
+    async def get(self, user_id: UUID) -> User | None:
         return copy(self.users.get(user_id))
 
-    async def get_all(self) -> List[User]:
+    async def get_all(self) -> list[User]:
         return [copy(user) for user in self.users.values()]
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         for user in self.users.values():
             if user.email == email:
                 return copy(user)
         return None
 
-    async def get_by_username(self, username: Username) -> Optional[User]:
+    async def get_by_username(self, username: Username) -> User | None:
         for user in self.users.values():
             if user.username == username:
                 return copy(user)
@@ -43,7 +44,7 @@ class InMemoryUserRepository(UserRepository):
     async def update(self, user: User) -> None:
         self.users[user.uuid] = user
 
-    async def find_latest_scan_before(self, timestamp: datetime) -> List[User]:
+    async def find_latest_scan_before(self, timestamp: datetime) -> list[User]:
         found_users = []
         for user in self.users.values():
             if user.scanned_at < timestamp:
@@ -51,7 +52,7 @@ class InMemoryUserRepository(UserRepository):
 
         return found_users
 
-    async def find_users_subscribed_to_subscription(self, subscription_id: UUID) -> List[User]:
+    async def find_users_subscribed_to_subscription(self, subscription_id: UUID) -> list[User]:
         found_users = []
         for user in self.users.values():
             if subscription_id in user.get_subscriptions():

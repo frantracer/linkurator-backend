@@ -2,15 +2,17 @@ from datetime import timedelta
 
 import pytest
 
-from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler, \
-    GetSubscriptionItemsResponse
-from linkurator_core.domain.common.mock_factory import mock_item, mock_interaction, mock_sub, mock_user
+from linkurator_core.application.items.get_subscription_items_handler import (
+    GetSubscriptionItemsHandler,
+    GetSubscriptionItemsResponse,
+)
+from linkurator_core.domain.common.mock_factory import mock_interaction, mock_item, mock_sub, mock_user
 from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_subscriptions_items_returns_items_with_interactions() -> None:
     subscription_repo = InMemorySubscriptionRepository()
     sub = mock_sub()
@@ -35,16 +37,16 @@ async def test_get_subscriptions_items_returns_items_with_interactions() -> None
         include_recommended_items=True,
         include_discouraged_items=True,
         include_viewed_items=True,
-        include_hidden_items=True
+        include_hidden_items=True,
     )
 
     assert result == GetSubscriptionItemsResponse(
         items=[ItemWithInteractions(item=item, interactions=[interaction])],
-        subscription=sub
+        subscription=sub,
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_test_get_subscriptions_items_with_no_user_returns_no_interactions() -> None:
     subscription_repo = InMemorySubscriptionRepository()
     sub = mock_sub()
@@ -61,10 +63,10 @@ async def test_test_get_subscriptions_items_with_no_user_returns_no_interactions
         subscription_id=sub.uuid,
         created_before=item.created_at + timedelta(seconds=1),
         page_number=0,
-        page_size=10
+        page_size=10,
     )
 
     assert result == GetSubscriptionItemsResponse(
         items=[ItemWithInteractions(item=item, interactions=[])],
-        subscription=sub
+        subscription=sub,
     )

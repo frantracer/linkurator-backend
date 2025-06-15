@@ -25,7 +25,7 @@ class Event(abc.ABC, BaseModel):
     def serialize(self) -> str:
         payload = SerializedEvent(
             event_class=self.__class__.__name__,
-            event_data=self.model_dump_json()
+            event_data=self.model_dump_json(),
         )
 
         return payload.model_dump_json()
@@ -37,15 +37,14 @@ class Event(abc.ABC, BaseModel):
         event_data = json.loads(payload.event_data)
 
         # Import the module that contains the class
-        module = importlib.import_module('linkurator_core.domain.common.event')
+        module = importlib.import_module("linkurator_core.domain.common.event")
 
         # Get the class from the module
         class_ = getattr(module, event_class)
 
         # Instantiate the class with the unpacked dictionary as keyword arguments
-        instance = class_(**event_data)
+        return class_(**event_data)
 
-        return instance
 
 
 class SubscriptionItemsBecameOutdatedEvent(Event):
@@ -56,7 +55,7 @@ class SubscriptionItemsBecameOutdatedEvent(Event):
         return cls(
             id=uuid4(),
             created_at=datetime.utcnow(),
-            subscription_id=subscription_id
+            subscription_id=subscription_id,
         )
 
 
@@ -68,7 +67,7 @@ class SubscriptionBecameOutdatedEvent(Event):
         return cls(
             id=uuid4(),
             created_at=datetime.utcnow(),
-            subscription_id=subscription_id
+            subscription_id=subscription_id,
         )
 
 class ItemsBecameOutdatedEvent(Event):
@@ -84,7 +83,7 @@ class ItemsBecameOutdatedEvent(Event):
         return cls(
             id=uuid4(),
             created_at=datetime.utcnow(),
-            item_ids=item_ids
+            item_ids=item_ids,
         )
 
 
@@ -96,7 +95,7 @@ class UserRegisterRequestSentEvent(Event):
         return cls(
             id=uuid4(),
             created_at=datetime.utcnow(),
-            request_uuid=request_uuid
+            request_uuid=request_uuid,
         )
 
 
@@ -108,5 +107,5 @@ class UserRegisteredEvent(Event):
         return cls(
             id=uuid4(),
             created_at=datetime.utcnow(),
-            user_id=user_id
+            user_id=user_id,
         )

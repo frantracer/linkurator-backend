@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from uuid import UUID
 
@@ -7,7 +9,7 @@ from linkurator_core.domain.users.user_repository import UserRepository
 
 
 class GetCuratorsHandler:
-    def __init__(self, user_repository: UserRepository):
+    def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
 
     async def handle(self, user_id: UUID) -> list[User]:

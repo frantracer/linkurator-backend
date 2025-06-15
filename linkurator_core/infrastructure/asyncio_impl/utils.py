@@ -6,7 +6,7 @@ from typing import Any, Awaitable, Callable, List
 async def wait_until(
         condition: Callable[[], bool],
         timeout_seconds: float = 5,
-        check_interval_seconds: float = 1
+        check_interval_seconds: float = 1,
 ) -> bool:
     start_time = time.time()
     while time.time() - start_time < timeout_seconds:

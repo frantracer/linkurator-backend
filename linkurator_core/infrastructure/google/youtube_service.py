@@ -5,22 +5,21 @@ import uuid
 from copy import deepcopy
 from datetime import datetime
 from random import randint
-from typing import Dict, List, Optional
 
 from pydantic import AnyUrl
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
-from linkurator_core.domain.common.utils import parse_url, datetime_now
+from linkurator_core.domain.common.utils import datetime_now, parse_url
 from linkurator_core.domain.items.item import Item, ItemProvider
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
-from linkurator_core.domain.users.external_service_credential import ExternalServiceType, ExternalServiceCredential
+from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
 from linkurator_core.domain.users.user_repository import UserRepository
-from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient, YoutubeChannel, YoutubeApiError
+from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient, YoutubeApiError, YoutubeChannel
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 
 
@@ -32,7 +31,7 @@ class YoutubeService(SubscriptionService):
                  credentials_repository: ExternalCredentialRepository,
                  youtube_client: YoutubeApiClient,
                  youtube_rss_client: YoutubeRssClient,
-                 api_keys: list[str]):
+                 api_keys: list[str]) -> None:
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
@@ -42,14 +41,15 @@ class YoutubeService(SubscriptionService):
         self.api_keys = api_keys
 
         if len(api_keys) == 0:
-            raise ValueError("No API keys provided")
+            msg = "No API keys provided"
+            raise ValueError(msg)
 
     async def get_subscriptions(
             self,
             user_id: uuid.UUID,
             access_token: str,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Subscription]:
+            credential: ExternalServiceCredential | None = None,
+    ) -> list[Subscription]:
         """
         Get subscriptions for a user from YouTube.
 
@@ -59,14 +59,14 @@ class YoutubeService(SubscriptionService):
 
         :raises InvalidCredentialTypeError: if the credential type is not YOUTUBE_API_KEY
         """
-
         user = await self.user_repository.get(user_id)
         youtube_channels = []
 
         api_key = self._get_api_key()
         if credential is not None:
-            if not credential.credential_type == ExternalServiceType.YOUTUBE_API_KEY:
-                raise InvalidCredentialTypeError("Invalid credential type")
+            if credential.credential_type != ExternalServiceType.YOUTUBE_API_KEY:
+                msg = "Invalid credential type"
+                raise InvalidCredentialTypeError(msg)
             api_key = credential.credential_value
 
         if user is not None:
@@ -79,8 +79,8 @@ class YoutubeService(SubscriptionService):
     async def get_subscription(
             self,
             sub_id: uuid.UUID,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> Optional[Subscription]:
+            credential: ExternalServiceCredential | None = None,
+    ) -> Subscription | None:
         subscription = await self.subscription_repository.get(sub_id)
         if subscription is None or subscription.provider != SubscriptionProvider.YOUTUBE:
             return None
@@ -88,8 +88,9 @@ class YoutubeService(SubscriptionService):
         channel_id = subscription.external_data["channel_id"]
 
         if credential is not None:
-            if not credential.credential_type == ExternalServiceType.YOUTUBE_API_KEY:
-                raise InvalidCredentialTypeError("Invalid credential type")
+            if credential.credential_type != ExternalServiceType.YOUTUBE_API_KEY:
+                msg = "Invalid credential type"
+                raise InvalidCredentialTypeError(msg)
             api_key = credential.credential_value
         else:
             api_key = await self._get_api_key_for_sub(sub_id)
@@ -103,8 +104,8 @@ class YoutubeService(SubscriptionService):
             self,
             sub_id: uuid.UUID,
             from_date: datetime,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Item]:
+            credential: ExternalServiceCredential | None = None,
+    ) -> list[Item]:
 
         subscription = await self.subscription_repository.get(sub_id)
         if subscription is None or subscription.provider != SubscriptionProvider.YOUTUBE:
@@ -117,8 +118,9 @@ class YoutubeService(SubscriptionService):
             return []
 
         if credential is not None:
-            if not credential.credential_type == ExternalServiceType.YOUTUBE_API_KEY:
-                raise InvalidCredentialTypeError("Invalid credential type")
+            if credential.credential_type != ExternalServiceType.YOUTUBE_API_KEY:
+                msg = "Invalid credential type"
+                raise InvalidCredentialTypeError(msg)
             api_key = credential.credential_value
         else:
             api_key = await self._get_api_key_for_sub(sub_id)
@@ -133,10 +135,10 @@ class YoutubeService(SubscriptionService):
     async def get_items(
             self,
             item_ids: set[uuid.UUID],
-            credential: Optional[ExternalServiceCredential] = None
+            credential: ExternalServiceCredential | None = None,
     ) -> set[Item]:
         def link_to_video_id(link: str) -> str:
-            return link.rsplit('/watch?v=', maxsplit=1)[-1]
+            return link.rsplit("/watch?v=", maxsplit=1)[-1]
 
         items = await self.item_repository.find_items(
             criteria=ItemFilterCriteria(item_ids=item_ids),
@@ -145,24 +147,23 @@ class YoutubeService(SubscriptionService):
 
         items = [item for item in items if item.provider == ItemProvider.YOUTUBE]
 
-        video_id_to_item: Dict[str, Item] = {link_to_video_id(str(item.url)): item for item in items}
+        video_id_to_item: dict[str, Item] = {link_to_video_id(str(item.url)): item for item in items}
 
         updated_videos = await self.youtube_client.get_youtube_videos(
             api_key=self._get_api_key() if credential is None else credential.credential_value,
             video_ids=[link_to_video_id(str(item.url)) for item in items])
 
-        updated_items = {v.to_item(item_id=video_id_to_item[v.video_id].uuid,
+        return {v.to_item(item_id=video_id_to_item[v.video_id].uuid,
                                    sub_id=video_id_to_item[v.video_id].subscription_uuid)
                          for v in updated_videos}
 
-        return updated_items
 
     async def get_subscription_from_url(
             self,
             url: AnyUrl,
-            credential: Optional[ExternalServiceCredential] = None
+            credential: ExternalServiceCredential | None = None,
     ) -> Subscription | None:
-        if not url.host in ["www.youtube.com", "youtube.com"]:
+        if url.host not in ["www.youtube.com", "youtube.com"]:
             return None
 
         try:
@@ -193,19 +194,19 @@ class YoutubeService(SubscriptionService):
                     thumbnail=utils.parse_url(youtube_channel.thumbnail_url),
                     external_data={
                         "channel_id": youtube_channel.channel_id,
-                        "playlist_id": youtube_channel.playlist_id
+                        "playlist_id": youtube_channel.playlist_id,
                     },
                 )
         except YoutubeApiError as exception:
-            logging.error("Error while getting subscription from URL: %s", exception)
+            logging.exception("Error while getting subscription from URL: %s", exception)
 
         return None
 
     async def get_subscriptions_from_name(
             self,
             name: str,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Subscription]:
+            credential: ExternalServiceCredential | None = None,
+    ) -> list[Subscription]:
         api_key = self._get_api_key() if credential is None else credential.credential_value
 
         channel = await self.youtube_client.get_youtube_channel_from_name(channel_name=name, api_key=api_key)
@@ -222,7 +223,7 @@ class YoutubeService(SubscriptionService):
                 thumbnail=utils.parse_url(channel.thumbnail_url),
                 external_data={
                     "channel_id": channel.channel_id,
-                    "playlist_id": channel.playlist_id
+                    "playlist_id": channel.playlist_id,
                 },
             )]
 
@@ -235,7 +236,7 @@ class YoutubeService(SubscriptionService):
 
         credentials = await self.credentials_repository.find_by_users_and_type(
             user_ids=[u.uuid for u in subscribed_users],
-            credential_type=ExternalServiceType.YOUTUBE_API_KEY
+            credential_type=ExternalServiceType.YOUTUBE_API_KEY,
         )
 
         if len(credentials) == 0:

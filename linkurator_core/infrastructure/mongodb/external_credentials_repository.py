@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import List, Optional
 from uuid import UUID
 
 from bson.binary import UuidRepresentation
@@ -30,7 +29,7 @@ class MongoDBExternalCredentials(BaseModel):
             credential_type=str(credentials.credential_type.value),
             value=credentials.credential_value,
             created_at=credentials.created_at,
-            updated_at=credentials.updated_at
+            updated_at=credentials.updated_at,
         )
 
     @staticmethod
@@ -43,7 +42,7 @@ class MongoDBExternalCredentials(BaseModel):
             credential_type=ExternalServiceType(self.credential_type),
             credential_value=self.value,
             created_at=self.created_at,
-            updated_at=self.updated_at
+            updated_at=self.updated_at,
         )
 
     def to_dict(self) -> MongoDBMapping:
@@ -51,12 +50,12 @@ class MongoDBExternalCredentials(BaseModel):
 
 
 class MongodDBExternalCredentialRepository(ExternalCredentialRepository):
-    _collection_name: str = 'external_credentials'
+    _collection_name: str = "external_credentials"
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
         self.client = AsyncIOMotorClient[MongoDBMapping](
-            f'mongodb://{str(ip)}:{port}/', username=username, password=password)
+            f"mongodb://{ip!s}:{port}/", username=username, password=password)
         self.db_name = db_name
 
     def _collection(self) -> AsyncIOMotorCollection[MongoDBMapping]:
@@ -65,12 +64,13 @@ class MongodDBExternalCredentialRepository(ExternalCredentialRepository):
 
     async def check_connection(self) -> None:
         if self._collection_name not in await self.client[self.db_name].list_collection_names():
+            msg = f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'"
             raise CollectionIsNotInitialized(
-                f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
+                msg)
 
-    async def get(self, user_id: UUID) -> List[ExternalServiceCredential]:
+    async def get(self, user_id: UUID) -> list[ExternalServiceCredential]:
         return [MongoDBExternalCredentials(**credential).to_domain_credentials()
-                for credential in await self._collection().find({'user_id': user_id}).to_list(length=None)]
+                for credential in await self._collection().find({"user_id": user_id}).to_list(length=None)]
 
     async def add(self, credentials: ExternalServiceCredential) -> None:
         await self._collection().insert_one(
@@ -78,37 +78,37 @@ class MongodDBExternalCredentialRepository(ExternalCredentialRepository):
 
     async def update(self, credentials: ExternalServiceCredential) -> None:
         await self._collection().update_one(
-            {'user_id': credentials.user_id},
-            {'$set': MongoDBExternalCredentials.from_domain_credentials(credentials).to_dict()}
+            {"user_id": credentials.user_id},
+            {"$set": MongoDBExternalCredentials.from_domain_credentials(credentials).to_dict()},
         )
 
     async def delete(
             self,
             user_id: UUID,
             credential_type: ExternalServiceType,
-            credential_value: str
+            credential_value: str,
     ) -> None:
         await self._collection().delete_one(
-            {'user_id': user_id, 'credential_type': str(credential_type.value), 'value': credential_value}
+            {"user_id": user_id, "credential_type": str(credential_type.value), "value": credential_value},
         )
 
     async def find_by_users_and_type(
             self,
-            user_ids: List[UUID],
-            credential_type: ExternalServiceType
-    ) -> List[ExternalServiceCredential]:
+            user_ids: list[UUID],
+            credential_type: ExternalServiceType,
+    ) -> list[ExternalServiceCredential]:
         return [MongoDBExternalCredentials(**credential).to_domain_credentials()
                 for credential in await self._collection().find(
-                {'user_id': {'$in': user_ids}, 'credential_type': str(credential_type.value)}
+                {"user_id": {"$in": user_ids}, "credential_type": str(credential_type.value)},
             ).to_list(length=None)]
 
     async def get_by_value_and_type(
             self,
             credential_type: ExternalServiceType,
-            credential_value: str
-    ) -> Optional[ExternalServiceCredential]:
+            credential_value: str,
+    ) -> ExternalServiceCredential | None:
         credential = await self._collection().find_one(
-            {'credential_type': str(credential_type.value), 'value': credential_value}
+            {"credential_type": str(credential_type.value), "value": credential_value},
         )
         if credential is None:
             return None

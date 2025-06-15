@@ -1,6 +1,6 @@
 import secrets
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Callable
 from uuid import UUID
 
@@ -26,12 +26,12 @@ class Session:
             user_id: UUID,
             seconds_to_expire: int,
             token_generator: Callable[[], str] = generate_random_token_128_chars,
-            now_function: Callable[[], datetime] = datetime_now_utc
+            now_function: Callable[[], datetime] = datetime_now_utc,
             ) -> "Session":
         return cls(
             token=token_generator(),
             user_id=user_id,
-            expires_at=now_function() + timedelta(seconds=seconds_to_expire)
+            expires_at=now_function() + timedelta(seconds=seconds_to_expire),
         )
 
     def is_expired(self) -> bool:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
@@ -5,7 +7,7 @@ from uuid import UUID
 
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria, InteractionFilterCriteria
+from linkurator_core.domain.items.item_repository import InteractionFilterCriteria, ItemFilterCriteria, ItemRepository
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 
@@ -19,7 +21,7 @@ class ItemWithInteractions:
 
 
 class GetCuratorItemsHandler:
-    def __init__(self, item_repository: ItemRepository, subscription_repository: SubscriptionRepository):
+    def __init__(self, item_repository: ItemRepository, subscription_repository: SubscriptionRepository) -> None:
         self.item_repository = item_repository
         self.subscription_repository = subscription_repository
 
@@ -41,10 +43,10 @@ class GetCuratorItemsHandler:
                 interaction_types=[InteractionType.RECOMMENDED],
                 text=text_filter,
                 min_duration=min_duration,
-                max_duration=max_duration
+                max_duration=max_duration,
             ),
             page_number=page_number,
-            limit=page_size
+            limit=page_size,
         )
 
         items_ids = {interaction.item_uuid for interaction in curator_items_interactions}
@@ -53,7 +55,7 @@ class GetCuratorItemsHandler:
             if user_id is not None:
                 return await self.item_repository.get_user_interactions_by_item_id(
                     user_id=user_id,
-                    item_ids=list(items_ids)
+                    item_ids=list(items_ids),
                 )
             return {}
 
@@ -63,9 +65,9 @@ class GetCuratorItemsHandler:
                     item_ids=items_ids,
                 ),
                 page_number=0,
-                limit=len(items_ids)
+                limit=len(items_ids),
             ),
-            get_user_interactions_if_user_id_provided()
+            get_user_interactions_if_user_id_provided(),
         )
         curator_items = results[0]
         user_items_interactions = results[1]
@@ -85,7 +87,7 @@ class GetCuratorItemsHandler:
                 item=curator_items_index[interaction.item_uuid],
                 subscription=subscriptions_index[curator_items_index[interaction.item_uuid].subscription_uuid],
                 user_interactions=user_items_interactions.get(interaction.item_uuid, []),
-                curator_interactions=curator_items_interactions_index.get(interaction.item_uuid, [])
+                curator_interactions=curator_items_interactions_index.get(interaction.item_uuid, []),
             )
             for interaction in curator_items_interactions
         ]

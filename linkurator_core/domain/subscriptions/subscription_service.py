@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import abc
 import uuid
 from datetime import datetime
-from typing import List, Optional
 
 from pydantic import AnyUrl
 
@@ -16,21 +17,21 @@ class SubscriptionService(abc.ABC):
             self,
             user_id: uuid.UUID,
             access_token: str,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Subscription]: ...
+            credential: ExternalServiceCredential | None = None,
+    ) -> list[Subscription]: ...
 
     @abc.abstractmethod
     async def get_subscription(
             self,
             sub_id: uuid.UUID,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> Optional[Subscription]: ...
+            credential: ExternalServiceCredential | None = None,
+    ) -> Subscription | None: ...
 
     @abc.abstractmethod
     async def get_items(
             self,
             item_ids: set[uuid.UUID],
-            credential: Optional[ExternalServiceCredential] = None
+            credential: ExternalServiceCredential | None = None,
     ) -> set[Item]: ...
 
     @abc.abstractmethod
@@ -38,19 +39,19 @@ class SubscriptionService(abc.ABC):
             self,
             sub_id: uuid.UUID,
             from_date: datetime,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Item]: ...
+            credential: ExternalServiceCredential | None = None,
+    ) -> list[Item]: ...
 
     @abc.abstractmethod
     async def get_subscription_from_url(
             self,
             url: AnyUrl,
-            credential: Optional[ExternalServiceCredential] = None
+            credential: ExternalServiceCredential | None = None,
     ) -> Subscription | None: ...
 
     @abc.abstractmethod
     async def get_subscriptions_from_name(
             self,
             name: str,
-            credential: Optional[ExternalServiceCredential] = None
-    ) -> List[Subscription]: ...
+            credential: ExternalServiceCredential | None = None,
+    ) -> list[Subscription]: ...

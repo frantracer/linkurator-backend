@@ -32,7 +32,7 @@ class GetPlatformStatisticsHandler:
         self,
         user_repository: UserRepository,
         subscription_repository: SubscriptionRepository,
-    ):
+    ) -> None:
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
 
@@ -41,16 +41,16 @@ class GetPlatformStatisticsHandler:
             self.user_repository.count_registered_users(),
             self.user_repository.count_active_users(),
             self.subscription_repository.count_subscriptions(
-                provider=SubscriptionProvider.YOUTUBE
+                provider=SubscriptionProvider.YOUTUBE,
             ),
             self.subscription_repository.count_subscriptions(
-                provider=SubscriptionProvider.SPOTIFY
+                provider=SubscriptionProvider.SPOTIFY,
             ),
         )
 
         return PlatformStatistics(
             users=UserPlatformStatistics(registered=results[0], active=results[1]),
             subscriptions=SubscriptionsPlatformStatistics(
-                total=results[2] + results[3], youtube=results[2], spotify=results[3]
+                total=results[2] + results[3], youtube=results[2], spotify=results[3],
             ),
         )

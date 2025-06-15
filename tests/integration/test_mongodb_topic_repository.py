@@ -19,18 +19,18 @@ from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopic
 def fixture_topic_repo(db_name: str, request: Any) -> TopicRepository:
     if request.param == "in_memory":
         return InMemoryTopicRepository()
-    return MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, db_name, "develop", "develop")
+    return MongoDBTopicRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_exception_is_raised_if_topics_collection_is_not_created() -> None:
     non_existent_db_name = f"test-{uuid.uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBTopicRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name, "develop", "develop")
+        repo = MongoDBTopicRepository(IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop")
         await repo.check_connection()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_add_topic(topic_repo: TopicRepository) -> None:
     topic = Topic(name="test",
                   uuid=uuid.UUID("0cc1102a-11e9-4e14-baa7-4a12e958a987"),
@@ -51,14 +51,14 @@ async def test_add_topic(topic_repo: TopicRepository) -> None:
     assert int(the_topic.updated_at.timestamp() * 100) == floor(topic.updated_at.timestamp() * 100)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_topic_that_does_not_exist(topic_repo: TopicRepository) -> None:
     the_topic = await topic_repo.get(uuid.UUID("b613c205-f99d-43b9-9d63-4b7ebe4119a3"))
 
     assert the_topic is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_topics_by_user_id(topic_repo: TopicRepository) -> None:
     user_uuid = uuid.UUID("fb0b5160-7704-4310-9bea-d7045574290b")
     topic1 = Topic(name="test_topic_1",
@@ -82,7 +82,7 @@ async def test_get_topics_by_user_id(topic_repo: TopicRepository) -> None:
     assert the_topics[1].uuid in [topic1.uuid, topic2.uuid]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_topic_parameters(topic_repo: TopicRepository) -> None:
     topic = Topic(name="test",
                   uuid=uuid.UUID("634b81ca-9dde-4bb9-b573-0c6b2cb958df"),
@@ -110,7 +110,7 @@ async def test_update_topic_parameters(topic_repo: TopicRepository) -> None:
     assert int(the_topic.updated_at.timestamp() * 100) == floor(topic.updated_at.timestamp() * 100)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_delete_topic(topic_repo: TopicRepository) -> None:
     topic = Topic(name="test",
                   uuid=uuid.UUID("abc2130f-5a83-499f-a3dc-3115b483f6ba"),
@@ -128,7 +128,7 @@ async def test_delete_topic(topic_repo: TopicRepository) -> None:
     assert deleted_topic is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_create_topic_with_same_raises_duplicated_key_exception(topic_repo: TopicRepository) -> None:
     topic = Topic.new(
         name="test",
@@ -140,9 +140,9 @@ async def test_create_topic_with_same_raises_duplicated_key_exception(topic_repo
         await topic_repo.add(topic)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_one_existing_and_non_existing_topics_returns_only_one_topic(
-        topic_repo: TopicRepository
+        topic_repo: TopicRepository,
 ) -> None:
     topic1 = Topic.new(
         name="test_topic_1",
@@ -162,7 +162,7 @@ async def test_find_one_existing_and_non_existing_topics_returns_only_one_topic(
     assert topics[0].uuid == topic1.uuid
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_topics_by_name(topic_repo: TopicRepository) -> None:
     topic1 = mock_topic(name="Leyendas y videojuegos")
     topic2 = mock_topic(name="Fútbol y más")

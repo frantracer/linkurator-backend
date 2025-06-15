@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
 from uuid import UUID
 
 from pydantic import AnyUrl
@@ -14,7 +15,7 @@ from linkurator_core.domain.subscriptions.subscription import (
 
 @dataclass
 class SubscriptionFilterCriteria:
-    updated_before: Optional[datetime] = None
+    updated_before: datetime | None = None
 
 
 class SubscriptionRepository(ABC):
@@ -25,10 +26,10 @@ class SubscriptionRepository(ABC):
     async def add(self, subscription: Subscription) -> None: ...
 
     @abstractmethod
-    async def get(self, subscription_id: UUID) -> Optional[Subscription]: ...
+    async def get(self, subscription_id: UUID) -> Subscription | None: ...
 
     @abstractmethod
-    async def get_list(self, subscription_ids: List[UUID]) -> List[Subscription]: ...
+    async def get_list(self, subscription_ids: list[UUID]) -> list[Subscription]: ...
 
     @abstractmethod
     async def delete(self, subscription_id: UUID) -> None: ...
@@ -40,18 +41,18 @@ class SubscriptionRepository(ABC):
     async def update(self, subscription: Subscription) -> None: ...
 
     @abstractmethod
-    async def find_by_url(self, url: AnyUrl) -> Optional[Subscription]: ...
+    async def find_by_url(self, url: AnyUrl) -> Subscription | None: ...
 
     @abstractmethod
     async def find_latest_scan_before(
-            self, datetime_limit: datetime
-    ) -> List[Subscription]: ...
+            self, datetime_limit: datetime,
+    ) -> list[Subscription]: ...
 
     @abstractmethod
-    async def find_by_name(self, name: str) -> List[Subscription]: ...
+    async def find_by_name(self, name: str) -> list[Subscription]: ...
 
     @abstractmethod
-    async def find(self, criteria: SubscriptionFilterCriteria) -> List[Subscription]: ...
+    async def find(self, criteria: SubscriptionFilterCriteria) -> list[Subscription]: ...
 
     @abstractmethod
     async def count_subscriptions(self, provider: SubscriptionProvider | None = None) -> int: ...

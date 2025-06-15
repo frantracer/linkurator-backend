@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -21,7 +23,8 @@ class FindCuratorHandler:
         if current_user_id is not None:
             user = await self.user_repository.get(current_user_id)
             if user is None:
-                raise UserNotFoundError("User not found")
+                msg = "User not found"
+                raise UserNotFoundError(msg)
             user_curators = user.curators
 
         curator = await self.user_repository.get_by_username(username)

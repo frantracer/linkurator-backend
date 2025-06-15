@@ -16,7 +16,7 @@ class RequestPasswordChange:
                  user_repository: UserRepository,
                  password_change_request_repository: PasswordChangeRequestRepository,
                  email_sender: EmailSender,
-                 uuid_generator: Callable[[], UUID] = uuid4
+                 uuid_generator: Callable[[], UUID] = uuid4,
                  ) -> None:
         self.user_repository = user_repository
         self.password_change_request_repository = password_change_request_repository

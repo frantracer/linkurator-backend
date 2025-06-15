@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import urllib.parse
 from enum import Enum
 from uuid import uuid4
@@ -38,7 +40,7 @@ class RegisterNewUserWithEmail:
     def __init__(self,
                  user_repository: UserRepository,
                  registration_request_repository: RegistrationRequestRepository,
-                 event_bus: EventBusService):
+                 event_bus: EventBusService) -> None:
         self.user_repository = user_repository
         self.registration_request_repository = registration_request_repository
         self.event_bus = event_bus
@@ -50,7 +52,7 @@ class RegisterNewUserWithEmail:
             first_name: str,
             last_name: str,
             username: Username,
-            validation_base_url: AnyUrl
+            validation_base_url: AnyUrl,
     ) -> list[RegistrationError]:
         errors: list[RegistrationError] = []
 

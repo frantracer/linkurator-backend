@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address
-from typing import List, Optional, Any
+from typing import Any
 from uuid import UUID
 
 import pymongo
@@ -22,7 +22,7 @@ class MongoDBTopic(BaseModel):
     uuid: UUID
     name: str
     user_id: UUID
-    subscriptions_ids: List[UUID]
+    subscriptions_ids: list[UUID]
     created_at: datetime
     updated_at: datetime
 
@@ -34,7 +34,7 @@ class MongoDBTopic(BaseModel):
             subscriptions_ids=topic.subscriptions_ids,
             user_id=topic.user_id,
             created_at=topic.created_at,
-            updated_at=topic.updated_at
+            updated_at=topic.updated_at,
         )
 
     def to_domain_topic(self) -> Topic:
@@ -44,17 +44,17 @@ class MongoDBTopic(BaseModel):
             subscriptions_ids=self.subscriptions_ids,
             user_id=self.user_id,
             created_at=self.created_at,
-            updated_at=self.updated_at
+            updated_at=self.updated_at,
         )
 
 
 class MongoDBTopicRepository(TopicRepository):
-    _collection_name: str = 'topics'
+    _collection_name: str = "topics"
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()
         self.client = AsyncIOMotorClient[MongoDBMapping](
-            f'mongodb://{str(ip)}:{port}/', username=username, password=password)
+            f"mongodb://{ip!s}:{port}/", username=username, password=password)
         self.db_name = db_name
 
     def _topic_collection(self) -> AsyncIOMotorCollection[MongoDBMapping]:
@@ -63,48 +63,50 @@ class MongoDBTopicRepository(TopicRepository):
 
     async def check_connection(self) -> None:
         if self._collection_name not in await self.client[self.db_name].list_collection_names():
+            msg = f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'"
             raise CollectionIsNotInitialized(
-                f"Collection '{self.db_name}' is not initialized in database '{self.db_name}'")
+                msg)
 
     async def add(self, topic: Topic) -> None:
         collection = self._topic_collection()
         try:
             await collection.insert_one(MongoDBTopic.from_domain_topic(topic).model_dump())
         except pymongo.errors.DuplicateKeyError as err:
-            raise DuplicatedKeyError(f"Topic with id '{topic.uuid}' already exists") from err
+            msg = f"Topic with id '{topic.uuid}' already exists"
+            raise DuplicatedKeyError(msg) from err
 
-    async def get(self, topic_id: UUID) -> Optional[Topic]:
+    async def get(self, topic_id: UUID) -> Topic | None:
         collection = self._topic_collection()
-        topic: Optional[dict[str, Any]] = await collection.find_one({'uuid': topic_id})
+        topic: dict[str, Any] | None = await collection.find_one({"uuid": topic_id})
         if topic is None:
             return None
         return MongoDBTopic(**topic).to_domain_topic()
 
-    async def find_topics(self, topic_ids: List[UUID]) -> List[Topic]:
+    async def find_topics(self, topic_ids: list[UUID]) -> list[Topic]:
         collection = self._topic_collection()
-        topics = await collection.find({'uuid': {'$in': topic_ids}}).to_list(length=None)
+        topics = await collection.find({"uuid": {"$in": topic_ids}}).to_list(length=None)
         return [MongoDBTopic(**topic).to_domain_topic() for topic in topics]
 
-    async def find_topics_by_name(self, name: str) -> List[Topic]:
+    async def find_topics_by_name(self, name: str) -> list[Topic]:
         collection = self._topic_collection()
-        topics: List[dict[str, Any]] = await (collection.find(
-            {'$text': {'$search': normalize_text_search(name)}}
-        ).sort('created_at', pymongo.DESCENDING).to_list(length=None))
+        topics: list[dict[str, Any]] = await (collection.find(
+            {"$text": {"$search": normalize_text_search(name)}},
+        ).sort("created_at", pymongo.DESCENDING).to_list(length=None))
         return [MongoDBTopic(**topic).to_domain_topic() for topic in topics]
 
     async def update(self, topic: Topic) -> None:
         collection = self._topic_collection()
-        await collection.update_one({'uuid': topic.uuid}, {'$set': MongoDBTopic.from_domain_topic(topic).model_dump()})
+        await collection.update_one({"uuid": topic.uuid}, {"$set": MongoDBTopic.from_domain_topic(topic).model_dump()})
 
     async def delete(self, topic_id: UUID) -> None:
         collection = self._topic_collection()
-        await collection.delete_one({'uuid': topic_id})
+        await collection.delete_one({"uuid": topic_id})
 
     async def delete_all(self) -> None:
         collection = self._topic_collection()
         await collection.delete_many({})
 
-    async def get_by_user_id(self, user_id: UUID) -> List[Topic]:
+    async def get_by_user_id(self, user_id: UUID) -> list[Topic]:
         collection = self._topic_collection()
-        topics = await collection.find({'user_id': user_id}).to_list(length=None)
+        topics = await collection.find({"user_id": user_id}).to_list(length=None)
         return [MongoDBTopic(**topic).to_domain_topic() for topic in topics]

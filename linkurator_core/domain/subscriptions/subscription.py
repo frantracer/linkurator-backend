@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, Optional
 from uuid import UUID
 
 from pydantic import AnyUrl
@@ -19,7 +18,7 @@ class Subscription:
     uuid: UUID
     name: str
     provider: SubscriptionProvider
-    external_data: Dict[str, str]
+    external_data: dict[str, str]
     url: AnyUrl
     thumbnail: AnyUrl
     created_at: datetime
@@ -29,7 +28,7 @@ class Subscription:
 
     @classmethod
     def new(cls, uuid: UUID, name: str, provider: SubscriptionProvider, url: AnyUrl, thumbnail: AnyUrl,
-            external_data: Optional[Dict[str, str]] = None) -> Subscription:
+            external_data: dict[str, str] | None = None) -> Subscription:
         now = datetime.now(tz=timezone.utc)
         return cls(
             uuid=uuid,

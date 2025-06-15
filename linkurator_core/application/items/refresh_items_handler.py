@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import logging
 from uuid import UUID
 
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 
 
@@ -16,11 +18,11 @@ class RefreshItemsHandler:
         items = await self.item_repository.find_items(criteria=ItemFilterCriteria(item_ids=item_uuids),
                                                 page_number=0, limit=len(item_uuids))
 
-        updated_items = await self.subscription_service.get_items(set(item.uuid for item in items))
+        updated_items = await self.subscription_service.get_items({item.uuid for item in items})
 
         await self.item_repository.upsert_items(list(updated_items))
 
-        updated_item_uuids = set(item.uuid for item in updated_items)
+        updated_item_uuids = {item.uuid for item in updated_items}
         for item in items:
             if item.uuid not in updated_item_uuids:
                 await self.item_repository.delete_item(item.uuid)

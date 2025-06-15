@@ -34,7 +34,7 @@ def parse_arguments() -> InputArguments:
 
     body = args.message_text
     if args.html_path != "":
-        with open(args.html_path, 'r', encoding='utf-8') as fd:
+        with open(args.html_path, encoding="utf-8") as fd:
             body = fd.read()
 
     return InputArguments(email=args.email, subject=args.subject, message_text=body)

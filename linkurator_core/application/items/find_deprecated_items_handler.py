@@ -2,8 +2,8 @@ import logging
 
 from linkurator_core.domain.common.event import ItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
-from linkurator_core.domain.items.item import ItemProvider, YOUTUBE_ITEM_VERSION
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.domain.items.item import YOUTUBE_ITEM_VERSION, ItemProvider
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
 
 
 class FindDeprecatedItemsHandler:
@@ -20,5 +20,5 @@ class FindDeprecatedItemsHandler:
             limit=50)
 
         if len(items) > 0:
-            item_uuids = set(item.uuid for item in items)
+            item_uuids = {item.uuid for item in items}
             await self.event_bus.publish(ItemsBecameOutdatedEvent.new(item_ids=item_uuids))

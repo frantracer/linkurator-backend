@@ -7,11 +7,11 @@ from linkurator_core.application.items.find_deprecated_items_handler import Find
 from linkurator_core.domain.common.event import ItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.mock_factory import mock_item
-from linkurator_core.domain.items.item import ItemProvider, YOUTUBE_ITEM_VERSION
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.domain.items.item import YOUTUBE_ITEM_VERSION, ItemProvider
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_deprecated_items_publish_an_event_with_all_deprecated_items() -> None:
     item_repository = MagicMock(spec=ItemRepository)
     event_bus = MagicMock(spec=EventBusService)
@@ -32,7 +32,7 @@ async def test_find_deprecated_items_publish_an_event_with_all_deprecated_items(
         ItemsBecameOutdatedEvent.new(item_ids={items[0].uuid, items[1].uuid}))
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_deprecated_items_does_not_publish_an_event_if_there_are_no_deprecated_items() -> None:
     item_repository = MagicMock(spec=ItemRepository)
     event_bus = MagicMock(spec=EventBusService)

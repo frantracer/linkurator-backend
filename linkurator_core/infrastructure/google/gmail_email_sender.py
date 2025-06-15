@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import logging
 from email.mime.multipart import MIMEMultipart
@@ -39,21 +41,22 @@ class GmailEmailSender(EmailSender):
             self.access_token = self.account_service.generate_access_token_from_service_credentials()
 
         if self.access_token is None:
-            raise InvalidAccessTokenError("Failed to generate access token for the Gmail API")
+            msg = "Failed to generate access token for the Gmail API"
+            raise InvalidAccessTokenError(msg)
 
         message = MIMEMultipart()
-        message['to'] = user_email
-        message['subject'] = subject
-        message.attach(MIMEText(message_text, 'html'))
+        message["to"] = user_email
+        message["subject"] = subject
+        message.attach(MIMEText(message_text, "html"))
 
         raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-        send_url = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'
+        send_url = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
         headers = {
-            'Authorization': f'Bearer {self.access_token}',
-            'Content-Type': 'application/json',
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json",
         }
-        payload = {'raw': raw_message}
+        payload = {"raw": raw_message}
 
         async with aiohttp.ClientSession() as session:
             async with session.post(send_url, headers=headers, json=payload) as response:
@@ -61,5 +64,6 @@ class GmailEmailSender(EmailSender):
                     return True
                 if response.status == 401:
                     self.access_token = None
-                    raise InvalidAccessTokenError("Failed to send email: Invalid access token")
+                    msg = "Failed to send email: Invalid access token"
+                    raise InvalidAccessTokenError(msg)
         return False

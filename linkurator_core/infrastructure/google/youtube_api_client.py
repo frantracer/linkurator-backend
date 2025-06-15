@@ -3,9 +3,9 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from urllib.parse import urlencode
 
 import aiohttp
@@ -14,7 +14,7 @@ import isodate  # type: ignore
 from unidecode import unidecode
 
 from linkurator_core.domain.common import utils
-from linkurator_core.domain.items.item import Item, YOUTUBE_ITEM_VERSION
+from linkurator_core.domain.items.item import YOUTUBE_ITEM_VERSION, Item
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 
 MAX_VIDEOS_PER_QUERY = 50
@@ -53,7 +53,7 @@ class YoutubeChannel:
             thumbnail_url=channel["snippet"]["thumbnails"]["medium"]["url"],
             url=f'https://www.youtube.com/channel/{channel["id"]}',
             playlist_id=channel["contentDetails"]["relatedPlaylists"]["uploads"],
-            country=channel['snippet'].get('country', '')
+            country=channel["snippet"].get("country", ""),
         )
 
     def to_subscription(self, sub_id: uuid.UUID) -> Subscription:
@@ -63,10 +63,10 @@ class YoutubeChannel:
             provider=SubscriptionProvider.YOUTUBE,
             external_data={
                 "channel_id": self.channel_id,
-                "playlist_id": self.playlist_id
+                "playlist_id": self.playlist_id,
             },
             url=utils.parse_url(self.url),
-            thumbnail=utils.parse_url(self.thumbnail_url)
+            thumbnail=utils.parse_url(self.thumbnail_url),
         )
 
 
@@ -97,14 +97,14 @@ class YoutubeVideo:
             url=f'https://www.youtube.com/watch?v={video["id"]}',
             channel_id=video["snippet"]["channelId"],
             channel_url=f'https://www.youtube.com/channel/{video["snippet"]["channelId"]}',
-            country=video['snippet'].get('country', ''),
-            duration=video['contentDetails'].get('duration', 'PT0S'),
-            live_broadcast_content=LiveBroadcastContent(video["snippet"]["liveBroadcastContent"])
+            country=video["snippet"].get("country", ""),
+            duration=video["contentDetails"].get("duration", "PT0S"),
+            live_broadcast_content=LiveBroadcastContent(video["snippet"]["liveBroadcastContent"]),
         )
 
     def to_item(self, item_id: uuid.UUID, sub_id: uuid.UUID,
                 current_date: datetime = datetime.now(tz=timezone.utc)) -> Item:
-        deleted_at: Optional[datetime] = None
+        deleted_at: datetime | None = None
         if self.live_broadcast_content == LiveBroadcastContent.UPCOMING and \
                 self.published_at + timedelta(days=365) < current_date:
             deleted_at = current_date
@@ -118,7 +118,7 @@ class YoutubeVideo:
             published_at=self.published_at,
             duration=isodate.parse_duration(self.duration).total_seconds(),
             version=YOUTUBE_ITEM_VERSION,
-            deleted_at=deleted_at
+            deleted_at=deleted_at,
         )
 
 
@@ -126,7 +126,7 @@ class YoutubeApiClient:
     def __init__(self) -> None:
         self.base_url = "https://youtube.googleapis.com/youtube/v3"
 
-    async def get_youtube_user_channel(self, access_token: str) -> Optional[YoutubeChannel]:
+    async def get_youtube_user_channel(self, access_token: str) -> YoutubeChannel | None:
         response_json, status_code = await self._request_youtube_user_channel(access_token)
         if status_code != 200:
             return None
@@ -137,15 +137,16 @@ class YoutubeApiClient:
 
         return YoutubeChannel.from_dict(items[0])
 
-    async def get_youtube_subscriptions(self, access_token: str, api_key: str) -> List[YoutubeChannel]:
+    async def get_youtube_subscriptions(self, access_token: str, api_key: str) -> list[YoutubeChannel]:
         next_page_token = None
-        subscriptions: List[YoutubeChannel] = []
+        subscriptions: list[YoutubeChannel] = []
 
         while True:
             subs_response_json, subs_status_code = await self._request_youtube_subscriptions(
                 access_token, next_page_token)
             if subs_status_code != 200:
-                raise YoutubeApiError(f"Error getting youtube subscriptions: {subs_response_json}")
+                msg = f"Error getting youtube subscriptions: {subs_response_json}"
+                raise YoutubeApiError(msg)
 
             next_page_token = subs_response_json.get("nextPageToken", None)
 
@@ -155,7 +156,8 @@ class YoutubeApiClient:
             channels_response_json, channels_status_code = await self._request_youtube_channels(
                 api_key, channel_ids)
             if channels_status_code != 200:
-                raise YoutubeApiError(f"Error getting youtube channels: {channels_response_json}")
+                msg = f"Error getting youtube channels: {channels_response_json}"
+                raise YoutubeApiError(msg)
 
             youtube_channels = list(channels_response_json["items"])
             youtube_channels.sort(key=lambda i: i["id"])
@@ -173,40 +175,43 @@ class YoutubeApiClient:
             api_key, channel_name)
 
         if channel_status_code != 200:
-            raise YoutubeApiError(f"Error getting youtube channel: {channel_response_json}")
+            msg = f"Error getting youtube channel: {channel_response_json}"
+            raise YoutubeApiError(msg)
 
         items = channel_response_json.get("items", [])
         return YoutubeChannel.from_dict(items[0]) if len(items) > 0 else None
 
-    async def get_youtube_channel(self, api_key: str, channel_id: str) -> Optional[YoutubeChannel]:
+    async def get_youtube_channel(self, api_key: str, channel_id: str) -> YoutubeChannel | None:
         channel_response_json, channel_status_code = await self._request_youtube_channels(
             api_key, [channel_id])
 
         if channel_status_code != 200:
-            raise YoutubeApiError(f"Error getting youtube channel: {channel_response_json}")
+            msg = f"Error getting youtube channel: {channel_response_json}"
+            raise YoutubeApiError(msg)
 
         items = channel_response_json.get("items", [])
         return YoutubeChannel.from_dict(items[0]) if len(items) > 0 else None
 
-    async def get_youtube_videos(self, api_key: str, video_ids: List[str]) -> List[YoutubeVideo]:
-        youtube_videos: List[YoutubeVideo] = []
+    async def get_youtube_videos(self, api_key: str, video_ids: list[str]) -> list[YoutubeVideo]:
+        youtube_videos: list[YoutubeVideo] = []
 
         for i in range(0, len(video_ids), MAX_VIDEOS_PER_QUERY):
             videos_response_json, videos_status_code = await self._request_youtube_videos(
                 api_key, video_ids[i:i + MAX_VIDEOS_PER_QUERY])
 
             if videos_status_code != 200:
-                raise YoutubeApiError(f"Error getting youtube videos: {videos_response_json}")
+                msg = f"Error getting youtube videos: {videos_response_json}"
+                raise YoutubeApiError(msg)
 
             youtube_videos = youtube_videos + [YoutubeVideo.from_dict(v) for v in videos_response_json["items"]]
 
         return youtube_videos
 
     async def get_youtube_videos_from_playlist(
-            self, api_key: str, playlist_id: str, from_date: datetime
-    ) -> List[YoutubeVideo]:
+            self, api_key: str, playlist_id: str, from_date: datetime,
+    ) -> list[YoutubeVideo]:
         next_page_token = None
-        videos: List[YoutubeVideo] = []
+        videos: list[YoutubeVideo] = []
 
         logging.debug("Starting to retrieve videos from playlist %s", playlist_id)
 
@@ -217,7 +222,8 @@ class YoutubeApiClient:
                 logging.debug("Playlist %s not found", playlist_id)
                 break
             if playlist_status_code != 200:
-                raise YoutubeApiError(f"Error getting youtube playlist items: {playlist_response_json}")
+                msg = f"Error getting youtube playlist items: {playlist_response_json}"
+                raise YoutubeApiError(msg)
 
             next_page_token = playlist_response_json.get("nextPageToken", None)
 
@@ -232,7 +238,8 @@ class YoutubeApiClient:
                 videos_response_json, videos_status_code = await self._request_youtube_videos(
                     api_key, filtered_video_ids)
                 if videos_status_code != 200:
-                    raise YoutubeApiError(f"Error getting youtube videos: {videos_response_json}")
+                    msg = f"Error getting youtube videos: {videos_response_json}"
+                    raise YoutubeApiError(msg)
 
                 youtube_videos = list(videos_response_json["items"])
                 youtube_videos.sort(key=lambda i: i["id"])
@@ -255,10 +262,10 @@ class YoutubeApiClient:
                           aiohttp.ClientConnectorError,
                           max_time=60,
                           jitter=None)
-    async def _request_youtube_user_channel(self, access_token: str) -> Tuple[Dict[str, Any], int]:
+    async def _request_youtube_user_channel(self, access_token: str) -> tuple[dict[str, Any], int]:
         youtube_api_url = f"{self.base_url}/channels"
 
-        channel_query_params: Dict[str, Any] = {
+        channel_query_params: dict[str, Any] = {
             "part": "snippet,contentDetails",
             "mine": True,
         }
@@ -274,11 +281,11 @@ class YoutubeApiClient:
                           max_time=60,
                           jitter=None)
     async def _request_youtube_subscriptions(
-            self, access_token: str, next_page_token: Optional[str]
-    ) -> Tuple[Dict[str, Any], int]:
+            self, access_token: str, next_page_token: str | None,
+    ) -> tuple[dict[str, Any], int]:
         youtube_api_url = f"{self.base_url}/subscriptions"
 
-        subs_query_params: Dict[str, Any] = {
+        subs_query_params: dict[str, Any] = {
             "part": "snippet",
             "maxResults": 50,
             "mine": "true",
@@ -300,25 +307,24 @@ class YoutubeApiClient:
                           max_time=60,
                           jitter=None)
     async def _request_youtube_channels_from_name(
-            self, api_key: str, channel_name: str
-    ) -> Tuple[Dict[str, Any], int]:
+            self, api_key: str, channel_name: str,
+    ) -> tuple[dict[str, Any], int]:
         channel_name = unidecode(channel_name.replace(" ", "").lower())
 
         youtube_api_channels_url = f"{self.base_url}/channels"
 
-        channels_query_params: Dict[str, Any] = {
+        channels_query_params: dict[str, Any] = {
             "part": "snippet,contentDetails",
             "forHandle": channel_name,
             "maxResults": 50,
-            "key": api_key
+            "key": api_key,
         }
 
         url = f"{youtube_api_channels_url}?{urlencode(channels_query_params)}"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                resp_body = await resp.json()
-                resp_status = resp.status
+        async with aiohttp.ClientSession() as session, session.get(url) as resp:
+            resp_body = await resp.json()
+            resp_status = resp.status
 
         return resp_body, resp_status
 
@@ -326,22 +332,21 @@ class YoutubeApiClient:
                           aiohttp.ClientConnectorError,
                           max_time=60,
                           jitter=None)
-    async def _request_youtube_channels(self, api_key: str, channel_ids: List[str]) -> Tuple[Dict[str, Any], int]:
+    async def _request_youtube_channels(self, api_key: str, channel_ids: list[str]) -> tuple[dict[str, Any], int]:
         youtube_api_channels_url = f"{self.base_url}/channels"
 
-        channels_query_params: Dict[str, Any] = {
+        channels_query_params: dict[str, Any] = {
             "part": "snippet,contentDetails",
             "id": ",".join(channel_ids),
             "maxResults": 50,
-            "key": api_key
+            "key": api_key,
         }
 
         url = f"{youtube_api_channels_url}?{urlencode(channels_query_params)}"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                resp_body = await resp.json()
-                resp_status = resp.status
+        async with aiohttp.ClientSession() as session, session.get(url) as resp:
+            resp_body = await resp.json()
+            resp_status = resp.status
 
         return resp_body, resp_status
 
@@ -350,25 +355,24 @@ class YoutubeApiClient:
                           max_time=60,
                           jitter=None)
     async def _request_youtube_playlist_items(
-            self, api_key: str, playlist_id: str, next_page_token: Optional[str]
-    ) -> Tuple[Dict[str, Any], int]:
+            self, api_key: str, playlist_id: str, next_page_token: str | None,
+    ) -> tuple[dict[str, Any], int]:
         youtube_api_url = f"{self.base_url}/playlistItems"
 
-        playlist_items_query_params: Dict[str, Any] = {
+        playlist_items_query_params: dict[str, Any] = {
             "part": "snippet",
             "playlistId": playlist_id,
             "maxResults": MAX_VIDEOS_PER_QUERY,
-            "key": api_key
+            "key": api_key,
         }
         if next_page_token is not None:
             playlist_items_query_params["pageToken"] = next_page_token
 
         url = f"{youtube_api_url}?{urlencode(playlist_items_query_params)}"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                resp_body = await resp.json()
-                resp_status = resp.status
+        async with aiohttp.ClientSession() as session, session.get(url) as resp:
+            resp_body = await resp.json()
+            resp_status = resp.status
 
         return resp_body, resp_status
 
@@ -377,22 +381,21 @@ class YoutubeApiClient:
                           max_time=60,
                           jitter=None)
     async def _request_youtube_videos(
-            self, api_key: str, video_ids: List[str]
-    ) -> Tuple[Dict[str, Any], int]:
+            self, api_key: str, video_ids: list[str],
+    ) -> tuple[dict[str, Any], int]:
         youtube_api_videos_url = f"{self.base_url}/videos"
 
-        videos_query_params: Dict[str, Any] = {
+        videos_query_params: dict[str, Any] = {
             "part": "snippet,contentDetails",
             "id": ",".join(video_ids),
             "maxResults": MAX_VIDEOS_PER_QUERY,
-            "key": api_key
+            "key": api_key,
         }
 
         url = f"{youtube_api_videos_url}?{urlencode(videos_query_params)}"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                resp_body = await resp.json()
-                resp_status = resp.status
+        async with aiohttp.ClientSession() as session, session.get(url) as resp:
+            resp_body = await resp.json()
+            resp_status = resp.status
 
         return resp_body, resp_status

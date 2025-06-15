@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Optional
 from uuid import UUID
 
 
@@ -11,7 +10,7 @@ class Topic:
     uuid: UUID
     name: str
     user_id: UUID
-    subscriptions_ids: List[UUID]
+    subscriptions_ids: list[UUID]
     created_at: datetime
     updated_at: datetime
 
@@ -20,7 +19,7 @@ class Topic:
             uuid: UUID,
             name: str,
             user_id: UUID,
-            subscription_ids: Optional[List[UUID]] = None
+            subscription_ids: list[UUID] | None = None,
             ) -> Topic:
         return cls(uuid=uuid,
                    name=name,

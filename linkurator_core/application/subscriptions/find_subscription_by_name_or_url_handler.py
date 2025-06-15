@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import asyncio
+import contextlib
 
 from pydantic import AnyUrl, ValidationError
 
@@ -14,8 +17,8 @@ class FindSubscriptionsByNameOrUrlHandler:
     def __init__(self,
                  subscription_repository: SubscriptionRepository,
                  subscription_service: SubscriptionService,
-                 event_bus: EventBusService
-                 ):
+                 event_bus: EventBusService,
+                 ) -> None:
         self.subscription_repository = subscription_repository
         self.subscription_service = subscription_service
         self.event_bus = event_bus
@@ -25,7 +28,7 @@ class FindSubscriptionsByNameOrUrlHandler:
         if url is None:
             results = await asyncio.gather(
                 self.subscription_repository.find_by_name(name=name_or_url),
-                self.subscription_service.get_subscriptions_from_name(name=name_or_url)
+                self.subscription_service.get_subscriptions_from_name(name=name_or_url),
             )
             existing_subs = results[0]
             service_subs = results[1]
@@ -56,9 +59,7 @@ class FindSubscriptionsByNameOrUrlHandler:
 
 def _try_parse_url(url: str) -> AnyUrl | None:
     parsed_url: AnyUrl | None = None
-    try:
+    with contextlib.suppress(ValidationError):
         parsed_url = parse_url(url)
-    except ValidationError:
-        pass
 
     return parsed_url

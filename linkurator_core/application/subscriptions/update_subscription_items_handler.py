@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import List, Dict
 
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 
@@ -13,11 +14,11 @@ class UpdateSubscriptionItemsHandler:
     subscription_service: SubscriptionService
     subscription_repository: SubscriptionRepository
     item_repository: ItemRepository
-    subscriptions_being_updated: Dict[uuid.UUID, datetime] = {}
+    subscriptions_being_updated: dict[uuid.UUID, datetime] = {}
 
     def __init__(self, subscription_service: SubscriptionService,
                  subscription_repository: SubscriptionRepository,
-                 item_repository: ItemRepository):
+                 item_repository: ItemRepository) -> None:
         self.subscription_service = subscription_service
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
@@ -41,7 +42,7 @@ class UpdateSubscriptionItemsHandler:
                 sub_id=subscription_id,
                 from_date=subscription.last_published_at)
             item_count = 0
-            new_filtered_items: List[Item] = []
+            new_filtered_items: list[Item] = []
             for item in new_items:
                 if item_count % 100 == 0:
                     logging.debug("%s items processed", item_count)

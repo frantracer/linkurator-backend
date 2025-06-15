@@ -13,10 +13,10 @@ class Arguments:
 
 
 def parse_arguments() -> Arguments:
-    parser = argparse.ArgumentParser(description='Generate a Google refresh token')
-    parser.add_argument('--client-id', required=True, help='Google client id')
-    parser.add_argument('--client-secret', required=True, help='Google client secret')
-    parser.add_argument('--show', required=True, help='Show name')
+    parser = argparse.ArgumentParser(description="Generate a Google refresh token")
+    parser.add_argument("--client-id", required=True, help="Google client id")
+    parser.add_argument("--client-secret", required=True, help="Google client secret")
+    parser.add_argument("--show", required=True, help="Show name")
 
     args = parser.parse_args()
     return Arguments(client_id=args.client_id,
@@ -31,9 +31,7 @@ async def main() -> None:
 
     show = await client.find_show(args.show)
     if show is None:
-        print("Show not found")
         return
-    print(show)
 
     shows = await client.get_shows(show_ids=[show.id])
     assert show == shows[0]
@@ -43,8 +41,8 @@ async def main() -> None:
         offset = 0
         while offset < show.total_episodes:
             response = await client.get_show_episodes(show_id=show.id, offset=offset, limit=limit)
-            for episode in response.items:
-                print(episode)
+            for _episode in response.items:
+                pass
             offset += limit
 
             same_response = await client.get_episodes(episode_ids=[episode.id for episode in response.items])

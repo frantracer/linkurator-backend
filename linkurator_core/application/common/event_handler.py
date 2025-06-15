@@ -15,9 +15,10 @@ from linkurator_core.application.users.update_user_subscriptions_handler import 
 from linkurator_core.domain.common.event import (
     Event,
     ItemsBecameOutdatedEvent,
+    SubscriptionBecameOutdatedEvent,
     SubscriptionItemsBecameOutdatedEvent,
     UserRegisteredEvent,
-    UserRegisterRequestSentEvent, SubscriptionBecameOutdatedEvent,
+    UserRegisterRequestSentEvent,
 )
 
 
@@ -42,4 +43,4 @@ class EventHandler:
         elif isinstance(event, UserRegisteredEvent):
             await self.send_welcome_email.handle(event.user_id)
         else:
-            print(f"Unhandled event: {event}")
+            pass

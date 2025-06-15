@@ -5,7 +5,9 @@ from linkurator_core.domain.subscriptions.subscription_service import Subscripti
 
 
 class UpdateSubscriptionHandler:
-    def __init__(self, subscription_repository: SubscriptionRepository, subscription_service: SubscriptionService):
+    def __init__(self,
+                 subscription_repository: SubscriptionRepository,
+                 subscription_service: SubscriptionService) -> None:
         self.subscription_repository = subscription_repository
         self.subscription_service = subscription_service
 

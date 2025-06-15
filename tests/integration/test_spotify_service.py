@@ -4,44 +4,49 @@ from unittest.mock import AsyncMock
 import pytest
 from pydantic import AnyUrl
 
-from linkurator_core.domain.common.mock_factory import mock_sub, mock_item
+from linkurator_core.domain.common.mock_factory import mock_item, mock_sub
 from linkurator_core.domain.items.item import ItemProvider
 from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
-from linkurator_core.infrastructure.spotify.spotify_api_client import Show, ShowImage, SpotifyApiClient, Episode, \
-    ReleaseDataPrecision
+from linkurator_core.infrastructure.spotify.spotify_api_client import (
+    Episode,
+    ReleaseDataPrecision,
+    Show,
+    ShowImage,
+    SpotifyApiClient,
+)
 from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscriptionService
 
 
 def mock_spotify_show(
-        show_id: str = '0sGGLIDnnijRPLef7InllD',
-        show_name: str = 'Entiende Tu Mente',
-        total_episodes: int = 20
+        show_id: str = "0sGGLIDnnijRPLef7InllD",
+        show_name: str = "Entiende Tu Mente",
+        total_episodes: int = 20,
 ) -> Show:
     return Show(
         id=show_id,
         name=show_name,
         total_episodes=total_episodes,
         images=[
-            ShowImage(url=AnyUrl('https://show.com/image/big.jpg'),
+            ShowImage(url=AnyUrl("https://show.com/image/big.jpg"),
                       height=640, width=640),
-            ShowImage(url=AnyUrl('https://show.com/image/medium.jpg'),
+            ShowImage(url=AnyUrl("https://show.com/image/medium.jpg"),
                       height=300, width=300),
-            ShowImage(url=AnyUrl('https://show.com/image/small.jpg'),
-                      height=64, width=64)
+            ShowImage(url=AnyUrl("https://show.com/image/small.jpg"),
+                      height=64, width=64),
         ],
     )
 
 
 def mock_spotify_episode(
-        description: str = '¿Sientes que ciertas creencias del pasado te están limitando en el presente?',
+        description: str = "¿Sientes que ciertas creencias del pasado te están limitando en el presente?",
         duration_ms: int = 986984,
-        episode_id: str = '0ChojfC3l3XHOWy6uV7vQb',
-        name: str = 'Aprender a desaprender | 360',
-        release_date: str = '2024-11-20',
-        release_date_precision: ReleaseDataPrecision = ReleaseDataPrecision.DAY
+        episode_id: str = "0ChojfC3l3XHOWy6uV7vQb",
+        name: str = "Aprender a desaprender | 360",
+        release_date: str = "2024-11-20",
+        release_date_precision: ReleaseDataPrecision = ReleaseDataPrecision.DAY,
 ) -> Episode:
     return Episode(
         description=description,
@@ -51,12 +56,12 @@ def mock_spotify_episode(
         release_date=release_date,
         release_date_precision=release_date_precision,
         images=[
-            ShowImage(url=AnyUrl('https://episode.com/image/big.jpg'),
+            ShowImage(url=AnyUrl("https://episode.com/image/big.jpg"),
                       height=640, width=640),
-            ShowImage(url=AnyUrl('https://episode.com/image/medium.jpg'),
+            ShowImage(url=AnyUrl("https://episode.com/image/medium.jpg"),
                       height=300, width=300),
-            ShowImage(url=AnyUrl('https://episode.com/image/small.jpg'),
-                      height=64, width=64)
+            ShowImage(url=AnyUrl("https://episode.com/image/small.jpg"),
+                      height=64, width=64),
         ],
     )
 
@@ -66,11 +71,11 @@ def mock_spotify_service() -> SpotifySubscriptionService:
         spotify_client=AsyncMock(spec=SpotifyApiClient),
         user_repository=InMemoryUserRepository(),
         item_repository=InMemoryItemRepository(),
-        subscription_repository=InMemorySubscriptionRepository()
+        subscription_repository=InMemorySubscriptionRepository(),
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_subscription_from_name() -> None:
     spotify_show = mock_spotify_show()
 
@@ -99,7 +104,7 @@ async def test_get_subscription_from_name() -> None:
     spotify_api_client.find_show.assert_called_once_with(spotify_show.name)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_subscription_from_url() -> None:
     spotify_show = mock_spotify_show()
 
@@ -128,7 +133,7 @@ async def test_get_subscription_from_url() -> None:
     spotify_api_client.get_shows.assert_called_once_with([spotify_show.id])
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_existing_subscription_from_id() -> None:
     spotify_show = mock_spotify_show()
 
@@ -165,10 +170,10 @@ async def test_get_existing_subscription_from_id() -> None:
     spotify_api_client.get_shows.assert_called_once_with([spotify_show.id])
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_items() -> None:
     spotify_episode = mock_spotify_episode(
-        duration_ms=999500
+        duration_ms=999500,
     )
 
     spotify_api_client = AsyncMock(spec=SpotifyApiClient)

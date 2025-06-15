@@ -8,7 +8,7 @@ from linkurator_core.domain.users.user import Username
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_edit_user_first_name_and_last_name() -> None:
     user_repo = InMemoryUserRepository()
     user = mock_user()
@@ -28,7 +28,7 @@ async def test_edit_user_first_name_and_last_name() -> None:
     assert updated_user.updated_at == now
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_edit_username() -> None:
     user_repo = InMemoryUserRepository()
     user = mock_user()
@@ -46,7 +46,7 @@ async def test_edit_username() -> None:
     assert updated_user.updated_at == now
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_edit_username_with_existing_one_returns_error() -> None:
     user_repo = InMemoryUserRepository()
     user = mock_user()

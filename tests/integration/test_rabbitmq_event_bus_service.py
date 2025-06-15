@@ -9,9 +9,9 @@ from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_publish_and_subscribe() -> None:
-    event_bus = RabbitMQEventBus(host='localhost', port=5672, username='develop', password='develop')
+    event_bus = RabbitMQEventBus(host="localhost", port=5672, username="develop", password="develop")
     dummy_function = AsyncMock()
     event_bus.subscribe(SubscriptionItemsBecameOutdatedEvent, dummy_function)
     event = SubscriptionItemsBecameOutdatedEvent(
@@ -25,8 +25,8 @@ async def test_publish_and_subscribe() -> None:
             wait_until(event_bus.is_running),
             event_bus.publish(event),
             wait_until(lambda: dummy_function.call_count == 1),
-            event_bus.stop()
-        )
+            event_bus.stop(),
+        ),
     )
 
     condition_was_met_in_time = results[1][2]

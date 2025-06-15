@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -9,7 +9,7 @@ from linkurator_core.infrastructure.in_memory.subscription_repository import InM
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_platform_statistics_handler() -> None:
     # Given
     now = datetime.now(timezone.utc)

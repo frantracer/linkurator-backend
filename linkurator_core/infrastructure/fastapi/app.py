@@ -1,6 +1,4 @@
-"""
-Main file of the application
-"""
+"""Main file of the application."""
 import logging
 
 from fastapi.applications import FastAPI
@@ -20,15 +18,17 @@ from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.application.statistics.get_platform_statistics import GetPlatformStatisticsHandler
-from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import \
-    FindSubscriptionsByNameOrUrlHandler
+from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import (
+    FindSubscriptionsByNameOrUrlHandler,
+)
 from linkurator_core.application.subscriptions.follow_subscription_handler import FollowSubscriptionHandler
 from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.application.subscriptions.unfollow_subscription_handler import UnfollowSubscriptionHandler
-from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import \
-    AssignSubscriptionToTopicHandler
+from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import (
+    AssignSubscriptionToTopicHandler,
+)
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.topics.find_topics_by_name_handler import FindTopicsByNameHandler
@@ -36,8 +36,9 @@ from linkurator_core.application.topics.follow_topic_handler import FollowTopicH
 from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
-from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
-    UnassignSubscriptionFromUserTopicHandler
+from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import (
+    UnassignSubscriptionFromUserTopicHandler,
+)
 from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
@@ -67,8 +68,9 @@ from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssC
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
-from linkurator_core.infrastructure.mongodb.password_change_request_repository import \
-    MongoDBPasswordChangeRequestRepository
+from linkurator_core.infrastructure.mongodb.password_change_request_repository import (
+    MongoDBPasswordChangeRequestRepository,
+)
 from linkurator_core.infrastructure.mongodb.registration_request_repository import MongoDBRegistrationRequestRepository
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
@@ -93,7 +95,7 @@ def app_handlers() -> Handlers:
         client_secret=google_secrets_youtube.client_secret,
     )
 
-    logging.getLogger('pymongo').setLevel(logging.INFO)
+    logging.getLogger("pymongo").setLevel(logging.INFO)
 
     db_settings = MongoDBSettings()
     user_repository = MongoDBUserRepository(
@@ -134,19 +136,19 @@ def app_handlers() -> Handlers:
 
     spotify_client = SpotifyApiClient(
         client_id=spotify_secrets.client_id,
-        client_secret=spotify_secrets.client_secret
+        client_secret=spotify_secrets.client_secret,
     )
 
     spotify_service = SpotifySubscriptionService(
         spotify_client=spotify_client,
         subscription_repository=subscription_repository,
         user_repository=user_repository,
-        item_repository=item_repository
+        item_repository=item_repository,
     )
 
     general_subscription_service = GeneralSubscriptionService(
         spotify_service=spotify_service,
-        youtube_service=youtube_service
+        youtube_service=youtube_service,
     )
 
     rabbitmq_settings = RabbitMQSettings()
@@ -155,7 +157,7 @@ def app_handlers() -> Handlers:
 
     google_domain_service = GoogleDomainAccountService(
         service_credentials_path=google_secrets.email_service_credentials_path,
-        email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL
+        email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL,
     )
     email_sender = GmailEmailSender(account_service=google_domain_service)
 
@@ -190,7 +192,7 @@ def app_handlers() -> Handlers:
         get_subscription=GetSubscriptionHandler(subscription_repository),
         get_subscription_items_handler=GetSubscriptionItemsHandler(
             item_repository=item_repository,
-            subscription_repository=subscription_repository
+            subscription_repository=subscription_repository,
         ),
         delete_subscription_items_handler=DeleteSubscriptionItemsHandler(
             item_repository=item_repository,
@@ -199,7 +201,7 @@ def app_handlers() -> Handlers:
         refresh_subscription_handler=RefreshSubscriptionHandler(
             subscription_repository=subscription_repository,
             subscription_service=general_subscription_service,
-            event_bus=event_bus
+            event_bus=event_bus,
         ),
         get_user_profile_handler=GetUserProfileHandler(user_repository),
         edit_user_profile_handler=EditUserProfile(user_repository),
@@ -209,7 +211,7 @@ def app_handlers() -> Handlers:
         find_subscriptions_by_name_handler=FindSubscriptionsByNameOrUrlHandler(
             subscription_repository=subscription_repository,
             subscription_service=general_subscription_service,
-            event_bus=event_bus
+            event_bus=event_bus,
         ),
         follow_curator_handler=FollowCuratorHandler(user_repository),
         unfollow_curator_handler=UnfollowCuratorHandler(user_repository),
@@ -226,7 +228,7 @@ def app_handlers() -> Handlers:
         ),
         get_curator_items_handler=GetCuratorItemsHandler(
             item_repository=item_repository,
-            subscription_repository=subscription_repository
+            subscription_repository=subscription_repository,
         ),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
         get_topic_items_handler=GetTopicItemsHandler(
@@ -243,7 +245,7 @@ def app_handlers() -> Handlers:
         delete_topic_handler=DeleteUserTopicHandler(topic_repository=topic_repository),
         get_topic_handler=GetTopicHandler(
             topic_repository=topic_repository,
-            user_repository=user_repository
+            user_repository=user_repository,
         ),
         unassign_subscription_from_topic_handler=UnassignSubscriptionFromUserTopicHandler(
             topic_repository=topic_repository),
@@ -251,10 +253,10 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             topic_repository=topic_repository),
         unfollow_topic_handler=UnfollowTopicHandler(
-            user_repository=user_repository, ),
+            user_repository=user_repository ),
         get_item_handler=GetItemHandler(
             item_repository=item_repository,
-            subscription_repository=subscription_repository
+            subscription_repository=subscription_repository,
         ),
         create_item_interaction_handler=CreateItemInteractionHandler(
             item_repository=item_repository),
@@ -278,6 +280,6 @@ def app_handlers() -> Handlers:
 
 
 def create_app() -> FastAPI:
-    logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
-                        level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+    logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s",
+                        level=logging.DEBUG, datefmt="%Y-%m-%d %H:%M:%S")
     return create_app_from_handlers(app_handlers())

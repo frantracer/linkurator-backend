@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import asyncio
 import sys
@@ -16,7 +18,6 @@ async def main() -> None:
     channel_id = args.parse_args().id
 
     if channel_name is None and channel_id is None:
-        print("Please provide either a channel name or a channel ID")
         sys.exit(1)
 
     client = YoutubeApiClient()
@@ -29,11 +30,10 @@ async def main() -> None:
         channel = await client.get_youtube_channel(api_key=api_key, channel_id=channel_id)
 
     if channel is None:
-        print("Channel not found")
+        pass
     else:
-        print('Title,Channel ID,Playlist ID,URL')
-        print(f'{channel.title},{channel.channel_id},{channel.playlist_id},{channel.url}')
+        pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

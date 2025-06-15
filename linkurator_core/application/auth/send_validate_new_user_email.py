@@ -16,7 +16,7 @@ if not VALIDATION_HTML_TEMPLATE_PATH.exists():
 class SendValidateNewUserEmail:
     def __init__(self,
                  email_sender: EmailSender,
-                 registration_request_repository: RegistrationRequestRepository
+                 registration_request_repository: RegistrationRequestRepository,
                  ) -> None:
         self.registration_request_repository = registration_request_repository
         self.email_sender = email_sender
@@ -26,7 +26,7 @@ class SendValidateNewUserEmail:
         if request is None:
             return
 
-        environment = jinja2.Environment()
+        environment = jinja2.Environment(autoescape=True)
         template = environment.from_string(VALIDATION_HTML_TEMPLATE_PATH.read_text())
         message_text = template.render(name=request.user.first_name, validation_url=request.get_validation_url())
 

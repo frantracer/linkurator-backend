@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -15,7 +17,7 @@ class YoutubeRssItem:
 
 
 class YoutubeRssClient:
-    def __init__(self, http_client: AsyncHttpClient = AsyncHttpClient()):
+    def __init__(self, http_client: AsyncHttpClient = AsyncHttpClient()) -> None:
         self.http_client = http_client
 
     async def get_youtube_items(self, playlist_id: str) -> list[YoutubeRssItem]:
@@ -26,12 +28,13 @@ class YoutubeRssClient:
         if response.status == 404:
             return []
         if response.status != 200:
-            raise InvalidYoutubeRssFeedError(f"Invalid response status: {response.status}")
+            msg = f"Invalid response status: {response.status}"
+            raise InvalidYoutubeRssFeedError(msg)
 
         root = ET.fromstring(response.text)
 
         namespaces = {
-            "atom": "http://www.w3.org/2005/Atom"
+            "atom": "http://www.w3.org/2005/Atom",
         }
 
         item: ET.Element
@@ -53,7 +56,7 @@ class YoutubeRssClient:
                     published_date = datetime.strptime(published_str, "%Y-%m-%dT%H:%M:%S+00:00").replace(
                         tzinfo=timezone.utc)
                 except ValueError as exception:
-                    logging.error("Error parsing published date: %s", exception)
+                    logging.exception("Error parsing published date: %s", exception)
 
             items.append(YoutubeRssItem(title=title, link=link_str, published=published_date))
 

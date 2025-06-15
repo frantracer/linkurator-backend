@@ -22,7 +22,7 @@ class FindSubscriptionsWithOutdatedItemsHandler:
     def __init__(self, subscription_repository: SubscriptionRepository,
                  event_bus: EventBusService,
                  external_credentials_repository: ExternalCredentialRepository,
-                 user_repository: UserRepository):
+                 user_repository: UserRepository) -> None:
         self.subscription_repository = subscription_repository
         self.event_bus = event_bus
         self.external_credentials_repository = external_credentials_repository
@@ -37,7 +37,7 @@ class FindSubscriptionsWithOutdatedItemsHandler:
         for subscription in outdated_subscriptions:
             refresh_period = await self.calculate_subscription_refresh_period_in_minutes(subscription)
             if subscription.scanned_at + timedelta(minutes=refresh_period) < now:
-                logging.info('Found outdated items for subscription: %s - %s', subscription.uuid, subscription.name)
+                logging.info("Found outdated items for subscription: %s - %s", subscription.uuid, subscription.name)
                 await self.event_bus.publish(SubscriptionItemsBecameOutdatedEvent.new(subscription.uuid))
 
     async def calculate_subscription_refresh_period_in_minutes(self, subscription: Subscription) -> int:

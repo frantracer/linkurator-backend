@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from uuid import UUID
 
 from pydantic.dataclasses import dataclass
@@ -7,6 +9,7 @@ from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
+
 
 @dataclass
 class GetCuratorTopicsResponse:

@@ -1,5 +1,5 @@
 import json
-from datetime import timezone, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from unittest.mock import AsyncMock, MagicMock, call
 from uuid import UUID, uuid4
@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
-from linkurator_core.domain.common.mock_factory import mock_user, mock_credential, mock_sub
+from linkurator_core.domain.common.mock_factory import mock_credential, mock_sub, mock_user
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.items.item import YOUTUBE_ITEM_VERSION, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemRepository
@@ -16,8 +16,12 @@ from linkurator_core.domain.subscriptions.subscription_repository import Subscri
 from linkurator_core.domain.users.external_service_credential import ExternalServiceType
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
 from linkurator_core.domain.users.user_repository import UserRepository
-from linkurator_core.infrastructure.google.youtube_api_client import (YoutubeChannel, YoutubeVideo,
-                                                                      LiveBroadcastContent, YoutubeApiClient)
+from linkurator_core.infrastructure.google.youtube_api_client import (
+    LiveBroadcastContent,
+    YoutubeApiClient,
+    YoutubeChannel,
+    YoutubeVideo,
+)
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient, YoutubeRssItem
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
@@ -52,11 +56,11 @@ def mock_youtube_video(video_id: Optional[str] = None, channel_id: Optional[str]
         published_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         url=f"https://www.youtube.com/watch?v={video_id}",
         duration="PT1H1M1S",
-        live_broadcast_content=LiveBroadcastContent.NONE
+        live_broadcast_content=LiveBroadcastContent.NONE,
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_youtube_service_returns_subscriptions_from_user() -> None:
     sub = mock_sub()
     sub_repo_mock = InMemorySubscriptionRepository()
@@ -80,7 +84,7 @@ async def test_youtube_service_returns_subscriptions_from_user() -> None:
             playlist_id="playlist_id",
             channel_title="channel_title",
             country="country",
-            url="https://channel_url.com/channel_id")
+            url="https://channel_url.com/channel_id"),
     ]
 
     rss_client_mock = AsyncMock(spec=YoutubeRssClient)
@@ -102,7 +106,7 @@ async def test_youtube_service_returns_subscriptions_from_user() -> None:
     assert subscriptions[0].name == "channel_title"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_youtube_service_returns_a_single_subscription_using_the_key_from_a_subscribed_user() -> None:
     youtube_channel = mock_youtube_channel()
 
@@ -152,7 +156,7 @@ async def test_youtube_service_returns_a_single_subscription_using_the_key_from_
     assert subscription.name == "channel_title"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_youtube_service_returns_subscription_by_channel_url_with_name() -> None:
     subs_repo_mock = InMemorySubscriptionRepository()
 
@@ -187,7 +191,7 @@ async def test_youtube_service_returns_subscription_by_channel_url_with_name() -
                              credentials_repository=credentials_repo)
 
     subscription = await service.get_subscription_from_url(
-        url=parse_url("https://www.youtube.com/channel_name"), )
+        url=parse_url("https://www.youtube.com/channel_name") )
 
     assert client_mock.get_youtube_channel_from_name.call_count == 1
     assert (client_mock.get_youtube_channel_from_name.call_args_list[0] ==
@@ -196,7 +200,7 @@ async def test_youtube_service_returns_subscription_by_channel_url_with_name() -
     assert subscription.name == "channel_title"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_youtube_service_returns_subscription_by_channel_url_with_id() -> None:
     subs_repo_mock = InMemorySubscriptionRepository()
 
@@ -234,12 +238,12 @@ async def test_youtube_service_returns_subscription_by_channel_url_with_id() -> 
         url=parse_url("https://www.youtube.com/channel/channel_id"))
 
     assert client_mock.get_youtube_channel.call_count == 1
-    assert client_mock.get_youtube_channel.call_args[1]['channel_id'] == "channel_id"
+    assert client_mock.get_youtube_channel.call_args[1]["channel_id"] == "channel_id"
     assert subscription is not None
     assert subscription.name == "channel_title"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_youtube_service_returns_none_if_channel_does_not_exists() -> None:
     subs_repo_mock = InMemorySubscriptionRepository()
 
@@ -263,7 +267,7 @@ async def test_youtube_service_returns_none_if_channel_does_not_exists() -> None
     assert subscription is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_youtube_service_returns_subscription_by_channel_url_with_id_and_existing_subscription() -> None:
     channel_id = "channel_id"
     channel_url = f"https://www.youtube.com/channel/{channel_id}"
@@ -306,18 +310,18 @@ async def test_youtube_service_returns_subscription_by_channel_url_with_id_and_e
     subscription = await service.get_subscription_from_url(url=parse_url(channel_url))
 
     assert client_mock.get_youtube_channel.call_count == 1
-    assert client_mock.get_youtube_channel.call_args[1]['channel_id'] == channel_id
+    assert client_mock.get_youtube_channel.call_args[1]["channel_id"] == channel_id
     assert subscription is not None
     assert subscription.name == youtube_channel.title
     assert subscription.url == parse_url(channel_url)
     assert subscription.thumbnail == parse_url(youtube_channel.thumbnail_url)
     assert subscription.external_data == {
         "channel_id": youtube_channel.channel_id,
-        "playlist_id": youtube_channel.playlist_id
+        "playlist_id": youtube_channel.playlist_id,
     }
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_youtube_service_return_none_if_url_is_not_a_youtube_channel() -> None:
     subs_repo_mock = InMemorySubscriptionRepository()
 
@@ -340,7 +344,7 @@ async def test_youtube_service_return_none_if_url_is_not_a_youtube_channel() -> 
     assert subscription is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_youtube_service_returns_subscription_items() -> None:
     subs_repo_mock = MagicMock(spec=SubscriptionRepository)
     subs_repo_mock.get.return_value = Subscription(
@@ -355,7 +359,7 @@ async def test_youtube_service_returns_subscription_items() -> None:
         thumbnail=parse_url("https://thumbnail.com/image"),
         external_data={
             "channel_id": "channel_123",
-            "playlist_id": "playlist_123"
+            "playlist_id": "playlist_123",
         },
     )
 
@@ -370,7 +374,7 @@ async def test_youtube_service_returns_subscription_items() -> None:
         published_at=datetime(2020, 1, 1, 2, 0, 0, tzinfo=timezone.utc),
         url="https://video_url.com/video_id",
         duration="PT1H1M1S",
-        live_broadcast_content=LiveBroadcastContent.NONE
+        live_broadcast_content=LiveBroadcastContent.NONE,
     )
     client_mock = AsyncMock(spec=YoutubeApiClient)
     client_mock.get_youtube_videos_from_playlist.return_value = [video]
@@ -380,8 +384,8 @@ async def test_youtube_service_returns_subscription_items() -> None:
         YoutubeRssItem(
             title=video.title,
             link=video.url,
-            published=video.published_at
-        )
+            published=video.published_at,
+        ),
     ]
 
     service = YoutubeService(youtube_client=client_mock,
@@ -398,14 +402,14 @@ async def test_youtube_service_returns_subscription_items() -> None:
         from_date=from_date)
 
     assert client_mock.get_youtube_videos_from_playlist.call_count == 1
-    client_mock.get_youtube_videos_from_playlist.assert_called_with(api_key='api_key',
+    client_mock.get_youtube_videos_from_playlist.assert_called_with(api_key="api_key",
                                                                     playlist_id="playlist_123",
                                                                     from_date=from_date)
     assert len(items) == 1
     assert items[0].name == "video_title"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_youtube_subscriptions_uses_provided_credentials() -> None:
     user_repo_mock = AsyncMock(spec=UserRepository)
     user = mock_user()
@@ -430,10 +434,10 @@ async def test_get_youtube_subscriptions_uses_provided_credentials() -> None:
     await service.get_subscriptions(user_id=user.uuid, credential=credential, access_token="access_token")
 
     assert client_mock.get_youtube_subscriptions.call_count == 1
-    assert client_mock.get_youtube_subscriptions.call_args[1]['api_key'] == credential.credential_value
+    assert client_mock.get_youtube_subscriptions.call_args[1]["api_key"] == credential.credential_value
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_youtube_subscriptions_raise_error_if_credential_is_not_a_youtube_api_key() -> None:
     user_repo_mock = InMemoryUserRepository()
     user = mock_user()
@@ -460,7 +464,7 @@ async def test_get_youtube_subscriptions_raise_error_if_credential_is_not_a_yout
         await service.get_subscriptions(user_id=user.uuid, credential=credential, access_token="access_token")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_youtube_channel_uses_provided_credentials() -> None:
     youtube_channel = mock_youtube_channel()
 
@@ -488,10 +492,10 @@ async def test_get_youtube_channel_uses_provided_credentials() -> None:
     await service.get_subscription(sub_id=sub.uuid, credential=credential)
 
     assert client_mock.get_youtube_channel.call_count == 1
-    assert client_mock.get_youtube_channel.call_args[1]['api_key'] == credential.credential_value
+    assert client_mock.get_youtube_channel.call_args[1]["api_key"] == credential.credential_value
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_youtube_channel_raise_error_if_credential_is_not_a_youtube_api_key() -> None:
     youtube_channel = mock_youtube_channel()
 
@@ -521,7 +525,7 @@ async def test_get_youtube_channel_raise_error_if_credential_is_not_a_youtube_ap
         await service.get_subscription(sub_id=sub.uuid, credential=credential)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_youtube_videos_from_playlist_uses_provided_credential() -> None:
     youtube_channel = mock_youtube_channel()
 
@@ -542,8 +546,8 @@ async def test_get_youtube_videos_from_playlist_uses_provided_credential() -> No
         YoutubeRssItem(
             title=video.title,
             link=video.url,
-            published=video.published_at
-        )
+            published=video.published_at,
+        ),
     ]
 
     service = YoutubeService(youtube_client=client_mock,
@@ -558,10 +562,10 @@ async def test_get_youtube_videos_from_playlist_uses_provided_credential() -> No
     await service.get_subscription_items(sub_id=sub.uuid, from_date=from_date, credential=credential)
 
     assert client_mock.get_youtube_videos_from_playlist.call_count == 1
-    assert client_mock.get_youtube_videos_from_playlist.call_args[1]['api_key'] == credential.credential_value
+    assert client_mock.get_youtube_videos_from_playlist.call_args[1]["api_key"] == credential.credential_value
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_youtube_videos_from_playlist_does_not_ask_youtube_api_if_there_is_no_newer_videos_in_rss() -> None:
     video = mock_youtube_video()
 
@@ -583,8 +587,8 @@ async def test_youtube_videos_from_playlist_does_not_ask_youtube_api_if_there_is
         YoutubeRssItem(
             title=video.title,
             link=video.url,
-            published=video.published_at
-        )
+            published=video.published_at,
+        ),
     ]
 
     service = YoutubeService(youtube_client=client_mock,
@@ -604,7 +608,7 @@ async def test_youtube_videos_from_playlist_does_not_ask_youtube_api_if_there_is
     assert client_mock.get_youtube_videos_from_playlist.call_count == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_youtube_videos_raise_error_if_credential_is_not_a_youtube_api_key() -> None:
     youtube_channel = mock_youtube_channel()
 
@@ -626,8 +630,8 @@ async def test_get_youtube_videos_raise_error_if_credential_is_not_a_youtube_api
         YoutubeRssItem(
             title=video.title,
             link=video.url,
-            published=video.published_at
-        )
+            published=video.published_at,
+        ),
     ]
 
     service = YoutubeService(youtube_client=client_mock,
@@ -643,7 +647,7 @@ async def test_get_youtube_videos_raise_error_if_credential_is_not_a_youtube_api
         await service.get_subscription_items(sub_id=sub.uuid, from_date=from_date, credential=credential)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_youtube_videos_returns_all_available_videos() -> None:
     video1 = mock_youtube_video(video_id="video1")
     video2 = mock_youtube_video(video_id="video2")
@@ -679,7 +683,7 @@ async def test_get_youtube_videos_returns_all_available_videos() -> None:
 
 
 def test_youtube_video_parsing() -> None:
-    video_json = '''
+    video_json = """
 
     {
       "kind": "youtube#video",
@@ -757,7 +761,7 @@ def test_youtube_video_parsing() -> None:
         "commentCount": "9597"
       }
     }
-    '''
+    """
 
     video = YoutubeVideo.from_dict(json.loads(video_json))
     item = video.to_item(item_id=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
@@ -777,7 +781,7 @@ def test_youtube_video_parsing() -> None:
 
 
 def test_youtube_video_with_upcoming_live_for_a_year_parsing() -> None:
-    video_json = '''
+    video_json = """
     {
       "kind": "youtube#video",
       "etag": "je9B2E53VF3MnXHWrugb_rbPsqQ",
@@ -841,7 +845,7 @@ def test_youtube_video_with_upcoming_live_for_a_year_parsing() -> None:
         "commentCount": "9597"
       }
     }
-    '''
+    """
 
     video = YoutubeVideo.from_dict(json.loads(video_json))
     item = video.to_item(item_id=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
@@ -860,7 +864,7 @@ def test_youtube_video_with_upcoming_live_for_a_year_parsing() -> None:
 
 
 def test_youtube_channel_parsing() -> None:
-    channel_json = '''
+    channel_json = """
    {
       "kind": "youtube#channel",
       "etag": "MYuyUsm3ivvUB4a8Jiqnv2REvww",
@@ -906,7 +910,7 @@ def test_youtube_channel_parsing() -> None:
         "videoCount": "5909"
       }
     }
-    '''
+    """
 
     channel = YoutubeChannel.from_dict(json.loads(channel_json))
     sub = channel.to_subscription(sub_id=UUID("1b2e723e-3d6c-4398-96dd-0da41a64007b"))

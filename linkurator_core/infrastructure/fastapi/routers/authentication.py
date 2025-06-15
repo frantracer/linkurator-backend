@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 import hashlib
 import http
-from typing import Any, Optional, Annotated
+from typing import Annotated, Any
 from urllib.parse import urljoin
 from uuid import UUID
 
-from fastapi import Request, status, HTTPException, Depends
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.routing import APIRouter
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pydantic import BaseModel, EmailStr, AnyUrl
+from pydantic import AnyUrl, BaseModel, EmailStr
 
 from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
@@ -22,6 +24,7 @@ from linkurator_core.domain.users.session import Session
 from linkurator_core.domain.users.user import Username
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.authentication import PasswordWith64HexCharacters
+from linkurator_core.infrastructure.fastapi.models.default_responses import EmptyResponse
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
 COOKIE_EXPIRATION_IN_SECONDS = 3600 * 24 * 30
@@ -54,7 +57,7 @@ class ChangePasswordSchema(BaseModel):
 
 def check_basic_auth(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]) -> None:
     hasher = hashlib.sha256()
-    hasher.update(f"{credentials.username}:{credentials.password}".encode("utf-8"))
+    hasher.update(f"{credentials.username}:{credentials.password}".encode())
     digest = hasher.hexdigest()
     if digest != "f9faf149ff01da006b1d90c28047b2e8a0aab2eccfe4c0f9f1c2ab6f8e25e9e3":
         raise HTTPException(
@@ -64,7 +67,7 @@ def check_basic_auth(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBa
         )
 
 
-def unauthorized_error(error: str, redirect_uri: Optional[str]) -> RedirectResponse | JSONResponse:
+def unauthorized_error(error: str, redirect_uri: str | None) -> RedirectResponse | JSONResponse:
     if redirect_uri is not None:
         encoded_error = error.replace(" ", "%20")
         uri = f"{redirect_uri}?error={encoded_error}"
@@ -79,7 +82,7 @@ def unauthorized_error(error: str, redirect_uri: Optional[str]) -> RedirectRespo
     return error_response
 
 
-def valid_auth_response(token: str, redirect_uri: Optional[str]) -> RedirectResponse | JSONResponse:
+def valid_auth_response(token: str, redirect_uri: str | None) -> RedirectResponse | JSONResponse:
     if redirect_uri is not None:
         response = RedirectResponse(url=redirect_uri)
         response.set_cookie(key=TOKEN_COOKIE_NAME, value=token, expires=COOKIE_EXPIRATION_IN_SECONDS)
@@ -90,7 +93,7 @@ def valid_auth_response(token: str, redirect_uri: Optional[str]) -> RedirectResp
     return response
 
 
-def google_redirect_response(oauth_uri: str, redirect_uri: Optional[str]) -> RedirectResponse:
+def google_redirect_response(oauth_uri: str, redirect_uri: str | None) -> RedirectResponse:
     response = RedirectResponse(
         url=oauth_uri,
         status_code=http.HTTPStatus.FOUND)
@@ -100,7 +103,7 @@ def google_redirect_response(oauth_uri: str, redirect_uri: Optional[str]) -> Red
     return response
 
 
-def valid_login_response(token: str, redirect_uri: Optional[str]) -> RedirectResponse | JSONResponse:
+def valid_login_response(token: str, redirect_uri: str | None) -> RedirectResponse | JSONResponse:
     if redirect_uri is not None:
         redirect_response = RedirectResponse(url=redirect_uri)
         redirect_response.delete_cookie(REDIRECT_URI_NAME)
@@ -121,7 +124,7 @@ def get_router(  # pylint: disable=too-many-statements
         register_user_with_email: RegisterNewUserWithEmail,
         validate_new_user_request: ValidateNewUserRequest,
         request_password_change: RequestPasswordChange,
-        change_password_from_request: ChangePasswordFromRequest
+        change_password_from_request: ChangePasswordFromRequest,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -132,16 +135,14 @@ def get_router(  # pylint: disable=too-many-statements
                     status.HTTP_307_TEMPORARY_REDIRECT: {"description": "Redirect to Google login page"},
                 })
     async def login(request: Request, redirect_uri: str | None = None, error: str | None = None) -> Any:
-        """
-        Login endpoint
-        """
+        """Login endpoint."""
         if redirect_uri is None:
             redirect_uri = request.cookies.get(REDIRECT_URI_NAME)
 
         if error is not None:
             return unauthorized_error(f"Login error {error}", redirect_uri)
 
-        valid_session: Optional[Session] = None
+        valid_session: Session | None = None
         token = request.cookies.get(TOKEN_COOKIE_NAME)
         if token is not None:
             valid_session = await validate_token.handle(access_token=token)
@@ -149,7 +150,7 @@ def get_router(  # pylint: disable=too-many-statements
         if valid_session is None:
             oauth_url = google_client.authorization_url(
                 scopes=["email"],
-                redirect_uri=urljoin(str(request.base_url), "/login_auth")
+                redirect_uri=urljoin(str(request.base_url), "/login_auth"),
             )
             return google_redirect_response(oauth_url, redirect_uri)
 
@@ -182,9 +183,7 @@ def get_router(  # pylint: disable=too-many-statements
                      status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
                  })
     async def login_email(credentials: LoginUserSchema) -> Any:
-        """
-        Login email endpoint
-        """
+        """Login email endpoint."""
         session = await validate_user_password.handle(email=credentials.email, password=str(credentials.password))
         if session is None:
             return unauthorized_error("Invalid credentials", None)
@@ -193,21 +192,17 @@ def get_router(  # pylint: disable=too-many-statements
 
     @router.get("/register")
     async def register(request: Request, redirect_uri: str | None = None) -> Any:
-        """
-        Login endpoint
-        """
-        scopes = ['profile', 'email', 'openid']
+        """Login endpoint."""
+        scopes = ["profile", "email", "openid"]
         oauth_url = google_client.authorization_url(
             scopes=scopes,
-            redirect_uri=urljoin(str(request.base_url), "/register_auth")
+            redirect_uri=urljoin(str(request.base_url), "/register_auth"),
         )
         return google_redirect_response(oauth_url, redirect_uri)
 
     @router.get("/register_auth")
     async def register_auth(request: Request, code: str | None = None, error: str | None = None) -> Any:
-        """
-        Auth endpoint
-        """
+        """Auth endpoint."""
         redirect_uri = request.cookies.get(REDIRECT_URI_NAME)
 
         auth_error: str
@@ -241,9 +236,7 @@ def get_router(  # pylint: disable=too-many-statements
                      status.HTTP_400_BAD_REQUEST: {"description": "Invalid request"},
                  })
     async def register_email(new_user: NewUserSchema) -> Any:
-        """
-        Register email endpoint
-        """
+        """Register email endpoint."""
         try:
             errors = await register_user_with_email.handle(
                 email=new_user.email,
@@ -251,7 +244,7 @@ def get_router(  # pylint: disable=too-many-statements
                 first_name=new_user.first_name,
                 last_name=new_user.last_name,
                 username=Username(new_user.username),
-                validation_base_url=new_user.validation_base_url
+                validation_base_url=new_user.validation_base_url,
             )
             if errors:
                 return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
@@ -266,9 +259,7 @@ def get_router(  # pylint: disable=too-many-statements
                     status.HTTP_400_BAD_REQUEST: {"description": "Invalid request"},
                 })
     async def validate_email(request_uuid: UUID) -> Any:
-        """
-        Validate email endpoint
-        """
+        """Validate email endpoint."""
         try:
             await validate_new_user_request.handle(request_uuid)
         except InvalidRegistrationRequestError:
@@ -276,10 +267,8 @@ def get_router(  # pylint: disable=too-many-statements
         return JSONResponse(content={"message": "Email validated"})
 
     @router.get("/logout")
-    async def logout(redirect_uri: Optional[str] = None) -> Any:
-        """
-        Logout endpoint
-        """
+    async def logout(redirect_uri: str | None = None) -> Any:
+        """Logout endpoint."""
         if redirect_uri is not None:
             redirect_res = RedirectResponse(url=redirect_uri)
             redirect_res.delete_cookie(key=TOKEN_COOKIE_NAME)
@@ -301,16 +290,15 @@ def get_router(  # pylint: disable=too-many-statements
         response.delete_cookie(key=TOKEN_COOKIE_NAME)
         return response
 
-    @router.post("/change_password",
-                 status_code=status.HTTP_204_NO_CONTENT
-                 )
-    async def request_change_password(password_change: RequestPasswordChangeSchema) -> None:
+    @router.post("/change_password", status_code=status.HTTP_204_NO_CONTENT)
+    async def request_change_password(password_change: RequestPasswordChangeSchema) -> EmptyResponse:
         """
         Request reset password endpoint
         """
         await request_password_change.handle(
             email=password_change.email,
             validate_base_url=password_change.validate_url)
+        return EmptyResponse()
 
     @router.post("/change_password/{request_id}",
                  status_code=status.HTTP_204_NO_CONTENT,
@@ -320,14 +308,13 @@ def get_router(  # pylint: disable=too-many-statements
                  })
     async def change_password_from_previous_request(
             request_id: UUID,
-            change_pass_request: ChangePasswordSchema
-    ) -> None:
-        """
-        Change password from previous request
-        """
+            change_pass_request: ChangePasswordSchema,
+    ) -> EmptyResponse:
+        """Change password from previous request."""
         new_password = str(change_pass_request.new_password)
         result = await change_password_from_request.handle(request_id=request_id, new_password=new_password)
         if not result:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
+        return EmptyResponse()
 
     return router

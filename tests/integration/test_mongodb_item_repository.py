@@ -9,8 +9,12 @@ from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.mock_factory import mock_item, mock_user
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
-from linkurator_core.domain.items.item_repository import ItemFilterCriteria, AnyItemInteraction, \
-    InteractionFilterCriteria, ItemRepository
+from linkurator_core.domain.items.item_repository import (
+    AnyItemInteraction,
+    InteractionFilterCriteria,
+    ItemFilterCriteria,
+    ItemRepository,
+)
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
@@ -19,27 +23,27 @@ from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotI
 @pytest.fixture(name="item_repo", scope="session", params=["mongodb", "in_memory"])
 def fixture_item_repo(db_name: str, request: Any) -> ItemRepository:
     if request.param == "mongodb":
-        return MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, db_name,
+        return MongoDBItemRepository(IPv4Address("127.0.0.1"), 27017, db_name,
                                      "develop", "develop")
     return InMemoryItemRepository()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_exception_is_raised_if_items_collection_is_not_created() -> None:
     non_existent_db_name = f"test-{uuid4()}"
     with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBItemRepository(IPv4Address('127.0.0.1'), 27017, non_existent_db_name, "develop", "develop")
+        repo = MongoDBItemRepository(IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop")
         await repo.check_connection()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_item(item_repo: ItemRepository) -> None:
     item = Item(name="test",
                 description="some description with emojis 🙂",
                 uuid=UUID("9cedfb45-70fb-4283-bfee-993941b05b53"),
                 subscription_uuid=UUID("6ae3792e-6427-4b61-bdc1-66cc9c61fe29"),
-                url=utils.parse_url('https://test.com'),
-                thumbnail=utils.parse_url('https://test.com/thumbnail.png'),
+                url=utils.parse_url("https://test.com"),
+                thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
                 created_at=datetime.now(tz=timezone.utc),
                 updated_at=datetime.now(tz=timezone.utc),
                 published_at=datetime.now(tz=timezone.utc),
@@ -53,14 +57,14 @@ async def test_get_item(item_repo: ItemRepository) -> None:
     assert the_item == item
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_item_that_does_not_exist(item_repo: ItemRepository) -> None:
     the_item = await item_repo.get_item(UUID("88aa425f-28d9-4a25-a87a-8c877cac772d"))
 
     assert the_item is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_delete_item(item_repo: ItemRepository) -> None:
     item = mock_item(item_uuid=UUID("4bf64498-239e-4bcb-a5a1-b84a7708ad01"))
 
@@ -73,7 +77,7 @@ async def test_delete_item(item_repo: ItemRepository) -> None:
     assert deleted_item is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_create_and_update_items(item_repo: ItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("72ab4421-f2b6-499a-bbf1-5105f2ed549b"))
     item2 = mock_item(item_uuid=UUID("a5a908e6-aa2c-4240-9a6d-d4340d38b8fc"))
@@ -91,28 +95,28 @@ async def test_create_and_update_items(item_repo: ItemRepository) -> None:
         subscription_uuid=item1.subscription_uuid,
         name="updated name",
         description="updated description",
-        url=utils.parse_url('https://updated.com'),
-        thumbnail=utils.parse_url('https://updated.com/thumbnail.png'),
+        url=utils.parse_url("https://updated.com"),
+        thumbnail=utils.parse_url("https://updated.com/thumbnail.png"),
         created_at=item1.created_at,
         updated_at=datetime.now(tz=timezone.utc),
         published_at=item1.published_at,
         version=2,
         duration=10,
-        provider=ItemProvider.YOUTUBE
+        provider=ItemProvider.YOUTUBE,
     )
     item2_updated = Item(
         uuid=item2.uuid,
         subscription_uuid=item2.subscription_uuid,
         name="updated name",
         description="updated description",
-        url=utils.parse_url('https://updated.com'),
-        thumbnail=utils.parse_url('https://updated.com/thumbnail.png'),
+        url=utils.parse_url("https://updated.com"),
+        thumbnail=utils.parse_url("https://updated.com/thumbnail.png"),
         created_at=item2.created_at,
         updated_at=datetime.now(tz=timezone.utc),
         published_at=item2.published_at,
         version=2,
         duration=10,
-        provider=ItemProvider.YOUTUBE
+        provider=ItemProvider.YOUTUBE,
     )
 
     await item_repo.upsert_items([item1_updated, item2_updated])
@@ -124,13 +128,13 @@ async def test_create_and_update_items(item_repo: ItemRepository) -> None:
     assert item2_found == item2_updated
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_create_and_update_items_with_no_items(item_repo: ItemRepository) -> None:
     await item_repo.upsert_items([])
     assert True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_items_by_subscription_uuid(item_repo: ItemRepository) -> None:
     subscription_uuid_1 = UUID("49e16717-3b41-4e1b-a2d8-8fccf1b6c184")
     subscription_uuid_2 = UUID("d3e22c40-c767-468b-8a61-cc61bcfd55ec")
@@ -154,7 +158,7 @@ async def test_get_items_by_subscription_uuid(item_repo: ItemRepository) -> None
     assert len(items_from_sub3) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_items_by_uuid(item_repo: ItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("cd79132f-ad0a-4206-b118-2c958bc28506"))
     item2 = mock_item(item_uuid=UUID("8e014a74-ddf9-4ad1-a354-22e1c9dd7acc"))
@@ -173,7 +177,7 @@ async def test_find_items_by_uuid(item_repo: ItemRepository) -> None:
     assert len(found_items) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_items_by_subscription_uuids(item_repo: ItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("9559fa81-e968-4d0d-8390-070908f66985"),
                       sub_uuid=UUID("e887b865-8aa2-47a5-a133-a6eb7ba0f957"))
@@ -194,36 +198,36 @@ async def test_find_items_by_subscription_uuids(item_repo: ItemRepository) -> No
     assert len(found_items) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_item_with_same_url(item_repo: ItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("8fc4fbca-439c-4c0e-937d-4147ef3b299c"),
-                      url='https://item-with-same-url.com')
+                      url="https://item-with-same-url.com")
 
     await item_repo.upsert_items([item1])
 
     found_items = await item_repo.find_items(
-        criteria=ItemFilterCriteria(url=utils.parse_url('https://item-with-same-url.com')),
+        criteria=ItemFilterCriteria(url=utils.parse_url("https://item-with-same-url.com")),
         page_number=0, limit=10)
 
     assert len(found_items) == 1
     assert found_items[0].uuid == item1.uuid
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_item_with_different_url_returns_none(item_repo: ItemRepository) -> None:
     item1 = mock_item(item_uuid=UUID("00fbe982-1c90-4e7a-bf73-4716fa565b3c"),
-                      url='https://item-with-same-url.com')
+                      url="https://item-with-same-url.com")
 
     await item_repo.upsert_items([item1])
 
     found_items = await item_repo.find_items(
-        criteria=ItemFilterCriteria(url=utils.parse_url('https://item-with-different-url.com')),
+        criteria=ItemFilterCriteria(url=utils.parse_url("https://item-with-different-url.com")),
         page_number=0, limit=10)
 
     assert len(found_items) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_items_published_after_and_created_before_a_date_are_sorted_by_publish_date(
         item_repo: ItemRepository) -> None:
     sub_uuid = UUID("480e5b4d-c193-4548-a987-c125d1699d10")
@@ -279,7 +283,7 @@ async def test_find_items_published_after_and_created_before_a_date_are_sorted_b
     assert len(found_items) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_items_created_before_a_certain_date(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
@@ -308,7 +312,7 @@ async def test_get_items_created_before_a_certain_date(item_repo: ItemRepository
     assert item1.uuid not in [item.uuid for item in found_items]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_items_for_a_subscription_with_text_search_criteria(item_repo: ItemRepository) -> None:
     sub1_uuid = UUID("b76f981e-083f-4cee-9e5c-9f46f010546f")
     item1 = mock_item(
@@ -343,7 +347,7 @@ async def test_find_items_for_a_subscription_with_text_search_criteria(item_repo
             subscription_ids=[sub1_uuid],
             text="videogames"),
         page_number=0,
-        limit=4
+        limit=4,
     )
     assert len(found_items) == 2
     assert found_items[0].uuid == item4.uuid
@@ -362,7 +366,7 @@ async def test_find_items_for_a_subscription_with_text_search_criteria(item_repo
     found_items = await item_repo.find_items(
         criteria=ItemFilterCriteria(
             subscription_ids=[sub1_uuid],
-            text="\"football free\""),
+            text='"football free"'),
         limit=4,
         page_number=0,
     )
@@ -379,7 +383,7 @@ async def test_find_items_for_a_subscription_with_text_search_criteria(item_repo
     assert len(found_items) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_filter_with_empty_string_returns_all_items(item_repo: ItemRepository) -> None:
     sub1_uuid = UUID("b76f981e-083f-4cee-9e5c-9f46f010546f")
     item1 = mock_item(
@@ -400,12 +404,12 @@ async def test_filter_with_empty_string_returns_all_items(item_repo: ItemReposit
     found_items = await item_repo.find_items(
         criteria=ItemFilterCriteria(text=""),
         page_number=0,
-        limit=2
+        limit=2,
     )
     assert len(found_items) == 2
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_deprecated_items(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
@@ -441,9 +445,9 @@ async def test_find_deprecated_items(item_repo: ItemRepository) -> None:
     assert found_items[0].uuid == item4.uuid
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_items_with_every_interaction(
-        item_repo: ItemRepository
+        item_repo: ItemRepository,
 ) -> None:
     await item_repo.delete_all_items()
 
@@ -534,7 +538,7 @@ async def test_find_items_with_every_interaction(
             interactions=AnyItemInteraction(
                 without_interactions=True,
             ),
-            interactions_from_user=user1_id
+            interactions_from_user=user1_id,
         ),
         limit=10,
         page_number=0)
@@ -547,7 +551,7 @@ async def test_find_items_with_every_interaction(
             interactions=AnyItemInteraction(
                 viewed=True,
             ),
-            interactions_from_user=user1_id
+            interactions_from_user=user1_id,
         ),
         limit=10,
         page_number=0)
@@ -560,7 +564,7 @@ async def test_find_items_with_every_interaction(
             interactions=AnyItemInteraction(
                 recommended=True,
             ),
-            interactions_from_user=user1_id
+            interactions_from_user=user1_id,
         ),
         limit=10,
         page_number=0)
@@ -573,7 +577,7 @@ async def test_find_items_with_every_interaction(
             interactions=AnyItemInteraction(
                 discouraged=True,
             ),
-            interactions_from_user=user1_id
+            interactions_from_user=user1_id,
         ),
         limit=10,
         page_number=0)
@@ -586,7 +590,7 @@ async def test_find_items_with_every_interaction(
             interactions=AnyItemInteraction(
                 hidden=True,
             ),
-            interactions_from_user=user1_id
+            interactions_from_user=user1_id,
         ),
         limit=10,
         page_number=0)
@@ -595,9 +599,9 @@ async def test_find_items_with_every_interaction(
     assert [item9] == found_items
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_user_recommended_or_without_interaction_items(
-        item_repo: ItemRepository
+        item_repo: ItemRepository,
 ) -> None:
     await item_repo.delete_all_items()
 
@@ -639,7 +643,7 @@ async def test_find_user_recommended_or_without_interaction_items(
                 without_interactions=True,
                 recommended=True,
             ),
-            interactions_from_user=user1_id
+            interactions_from_user=user1_id,
         ),
         limit=3,
         page_number=0)
@@ -648,25 +652,25 @@ async def test_find_user_recommended_or_without_interaction_items(
     assert [item3, item1] == found_items
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_interaction(item_repo: ItemRepository) -> None:
     interaction = Interaction.new(
         uuid=UUID("74cf7cb9-e86e-4d7d-9bb8-3881dc2ebd82"),
         item_uuid=UUID("77c0d137-b8d7-4424-836f-d9f4b546f2e9"),
         user_uuid=UUID("3b1b3369-f7f7-4f61-926f-bdbe3c49160a"),
-        interaction_type=InteractionType.RECOMMENDED
+        interaction_type=InteractionType.RECOMMENDED,
     )
     await item_repo.add_interaction(interaction)
     assert await item_repo.get_interaction(interaction.uuid) == interaction
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_delete_interaction(item_repo: ItemRepository) -> None:
     interaction = Interaction.new(
         uuid=UUID("20e413a1-4600-4c7e-bab8-bb692ec51921"),
         user_uuid=UUID("60f53698-9cc6-47e5-994c-25c6cded6f62"),
         item_uuid=UUID("3ee43c65-2792-4c04-bc63-b3952988d954"),
-        interaction_type=InteractionType.RECOMMENDED
+        interaction_type=InteractionType.RECOMMENDED,
     )
     await item_repo.add_interaction(interaction)
     assert await item_repo.get_interaction(interaction.uuid) is not None
@@ -675,7 +679,7 @@ async def test_delete_interaction(item_repo: ItemRepository) -> None:
     assert await item_repo.get_interaction(interaction.uuid) is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_interactions_by_item(item_repo: ItemRepository) -> None:
     interaction0 = Interaction.new(
         uuid=UUID("99f8c2ce-bc34-45ed-8368-139033acf32e"),
@@ -688,7 +692,7 @@ async def test_get_interactions_by_item(item_repo: ItemRepository) -> None:
         uuid=UUID("7b4eee4a-95a6-47af-9cf1-46f5a23cbde7"),
         user_uuid=UUID("e306a421-e191-4f50-874d-1f9e78e13694"),
         item_uuid=UUID("581402ec-8043-4098-9995-735e9e427571"),
-        interaction_type=InteractionType.RECOMMENDED
+        interaction_type=InteractionType.RECOMMENDED,
     )
     await item_repo.add_interaction(interaction1)
 
@@ -702,7 +706,7 @@ async def test_get_interactions_by_item(item_repo: ItemRepository) -> None:
     assert interactions[interaction1.item_uuid] == [interaction1]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_items_with_max_and_min_duration(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
@@ -719,7 +723,7 @@ async def test_find_items_with_max_and_min_duration(item_repo: ItemRepository) -
 
     found_items = await item_repo.find_items(
         criteria=ItemFilterCriteria(
-            max_duration=600
+            max_duration=600,
         ),
         limit=10,
         page_number=0)
@@ -729,7 +733,7 @@ async def test_find_items_with_max_and_min_duration(item_repo: ItemRepository) -
 
     found_items = await item_repo.find_items(
         criteria=ItemFilterCriteria(
-            min_duration=600
+            min_duration=600,
         ),
         limit=10,
         page_number=0)
@@ -740,7 +744,7 @@ async def test_find_items_with_max_and_min_duration(item_repo: ItemRepository) -
     found_items = await item_repo.find_items(
         criteria=ItemFilterCriteria(
             min_duration=600,
-            max_duration=600
+            max_duration=600,
         ),
         limit=10,
         page_number=0)
@@ -749,7 +753,7 @@ async def test_find_items_with_max_and_min_duration(item_repo: ItemRepository) -
     assert {item1} == set(found_items)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_zero_duration_items(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
@@ -764,7 +768,7 @@ async def test_find_zero_duration_items(item_repo: ItemRepository) -> None:
 
     found_items = await item_repo.find_items(
         criteria=ItemFilterCriteria(
-            max_duration=0
+            max_duration=0,
         ),
         limit=10,
         page_number=0)
@@ -773,7 +777,7 @@ async def test_find_zero_duration_items(item_repo: ItemRepository) -> None:
     assert {item1} == set(found_items)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_items_updated_before_a_date(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
@@ -795,7 +799,7 @@ async def test_find_items_updated_before_a_date(item_repo: ItemRepository) -> No
     assert found_items == [item1]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_video_with_deleted_at_date(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
 
@@ -820,7 +824,7 @@ async def test_update_video_with_deleted_at_date(item_repo: ItemRepository) -> N
     assert len(found_items) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_interactions(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
     await item_repo.delete_all_interactions()
@@ -835,7 +839,7 @@ async def test_find_interactions(item_repo: ItemRepository) -> None:
         user_uuid=user1.uuid,
         item_uuid=item1.uuid,
         created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        type=InteractionType.RECOMMENDED
+        type=InteractionType.RECOMMENDED,
     )
 
     interaction2 = Interaction(
@@ -843,7 +847,7 @@ async def test_find_interactions(item_repo: ItemRepository) -> None:
         user_uuid=user1.uuid,
         item_uuid=item2.uuid,
         created_at=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        type=InteractionType.RECOMMENDED
+        type=InteractionType.RECOMMENDED,
     )
 
     interaction3 = Interaction(
@@ -851,7 +855,7 @@ async def test_find_interactions(item_repo: ItemRepository) -> None:
         user_uuid=user1.uuid,
         item_uuid=item2.uuid,
         created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        type=InteractionType.VIEWED
+        type=InteractionType.VIEWED,
     )
 
     await item_repo.add_interaction(interaction1)
@@ -862,10 +866,10 @@ async def test_find_interactions(item_repo: ItemRepository) -> None:
     found_interactions = await item_repo.find_interactions(
         criteria=InteractionFilterCriteria(
             user_ids=[user1.uuid],
-            interaction_types=[InteractionType.RECOMMENDED]
+            interaction_types=[InteractionType.RECOMMENDED],
         ),
         page_number=0,
-        limit=10
+        limit=10,
     )
 
     assert len(found_interactions) == 2
@@ -875,10 +879,10 @@ async def test_find_interactions(item_repo: ItemRepository) -> None:
     # Find all interactions of an item
     found_interactions = await item_repo.find_interactions(
         criteria=InteractionFilterCriteria(
-            item_ids=[item2.uuid]
+            item_ids=[item2.uuid],
         ),
         page_number=0,
-        limit=10
+        limit=10,
     )
 
     assert len(found_interactions) == 2
@@ -889,7 +893,7 @@ async def test_find_interactions(item_repo: ItemRepository) -> None:
     found_interactions = await item_repo.find_interactions(
         criteria=InteractionFilterCriteria(),
         page_number=1,
-        limit=2
+        limit=2,
     )
 
     assert len(found_interactions) == 1
@@ -899,10 +903,10 @@ async def test_find_interactions(item_repo: ItemRepository) -> None:
     found_interactions = await item_repo.find_interactions(
         criteria=InteractionFilterCriteria(
             item_ids=[item1.uuid, item2.uuid],
-            interaction_types=[InteractionType.RECOMMENDED]
+            interaction_types=[InteractionType.RECOMMENDED],
         ),
         page_number=0,
-        limit=10
+        limit=10,
     )
 
     assert len(found_interactions) == 2
@@ -910,7 +914,7 @@ async def test_find_interactions(item_repo: ItemRepository) -> None:
     assert interaction2 in found_interactions
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_interactions_filtered_by_text(item_repo: ItemRepository) -> None:
     await item_repo.delete_all_items()
     await item_repo.delete_all_interactions()
@@ -924,7 +928,7 @@ async def test_find_interactions_filtered_by_text(item_repo: ItemRepository) -> 
         user_uuid=user1.uuid,
         item_uuid=item1.uuid,
         created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        type=InteractionType.RECOMMENDED
+        type=InteractionType.RECOMMENDED,
     )
 
     interaction2 = Interaction(
@@ -932,7 +936,7 @@ async def test_find_interactions_filtered_by_text(item_repo: ItemRepository) -> 
         user_uuid=user1.uuid,
         item_uuid=item2.uuid,
         created_at=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        type=InteractionType.RECOMMENDED
+        type=InteractionType.RECOMMENDED,
     )
 
     await item_repo.upsert_items([item1, item2])
@@ -941,7 +945,7 @@ async def test_find_interactions_filtered_by_text(item_repo: ItemRepository) -> 
 
     found_interactions = await item_repo.find_interactions(
         criteria=InteractionFilterCriteria(
-            text="videogames"
+            text="videogames",
         ),
         page_number=0,
         limit=10)

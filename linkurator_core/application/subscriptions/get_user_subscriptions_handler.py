@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from uuid import UUID
 
 from linkurator_core.domain.subscriptions.subscription import Subscription

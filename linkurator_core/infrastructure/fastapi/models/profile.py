@@ -10,9 +10,8 @@ from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
 
 
 class LanguageSchema(str, Enum):
-    """
-    Language schema
-    """
+    """Language schema."""
+
     SPANISH = "es"
     ENGLISH = "en"
 
@@ -24,9 +23,8 @@ class LanguageSchema(str, Enum):
 
 
 class ProfileSchema(BaseModel):
-    """
-    Profile with the user information
-    """
+    """Profile with the user information."""
+
     uuid: UUID
     first_name: str
     last_name: str

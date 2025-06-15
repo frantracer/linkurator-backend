@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from math import floor
-from typing import Optional, Any
+from typing import Any
 from uuid import UUID
 
 from pydantic import AnyUrl
@@ -16,8 +16,8 @@ YOUTUBE_ITEM_VERSION = 1
 
 
 class ItemProvider(str, Enum):
-    YOUTUBE = 'youtube'
-    SPOTIFY = 'spotify'
+    YOUTUBE = "youtube"
+    SPOTIFY = "spotify"
 
 @dataclass
 class Item:
@@ -27,13 +27,13 @@ class Item:
     description: str
     url: AnyUrl
     thumbnail: AnyUrl
-    duration: Optional[Seconds]
+    duration: Seconds | None
     version: int
     provider: ItemProvider
     created_at: datetime
     updated_at: datetime
     published_at: datetime
-    deleted_at: Optional[datetime] = None
+    deleted_at: datetime | None = None
 
     @classmethod
     def new(cls,
@@ -44,10 +44,10 @@ class Item:
             url: AnyUrl,
             thumbnail: AnyUrl,
             published_at: datetime,
-            duration: Optional[Seconds] = None,
+            duration: Seconds | None = None,
             version: int = DEFAULT_ITEM_VERSION,
             provider: ItemProvider = ItemProvider.YOUTUBE,
-            deleted_at: Optional[datetime] = None
+            deleted_at: datetime | None = None,
             ) -> Item:
         now = datetime.now(tz=timezone.utc)
         return cls(

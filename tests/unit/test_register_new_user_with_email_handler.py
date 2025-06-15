@@ -8,12 +8,13 @@ from linkurator_core.domain.common.event import UserRegisterRequestSentEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.user import Username
-from linkurator_core.infrastructure.in_memory.registration_request_repository import \
-    InMemoryRegistrationRequestRepository
+from linkurator_core.infrastructure.in_memory.registration_request_repository import (
+    InMemoryRegistrationRequestRepository,
+)
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_register_new_user_with_email() -> None:
     user_repo = InMemoryUserRepository()
     registration_request_repository = InMemoryRegistrationRequestRepository()
@@ -27,7 +28,7 @@ async def test_register_new_user_with_email() -> None:
         first_name="John",
         last_name="Doe",
         username=Username("johndoe"),
-        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate"),
     )
 
     assert len(errors) == 0
@@ -35,13 +36,13 @@ async def test_register_new_user_with_email() -> None:
     assert new_user is None
 
     assert event_bus.publish.call_count == 1
-    published_event = event_bus.publish.call_args_list[0][1]['event']
+    published_event = event_bus.publish.call_args_list[0][1]["event"]
 
     assert isinstance(published_event, UserRegisterRequestSentEvent)
     assert await registration_request_repository.get_request(published_event.request_uuid) is not None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_register_new_user_with_email_email_already_registered() -> None:
     user_repo = InMemoryUserRepository()
     registration_request_repository = InMemoryRegistrationRequestRepository()
@@ -58,7 +59,7 @@ async def test_register_new_user_with_email_email_already_registered() -> None:
         first_name="John",
         last_name="Doe",
         username=Username("johndoe"),
-        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate"),
     )
 
     assert len(errors) == 1
@@ -67,7 +68,7 @@ async def test_register_new_user_with_email_email_already_registered() -> None:
     assert event_bus.publish.call_count == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_register_new_user_with_all_errors() -> None:
     user_repo = InMemoryUserRepository()
     registration_request_repository = InMemoryRegistrationRequestRepository()
@@ -84,7 +85,7 @@ async def test_register_new_user_with_all_errors() -> None:
         first_name="John",
         last_name="Doe",
         username=Username("johndoe"),
-        validation_base_url=AnyUrl("https://linkurator-test.com/validate")
+        validation_base_url=AnyUrl("https://linkurator-test.com/validate"),
     )
 
     assert len(errors) == 3

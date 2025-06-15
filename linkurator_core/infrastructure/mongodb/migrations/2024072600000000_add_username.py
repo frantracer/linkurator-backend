@@ -8,7 +8,7 @@ class Migration(BaseMigration):
             username = str(user["first_name"] + user["last_name"]).strip().replace(" ", "").lower()
             self.db.get_collection("users").update_one(
                 {"_id": user["_id"]},
-                {"$set": {"username": username}}
+                {"$set": {"username": username}},
             )
         self.db.get_collection("users").create_index("username", unique=True)
 

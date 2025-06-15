@@ -3,7 +3,7 @@ import sys
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Callable, List, Awaitable
+from typing import Awaitable, Callable, List
 
 TaskCallback = Callable[[], Awaitable[None]]
 

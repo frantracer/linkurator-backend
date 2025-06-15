@@ -5,8 +5,12 @@ from unittest.mock import AsyncMock, call
 import pytest
 
 from linkurator_core.application.common.event_handler import EventHandler
-from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent, \
-    UserRegisterRequestSentEvent, UserRegisteredEvent, SubscriptionBecameOutdatedEvent
+from linkurator_core.domain.common.event import (
+    SubscriptionBecameOutdatedEvent,
+    SubscriptionItemsBecameOutdatedEvent,
+    UserRegisteredEvent,
+    UserRegisterRequestSentEvent,
+)
 
 
 def dummy_event_handler() -> EventHandler:
@@ -16,11 +20,11 @@ def dummy_event_handler() -> EventHandler:
         update_subscription_handler=AsyncMock(),
         refresh_items_handler=AsyncMock(),
         send_validate_new_user_email=AsyncMock(),
-        send_welcome_email=AsyncMock()
+        send_welcome_email=AsyncMock(),
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_subscription_items_became_obsolete_event_triggers_update_subscriptions_items_handler() -> None:
     update_subscription_items_handler = AsyncMock()
     update_subscription_items_handler.handle.return_value = None
@@ -37,7 +41,7 @@ async def test_subscription_items_became_obsolete_event_triggers_update_subscrip
     assert handle_calls[0] == call(uuid.UUID("4d00e658-2947-4781-a045-691f0ef57831"))
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_subscription_became_obsolete_event_triggers_update_subscription_handler() -> None:
     update_subscription_handler = AsyncMock()
     update_subscription_handler.handle.return_value = None
@@ -54,7 +58,7 @@ async def test_subscription_became_obsolete_event_triggers_update_subscription_h
     assert handle_calls[0] == call(uuid.UUID("4d00e658-2947-4781-a045-691f0ef57831"))
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_new_registration_request_event_triggers_validate_the_new_user_email_handler() -> None:
     send_validate_new_user_email = AsyncMock()
     send_validate_new_user_email.handle.return_value = None
@@ -69,7 +73,7 @@ async def test_new_registration_request_event_triggers_validate_the_new_user_ema
     assert handle_calls[0] == call(uuid.UUID("4a814f72-28bb-4e75-a9ab-8e3d9715a29a"))
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_new_registered_user_event_triggers_send_welcome_email_handler() -> None:
     send_welcome_email = AsyncMock()
     send_welcome_email.handle.return_value = None

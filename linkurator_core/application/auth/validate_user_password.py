@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
 
-from linkurator_core.domain.users.session import Session, SESSION_DURATION_IN_SECONDS
+from linkurator_core.domain.users.session import SESSION_DURATION_IN_SECONDS, Session
 from linkurator_core.domain.users.session_repository import SessionRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
 class ValidateUserPassword:
-    def __init__(self, user_repository: UserRepository, session_repository: SessionRepository):
+    def __init__(self, user_repository: UserRepository, session_repository: SessionRepository) -> None:
         self.user_repository = user_repository
         self.session_repository = session_repository
 

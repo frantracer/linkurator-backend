@@ -18,7 +18,7 @@ class SendWelcomeEmail:
     def __init__(self,
                  user_repository: UserRepository,
                  email_sender: EmailSender,
-                 base_url: AnyUrl
+                 base_url: AnyUrl,
                  ) -> None:
         self.user_repository = user_repository
         self.email_sender = email_sender
@@ -29,7 +29,7 @@ class SendWelcomeEmail:
         if user is None:
             return
 
-        environment = jinja2.Environment()
+        environment = jinja2.Environment(autoescape=True)
         template = environment.from_string(WELCOME_EMAIL_TEMPLATE_PATH.read_text())
         message_text = template.render(name=user.first_name, web_url=self.base_url)
 

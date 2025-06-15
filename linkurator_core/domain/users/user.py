@@ -4,7 +4,7 @@ import hashlib
 from copy import copy
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Callable
+from typing import Callable
 from uuid import UUID, uuid4
 
 from pydantic import AnyUrl, Field, RootModel
@@ -15,7 +15,7 @@ def default_salt_generator() -> str:
 
 
 def default_hash_function(text_input: str) -> str:
-    return hashlib.sha512(text_input.encode('utf-8')).hexdigest()
+    return hashlib.sha512(text_input.encode("utf-8")).hexdigest()
 
 
 class Username(RootModel[str]):
@@ -39,18 +39,18 @@ class HashedPassword:
     def new(cls,
             input_hash: str,
             salt_generator: Callable[[], str] = default_salt_generator,
-            hash_function: Callable[[str], str] = default_hash_function
+            hash_function: Callable[[str], str] = default_hash_function,
             ) -> HashedPassword:
         salt = salt_generator()
         pass_to_hash = input_hash + salt
         return cls(
             hashed_pass_plus_salt=hash_function(pass_to_hash),
-            salt=salt
+            salt=salt,
         )
 
     def validate(self,
                  input_hash: str,
-                 hash_function: Callable[[str], str] = default_hash_function
+                 hash_function: Callable[[str], str] = default_hash_function,
                  ) -> bool:
         return self.hashed_pass_plus_salt == hash_function(input_hash + self.salt)
 
@@ -68,8 +68,8 @@ class User:
     updated_at: datetime
     scanned_at: datetime
     last_login_at: datetime
-    google_refresh_token: Optional[str]
-    password_hash: Optional[HashedPassword]
+    google_refresh_token: str | None
+    password_hash: HashedPassword | None
     _youtube_subscriptions_uuids: set[UUID]
     _unfollowed_youtube_subscriptions_uuids: set[UUID]
     _subscription_uuids: set[UUID]
@@ -86,11 +86,11 @@ class User:
             email: str,
             avatar_url: AnyUrl,
             locale: str,
-            google_refresh_token: Optional[str] = None,
-            subscription_uuids: Optional[set[UUID]] = None,
+            google_refresh_token: str | None = None,
+            subscription_uuids: set[UUID] | None = None,
             is_admin: bool = False,
-            curators: Optional[set[UUID]] = None,
-            followed_topics: Optional[set[UUID]] = None
+            curators: set[UUID] | None = None,
+            followed_topics: set[UUID] | None = None,
             ) -> User:
         now = datetime.now(timezone.utc)
         return cls(
@@ -112,7 +112,7 @@ class User:
             _followed_topics=set() if followed_topics is None else followed_topics,
             is_admin=is_admin,
             curators=set() if curators is None else curators,
-            password_hash=None
+            password_hash=None,
         )
 
     def follow_topic(self, topic_id: UUID) -> None:

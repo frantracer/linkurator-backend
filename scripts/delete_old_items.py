@@ -11,12 +11,12 @@ from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRe
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 
 
 async def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--admin-email', type=str, required=True)
+    parser.add_argument("--admin-email", type=str, required=True)
     args = parser.parse_args()
 
     db_settings = MongoDBSettings()
@@ -41,7 +41,7 @@ async def main() -> None:
 
     admin = await user_repository.get_by_email(args.admin_email)
     if admin is None:
-        logging.error('Admin user not found')
+        logging.error("Admin user not found")
         sys.exit(1)
 
     while is_there_and_outdated_subscription:
@@ -63,5 +63,5 @@ async def main() -> None:
             is_there_and_outdated_subscription = False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

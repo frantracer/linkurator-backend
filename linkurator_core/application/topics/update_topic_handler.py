@@ -1,8 +1,8 @@
-from datetime import timezone, datetime
-from typing import Optional, List
+from datetime import datetime, timezone
+from typing import List, Optional
 from uuid import UUID
 
-from linkurator_core.domain.common.exceptions import TopicNotFoundError, SubscriptionNotFoundError
+from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 

@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from datetime import datetime
-from typing import List, Optional
 from uuid import UUID
 
 from pydantic import AnyUrl
@@ -7,7 +8,8 @@ from unidecode import unidecode
 
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import (
-    SubscriptionRepository, SubscriptionFilterCriteria,
+    SubscriptionFilterCriteria,
+    SubscriptionRepository,
 )
 
 
@@ -19,10 +21,10 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
     async def add(self, subscription: Subscription) -> None:
         self.subscriptions[subscription.uuid] = subscription
 
-    async def get(self, subscription_id: UUID) -> Optional[Subscription]:
+    async def get(self, subscription_id: UUID) -> Subscription | None:
         return self.subscriptions.get(subscription_id)
 
-    async def get_list(self, subscription_ids: List[UUID]) -> List[Subscription]:
+    async def get_list(self, subscription_ids: list[UUID]) -> list[Subscription]:
         subs = [
             subscription
             for subscription in self.subscriptions.values()
@@ -44,12 +46,12 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
         ):
             self.subscriptions[subscription.uuid] = subscription
 
-    async def find_by_url(self, url: AnyUrl) -> Optional[Subscription]:
+    async def find_by_url(self, url: AnyUrl) -> Subscription | None:
         return self._find_by_url(url)
 
     async def find_latest_scan_before(
-        self, datetime_limit: datetime
-    ) -> List[Subscription]:
+        self, datetime_limit: datetime,
+    ) -> list[Subscription]:
         subs = [
             subscription
             for subscription in self.subscriptions.values()
@@ -57,7 +59,7 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
         ]
         return sorted(subs, key=lambda x: x.created_at, reverse=True)
 
-    async def find_by_name(self, name: str) -> List[Subscription]:
+    async def find_by_name(self, name: str) -> list[Subscription]:
         search_terms = unidecode(name.lower()).split(" ")
 
         def search_terms_in_name(terms: list[str], name: str) -> bool:
@@ -70,7 +72,7 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
         ]
         return sorted(subs, key=lambda x: x.created_at, reverse=True)
 
-    async def find(self, criteria: SubscriptionFilterCriteria) -> List[Subscription]:
+    async def find(self, criteria: SubscriptionFilterCriteria) -> list[Subscription]:
         subs = [
             subscription
             for subscription in self.subscriptions.values()
@@ -79,13 +81,13 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
         ]
         return sorted(subs, key=lambda x: x.created_at, reverse=True)
 
-    def _find_by_url(self, url: AnyUrl) -> Optional[Subscription]:
+    def _find_by_url(self, url: AnyUrl) -> Subscription | None:
         for subscription in self.subscriptions.values():
             if subscription.url == url:
                 return subscription
         return None
 
-    async def count_subscriptions(self, provider: Optional[str] = None) -> int:
+    async def count_subscriptions(self, provider: str | None = None) -> int:
         if provider is None:
             return len(self.subscriptions)
         return len(
@@ -93,5 +95,5 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
                 subscription
                 for subscription in self.subscriptions.values()
                 if subscription.provider == provider
-            ]
+            ],
         )

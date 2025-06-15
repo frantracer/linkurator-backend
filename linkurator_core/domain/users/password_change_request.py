@@ -28,17 +28,18 @@ class PasswordChangeRequest:
             seconds_to_expire: int,
             validation_base_url: AnyUrl,
             now_function: Callable[[], datetime] = default_datetime_generator,
-            uuid_generator: Callable[[], UUID] = uuid4
+            uuid_generator: Callable[[], UUID] = uuid4,
             ) -> PasswordChangeRequest:
         main_domain = validation_base_url.host
         if main_domain not in cls.valid_domains:
-            raise ValueError(f"Invalid domain: {main_domain}")
+            msg = f"Invalid domain: {main_domain}"
+            raise ValueError(msg)
 
         return cls(
             uuid=uuid_generator(),
             user_id=user_id,
             valid_until=now_function() + timedelta(seconds=seconds_to_expire),
-            validation_base_url=validation_base_url
+            validation_base_url=validation_base_url,
         )
 
     def is_expired(self, now_function: Callable[[], datetime] = default_datetime_generator) -> bool:

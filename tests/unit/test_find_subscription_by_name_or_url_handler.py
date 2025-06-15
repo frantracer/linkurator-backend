@@ -4,8 +4,9 @@ from uuid import UUID
 import pytest
 from pydantic import AnyUrl
 
-from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import \
-    FindSubscriptionsByNameOrUrlHandler
+from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import (
+    FindSubscriptionsByNameOrUrlHandler,
+)
 from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
@@ -13,7 +14,7 @@ from linkurator_core.domain.subscriptions.subscription_service import Subscripti
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_subscription_by_url() -> None:
     sub_repo = InMemorySubscriptionRepository()
     sub = Subscription.new(
@@ -38,7 +39,7 @@ async def test_find_subscription_by_url() -> None:
     assert found_subs[0] == sub
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_subscription_by_name() -> None:
     sub_repo = InMemorySubscriptionRepository()
     sub = Subscription.new(
@@ -64,7 +65,7 @@ async def test_find_subscription_by_name() -> None:
     assert found_subs[0] == sub
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_subscription_by_url_is_added_to_repo_if_not_exists() -> None:
     sub_repo = InMemorySubscriptionRepository()
     sub = Subscription.new(
@@ -93,7 +94,7 @@ async def test_find_subscription_by_url_is_added_to_repo_if_not_exists() -> None
     assert isinstance(event_bus.publish.call_args_list[0].args[0], SubscriptionItemsBecameOutdatedEvent)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_subscription_by_non_existing_name() -> None:
     sub_repo = InMemorySubscriptionRepository()
     sub_service = AsyncMock(spec=SubscriptionService)
@@ -109,7 +110,7 @@ async def test_find_subscription_by_non_existing_name() -> None:
     assert len(found_subs) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_subscription_by_non_existing_url() -> None:
     sub_repo = InMemorySubscriptionRepository()
     sub_service = AsyncMock(spec=SubscriptionService)
@@ -124,7 +125,7 @@ async def test_find_subscription_by_non_existing_url() -> None:
     assert len(found_subs) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_subscription_by_name_that_does_not_exist_in_the_repository_but_exists_in_the_service() -> None:
     sub_repo = InMemorySubscriptionRepository()
     sub = Subscription.new(

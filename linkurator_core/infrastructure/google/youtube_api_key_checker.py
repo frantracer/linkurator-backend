@@ -9,18 +9,18 @@ class YoutubeApiKeyChecker(ExternalCredentialsCheckerService):
     async def check(self, credential: ExternalServiceCredential) -> bool:
 
         if credential.credential_type != ExternalServiceType.YOUTUBE_API_KEY:
-            raise ValueError('Invalid credential type')
+            msg = "Invalid credential type"
+            raise ValueError(msg)
 
         try:
             client = YoutubeApiClient()
             videos = await client.get_youtube_videos_from_playlist(
                 api_key=credential.credential_value,
-                playlist_id='UUYVFW8d1p41UM-ZGzzYYB2w',
-                from_date=datetime(2020, 1, 1)
+                playlist_id="UUYVFW8d1p41UM-ZGzzYYB2w",
+                from_date=datetime(2020, 1, 1),
             )
             if len(videos) >= 0:
                 return True
             return False
-        except Exception as ex:  # pylint: disable=broad-except
-            print(ex)
+        except Exception:  # pylint: disable=broad-except
             return False

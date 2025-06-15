@@ -6,7 +6,7 @@ from linkurator_core.domain.users.user import Username
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_existing_followed_curator_returns_curator_and_followed_flag() -> None:
     curator = mock_user()
     user = mock_user(curators={curator.uuid})
@@ -22,7 +22,7 @@ async def test_find_existing_followed_curator_returns_curator_and_followed_flag(
     assert response.followed is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_existing_unfollowed_curator_returns_curator_and_unfollowed_flag() -> None:
     curator = mock_user()
     user = mock_user()
@@ -38,7 +38,7 @@ async def test_find_existing_unfollowed_curator_returns_curator_and_unfollowed_f
     assert response.followed is False
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_find_non_existing_curator_returns_none_and_unfollowed_flag() -> None:
     user = mock_user()
     user_repo = InMemoryUserRepository()

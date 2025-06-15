@@ -1,11 +1,12 @@
+from __future__ import annotations
+
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Optional
 from uuid import UUID
 
 from linkurator_core.domain.items.interaction import Interaction
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria, AnyItemInteraction
+from linkurator_core.domain.items.item_repository import AnyItemInteraction, ItemFilterCriteria, ItemRepository
 from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -24,14 +25,14 @@ class GetSubscriptionItemsHandler:
 
     async def handle(
             self,
-            user_id: Optional[UUID],
+            user_id: UUID | None,
             subscription_id: UUID,
             created_before: datetime,
             page_number: int,
             page_size: int,
-            text_filter: Optional[str] = None,
-            min_duration: Optional[int] = None,
-            max_duration: Optional[int] = None,
+            text_filter: str | None = None,
+            min_duration: int | None = None,
+            max_duration: int | None = None,
             include_items_without_interactions: bool = True,
             include_recommended_items: bool = True,
             include_discouraged_items: bool = True,
@@ -54,24 +55,25 @@ class GetSubscriptionItemsHandler:
                         recommended=include_recommended_items,
                         discouraged=include_discouraged_items,
                         viewed=include_viewed_items,
-                        hidden=include_hidden_items
+                        hidden=include_hidden_items,
                     ),
                 ),
                 page_number=page_number,
-                limit=page_size
-            )
+                limit=page_size,
+            ),
         )
         subscription = results[0]
         items = results[1]
 
         if subscription is None:
-            raise ValueError("Subscription not found")
+            msg = "Subscription not found"
+            raise ValueError(msg)
 
-        interactions_by_item: dict[UUID, List[Interaction]] = {}
+        interactions_by_item: dict[UUID, list[Interaction]] = {}
         if user_id:
             interactions_by_item = await self.item_repository.get_user_interactions_by_item_id(
                 user_id=user_id,
-                item_ids=[item.uuid for item in items]
+                item_ids=[item.uuid for item in items],
             )
 
         return GetSubscriptionItemsResponse(
@@ -79,5 +81,5 @@ class GetSubscriptionItemsHandler:
             items=[
                 ItemWithInteractions(item=item, interactions=interactions_by_item.get(item.uuid, []))
                 for item in items
-            ]
+            ],
         )

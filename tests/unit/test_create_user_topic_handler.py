@@ -8,16 +8,16 @@ from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_create_topic_handler() -> None:
     topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.add.return_value = None
     handler = CreateTopicHandler(topic_repository=topic_repo_mock)
 
     topic = Topic.new(
-        user_id=UUID('3b434473-c6b4-4c6a-a5f8-a5c22021ee3b'),
-        name='Topic 1',
-        uuid=UUID('615035e7-7d11-41e1-ac29-66ae824e7530')
+        user_id=UUID("3b434473-c6b4-4c6a-a5f8-a5c22021ee3b"),
+        name="Topic 1",
+        uuid=UUID("615035e7-7d11-41e1-ac29-66ae824e7530"),
     )
 
     await handler.handle(topic)

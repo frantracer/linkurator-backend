@@ -9,7 +9,7 @@ from linkurator_core.infrastructure.in_memory.topic_repository import InMemoryTo
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_follow_topic() -> None:
     user = mock_user()
     topic = mock_topic()
@@ -28,7 +28,7 @@ async def test_follow_topic() -> None:
     assert topic.uuid in updated_user.get_followed_topics()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_user_cannot_follow_a_topic_that_belongs_to_the_same_user() -> None:
     user = mock_user()
     topic = mock_topic(user_uuid=user.uuid)
@@ -45,7 +45,7 @@ async def test_user_cannot_follow_a_topic_that_belongs_to_the_same_user() -> Non
         await handler.handle(user_id=user.uuid, topic_id=topic.uuid)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_cannot_follow_non_existent_topic() -> None:
     user = mock_user()
     user_repo = InMemoryUserRepository()
@@ -56,4 +56,4 @@ async def test_cannot_follow_non_existent_topic() -> None:
     handler = FollowTopicHandler(topic_repository=topic_repo, user_repository=user_repo)
 
     with pytest.raises(TopicNotFoundError):
-        await handler.handle(user_id=user.uuid, topic_id=UUID('8ff7610d-9f72-4eb5-83b9-e721fbcf61d6'))
+        await handler.handle(user_id=user.uuid, topic_id=UUID("8ff7610d-9f72-4eb5-83b9-e721fbcf61d6"))

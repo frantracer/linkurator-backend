@@ -1,12 +1,14 @@
 from copy import copy
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler, \
-    MIN_REFRESH_INTERVAL_IN_SECONDS
+from linkurator_core.application.subscriptions.refresh_subscription_handler import (
+    MIN_REFRESH_INTERVAL_IN_SECONDS,
+    RefreshSubscriptionHandler,
+)
 from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.exceptions import SubscriptionAlreadyUpdatedError, SubscriptionNotFoundError
@@ -15,7 +17,7 @@ from linkurator_core.domain.subscriptions.subscription_service import Subscripti
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_refresh_an_outdated_subscription() -> None:
     now = datetime.now(tz=timezone.utc)
     sub = mock_sub()
@@ -38,7 +40,7 @@ async def test_refresh_an_outdated_subscription() -> None:
         subscription_repository=subscription_repository,
         subscription_service=subscription_service,
         event_bus=event_bus,
-        datetime_now=lambda: now
+        datetime_now=lambda: now,
     )
 
     await handler.handle(subscription_id=sub.uuid)
@@ -52,7 +54,7 @@ async def test_refresh_an_outdated_subscription() -> None:
     assert isinstance(event_bus.publish.mock_calls[0][1][0], SubscriptionItemsBecameOutdatedEvent)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_an_already_updated_subscription_returns_error() -> None:
     now = datetime.now(tz=timezone.utc)
     sub = mock_sub()
@@ -68,7 +70,7 @@ async def test_an_already_updated_subscription_returns_error() -> None:
         subscription_repository=subscription_repository,
         subscription_service=subscription_service,
         event_bus=event_bus,
-        datetime_now=lambda: now
+        datetime_now=lambda: now,
     )
 
     with pytest.raises(SubscriptionAlreadyUpdatedError) as exc:
@@ -76,7 +78,7 @@ async def test_an_already_updated_subscription_returns_error() -> None:
     assert "3600 seconds" in str(exc)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_subscription_not_found() -> None:
     subscription_repository = InMemorySubscriptionRepository()
     subscription_service = AsyncMock(spec=SubscriptionService)
@@ -86,14 +88,14 @@ async def test_subscription_not_found() -> None:
         subscription_repository=subscription_repository,
         subscription_service=subscription_service,
         event_bus=event_bus,
-        datetime_now=lambda: datetime.now(tz=timezone.utc)
+        datetime_now=lambda: datetime.now(tz=timezone.utc),
     )
 
     with pytest.raises(SubscriptionNotFoundError):
         await handler.handle(subscription_id=UUID("60864001-882d-4ca3-b529-5710d86eccd8"))
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_subscription_scanned_recently_does_not_publish_event() -> None:
     now = datetime.now(tz=timezone.utc)
     sub = mock_sub()
@@ -110,7 +112,7 @@ async def test_subscription_scanned_recently_does_not_publish_event() -> None:
         subscription_repository=subscription_repository,
         subscription_service=subscription_service,
         event_bus=event_bus,
-        datetime_now=lambda: now
+        datetime_now=lambda: now,
     )
 
     await handler.handle(subscription_id=sub.uuid)

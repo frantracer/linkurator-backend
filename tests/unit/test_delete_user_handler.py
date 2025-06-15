@@ -11,7 +11,7 @@ from linkurator_core.domain.users.session_repository import SessionRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_delete_user_handler() -> None:
     user_repository = InMemoryUserRepository()
     session_repository = MagicMock(spec=SessionRepository)
@@ -33,7 +33,7 @@ async def test_delete_user_handler() -> None:
     assert len(session_repository.delete.call_args_list) == 1
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_delete_user_handler_user_not_found() -> None:
     user_repository = InMemoryUserRepository()
     session_repository = MagicMock(spec=SessionRepository)
@@ -50,7 +50,7 @@ async def test_delete_user_handler_user_not_found() -> None:
     assert len(session_repository.delete.call_args_list) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_delete_user_handler_fail_to_revoke_credentials() -> None:
     user_repository = InMemoryUserRepository()
     session_repository = MagicMock(spec=SessionRepository)

@@ -1,4 +1,6 @@
 # pylint: disable=invalid-name
+from __future__ import annotations
+
 from datetime import datetime, timezone
 from typing import Any
 
@@ -39,7 +41,7 @@ class Migration(BaseMigration):
                 topics_per_user[user_id].append({
                     "user_uuid": user_id,
                     "topic_uuid": topic_id,
-                    "created_at": datetime.now(tz=timezone.utc)
+                    "created_at": datetime.now(tz=timezone.utc),
                 })
 
         for _user_id, topic_ids in topics_per_user.items():

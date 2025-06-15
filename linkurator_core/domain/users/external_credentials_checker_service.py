@@ -1,4 +1,4 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
 

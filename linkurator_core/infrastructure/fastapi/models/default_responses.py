@@ -1,6 +1,6 @@
 import http
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Response, status
 
 
 def not_authenticated() -> HTTPException:
@@ -31,3 +31,14 @@ def too_many_requests(message: str) -> HTTPException:
     return HTTPException(
         status_code=http.HTTPStatus.TOO_MANY_REQUESTS,
         detail=message)
+
+class EmptyResponse(Response):
+    """
+    A custom response class that represents an empty response with a 204 No Content status code.
+    This is used when no content needs to be returned in the response body.
+    """
+
+    media_type = None
+
+    def __init__(self) -> None:
+        super().__init__(status_code=status.HTTP_204_NO_CONTENT)

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional
 from uuid import UUID
 
 from pydantic import AnyUrl, BaseModel
@@ -15,9 +14,8 @@ from linkurator_core.infrastructure.fastapi.models.subscription import Subscript
 
 
 class ItemSchema(BaseModel):
-    """
-    Content item that belongs to a subscription
-    """
+    """Content item that belongs to a subscription."""
+
     uuid: UUID
     subscription_uuid: UUID
     subscription: SubscriptionSchema
@@ -27,7 +25,7 @@ class ItemSchema(BaseModel):
     thumbnail: AnyUrl
     created_at: Iso8601Datetime
     published_at: Iso8601Datetime
-    duration: Optional[Seconds]
+    duration: Seconds | None
 
     recommended: bool
     discouraged: bool
@@ -39,7 +37,7 @@ class ItemSchema(BaseModel):
             cls,
             item: Item,
             subscription: Subscription,
-            interactions: Optional[List[Interaction]] = None
+            interactions: list[Interaction] | None = None,
     ) -> ItemSchema:
         recommended = False
         discouraged = False
@@ -68,9 +66,8 @@ class ItemSchema(BaseModel):
 
 
 class InteractionFilterSchema(Enum):
-    """
-    Filter items by interaction type
-    """
+    """Filter items by interaction type."""
+
     WITHOUT_INTERACTIONS = "without_interactions"
     RECOMMENDED = "recommended"
     DISCOURAGED = "discouraged"
@@ -78,4 +75,4 @@ class InteractionFilterSchema(Enum):
     HIDDEN = "hidden"
 
 
-VALID_INTERACTIONS = ', '.join([value.value for value in InteractionFilterSchema])
+VALID_INTERACTIONS = ", ".join([value.value for value in InteractionFilterSchema])

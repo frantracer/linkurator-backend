@@ -1,17 +1,18 @@
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timezone
-from typing import List
 from uuid import UUID
 
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError
-from linkurator_core.domain.items.item_repository import ItemRepository, ItemFilterCriteria
+from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
 class DeleteSubscriptionItemsHandler:
     def __init__(self, user_repository: UserRepository, subscription_repository: SubscriptionRepository,
-                 item_repository: ItemRepository):
+                 item_repository: ItemRepository) -> None:
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
@@ -19,13 +20,14 @@ class DeleteSubscriptionItemsHandler:
     async def handle(self, user_id: UUID, subscription_id: UUID) -> None:
         user = await self.user_repository.get(user_id)
         if user is None or user.is_admin is False:
-            raise PermissionError("Only admins can delete subscription items")
+            msg = "Only admins can delete subscription items"
+            raise PermissionError(msg)
 
         subscription = await self.subscription_repository.get(subscription_id)
         if subscription is None:
             raise SubscriptionNotFoundError(subscription_id)
 
-        items_uuids: List[UUID] = []
+        items_uuids: list[UUID] = []
         page_number = 0
 
         while True:

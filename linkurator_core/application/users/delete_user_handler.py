@@ -9,7 +9,7 @@ from linkurator_core.domain.users.user_repository import UserRepository
 
 class DeleteUserHandler:
     def __init__(self, user_repository: UserRepository, session_repository: SessionRepository,
-                 account_service: AccountService):
+                 account_service: AccountService) -> None:
         self.user_repository = user_repository
         self.session_repository = session_repository
         self.account_service = account_service
@@ -23,7 +23,7 @@ class DeleteUserHandler:
         try:
             self.account_service.revoke_credentials(user_session.token)
         except FailToRevokeCredentialsError:
-            logging.warning('Failed to revoke credentials for user %s', user.username)
+            logging.warning("Failed to revoke credentials for user %s", user.username)
 
         self.session_repository.delete(user_session.token)
 

@@ -1,10 +1,9 @@
-"""
-Main file of the application
-"""
-from dataclasses import dataclass
-from typing import Optional
+"""Main file of the application."""
+from __future__ import annotations
 
-from fastapi import Request, Depends
+from dataclasses import dataclass
+
+from fastapi import Depends, Request
 from fastapi.applications import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -22,17 +21,21 @@ from linkurator_core.application.items.get_curator_items_handler import GetCurat
 from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
-from linkurator_core.application.statistics.get_platform_statistics import GetPlatformStatisticsHandler, \
-    PlatformStatistics
-from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import \
-    FindSubscriptionsByNameOrUrlHandler
+from linkurator_core.application.statistics.get_platform_statistics import (
+    GetPlatformStatisticsHandler,
+    PlatformStatistics,
+)
+from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import (
+    FindSubscriptionsByNameOrUrlHandler,
+)
 from linkurator_core.application.subscriptions.follow_subscription_handler import FollowSubscriptionHandler
 from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.application.subscriptions.unfollow_subscription_handler import UnfollowSubscriptionHandler
-from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import \
-    AssignSubscriptionToTopicHandler
+from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import (
+    AssignSubscriptionToTopicHandler,
+)
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
 from linkurator_core.application.topics.find_topics_by_name_handler import FindTopicsByNameHandler
@@ -40,8 +43,9 @@ from linkurator_core.application.topics.follow_topic_handler import FollowTopicH
 from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
 from linkurator_core.application.topics.get_user_topics_handler import GetUserTopicsHandler
-from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import \
-    UnassignSubscriptionFromUserTopicHandler
+from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import (
+    UnassignSubscriptionFromUserTopicHandler,
+)
 from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
@@ -56,8 +60,15 @@ from linkurator_core.application.users.get_user_profile_handler import GetUserPr
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.users.session import Session
-from linkurator_core.infrastructure.fastapi.routers import authentication, profile, subscriptions, topics, items, \
-    credentials, curators
+from linkurator_core.infrastructure.fastapi.routers import (
+    authentication,
+    credentials,
+    curators,
+    items,
+    profile,
+    subscriptions,
+    topics,
+)
 from linkurator_core.infrastructure.fastapi.routers.authentication import check_basic_auth
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
 
@@ -114,27 +125,22 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
     app = FastAPI(title="Linkurator API", version="0.1.0")
 
-    async def get_current_session(request: Request) -> Optional[Session]:
+    async def get_current_session(request: Request) -> Session | None:
         token = request.cookies.get("token")
         if token is None:
             return None
-        session = await handlers.validate_token.handle(access_token=token)
-        return session
+        return await handlers.validate_token.handle(access_token=token)
 
     @app.get("/health", tags=["API Status"])
     async def health() -> str:
-        """
-        Health endpoint returns a 200 if the service is alive
-        """
+        """Health endpoint returns a 200 if the service is alive."""
         return "OK"
 
     @app.get("/statistics", tags=["API Status"])
     async def statistics(
             _: None = Depends(check_basic_auth),
     ) -> PlatformStatistics:
-        """
-        Returns platform statistics
-        """
+        """Returns platform statistics."""
         return await handlers.get_platform_statistics.handle()
 
     app.include_router(
@@ -147,8 +153,8 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             register_user_with_email=handlers.register_user_with_email,
             validate_new_user_request=handlers.validate_new_user_request,
             request_password_change=handlers.request_password_change,
-            change_password_from_request=handlers.change_password_from_request
-        )
+            change_password_from_request=handlers.change_password_from_request,
+        ),
     )
     app.include_router(
         tags=["Profile"],
@@ -156,9 +162,9 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             get_session=get_current_session,
             get_user_profile_handler=handlers.get_user_profile_handler,
             edit_user_profile_handler=handlers.edit_user_profile_handler,
-            delete_user_handler=handlers.delete_user_handler
+            delete_user_handler=handlers.delete_user_handler,
         ),
-        prefix="/profile"
+        prefix="/profile",
     )
     app.include_router(
         tags=["Curators"],
@@ -171,9 +177,9 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             find_user_handler=handlers.find_user_handler,
             get_curator_topics_handler=handlers.get_curator_topics_handler,
             get_curator_subscriptions_handler=handlers.get_user_subscriptions,
-            get_curator_items_handler=handlers.get_curator_items_handler
+            get_curator_items_handler=handlers.get_curator_items_handler,
         ),
-        prefix="/curators"
+        prefix="/curators",
     )
     app.include_router(
         tags=["Topics"],
@@ -190,7 +196,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             delete_user_topic_handler=handlers.delete_topic_handler,
             update_user_topic_handler=handlers.update_topic_handler,
             follow_topic_handler=handlers.follow_topic_handler,
-            unfollow_topic_handler=handlers.unfollow_topic_handler
+            unfollow_topic_handler=handlers.unfollow_topic_handler,
         ),
         prefix="/topics")
     app.include_router(
@@ -207,7 +213,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             get_subscription_items_handler=handlers.get_subscription_items_handler,
             delete_subscription_items_handler=handlers.delete_subscription_items_handler,
             refresh_subscription_handler=handlers.refresh_subscription_handler,
-            update_user_subscriptions_handler=handlers.update_user_subscriptions_handler
+            update_user_subscriptions_handler=handlers.update_user_subscriptions_handler,
         ),
         prefix="/subscriptions")
     app.include_router(
@@ -225,7 +231,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             get_user_external_credentials_handler=handlers.get_user_external_credentials_handler,
             add_external_credential_handler=handlers.add_external_credentials_handler,
             delete_external_credential_handler=handlers.delete_external_credential_handler),
-        prefix="/credentials"
+        prefix="/credentials",
     )
 
     app.add_middleware(
@@ -233,7 +239,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
         allow_origins=["http://localhost:3000", "https://linkurator.com", "https://www.linkurator.com"],
         allow_credentials=True,
         allow_methods=["*"],
-        allow_headers=["*"]
+        allow_headers=["*"],
     )
 
     return app

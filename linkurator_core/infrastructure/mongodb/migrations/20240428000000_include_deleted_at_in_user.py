@@ -8,7 +8,7 @@ class Migration(BaseMigration):
         self.db.get_collection("users").create_index(
             [("email", 1), ("deleted_at", 1)],
             unique=True,
-            name="email_unique"
+            name="email_unique",
         )
         self.db.get_collection("users").create_index("deleted_at")
 

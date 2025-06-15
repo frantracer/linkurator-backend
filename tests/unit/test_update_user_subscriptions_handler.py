@@ -17,7 +17,7 @@ from linkurator_core.infrastructure.in_memory.subscription_repository import InM
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_user_subscriptions_with_a_subscription_that_is_not_registered() -> None:
     subscription_service = AsyncMock(spec=SubscriptionService)
     sub1 = Subscription.new(
@@ -47,7 +47,7 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
     assert user_input.scanned_at > user.scanned_at
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_user_subscription_with_subscription_that_is_already_registered() -> None:
     subscription_service = AsyncMock(spec=SubscriptionService)
     sub1 = Subscription.new(
@@ -82,7 +82,7 @@ async def test_update_user_subscription_with_subscription_that_is_already_regist
     assert user_input.get_subscriptions() == {sub2.uuid}
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_subscriptions_for_non_existing_user_does_nothing() -> None:
     subscription_service = AsyncMock(spec=SubscriptionService)
     subscription_repository = MagicMock(spec=SubscriptionRepository)
@@ -101,7 +101,7 @@ async def test_update_subscriptions_for_non_existing_user_does_nothing() -> None
     assert user_repository.get.call_args[0][0] == user_id
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_subscriptions_for_user_with_invalid_refresh_token_only_updates_scanned_at() -> None:
     subscription_service = AsyncMock(spec=SubscriptionService)
     subscription_service.get_subscriptions.side_effect = InvalidCredentialError("Invalid refresh token")

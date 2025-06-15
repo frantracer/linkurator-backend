@@ -9,7 +9,7 @@ from linkurator_core.domain.users.user_repository import UserRepository
 class AssignSubscriptionToTopicHandler:
     def __init__(self, user_repository: UserRepository,
                  subscription_repository: SubscriptionRepository,
-                 topic_repository: TopicRepository):
+                 topic_repository: TopicRepository) -> None:
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.topic_repository = topic_repository

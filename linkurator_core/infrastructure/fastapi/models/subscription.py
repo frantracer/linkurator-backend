@@ -10,9 +10,8 @@ from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
 
 
 class SubscriptionSchema(BaseModel):
-    """
-    Information about the different channels the user is subscribed to
-    """
+    """Information about the different channels the user is subscribed to."""
+
     uuid: UUID
     name: str
     url: AnyUrl

@@ -1,4 +1,4 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from typing import List, Optional
 from uuid import UUID
 
@@ -23,7 +23,7 @@ class ExternalCredentialRepository(ABC):
             self,
             user_id: UUID,
             credential_type: ExternalServiceType,
-            credential_value: str
+            credential_value: str,
     ) -> None:
         pass
 
@@ -31,7 +31,7 @@ class ExternalCredentialRepository(ABC):
     async def find_by_users_and_type(
             self,
             user_ids: List[UUID],
-            credential_type: ExternalServiceType
+            credential_type: ExternalServiceType,
     ) -> List[ExternalServiceCredential]:
         pass
 
@@ -39,6 +39,6 @@ class ExternalCredentialRepository(ABC):
     async def get_by_value_and_type(
             self,
             credential_type: ExternalServiceType,
-            credential_value: str
+            credential_value: str,
     ) -> Optional[ExternalServiceCredential]:
         pass
