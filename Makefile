@@ -33,7 +33,7 @@ install-requirements:
 
 install:
 	rm -rf .venv
-	uv venv --python=python3.10 .venv
+	uv venv --python=python3.10.4 .venv
 	uv pip install -r requirements.txt
 	@echo
 	@echo "Run 'source .venv/bin/activate' to activate the virtual environment."
@@ -41,43 +41,43 @@ install:
 
 run-api: link-config
 	@if [ "${LINKURATOR_ENVIRONMENT}" = "DEVELOPMENT" ]; then \
-    	.venv/bin/python3.10 -m linkurator_core --reload --workers 1 --debug --without-gunicorn; \
+    	.venv/bin/python3 -m linkurator_core --reload --workers 1 --debug --without-gunicorn; \
 	else \
-		.venv/bin/python3.10 -m linkurator_core; \
+		.venv/bin/python3 -m linkurator_core; \
 	fi
 
 run-processor: link-config
-	PYTHONPATH='.' .venv/bin/python3.10 ./linkurator_core/processor.py
+	PYTHONPATH='.' .venv/bin/python3 ./linkurator_core/processor.py
 
 ####################
 # Setup configuration
 ####################
-check-vault-pass-is-defined:
-	@if [ -z "${LINKURATOR_VAULT_PASSWORD}" ]; then echo "LINKURATOR_VAULT_PASSWORD environment variable is not set"; exit 1; fi
 
-encrypt-secrets: create-vault-pass
-	rm -f config/*.enc
-	cp secrets/client_secret.json config/client_secret.json.enc
-	cp secrets/client_secret_youtube.json config/client_secret_youtube.json.enc
-	cp secrets/app_config_production.ini config/app_config_production.ini.enc
-	cp secrets/docker_token.txt config/docker_token.txt.enc
-	cp secrets/google_api_key.txt config/google_api_key.txt.enc
-	cp secrets/domain_service_credentials.json config/domain_service_credentials.json.enc
-	cp secrets/spotify_credentials.json config/spotify_credentials.json.enc
+check-password:
+	@if [ -z "${LINKURATOR_VAULT_PASSWORD}" ]; then \
+		echo "LINKURATOR_VAULT_PASSWORD environment variable is not set"; \
+		exit 1; \
+	fi
 
-	ansible-vault encrypt --vault-password-file=secrets/vault_password.txt config/*.enc
+encrypt-secrets: check-password
+	rm -rf config/*.enc
+	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/client_secret.json config/client_secret.json.enc
+	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/client_secret_youtube.json config/client_secret_youtube.json.enc
+	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/app_config_production.ini config/app_config_production.ini.enc
+	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/docker_token.txt config/docker_token.txt.enc
+	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/google_api_key.txt config/google_api_key.txt.enc
+	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/domain_service_credentials.json config/domain_service_credentials.json.enc
+	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/spotify_credentials.json config/spotify_credentials.json.enc
 
-decrypt-secrets: create-vault-pass
-	cp config/*.enc secrets/
-	ansible-vault decrypt --vault-password-file=secrets/vault_password.txt secrets/*.enc
-
-	mv -f secrets/client_secret.json.enc secrets/client_secret.json
-	mv -f secrets/client_secret_youtube.json.enc secrets/client_secret_youtube.json
-	mv -f secrets/app_config_production.ini.enc secrets/app_config_production.ini
-	mv -f secrets/docker_token.txt.enc secrets/docker_token.txt
-	mv -f secrets/google_api_key.txt.enc secrets/google_api_key.txt
-	mv -f secrets/domain_service_credentials.json.enc secrets/domain_service_credentials.json
-	mv -f secrets/spotify_credentials.json.enc secrets/spotify_credentials.json
+decrypt-secrets: check-password
+	mkdir -p secrets
+	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/client_secret.json.enc secrets/client_secret.json
+	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/client_secret_youtube.json.enc secrets/client_secret_youtube.json
+	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/app_config_production.ini.enc secrets/app_config_production.ini
+	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/docker_token.txt.enc secrets/docker_token.txt
+	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/google_api_key.txt.enc secrets/google_api_key.txt
+	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/domain_service_credentials.json.enc secrets/domain_service_credentials.json
+	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/spotify_credentials.json.enc secrets/spotify_credentials.json
 
 link-config:
 	@if [ "${LINKURATOR_ENVIRONMENT}" = "PRODUCTION" ]; then \
@@ -94,11 +94,6 @@ link-dev-config: decrypt-secrets
 
 link-prod-config: decrypt-secrets
 	ln -sfn app_config_production.ini secrets/app_config.ini
-
-create-vault-pass: check-vault-pass-is-defined
-	@mkdir -p secrets
-	@echo -n $(LINKURATOR_VAULT_PASSWORD) > secrets/vault_password.txt
-	@echo "Vault password stored in secrets/vault_password.txt"
 
 ####################
 # Test
@@ -126,19 +121,19 @@ docker-build:
 	docker rmi -f $(DOCKER_IMAGE)
 	docker build -t $(DOCKER_IMAGE) .
 
-docker-run-api: check-vault-pass-is-defined
+docker-run-api:
 	@docker rm -f $(DOCKER_CONTAINER_API)
 	@docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
 		-e 'LINKURATOR_ENVIRONMENT=$(LINKURATOR_ENVIRONMENT)'\
 		--pull never \
-		--name $(DOCKER_CONTAINER_API) --network host -d $(DOCKER_IMAGE) make run-api
+		--name $(DOCKER_CONTAINER_API) --network host -it $(DOCKER_IMAGE) make run-api
 
-docker-run-processor: check-vault-pass-is-defined
+docker-run-processor:
 	@docker rm -f $(DOCKER_CONTAINER_PROCESSOR)
 	@docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
 		-e 'LINKURATOR_ENVIRONMENT=$(LINKURATOR_ENVIRONMENT)'\
 		--pull never \
-		--name $(DOCKER_CONTAINER_PROCESSOR) --network host -d $(DOCKER_IMAGE) make run-processor
+		--name $(DOCKER_CONTAINER_PROCESSOR) --network host -it $(DOCKER_IMAGE) make run-processor
 
 docker-test: docker-run-external-services
 	docker rm -f $(DOCKER_CONTAINER_TEST)
@@ -179,7 +174,7 @@ provision: check-ssh-connection
 ####################
 # Deploy
 ####################
-deploy: check-vault-pass-is-defined check-ssh-connection
+deploy: check-ssh-connection
 	ssh root@$(SSH_IP_ADDRESS) "docker pull $(DOCKER_IMAGE)"
 	ssh root@$(SSH_IP_ADDRESS) "docker rm -f $(DOCKER_CONTAINER_API) $(DOCKER_CONTAINER_PROCESSOR)"
 	@ssh root@$(SSH_IP_ADDRESS) "docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \

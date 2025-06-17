@@ -11,7 +11,6 @@ The API is currently available at https://api.linkurator.com/docs
 * Python 3.10 with pip and venv
 * Docker
 * Docker Compose
-* Ansible vault password to decrypt some secrets
 
 The requirements can be installed with: 
 ```bash
@@ -26,7 +25,7 @@ make install
 make docker-run-external-services
 ```
 
-2. Get the ansible vault password and store in the secrets folder
+2. Get the encryption key and store it securely
 ```bash
 echo "YOUR_PASSWORD" > secrets/vault_password.txt
 export LINKURATOR_VAULT_PASSWORD=$(cat secrets/vault_password.txt)
@@ -118,7 +117,7 @@ Define the ip of the server to provision and deploy:
 export SSH_IP_ADDRESS=api.linkurator.com
 ```
 
-Define the ansible vault password:
+Define the encryption key:
 ```bash
 export LINKURATOR_VAULT_PASSWORD=$(cat secrets/vault_password.txt)
 ```
