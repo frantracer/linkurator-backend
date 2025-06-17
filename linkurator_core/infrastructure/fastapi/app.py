@@ -253,7 +253,7 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             topic_repository=topic_repository),
         unfollow_topic_handler=UnfollowTopicHandler(
-            user_repository=user_repository ),
+            user_repository=user_repository),
         get_item_handler=GetItemHandler(
             item_repository=item_repository,
             subscription_repository=subscription_repository,

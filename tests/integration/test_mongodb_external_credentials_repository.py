@@ -15,7 +15,6 @@ def fixture_item_repo(db_name: str) -> MongodDBExternalCredentialRepository:
         IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
 
 
-
 @pytest.mark.asyncio()
 async def test_exception_is_raised_if_items_collection_is_not_created() -> None:
     non_existent_db_name = f"test-{uuid4()}"

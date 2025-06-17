@@ -25,5 +25,6 @@ def fixture_db_name() -> str:
     run_mongodb_migrations(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
     return db_name
 
+
 PasswordChangeRequest.valid_domains = ["linkurator-test.com"]
 RegistrationRequest.valid_domains = ["linkurator-test.com"]

@@ -32,6 +32,7 @@ def too_many_requests(message: str) -> HTTPException:
         status_code=http.HTTPStatus.TOO_MANY_REQUESTS,
         detail=message)
 
+
 class EmptyResponse(Response):
     """
     A custom response class that represents an empty response with a 204 No Content status code.

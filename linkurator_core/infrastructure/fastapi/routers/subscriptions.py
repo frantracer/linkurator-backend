@@ -349,7 +349,6 @@ def get_router(  # pylint: disable=too-many-statements
         response.set_cookie(REDIRECT_URI_COOKIE_NAME, redirect_uri or "/")
         return response
 
-
     @router.get("/sync/youtube_auth",
                 status_code=status.HTTP_204_NO_CONTENT)
     async def sync_youtube_auth(

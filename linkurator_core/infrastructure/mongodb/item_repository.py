@@ -261,7 +261,7 @@ class MongoDBItemRepository(ItemRepository):
             interactions = interactions_by_item.get(item["uuid"], [])
             if interactions is not None:
                 add_item = False
-                if criteria.interactions.recommended and InteractionType.RECOMMENDED.value in interactions or criteria.interactions.discouraged and InteractionType.DISCOURAGED.value in interactions or (criteria.interactions.viewed and InteractionType.VIEWED.value in interactions or criteria.interactions.hidden and InteractionType.HIDDEN.value in interactions) or len(interactions) == 0 and criteria.interactions.without_interactions is True:
+                if (criteria.interactions.recommended and InteractionType.RECOMMENDED.value in interactions) or (criteria.interactions.discouraged and InteractionType.DISCOURAGED.value in interactions) or ((criteria.interactions.viewed and InteractionType.VIEWED.value in interactions) or (criteria.interactions.hidden and InteractionType.HIDDEN.value in interactions)) or (len(interactions) == 0 and criteria.interactions.without_interactions is True):
                     add_item = True
 
                 if add_item is True:

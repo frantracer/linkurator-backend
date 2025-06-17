@@ -58,7 +58,6 @@ def get_router(
 
         await delete_item_interaction_handler.handle(session.user_id, item_id, interaction_type)
 
-
     @router.get("/{item_id}",
                 status_code=status.HTTP_200_OK,
                 responses={

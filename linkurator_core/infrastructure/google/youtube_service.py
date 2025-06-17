@@ -157,7 +157,6 @@ class YoutubeService(SubscriptionService):
                                    sub_id=video_id_to_item[v.video_id].subscription_uuid)
                          for v in updated_videos}
 
-
     async def get_subscription_from_url(
             self,
             url: AnyUrl,

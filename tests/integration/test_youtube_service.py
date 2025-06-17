@@ -191,7 +191,7 @@ async def test_youtube_service_returns_subscription_by_channel_url_with_name() -
                              credentials_repository=credentials_repo)
 
     subscription = await service.get_subscription_from_url(
-        url=parse_url("https://www.youtube.com/channel_name") )
+        url=parse_url("https://www.youtube.com/channel_name"))
 
     assert client_mock.get_youtube_channel_from_name.call_count == 1
     assert (client_mock.get_youtube_channel_from_name.call_args_list[0] ==

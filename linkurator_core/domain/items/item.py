@@ -19,6 +19,7 @@ class ItemProvider(str, Enum):
     YOUTUBE = "youtube"
     SPOTIFY = "spotify"
 
+
 @dataclass
 class Item:
     uuid: UUID

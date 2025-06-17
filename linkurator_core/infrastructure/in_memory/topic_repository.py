@@ -28,6 +28,7 @@ class InMemoryTopicRepository(TopicRepository):
 
     async def find_topics_by_name(self, name: str) -> list[Topic]:
         search_terms = unidecode(name.lower()).split(" ")
+
         def search_terms_in_name(terms: list[str], topic_name: str) -> bool:
             return all(term in topic_name for term in terms)
 

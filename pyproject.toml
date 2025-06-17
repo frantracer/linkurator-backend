@@ -32,14 +32,16 @@ exclude = [".venv", "secrets", "config", "docs"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "C90", "I", "N", "D", "UP", "YTT", "ANN", "S", "BLE", "B", "A", "COM", "C4", "DTZ", "EM", "EXE", "FA", "FBT", "ICN", "INP", "PIE", "PT", "Q", "RET", "SIM", "T20", "TID", "ARG", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "RUF"]
 ignore = [
-    "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D212",
+    "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D203", "D212", "PLR6301", "RUF029",
     "ANN101", "ANN102", "ANN401", "PLR0913", "FBT001", "FBT002", "S105", "S106", "FA100", "FA102",
     # The following errors should be taken into consideration
     "SIM117", "PLR2004", "PGH003", "N818", "RUF012", "SIM113", "DTZ003", "DTZ005", "DTZ006", 
-    "PT011", "PT012", "ARG001", "E501", "RUF009", "B027", "D401", "D205", "ANN204", "C901", "PLR0915",
+    "PT011", "PT012", "ARG001", "RUF009", "B027", "D401", "D205", "ANN204", "C901", "PLR0915",
     "B904", "D200", "D400", "D415", "TRY300", "ARG005", "DTZ007", "B008", "DTZ001", "BLE001", "N817",
-    "S314", "TRY401", "S311", "PLR0912", "S101", "PTH123"
+    "S314", "TRY401", "S311", "PLR0912", "S101", "PTH123", "PLR0917", "PLR6104", "PLR6201", "PLW1641",
+    "PLR0914", "SIM103", "S405", "PLC1901", "PLR0916", "PLR1702", "E721", "E501"
 ]
+preview = true
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*" = ["S101"]

@@ -9,6 +9,7 @@ from cryptography.fernet import Fernet
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
+
 def convert_to_fernet_key(key: str | bytes) -> bytes:
     """
     Converts any string or bytes to a Fernet-compatible 32-byte urlsafe base64-encoded key.
@@ -17,6 +18,7 @@ def convert_to_fernet_key(key: str | bytes) -> bytes:
         key = key.encode()
     key32 = hashlib.sha256(key).digest()
     return base64.urlsafe_b64encode(key32)
+
 
 def encrypt_file(key: bytes, input_file: str, output_file: str) -> None:
     f = Fernet(key)
@@ -27,6 +29,7 @@ def encrypt_file(key: bytes, input_file: str, output_file: str) -> None:
         file.write(encrypted)
     logging.info(f"Encrypted {input_file} -> {output_file}")
 
+
 def decrypt_file(key: bytes, input_file: str, output_file: str) -> None:
     f = Fernet(key)
     with open(input_file, "rb") as file:
@@ -35,6 +38,7 @@ def decrypt_file(key: bytes, input_file: str, output_file: str) -> None:
     with open(output_file, "wb") as file:
         file.write(decrypted)
     logging.info(f"Decrypted {input_file} -> {output_file}")
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Encrypt or decrypt files using Fernet symmetric encryption.")
@@ -59,6 +63,7 @@ def main() -> None:
         encrypt_file(convert_to_fernet_key(key), args.input_file, args.output_file)
     elif args.command == "decrypt":
         decrypt_file(convert_to_fernet_key(key), args.input_file, args.output_file)
+
 
 if __name__ == "__main__":
     main()

@@ -46,7 +46,6 @@ class Event(abc.ABC, BaseModel):
         return class_(**event_data)
 
 
-
 class SubscriptionItemsBecameOutdatedEvent(Event):
     subscription_id: UUID
 
@@ -69,6 +68,7 @@ class SubscriptionBecameOutdatedEvent(Event):
             created_at=datetime.utcnow(),
             subscription_id=subscription_id,
         )
+
 
 class ItemsBecameOutdatedEvent(Event):
     item_ids: set[UUID]

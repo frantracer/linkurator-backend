@@ -60,7 +60,6 @@ def get_router(
 
         return EmptyResponse()
 
-
     @router.delete("/{credential_id}",
                    responses={
                        status.HTTP_401_UNAUTHORIZED: {"model": None},
