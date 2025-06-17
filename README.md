@@ -8,7 +8,7 @@ The API is currently available at https://api.linkurator.com/docs
 
 ## Requirements
 
-* Python 3.10 with pip and venv
+* Python 3.13 with pip and venv
 * Docker
 * Docker Compose
 

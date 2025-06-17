@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID
 
@@ -34,7 +34,7 @@ class ItemFilterCriteria:
     interactions_from_user: UUID | None = None
     min_duration: int | None = None
     max_duration: int | None = None
-    interactions: AnyItemInteraction = AnyItemInteraction()
+    interactions: AnyItemInteraction = field(default_factory=AnyItemInteraction)
 
 
 @dataclass

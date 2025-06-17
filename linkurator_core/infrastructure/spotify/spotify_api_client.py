@@ -85,8 +85,8 @@ class SpotifyApiClient:
         params = {
             "q": query,
             "type": "show",
-            "limit": 5,
-            "offset": 0,
+            "limit": "5",
+            "offset": "0",
             "market": "ES",
         }
 
