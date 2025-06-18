@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from linkurator_core.domain.common.exceptions import CredentialsAlreadyExistsError, InvalidCredentialsError
@@ -20,8 +20,8 @@ class AddExternalCredentialsHandler:
             user_id=user_uuid,
             credential_type=credential_type,
             credential_value=credential_value,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
 
         credential = await self.credentials_repository.get_by_value_and_type(credential_type, credential_value)

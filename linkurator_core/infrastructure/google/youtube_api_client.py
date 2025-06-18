@@ -86,13 +86,13 @@ class YoutubeVideo:
 
     @staticmethod
     def from_dict(video: dict[str, Any]) -> YoutubeVideo:
-        published_at = datetime.strptime(video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ")
+        published_at = datetime.strptime(video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
 
         return YoutubeVideo(
             title=video["snippet"]["title"],
             description=video["snippet"]["description"],
             video_id=video["id"],
-            published_at=published_at.replace(tzinfo=timezone.utc),
+            published_at=published_at,
             thumbnail_url=video["snippet"]["thumbnails"]["medium"]["url"],
             url=f'https://www.youtube.com/watch?v={video["id"]}',
             channel_id=video["snippet"]["channelId"],

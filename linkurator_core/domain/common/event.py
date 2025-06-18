@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import importlib
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -53,7 +53,7 @@ class SubscriptionItemsBecameOutdatedEvent(Event):
     def new(cls, subscription_id: UUID) -> SubscriptionItemsBecameOutdatedEvent:
         return cls(
             id=uuid4(),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             subscription_id=subscription_id,
         )
 
@@ -65,7 +65,7 @@ class SubscriptionBecameOutdatedEvent(Event):
     def new(cls, subscription_id: UUID) -> SubscriptionBecameOutdatedEvent:
         return cls(
             id=uuid4(),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             subscription_id=subscription_id,
         )
 
@@ -82,7 +82,7 @@ class ItemsBecameOutdatedEvent(Event):
     def new(cls, item_ids: set[UUID]) -> ItemsBecameOutdatedEvent:
         return cls(
             id=uuid4(),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             item_ids=item_ids,
         )
 
@@ -94,7 +94,7 @@ class UserRegisterRequestSentEvent(Event):
     def new(cls, request_uuid: UUID) -> UserRegisterRequestSentEvent:
         return cls(
             id=uuid4(),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             request_uuid=request_uuid,
         )
 
@@ -106,6 +106,6 @@ class UserRegisteredEvent(Event):
     def new(cls, user_id: UUID) -> UserRegisteredEvent:
         return cls(
             id=uuid4(),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             user_id=user_id,
         )

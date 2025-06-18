@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock
 from uuid import UUID
 
@@ -64,8 +64,8 @@ async def test_add_existing_external_credentials_raises_exception() -> None:
         user_id=UUID("2261cc75-e64d-4c7f-b5dd-b42b70e3f583"),
         credential_type=ExternalServiceType.YOUTUBE_API_KEY,
         credential_value="test-api-key",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
     credentials_repository.get_by_value_and_type.return_value = existing_credential
 

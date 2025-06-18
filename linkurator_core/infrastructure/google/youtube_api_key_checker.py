@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from linkurator_core.domain.users.external_credentials_checker_service import ExternalCredentialsCheckerService
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
@@ -17,7 +17,7 @@ class YoutubeApiKeyChecker(ExternalCredentialsCheckerService):
             videos = await client.get_youtube_videos_from_playlist(
                 api_key=credential.credential_value,
                 playlist_id="UUYVFW8d1p41UM-ZGzzYYB2w",
-                from_date=datetime(2020, 1, 1),
+                from_date=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
             )
             if len(videos) >= 0:
                 return True

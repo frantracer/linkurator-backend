@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock
 
 import pytest
@@ -16,7 +16,7 @@ async def test_publish_and_subscribe() -> None:
     event_bus.subscribe(SubscriptionItemsBecameOutdatedEvent, dummy_function)
     event = SubscriptionItemsBecameOutdatedEvent(
         id=uuid.uuid4(),
-        created_at=datetime.now(),
+        created_at=datetime.now(timezone.utc),
         subscription_id=uuid.uuid4())
 
     results = await run_parallel(

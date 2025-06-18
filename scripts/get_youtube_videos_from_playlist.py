@@ -1,6 +1,6 @@
 import argparse
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
@@ -10,7 +10,7 @@ async def main() -> None:
     args = argparse.ArgumentParser()
     args.add_argument("--playlist-id", required=True, help="Playlist ID of the youtube channel main playlist")
     args.add_argument("--from-date", required=True, help="From date in format YYYY-MM-DD:HH:MM:SSZ",
-                      type=lambda s: datetime.strptime(s, "%Y-%m-%d:%H:%M:%S"))
+                      type=lambda s: datetime.strptime(s, "%Y-%m-%d:%H:%M:%S").replace(tzinfo=timezone.utc))
     parsed_args = args.parse_args()
     playlist_id = parsed_args.playlist_id
     from_date = parsed_args.from_date

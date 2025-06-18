@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from ipaddress import IPv4Address
 from typing import Any
 from uuid import UUID
@@ -196,7 +196,7 @@ class MongoDBItemRepository(ItemRepository):
         collection = self._item_collection()
         await collection.update_one(
             {"uuid": item_id},
-            {"$set": {"deleted_at": datetime.utcnow()}},
+            {"$set": {"deleted_at": datetime.now(timezone.utc)}},
         )
 
     async def find_items(self, criteria: ItemFilterCriteria, page_number: int, limit: int) -> list[Item]:
@@ -273,7 +273,7 @@ class MongoDBItemRepository(ItemRepository):
         collection = self._item_collection()
         await collection.update_many(
             {},
-            {"$set": {"deleted_at": datetime.utcnow()}},
+            {"$set": {"deleted_at": datetime.now(timezone.utc)}},
         )
 
     async def add_interaction(self, interaction: Interaction) -> None:

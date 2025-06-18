@@ -61,7 +61,7 @@ class Item:
             thumbnail=thumbnail,
             created_at=now,
             updated_at=now,
-            published_at=published_at.astimezone(timezone.utc),
+            published_at=published_at,
             version=version,
             provider=provider,
             deleted_at=deleted_at)
