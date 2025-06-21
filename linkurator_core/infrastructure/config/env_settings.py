@@ -18,3 +18,7 @@ class EnvSettings(BaseModel):
     VALID_DOMAINS: list[str] = os.getenv('LINKURATOR_VALID_DOMAINS', DEFAULT_DOMAINS).split(",")
 
     GOOGLE_SERVICE_ACCOUNT_EMAIL: str = os.getenv("LINKURATOR_GOOGLE_SERVICE_ACCOUNT_EMAIL", "admin@linkurator.com")
+
+    OPENAI_API_KEY: str = os.getenv("LINKURATOR_OPENAI_API_KEY", "")
+
+    LOGFIRE_TOKEN: str = os.getenv("LINKURATOR_LOGFIRE_TOKEN", "")

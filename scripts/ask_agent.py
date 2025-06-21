@@ -1,0 +1,40 @@
+import asyncio
+from uuid import UUID
+
+import logfire
+
+from linkurator_core.infrastructure.ai_agents.PydanticAIAgent import SupportDependencies, create_agent
+from linkurator_core.infrastructure.config.env_settings import EnvSettings
+from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
+from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
+from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
+
+
+async def main() -> None:
+    env_settings = EnvSettings()
+    db_settings = MongoDBSettings()
+
+    logfire.configure(token=env_settings.LOGFIRE_TOKEN, scrubbing=False)
+
+    # Repositories
+    user_repository = MongoDBUserRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password,
+    )
+    subscription_repository = MongoDBSubscriptionRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password,
+    )
+
+    deps = SupportDependencies(
+        user_uuid=UUID('97fda3e1-8f3d-4068-a6a6-5583c1d9e220'),
+        user_repository=user_repository,
+        subscription_repository=subscription_repository,
+    )
+    support_agent = create_agent(env_settings.OPENAI_API_KEY)
+    result = await support_agent.run('Group my subscriptions into topics', deps=deps)
+    print(result.output)
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
