@@ -15,6 +15,7 @@ from linkurator_core.application.topics.assign_subscription_to_user_topic_handle
 )
 from linkurator_core.application.topics.create_topic_handler import CreateTopicHandler
 from linkurator_core.application.topics.delete_user_topic_handler import DeleteUserTopicHandler
+from linkurator_core.application.topics.favorite_topic_handler import FavoriteTopicHandler
 from linkurator_core.application.topics.find_topics_by_name_handler import FindTopicsByNameHandler
 from linkurator_core.application.topics.follow_topic_handler import FollowTopicHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler
@@ -22,6 +23,7 @@ from linkurator_core.application.topics.get_user_topics_handler import GetUserTo
 from linkurator_core.application.topics.unassign_subscription_from_user_topic_handler import (
     UnassignSubscriptionFromUserTopicHandler,
 )
+from linkurator_core.application.topics.unfavorite_topic_handler import UnfavoriteTopicHandler
 from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
@@ -50,6 +52,8 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         update_user_topic_handler: UpdateTopicHandler,
         follow_topic_handler: FollowTopicHandler,
         unfollow_topic_handler: UnfollowTopicHandler,
+        favorite_topic_handler: FavoriteTopicHandler,
+        unfavorite_topic_handler: UnfavoriteTopicHandler,
 ) -> APIRouter:
     """Get the router for the topics."""
     router = APIRouter()
@@ -379,6 +383,45 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
             raise default_responses.not_authenticated()
 
         await unfollow_topic_handler.handle(user_id=session.user_id, topic_id=topic_id)
+
+        return EmptyResponse()
+
+    @router.post("/{topic_id}/favorite",
+                 status_code=status.HTTP_201_CREATED,
+                 response_class=Response,
+                 responses={
+                     status.HTTP_401_UNAUTHORIZED: {"model": None},
+                     status.HTTP_404_NOT_FOUND: {"model": None},
+                 })
+    async def favorite_topic(
+            topic_id: UUID,
+            session: Session | None = Depends(get_session),
+    ) -> None:
+        """Favorite a topic."""
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        try:
+            await favorite_topic_handler.handle(user_id=session.user_id, topic_id=topic_id)
+        except TopicNotFoundError as error:
+            msg = "Topic not found"
+            raise default_responses.not_found(msg) from error
+
+    @router.delete("/{topic_id}/favorite",
+                   status_code=status.HTTP_204_NO_CONTENT,
+                   response_class=Response,
+                   responses={
+                       status.HTTP_401_UNAUTHORIZED: {"model": None},
+                   })
+    async def unfavorite_topic(
+            topic_id: UUID,
+            session: Session | None = Depends(get_session),
+    ) -> EmptyResponse:
+        """Unfavorite a topic."""
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        await unfavorite_topic_handler.handle(user_id=session.user_id, topic_id=topic_id)
 
         return EmptyResponse()
 

@@ -5,7 +5,7 @@ from datetime import datetime
 from uuid import UUID
 
 from linkurator_core.domain.users.user import User, Username
-from linkurator_core.domain.users.user_repository import UserRepository
+from linkurator_core.domain.users.user_repository import EmailAlreadyInUse, UserRepository
 
 
 class InMemoryUserRepository(UserRepository):
@@ -14,6 +14,10 @@ class InMemoryUserRepository(UserRepository):
         self.users: dict[UUID, User] = {}
 
     async def add(self, user: User) -> None:
+        # Check for email uniqueness
+        for existing_user in self.users.values():
+            if existing_user.email == user.email:
+                raise EmailAlreadyInUse()
         self.users[user.uuid] = user
 
     async def get(self, user_id: UUID) -> User | None:

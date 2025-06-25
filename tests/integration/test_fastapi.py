@@ -86,6 +86,8 @@ def dummy_handlers() -> Handlers:
         delete_external_credential_handler=AsyncMock(),
         follow_topic_handler=AsyncMock(),
         unfollow_topic_handler=AsyncMock(),
+        favorite_topic_handler=AsyncMock(),
+        unfavorite_topic_handler=AsyncMock(),
         get_platform_statistics=AsyncMock(),
         update_user_subscriptions_handler=AsyncMock(),
     )
@@ -117,6 +119,7 @@ def test_user_profile_returns_200(handlers: Handlers) -> None:
         _youtube_subscriptions_uuids=set(),
         _unfollowed_youtube_subscriptions_uuids=set(),
         _followed_topics=set(),
+        _favorite_topics=set(),
         google_refresh_token="refresh token",
         is_admin=False,
         curators=set(),
@@ -576,3 +579,43 @@ def test_unfollow_assigned_subscription_returns_403(handlers: Handlers) -> None:
 
     response = client.delete("/subscriptions/362a9ddb-1838-419e-acef-0159b0f27e2b/follow")
     assert response.status_code == 403
+
+
+def test_favorite_topic_returns_201(handlers: Handlers) -> None:
+    client = TestClient(create_app_from_handlers(handlers), cookies={"token": "token"})
+
+    response = client.post("/topics/f22b92da-5b90-455f-8141-fb4a37f07805/favorite")
+    assert response.status_code == 201
+    assert response.content == b""
+
+
+def test_favorite_non_existing_topic_returns_404(handlers: Handlers) -> None:
+    dummy_handler = AsyncMock()
+    dummy_handler.handle.side_effect = TopicNotFoundError
+    handlers.favorite_topic_handler = dummy_handler
+    client = TestClient(create_app_from_handlers(handlers), cookies={"token": "token"})
+
+    response = client.post("/topics/f22b92da-5b90-455f-8141-fb4a37f07805/favorite")
+    assert response.status_code == 404
+
+
+def test_favorite_topic_without_authentication_returns_401(handlers: Handlers) -> None:
+    client = TestClient(create_app_from_handlers(handlers))
+
+    response = client.post("/topics/f22b92da-5b90-455f-8141-fb4a37f07805/favorite")
+    assert response.status_code == 401
+
+
+def test_unfavorite_topic_returns_204(handlers: Handlers) -> None:
+    client = TestClient(create_app_from_handlers(handlers), cookies={"token": "token"})
+
+    response = client.delete("/topics/f22b92da-5b90-455f-8141-fb4a37f07805/favorite")
+    assert response.status_code == 204
+    assert response.content == b""
+
+
+def test_unfavorite_topic_without_authentication_returns_401(handlers: Handlers) -> None:
+    client = TestClient(create_app_from_handlers(handlers))
+
+    response = client.delete("/topics/f22b92da-5b90-455f-8141-fb4a37f07805/favorite")
+    assert response.status_code == 401

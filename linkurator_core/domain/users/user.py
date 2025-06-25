@@ -74,6 +74,7 @@ class User:
     _unfollowed_youtube_subscriptions_uuids: set[UUID]
     _subscription_uuids: set[UUID]
     _followed_topics: set[UUID]
+    _favorite_topics: set[UUID]
     is_admin: bool
     curators: set[UUID]
 
@@ -91,6 +92,7 @@ class User:
             is_admin: bool = False,
             curators: set[UUID] | None = None,
             followed_topics: set[UUID] | None = None,
+            favorite_topics: set[UUID] | None = None,
             ) -> User:
         now = datetime.now(timezone.utc)
         return cls(
@@ -110,6 +112,7 @@ class User:
             _subscription_uuids=set() if subscription_uuids is None else subscription_uuids,
             _unfollowed_youtube_subscriptions_uuids=set(),
             _followed_topics=set() if followed_topics is None else followed_topics,
+            _favorite_topics=set() if favorite_topics is None else favorite_topics,
             is_admin=is_admin,
             curators=set() if curators is None else curators,
             password_hash=None,
@@ -124,6 +127,16 @@ class User:
 
     def get_followed_topics(self) -> set[UUID]:
         return self._followed_topics
+
+    def favorite_topic(self, topic_id: UUID) -> None:
+        self._favorite_topics.add(topic_id)
+
+    def unfavorite_topic(self, topic_id: UUID) -> None:
+        if topic_id in self._favorite_topics:
+            self._favorite_topics.remove(topic_id)
+
+    def get_favorite_topics(self) -> set[UUID]:
+        return self._favorite_topics
 
     def follow_curator(self, curator_id: UUID) -> None:
         self.curators.add(curator_id)

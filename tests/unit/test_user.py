@@ -86,3 +86,49 @@ def test_user_is_not_active() -> None:
     user.last_login_at = User.time_since_last_active() - timedelta(minutes=1)
 
     assert not user.is_active()
+
+
+def test_user_can_favorite_and_unfavorite_topic() -> None:
+    user = mock_user()
+
+    topic_id = UUID("7660c244-fc8b-49c6-8bdc-97d6b4e05af1")
+    user.favorite_topic(topic_id=topic_id)
+    assert user.get_favorite_topics() == {topic_id}
+
+    user.unfavorite_topic(topic_id=topic_id)
+    assert user.get_favorite_topics() == set()
+
+
+def test_user_can_favorite_topic_twice() -> None:
+    user = mock_user()
+
+    topic_id = UUID("efa69101-9502-4496-a105-7128a3ccdeba")
+    user.favorite_topic(topic_id=topic_id)
+    user.favorite_topic(topic_id=topic_id)
+
+    assert user.get_favorite_topics() == {topic_id}
+
+
+def test_user_can_unfavorite_topic_twice() -> None:
+    user = mock_user()
+
+    topic_id = UUID("757faf19-ef3c-4e98-bde2-920f98c6198d")
+    user.unfavorite_topic(topic_id=topic_id)
+    user.unfavorite_topic(topic_id=topic_id)
+
+    assert user.get_favorite_topics() == set()
+
+
+def test_user_can_favorite_multiple_topics() -> None:
+    user = mock_user()
+
+    topic_id_1 = UUID("7660c244-fc8b-49c6-8bdc-97d6b4e05af1")
+    topic_id_2 = UUID("efa69101-9502-4496-a105-7128a3ccdeba")
+
+    user.favorite_topic(topic_id=topic_id_1)
+    user.favorite_topic(topic_id=topic_id_2)
+
+    assert user.get_favorite_topics() == {topic_id_1, topic_id_2}
+
+    user.unfavorite_topic(topic_id=topic_id_1)
+    assert user.get_favorite_topics() == {topic_id_2}

@@ -34,6 +34,7 @@ class TopicSchema(BaseModel):
     subscriptions_ids: list[UUID]
     is_owner: bool
     followed: bool
+    is_favorite: bool
     created_at: Iso8601Datetime
     curator: CuratorSchema
 
@@ -47,6 +48,7 @@ class TopicSchema(BaseModel):
 
         is_owner = False if user is None else user.uuid == topic.user_id
         followed = False if user is None else topic.uuid in user.get_followed_topics()
+        is_favorite = False if user is None else topic.uuid in user.get_favorite_topics()
         curator_followed = False if user is None else topic.user_id in user.curators
 
         return cls(
@@ -56,6 +58,7 @@ class TopicSchema(BaseModel):
             subscriptions_ids=topic.subscriptions_ids,
             is_owner=is_owner,
             followed=followed,
+            is_favorite=is_favorite,
             created_at=topic.created_at,
             curator=CuratorSchema.from_domain_user(curator, curator_followed),
         )

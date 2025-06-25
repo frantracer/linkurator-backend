@@ -2,21 +2,26 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from ipaddress import IPv4Address
 from math import floor
+from typing import Any
 from unittest import mock
 from unittest.mock import AsyncMock
 
 import pytest
 
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.user import User, Username
-from linkurator_core.domain.users.user_repository import EmailAlreadyInUse
+from linkurator_core.domain.users.user_repository import EmailAlreadyInUse, UserRepository
+from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUser, MongoDBUserRepository
 
 
-@pytest.fixture(name="user_repo", scope="session")
-def fixture_user_repo(db_name: str) -> MongoDBUserRepository:
-    return MongoDBUserRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
+@pytest.fixture(name="user_repo", scope="session", params=["mongodb", "in_memory"])
+def fixture_user_repo(db_name: str, request: Any) -> UserRepository:
+    if request.param == "mongodb":
+        return MongoDBUserRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
+    return InMemoryUserRepository()
 
 
 @pytest.mark.asyncio()
@@ -28,7 +33,7 @@ async def test_exception_is_raised_if_users_collection_is_not_created() -> None:
 
 
 @pytest.mark.asyncio()
-async def test_add_user_to_mongodb(user_repo: MongoDBUserRepository) -> None:
+async def test_add_user_to_mongodb(user_repo: UserRepository) -> None:
     user = User.new(
         first_name="test",
         last_name="test",
@@ -65,14 +70,17 @@ async def test_add_user_to_mongodb(user_repo: MongoDBUserRepository) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_get_user_that_does_not_exist(user_repo: MongoDBUserRepository) -> None:
+async def test_get_user_that_does_not_exist(user_repo: UserRepository) -> None:
     the_user = await user_repo.get(uuid.UUID("c04c2880-6376-4fe1-a0bf-eac1ae0801ad"))
 
     assert the_user is None
 
 
 @pytest.mark.asyncio()
-async def test_get_user_with_invalid_format_raises_an_exception(user_repo: MongoDBUserRepository) -> None:
+async def test_get_user_with_invalid_format_raises_an_exception(user_repo: UserRepository) -> None:
+    # This test is MongoDB-specific as it tests MongoDB document format validation
+    if isinstance(user_repo, InMemoryUserRepository):
+        pytest.skip("Test specific to MongoDB implementation")
     user_dict = MongoDBUser(uuid=uuid.UUID("449e3bee-6f9b-4cbc-8a09-64a6fcface96"),
                             first_name="test",
                             last_name="test",
@@ -94,7 +102,7 @@ async def test_get_user_with_invalid_format_raises_an_exception(user_repo: Mongo
 
 
 @pytest.mark.asyncio()
-async def test_delete_user(user_repo: MongoDBUserRepository) -> None:
+async def test_delete_user(user_repo: UserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
                     username=Username("test_1"),
@@ -114,7 +122,7 @@ async def test_delete_user(user_repo: MongoDBUserRepository) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_update_user(user_repo: MongoDBUserRepository) -> None:
+async def test_update_user(user_repo: UserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
                     username=Username("update_1"),
@@ -136,7 +144,7 @@ async def test_update_user(user_repo: MongoDBUserRepository) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_get_user_by_email(user_repo: MongoDBUserRepository) -> None:
+async def test_get_user_by_email(user_repo: UserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
                     username=Username("sample_1"),
@@ -154,7 +162,7 @@ async def test_get_user_by_email(user_repo: MongoDBUserRepository) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_the_email_is_unique(user_repo: MongoDBUserRepository) -> None:
+async def test_the_email_is_unique(user_repo: UserRepository) -> None:
     user_1 = User.new(
         first_name="test",
         last_name="test",
@@ -181,7 +189,7 @@ async def test_the_email_is_unique(user_repo: MongoDBUserRepository) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_find_latest_scan(user_repo: MongoDBUserRepository) -> None:
+async def test_find_latest_scan(user_repo: UserRepository) -> None:
     user1 = User.new(first_name="test",
                      last_name="test",
                      username=Username("c2d73a23"),
@@ -214,7 +222,7 @@ async def test_find_latest_scan(user_repo: MongoDBUserRepository) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_find_users_by_subscription(user_repo: MongoDBUserRepository) -> None:
+async def test_find_users_by_subscription(user_repo: UserRepository) -> None:
     user1 = User.new(first_name="test",
                      last_name="test",
                      username=Username("9cca4ef4"),
@@ -245,7 +253,7 @@ async def test_find_users_by_subscription(user_repo: MongoDBUserRepository) -> N
 
 
 @pytest.mark.asyncio()
-async def test_find_users_by_subscription_empty(user_repo: MongoDBUserRepository) -> None:
+async def test_find_users_by_subscription_empty(user_repo: UserRepository) -> None:
     user = User.new(first_name="test",
                     last_name="test",
                     username=Username("cb7b18dc"),
@@ -264,7 +272,7 @@ async def test_find_users_by_subscription_empty(user_repo: MongoDBUserRepository
 
 
 @pytest.mark.asyncio()
-async def test_get_user_by_username(user_repo: MongoDBUserRepository) -> None:
+async def test_get_user_by_username(user_repo: UserRepository) -> None:
     user1 = User.new(first_name="test",
                      last_name="test",
                      username=Username("eeff7d5b"),
@@ -294,12 +302,12 @@ async def test_get_user_by_username(user_repo: MongoDBUserRepository) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_get_non_existing_username(user_repo: MongoDBUserRepository) -> None:
+async def test_get_non_existing_username(user_repo: UserRepository) -> None:
     assert await user_repo.get_by_username(Username("non_existent")) is None
 
 
 @pytest.mark.asyncio()
-async def test_count_registered_and_active_users(user_repo: MongoDBUserRepository) -> None:
+async def test_count_registered_and_active_users(user_repo: UserRepository) -> None:
     user1 = User.new(first_name="test",
                      last_name="test",
                      username=Username("cc74dcf5"),
@@ -329,3 +337,95 @@ async def test_count_registered_and_active_users(user_repo: MongoDBUserRepositor
 
     assert await user_repo.count_registered_users() == 2
     assert await user_repo.count_active_users() == 1
+
+
+@pytest.mark.asyncio()
+async def test_add_user_with_favorite_topics(user_repo: UserRepository) -> None:
+    topic_id_1 = uuid.UUID("f1e2d3c4-b5a6-9877-8899-aabbccddeeff")
+    topic_id_2 = uuid.UUID("a1b2c3d4-e5f6-7890-1234-567890abcdef")
+
+    user = mock_user(
+        uuid=uuid.UUID("12345678-1234-5678-9abc-123456789abc"),
+        email="favorite_test@test.com",
+    )
+    user.favorite_topic(topic_id_1)
+    user.favorite_topic(topic_id_2)
+
+    await user_repo.add(user)
+    retrieved_user = await user_repo.get(user.uuid)
+
+    assert retrieved_user is not None
+    assert retrieved_user.get_favorite_topics() == {topic_id_1, topic_id_2}
+
+
+@pytest.mark.asyncio()
+async def test_update_user_favorite_topics(user_repo: UserRepository) -> None:
+    topic_id_1 = uuid.UUID("f1e2d3c4-b5a6-9877-8899-aabbccddeeff")
+    topic_id_2 = uuid.UUID("a1b2c3d4-e5f6-7890-1234-567890abcdef")
+    topic_id_3 = uuid.UUID("11111111-2222-3333-4444-555555555555")
+
+    user = mock_user(
+        uuid=uuid.UUID("87654321-4321-8765-cba9-987654321098"),
+        email="update_favorite_test@test.com",
+    )
+
+    # Add user with no favorite topics
+    await user_repo.add(user)
+    retrieved_user = await user_repo.get(user.uuid)
+    assert retrieved_user is not None
+    assert retrieved_user.get_favorite_topics() == set()
+
+    # Add favorite topics
+    user.favorite_topic(topic_id_1)
+    user.favorite_topic(topic_id_2)
+    await user_repo.update(user)
+
+    updated_user = await user_repo.get(user.uuid)
+    assert updated_user is not None
+    assert updated_user.get_favorite_topics() == {topic_id_1, topic_id_2}
+
+    # Remove one favorite and add another
+    user.unfavorite_topic(topic_id_1)
+    user.favorite_topic(topic_id_3)
+    await user_repo.update(user)
+
+    final_user = await user_repo.get(user.uuid)
+    assert final_user is not None
+    assert final_user.get_favorite_topics() == {topic_id_2, topic_id_3}
+
+
+@pytest.mark.asyncio()
+async def test_user_favorite_topics_empty_by_default(user_repo: UserRepository) -> None:
+    user = mock_user(
+        uuid=uuid.UUID("99999999-9999-9999-9999-999999999999"),
+        email="empty_favorites_test@test.com",
+    )
+
+    await user_repo.add(user)
+    retrieved_user = await user_repo.get(user.uuid)
+
+    assert retrieved_user is not None
+    assert retrieved_user.get_favorite_topics() == set()
+
+
+@pytest.mark.asyncio()
+async def test_user_favorite_topics_persistence_through_updates(user_repo: UserRepository) -> None:
+    topic_id = uuid.UUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+
+    user = mock_user(
+        uuid=uuid.UUID("eeeeeeee-dddd-cccc-bbbb-aaaaaaaaaaaa"),
+        email="persistence_test@test.com",
+    )
+    user.favorite_topic(topic_id)
+
+    await user_repo.add(user)
+
+    # Update unrelated field
+    user.first_name = "updated_name"
+    await user_repo.update(user)
+
+    # Verify favorite topics are still preserved
+    updated_user = await user_repo.get(user.uuid)
+    assert updated_user is not None
+    assert updated_user.first_name == "updated_name"
+    assert updated_user.get_favorite_topics() == {topic_id}
