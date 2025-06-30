@@ -64,7 +64,6 @@ encrypt-secrets: check-password
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/client_secret.json config/client_secret.json.enc
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/client_secret_youtube.json config/client_secret_youtube.json.enc
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/app_config_production.ini config/app_config_production.ini.enc
-	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/docker_token.txt config/docker_token.txt.enc
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/google_api_key.txt config/google_api_key.txt.enc
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/domain_service_credentials.json config/domain_service_credentials.json.enc
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/spotify_credentials.json config/spotify_credentials.json.enc
@@ -74,7 +73,6 @@ decrypt-secrets: check-password
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/client_secret.json.enc secrets/client_secret.json
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/client_secret_youtube.json.enc secrets/client_secret_youtube.json
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/app_config_production.ini.enc secrets/app_config_production.ini
-	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/docker_token.txt.enc secrets/docker_token.txt
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/google_api_key.txt.enc secrets/google_api_key.txt
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/domain_service_credentials.json.enc secrets/domain_service_credentials.json
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/spotify_credentials.json.enc secrets/spotify_credentials.json
@@ -149,8 +147,14 @@ docker-run-external-services:
 docker-stop:
 	docker stop $(DOCKER_CONTAINER_API) $(DOCKER_CONTAINER_PROCESSOR)
 
-docker-push: decrypt-secrets
-	@docker login -u frantracer -p $(shell cat ./secrets/docker_token.txt)
+check-docker-token:
+	@if [ -z "${LINKURATOR_DOCKER_TOKEN}" ]; then \
+		echo "LINKURATOR_DOCKER_TOKEN environment variable is not set"; \
+		exit 1; \
+	fi
+
+docker-push: check-docker-token
+	@docker login -u frantracer -p ${LINKURATOR_DOCKER_TOKEN}
 	docker push $(DOCKER_IMAGE)
 
 ####################
