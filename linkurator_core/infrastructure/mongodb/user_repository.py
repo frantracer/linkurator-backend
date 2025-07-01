@@ -209,3 +209,9 @@ class MongoDBUserRepository(UserRepository):
     async def count_active_users(self) -> int:
         logged_after = User.time_since_last_active()
         return await self._collection().count_documents({"last_login_at": {"$gt": logged_after}})
+
+    async def search_by_username(self, username_part: str) -> list[User]:
+        users = await self._collection().find(
+            {"username": {"$regex": username_part, "$options": "i"}},
+        ).to_list(length=None)
+        return [MongoDBUser(**user).to_domain_user() for user in users]

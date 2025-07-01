@@ -70,3 +70,10 @@ class InMemoryUserRepository(UserRepository):
     async def count_active_users(self) -> int:
         logged_after = User.time_since_last_active()
         return len([user for user in self.users.values() if user.last_login_at > logged_after])
+
+    async def search_by_username(self, username_part: str) -> list[User]:
+        found_users = []
+        for user in self.users.values():
+            if username_part.lower() in str(user.username).lower():
+                found_users.append(copy(user))
+        return found_users

@@ -46,3 +46,6 @@ class UserRepository(abc.ABC):
 
     @abc.abstractmethod
     async def count_active_users(self) -> int: ...
+
+    @abc.abstractmethod
+    async def search_by_username(self, username_part: str) -> List[User]: ...

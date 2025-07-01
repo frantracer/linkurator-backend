@@ -46,14 +46,35 @@ def get_router(
                     status.HTTP_401_UNAUTHORIZED: {"model": None},
                 })
     async def get_curators(
+            mine: bool = True,
+            username: str | None = None,
             session: Session | None = Depends(get_session),
     ) -> list[CuratorSchema]:
-        if session is None:
-            raise default_responses.not_authenticated()
+        user_curators: set[UUID] = set()
+        current_user_id = None
 
-        curators = await get_curators_handler.handle(session.user_id)
+        if session is not None:
+            user = await get_user_profile_handler.handle(session.user_id)
+            if user is not None:
+                user_curators = user.curators
 
-        return [CuratorSchema.from_domain_user(user=curator, followed=True) for curator in curators]
+        if mine:
+            if session is None:
+                raise default_responses.not_authenticated()
+            current_user_id = session.user_id
+
+        curators = await get_curators_handler.handle(
+            user_id=current_user_id,
+            username=username,
+        )
+
+        return [
+            CuratorSchema.from_domain_user(
+                user=curator,
+                followed=curator.uuid in user_curators,
+            )
+            for curator in curators
+        ]
 
     @router.post("/{curator_id}/follow",
                  responses={

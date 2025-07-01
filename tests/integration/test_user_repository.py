@@ -429,3 +429,138 @@ async def test_user_favorite_topics_persistence_through_updates(user_repo: UserR
     assert updated_user is not None
     assert updated_user.first_name == "updated_name"
     assert updated_user.get_favorite_topics() == {topic_id}
+
+
+@pytest.mark.asyncio()
+async def test_search_by_username_partial_match(user_repo: UserRepository) -> None:
+    await user_repo.delete_all()
+
+    john_doe = mock_user(username=Username("john_doe"))
+    jane_smith = mock_user(username=Username("jane_smith"))
+    johnny_walker = mock_user(username=Username("johnny_walker"))
+    bob_jones = mock_user(username=Username("bob_jones"))
+
+    await user_repo.add(john_doe)
+    await user_repo.add(jane_smith)
+    await user_repo.add(johnny_walker)
+    await user_repo.add(bob_jones)
+
+    result = await user_repo.search_by_username("john")
+
+    assert len(result) == 2
+    result_uuids = {user.uuid for user in result}
+    assert john_doe.uuid in result_uuids
+    assert johnny_walker.uuid in result_uuids
+    assert jane_smith.uuid not in result_uuids
+    assert bob_jones.uuid not in result_uuids
+
+
+@pytest.mark.asyncio()
+async def test_search_by_username_case_insensitive(user_repo: UserRepository) -> None:
+    await user_repo.delete_all()
+
+    john_doe = mock_user(username=Username("john_doe"))
+    jane_smith = mock_user(username=Username("jane_smith"))
+
+    await user_repo.add(john_doe)
+    await user_repo.add(jane_smith)
+
+    result = await user_repo.search_by_username("JOHN")
+
+    assert len(result) == 1
+    result_uuids = {user.uuid for user in result}
+    assert john_doe.uuid in result_uuids
+    assert jane_smith.uuid not in result_uuids
+
+
+@pytest.mark.asyncio()
+async def test_search_by_username_middle_match(user_repo: UserRepository) -> None:
+    await user_repo.delete_all()
+
+    user1 = mock_user(username=Username("alice_bob_charlie"))
+    user2 = mock_user(username=Username("david_edward_frank"))
+    user3 = mock_user(username=Username("bob_is_here"))
+
+    await user_repo.add(user1)
+    await user_repo.add(user2)
+    await user_repo.add(user3)
+
+    result = await user_repo.search_by_username("bob")
+
+    assert len(result) == 2
+    result_uuids = {user.uuid for user in result}
+    assert user1.uuid in result_uuids
+    assert user3.uuid in result_uuids
+    assert user2.uuid not in result_uuids
+
+
+@pytest.mark.asyncio()
+async def test_search_by_username_no_matches(user_repo: UserRepository) -> None:
+    await user_repo.delete_all()
+
+    john_doe = mock_user(username=Username("john_doe"))
+    jane_smith = mock_user(username=Username("jane_smith"))
+
+    await user_repo.add(john_doe)
+    await user_repo.add(jane_smith)
+
+    result = await user_repo.search_by_username("xyz")
+
+    assert len(result) == 0
+
+
+@pytest.mark.asyncio()
+async def test_search_by_username_empty_string(user_repo: UserRepository) -> None:
+    await user_repo.delete_all()
+
+    john_doe = mock_user(username=Username("john_doe"))
+    jane_smith = mock_user(username=Username("jane_smith"))
+
+    await user_repo.add(john_doe)
+    await user_repo.add(jane_smith)
+
+    result = await user_repo.search_by_username("")
+
+    assert len(result) == 2
+    result_uuids = {user.uuid for user in result}
+    assert john_doe.uuid in result_uuids
+    assert jane_smith.uuid in result_uuids
+
+
+@pytest.mark.asyncio()
+async def test_search_by_username_exact_match(user_repo: UserRepository) -> None:
+    await user_repo.delete_all()
+
+    john_doe = mock_user(username=Username("john_doe"))
+    jane_smith = mock_user(username=Username("jane_smith"))
+
+    await user_repo.add(john_doe)
+    await user_repo.add(jane_smith)
+
+    result = await user_repo.search_by_username("john_doe")
+
+    assert len(result) == 1
+    result_uuids = {user.uuid for user in result}
+    assert john_doe.uuid in result_uuids
+    assert jane_smith.uuid not in result_uuids
+
+
+@pytest.mark.asyncio()
+async def test_search_by_username_special_characters(user_repo: UserRepository) -> None:
+    await user_repo.delete_all()
+
+    user1 = mock_user(username=Username("user_with_underscore"))
+    user2 = mock_user(username=Username("user-with-dash"))
+    user3 = mock_user(username=Username("normaluser"))
+
+    await user_repo.add(user1)
+    await user_repo.add(user2)
+    await user_repo.add(user3)
+
+    result = await user_repo.search_by_username("with")
+
+    assert len(result) == 2
+    result_uuids = {user.uuid for user in result}
+    assert user1.uuid in result_uuids
+    assert user2.uuid in result_uuids
+    assert user3.uuid not in result_uuids
