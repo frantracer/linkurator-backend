@@ -6,10 +6,8 @@ import pytest
 from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import (
     AssignSubscriptionToTopicHandler,
 )
-from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError, UserNotFoundError
-from linkurator_core.domain.common.mock_factory import mock_user
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.common.mock_factory import mock_sub, mock_user
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.domain.users.user_repository import UserRepository
@@ -24,14 +22,7 @@ async def test_assign_subscription_to_topic_handler() -> None:
     user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = mock_user(uuid=user_id, subscribed_to=[subscription_id])
     subs_repo_mock = MagicMock()
-    subs_repo_mock.get.return_value = Subscription.new(
-        uuid=subscription_id,
-        name="Subscription 1",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=utils.parse_url("https://example.com"),
-        thumbnail=utils.parse_url("https://example.com/thumbnail.png"),
-        external_data={},
-    )
+    subs_repo_mock.get.return_value = mock_sub(uuid=subscription_id)
     topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = Topic.new(
         uuid=topic_id,
@@ -99,14 +90,7 @@ async def test_assign_subscription_to_topic_handler_user_not_subscribed_to_subsc
     user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = mock_user(uuid=user_id, subscribed_to=[])
     subs_repo_mock = MagicMock()
-    subs_repo_mock.get.return_value = Subscription.new(
-        uuid=subscription_id,
-        name="Subscription 1",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=utils.parse_url("https://example.com"),
-        thumbnail=utils.parse_url("https://example.com/thumbnail.png"),
-        external_data={},
-    )
+    subs_repo_mock.get.return_value = mock_sub(uuid=subscription_id)
     handler = AssignSubscriptionToTopicHandler(
         user_repository=user_repo_mock,
         subscription_repository=subs_repo_mock,
@@ -125,14 +109,7 @@ async def test_assign_subscription_to_topic_handler_topic_not_found_raises_an_er
     user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = mock_user(uuid=user_id, subscribed_to=[subscription_id])
     subs_repo_mock = MagicMock()
-    subs_repo_mock.get.return_value = Subscription.new(
-        uuid=subscription_id,
-        name="Subscription 1",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=utils.parse_url("https://example.com"),
-        thumbnail=utils.parse_url("https://example.com/thumbnail.png"),
-        external_data={},
-    )
+    subs_repo_mock.get.return_value = mock_sub(uuid=subscription_id)
     topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = None
     handler = AssignSubscriptionToTopicHandler(
@@ -153,14 +130,7 @@ async def test_assign_subscription_to_topic_handler_topic_does_not_belong_to_use
     user_repo_mock = AsyncMock(spec=UserRepository)
     user_repo_mock.get.return_value = mock_user(uuid=user_id, subscribed_to=[subscription_id])
     subs_repo_mock = MagicMock()
-    subs_repo_mock.get.return_value = Subscription.new(
-        uuid=subscription_id,
-        name="Subscription 1",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=utils.parse_url("https://example.com"),
-        thumbnail=utils.parse_url("https://example.com/thumbnail.png"),
-        external_data={},
-    )
+    subs_repo_mock.get.return_value = mock_sub(uuid=subscription_id)
     topic_repo_mock = AsyncMock(spec=TopicRepository)
     topic_repo_mock.get.return_value = Topic.new(
         uuid=topic_id,

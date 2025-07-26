@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from uuid import UUID
 
-from pydantic import AnyUrl
+from pydantic import AnyUrl, BaseModel
 
 
 class SubscriptionProvider(str, Enum):
@@ -13,8 +12,7 @@ class SubscriptionProvider(str, Enum):
     SPOTIFY = "spotify"
 
 
-@dataclass
-class Subscription:
+class Subscription(BaseModel):
     uuid: UUID
     name: str
     provider: SubscriptionProvider
@@ -25,10 +23,18 @@ class Subscription:
     updated_at: datetime
     scanned_at: datetime
     last_published_at: datetime
+    description: str
 
     @classmethod
-    def new(cls, uuid: UUID, name: str, provider: SubscriptionProvider, url: AnyUrl, thumbnail: AnyUrl,
-            external_data: dict[str, str] | None = None) -> Subscription:
+    def new(cls,
+            uuid: UUID,
+            name: str,
+            provider: SubscriptionProvider,
+            url: AnyUrl,
+            thumbnail: AnyUrl,
+            description: str,
+            external_data: dict[str, str] | None = None,
+            ) -> Subscription:
         now = datetime.now(tz=timezone.utc)
         return cls(
             uuid=uuid,
@@ -41,4 +47,5 @@ class Subscription:
             updated_at=now,
             scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
             last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
+            description=description,
         )

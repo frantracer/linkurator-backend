@@ -6,9 +6,8 @@ from unittest.mock import MagicMock, call
 import pytest
 
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
-from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import SubscriptionNotFoundError, TopicNotFoundError
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.common.mock_factory import mock_sub
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
@@ -54,14 +53,8 @@ async def test_update_topic_subscriptions() -> None:
     topic_repository.get.return_value = copy(topic)
 
     subscription_repository = MagicMock(spec=SubscriptionRepository)
-    subscription_repository.get = MagicMock(return_value=Subscription.new(
-        uuid=uuid.UUID("e7c9773b-9569-42c1-ab6c-43296756c534"),
-        name="subscription1",
-        provider=SubscriptionProvider.YOUTUBE,
-        thumbnail=utils.parse_url("https://example.com/thumbnail.png"),
-        external_data={},
-        url=utils.parse_url("https://url.com"),
-    ))
+    sub_uuid = uuid.UUID("8cfb4561-6fc5-4cc0-914d-cc91737cb316")
+    subscription_repository.get = MagicMock(return_value=mock_sub(uuid=sub_uuid))
 
     handler = UpdateTopicHandler(
         topic_repository=topic_repository,
@@ -70,19 +63,19 @@ async def test_update_topic_subscriptions() -> None:
     await handler.handle(
         topic_id=topic.uuid,
         name=None,
-        subscriptions_ids=[uuid.UUID("8cfb4561-6fc5-4cc0-914d-cc91737cb316")])
+        subscriptions_ids=[sub_uuid])
 
     assert topic_repository.get.call_count == 1
     assert topic_repository.get.call_args == call(topic.uuid)
     assert topic_repository.update.call_count == 1
 
     assert subscription_repository.get.call_count == 1
-    assert subscription_repository.get.call_args == call(uuid.UUID("8cfb4561-6fc5-4cc0-914d-cc91737cb316"))
+    assert subscription_repository.get.call_args == call(sub_uuid)
 
     updated_topic = topic_repository.update.call_args[0][0]
     assert updated_topic.name == topic.name
     assert updated_topic.updated_at > topic.updated_at
-    assert updated_topic.subscriptions_ids == [uuid.UUID("8cfb4561-6fc5-4cc0-914d-cc91737cb316")]
+    assert updated_topic.subscriptions_ids == [sub_uuid]
 
 
 @pytest.mark.asyncio()

@@ -40,18 +40,29 @@ def mock_user(
     )
 
 
-def mock_sub(uuid: UUID | None = None, name: str = "Test", url: str | None = None,
+def mock_sub(uuid: UUID | None = None,
+             name: str = "Test",
+             url: str | None = None,
              provider: SubscriptionProvider = SubscriptionProvider.YOUTUBE,
+             created_at: datetime | None = None,
+             scanned_at: datetime | None = None,
+             external_data: dict[str, str] | None = None,
              ) -> Subscription:
     uuid = uuid or uuid4()
-    return Subscription.new(
+    sub = Subscription.new(
         uuid=uuid,
         provider=provider,
         name=name,
         url=parse_url(f"https://www.youtube.com/channel/{uuid}") if url is None else parse_url(url),
         thumbnail=parse_url(f"https://www.youtube.com/channel/{uuid}/thumbnail"),
-        external_data={},
+        external_data={} if external_data is None else external_data,
+        description=f"Description for {name}",
     )
+    if created_at is not None:
+        sub.created_at = created_at
+    if scanned_at is not None:
+        sub.scanned_at = scanned_at
+    return sub
 
 
 def mock_topic(

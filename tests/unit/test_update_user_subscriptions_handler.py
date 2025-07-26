@@ -6,9 +6,7 @@ import pytest
 
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.common.exceptions import InvalidCredentialError
-from linkurator_core.domain.common.mock_factory import mock_user
-from linkurator_core.domain.common.utils import parse_url
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.common.mock_factory import mock_sub, mock_user
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.user import User
@@ -20,12 +18,7 @@ from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUse
 @pytest.mark.asyncio()
 async def test_update_user_subscriptions_with_a_subscription_that_is_not_registered() -> None:
     subscription_service = AsyncMock(spec=SubscriptionService)
-    sub1 = Subscription.new(
-        uuid=uuid.UUID("db051fbc-3f2e-47bc-a03a-8a567e4604c9"),
-        name="sub1",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=parse_url("http://url.com"),
-        thumbnail=parse_url("http://thumbnail.com"))
+    sub1 = mock_sub()
     subscription_service.get_subscriptions.return_value = [sub1]
     subscription_repository = InMemorySubscriptionRepository()
 
@@ -50,18 +43,9 @@ async def test_update_user_subscriptions_with_a_subscription_that_is_not_registe
 @pytest.mark.asyncio()
 async def test_update_user_subscription_with_subscription_that_is_already_registered() -> None:
     subscription_service = AsyncMock(spec=SubscriptionService)
-    sub1 = Subscription.new(
-        uuid=uuid.UUID("8c9879ec-35d1-44d5-84c1-ef1939330033"),
-        name="sub1",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=parse_url("http://url.com"),
-        thumbnail=parse_url("http://thumbnail.com"))
-    sub2 = Subscription.new(
-        uuid=uuid.UUID("001db850-7edc-4fab-9e1c-6c148edfafab"),
-        name="sub1",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=parse_url("http://url.com"),
-        thumbnail=parse_url("http://thumbnail.com"))
+    url = "https://www.youtube.com/channel/UC1234567890"
+    sub1 = mock_sub(url=url)
+    sub2 = mock_sub(url=url)
     subscription_service.get_subscriptions.return_value = [sub1]
     subscription_repository = InMemorySubscriptionRepository()
     await subscription_repository.add(sub2)

@@ -38,6 +38,7 @@ class MongoDBSubscription(BaseModel):
     updated_at: datetime
     scanned_at: datetime
     last_published_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
+    description: str = ""
 
     @staticmethod
     def from_domain_subscription(subscription: Subscription) -> MongoDBSubscription:
@@ -52,6 +53,7 @@ class MongoDBSubscription(BaseModel):
             updated_at=subscription.updated_at,
             scanned_at=subscription.scanned_at,
             last_published_at=subscription.last_published_at,
+            description=subscription.description,
         )
 
     def to_domain_subscription(self) -> Subscription:
@@ -66,6 +68,7 @@ class MongoDBSubscription(BaseModel):
             updated_at=self.updated_at,
             scanned_at=self.scanned_at,
             last_published_at=self.last_published_at,
+            description=self.description,
         )
 
 

@@ -37,6 +37,7 @@ def mock_spotify_show(
             ShowImage(url=AnyUrl("https://show.com/image/small.jpg"),
                       height=64, width=64),
         ],
+        description="Un pódcast sobre psicología y bienestar emocional",
     )
 
 

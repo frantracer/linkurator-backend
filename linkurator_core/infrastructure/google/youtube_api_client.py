@@ -67,6 +67,7 @@ class YoutubeChannel:
             },
             url=utils.parse_url(self.url),
             thumbnail=utils.parse_url(self.thumbnail_url),
+            description=self.description,
         )
 
 

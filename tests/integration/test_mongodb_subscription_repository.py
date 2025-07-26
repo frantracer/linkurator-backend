@@ -37,13 +37,7 @@ async def test_exception_is_raised_if_subscriptions_collection_is_not_created() 
 
 @pytest.mark.asyncio()
 async def test_add_subscription(subscription_repo: SubscriptionRepository) -> None:
-    subscription = Subscription.new(
-        name="test",
-        uuid=uuid.UUID("8d9e9e1f-c9b4-4b8f-b8c4-c8f1e7b7d9a1"),
-        url=utils.parse_url("https://test.com"),
-        thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-        external_data=None,
-        provider=SubscriptionProvider.YOUTUBE)
+    subscription = mock_sub()
 
     await subscription_repo.add(subscription)
     the_subscription = await subscription_repo.get(subscription.uuid)
@@ -63,13 +57,7 @@ async def test_add_subscription(subscription_repo: SubscriptionRepository) -> No
 
 @pytest.mark.asyncio()
 async def test_add_subscriptions_stores_any_external_data(subscription_repo: SubscriptionRepository) -> None:
-    subscription = Subscription.new(
-        name="test",
-        uuid=uuid.UUID("31a2ba8e-e3a5-405a-ae41-43eaaab56fdf"),
-        url=utils.parse_url("https://31a2ba8e-e3a5-405a-ae41-43eaaab56fdf.com"),
-        thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-        external_data={"test": "test"},
-        provider=SubscriptionProvider.YOUTUBE)
+    subscription = mock_sub(external_data={"test": "test"})
 
     await subscription_repo.add(subscription)
     the_subscription = await subscription_repo.get(subscription.uuid)
@@ -80,16 +68,9 @@ async def test_add_subscriptions_stores_any_external_data(subscription_repo: Sub
 
 @pytest.mark.asyncio()
 async def test_find_a_subscription_that_already_exist(subscription_repo: SubscriptionRepository) -> None:
-    sub1 = Subscription.new(name="test",
-                            uuid=uuid.UUID("e329b931-9bf0-410f-9789-d48ea4eb816b"),
-                            url=utils.parse_url("https://the-same-url.com"),
-                            thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-                            provider=SubscriptionProvider.YOUTUBE)
-    sub2 = Subscription.new(name="test",
-                            uuid=uuid.UUID("92fd4909-6d56-427a-acc4-3215e56375d0"),
-                            url=utils.parse_url("https://the-same-url.com"),
-                            thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-                            provider=SubscriptionProvider.YOUTUBE)
+    url = "https://the-same-url.com"
+    sub1 = mock_sub(url=url)
+    sub2 = mock_sub(url=url)
 
     await subscription_repo.add(sub1)
     found_subscription = await subscription_repo.find_by_url(sub2.url)
@@ -99,41 +80,18 @@ async def test_find_a_subscription_that_already_exist(subscription_repo: Subscri
 
 @pytest.mark.asyncio()
 async def test_find_a_subscription_that_does_not_exist(subscription_repo: SubscriptionRepository) -> None:
-    sub1 = Subscription.new(name="test",
-                            uuid=uuid.UUID("391f6292-b677-494f-b60d-791e51d22f08"),
-                            url=utils.parse_url("https://391f6292-b677-494f-b60d-791e51d22f08.com"),
-                            thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-                            provider=SubscriptionProvider.YOUTUBE)
-
+    sub1 = mock_sub()
     found_subscription = await subscription_repo.find_by_url(sub1.url)
     assert found_subscription is None
 
 
 @pytest.mark.asyncio()
 async def test_find_subscriptions_scanned_before_a_date(subscription_repo: SubscriptionRepository) -> None:
-    sub1 = Subscription(
-        name="test",
-        uuid=uuid.UUID("2e17788f-0411-4383-a3f6-69c2c1a07901"),
-        url=utils.parse_url("https://2e17788f.com"),
-        thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-        provider=SubscriptionProvider.YOUTUBE,
-        created_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
-        updated_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
+    sub1 = mock_sub(
         scanned_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
-        last_published_at=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
-        external_data={},
     )
-    sub2 = Subscription(
-        name="test",
-        uuid=uuid.UUID("9270daf8-1c06-4566-adfd-ace610c67811"),
-        url=utils.parse_url("https://9270daf8.com"),
-        thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-        provider=SubscriptionProvider.YOUTUBE,
-        created_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        updated_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+    sub2 = mock_sub(
         scanned_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        last_published_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        external_data={},
     )
 
     current_subscriptions = await subscription_repo.find_latest_scan_before(
@@ -148,23 +106,9 @@ async def test_find_subscriptions_scanned_before_a_date(subscription_repo: Subsc
 
 @pytest.mark.asyncio()
 async def test_find_subspcriptions_updated_before_a_date(subscription_repo: SubscriptionRepository) -> None:
-    sub1 = Subscription.new(
-        name="test",
-        uuid=uuid.UUID("ee17d49f-2e7d-4439-b563-7eba54623e5c"),
-        url=utils.parse_url("https://ee17d49f-2e7d-4439-b563-7eba54623e5c.com"),
-        provider=SubscriptionProvider.YOUTUBE,
-        thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-        external_data={},
-    )
+    sub1 = mock_sub()
     sub1.updated_at = datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc)
-    sub2 = Subscription.new(
-        name="test",
-        uuid=uuid.UUID("f3b1b3b4-1b3b-4b3b-8b3b-3b3b3b3b3b3b"),
-        url=utils.parse_url("https://f3b1b3b4-1b3b-4b3b-8b3b-3b3b3b3b3b3b.com"),
-        provider=SubscriptionProvider.YOUTUBE,
-        thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-        external_data={},
-    )
+    sub2 = mock_sub()
     sub2.updated_at = datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
 
     filter_criteria = SubscriptionFilterCriteria(updated_before=datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc))
@@ -186,41 +130,14 @@ async def test_get_subscription_that_does_not_exist(subscription_repo: Subscript
 @pytest.mark.asyncio()
 async def test_get_list_of_subscriptions_ordered_by_created_at(
         subscription_repo: SubscriptionRepository) -> None:
-    sub1 = Subscription(
-        name="test",
-        uuid=uuid.UUID("83ea331c-fa87-4654-89d0-055972a64e5b"),
-        url=utils.parse_url("https://83ea331c-fa87-4654-89d0-055972a64e5b.com"),
-        thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-        provider=SubscriptionProvider.YOUTUBE,
-        external_data={},
+    sub1 = mock_sub(
         created_at=datetime(2020, 1, 2, 0, 0, 0, tzinfo=timezone.utc),
-        updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
     )
-    sub2 = Subscription(
-        name="test",
-        uuid=uuid.UUID("5745b75b-9a0a-49ff-85c5-b69c03bd1ba2"),
-        url=utils.parse_url("https://5745b75b-9a0a-49ff-85c5-b69c03bd1ba2.com"),
-        thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-        provider=SubscriptionProvider.YOUTUBE,
-        external_data={},
+    sub2 = mock_sub(
         created_at=datetime(2020, 1, 3, 0, 0, 0, tzinfo=timezone.utc),
-        updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
     )
-    sub3 = Subscription(
-        name="test",
-        uuid=uuid.UUID("d30ca1c8-40c4-4bcd-8b4f-81f0e315c975"),
-        url=utils.parse_url("https://d30ca1c8-40c4-4bcd-8b4f-81f0e315c975.com"),
-        thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-        provider=SubscriptionProvider.YOUTUBE,
-        external_data={},
+    sub3 = mock_sub(
         created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
     )
 
     await subscription_repo.add(sub1)
@@ -247,6 +164,7 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
         updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
         scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
         last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
+        description="test description",
     )
     await subscription_repo.add(sub)
 
@@ -259,6 +177,7 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
     sub.updated_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     sub.scanned_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     sub.last_published_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    sub.description = "new description"
 
     await subscription_repo.update(sub)
     updated_subscription = await subscription_repo.get(sub.uuid)
@@ -272,15 +191,12 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
     assert updated_subscription.updated_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     assert updated_subscription.scanned_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     assert updated_subscription.last_published_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    assert updated_subscription.description == "new description"
 
 
 @pytest.mark.asyncio()
 async def test_delete_subscription(subscription_repo: SubscriptionRepository) -> None:
-    subscription = Subscription.new(name="test",
-                                    uuid=uuid.UUID("5f0430b3-6044-4cca-b739-d63c75794b3c"),
-                                    url=utils.parse_url("https://5f0430b3-6044-4cca-b739-d63c75794b3c.com"),
-                                    thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-                                    provider=SubscriptionProvider.YOUTUBE)
+    subscription = mock_sub()
 
     await subscription_repo.add(subscription)
     the_subscription = await subscription_repo.get(subscription.uuid)

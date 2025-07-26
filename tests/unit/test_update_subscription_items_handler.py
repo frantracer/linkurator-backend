@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock, MagicMock, call
 import pytest
 
 from linkurator_core.application.subscriptions.update_subscription_items_handler import UpdateSubscriptionItemsHandler
+from linkurator_core.domain.common.mock_factory import mock_sub
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence
@@ -19,17 +19,7 @@ from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_
 
 @pytest.mark.asyncio()
 async def test_update_subscriptions_items_with_an_item_that_is_not_registered() -> None:
-    sub1 = Subscription(
-        uuid=uuid.UUID("b6cae596-4526-4ab7-b5da-bd803f04980b"),
-        name="sub1",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=parse_url("http://url.com"),
-        thumbnail=parse_url("http://thumbnail.com"),
-        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        updated_at=datetime.fromtimestamp(1, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(2, tz=timezone.utc),
-        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        external_data={})
+    sub1 = mock_sub()
 
     item1 = Item.new(
         uuid=uuid.UUID("64ad0bbb-27d5-4b45-bc9b-d3a09c1d8df2"),
@@ -70,17 +60,7 @@ async def test_update_subscriptions_items_with_an_item_that_is_not_registered() 
 
 @pytest.mark.asyncio()
 async def test_update_subscriptions_items_with_items_that_are_already_registered() -> None:
-    sub1 = Subscription(
-        uuid=uuid.UUID("b6cae596-4526-4ab7-b5da-bd803f04980b"),
-        name="sub1",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=parse_url("http://url.com"),
-        thumbnail=parse_url("http://thumbnail.com"),
-        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        updated_at=datetime.fromtimestamp(1, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(2, tz=timezone.utc),
-        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        external_data={})
+    sub1 = mock_sub()
 
     item1 = Item.new(
         uuid=uuid.UUID("64ad0bbb-27d5-4b45-bc9b-d3a09c1d8df2"),
@@ -134,17 +114,7 @@ async def test_update_subscriptions_items_with_items_that_are_already_registered
 
 @pytest.mark.asyncio()
 async def test_only_one_concurrent_update_is_allowed_to_run_per_subscription() -> None:
-    sub1 = Subscription(
-        uuid=uuid.UUID("547d692c-d2a2-49ef-bfd6-97cb02fb03d1"),
-        name="sub1",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=parse_url("http://url.com"),
-        thumbnail=parse_url("http://thumbnail.com"),
-        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        updated_at=datetime.fromtimestamp(1, tz=timezone.utc),
-        scanned_at=datetime.fromtimestamp(2, tz=timezone.utc),
-        last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
-        external_data={})
+    sub1 = mock_sub()
 
     async def wait_2_second_and_return_no_items(
             sub_id: uuid.UUID, from_date: datetime,  # pylint: disable=unused-argument

@@ -1,15 +1,13 @@
 from unittest.mock import AsyncMock
-from uuid import UUID
 
 import pytest
-from pydantic import AnyUrl
 
 from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_handler import (
     FindSubscriptionsByNameOrUrlHandler,
 )
 from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.common.mock_factory import mock_sub
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 
@@ -17,13 +15,7 @@ from linkurator_core.infrastructure.in_memory.subscription_repository import InM
 @pytest.mark.asyncio()
 async def test_find_subscription_by_url() -> None:
     sub_repo = InMemorySubscriptionRepository()
-    sub = Subscription.new(
-        uuid=UUID("291e0e31-46d4-4d7e-a39c-5bfd632a72cb"),
-        name="Test",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=AnyUrl("https://www.youtube.com/channel/UC6ZFN9Tx6xh-skXCuRHCDpQ"),
-        thumbnail=AnyUrl("https://i.ytimg.com/vi/4jNz0lG0k2U/maxresdefault.jpg"),
-    )
+    sub = mock_sub()
     await sub_repo.add(sub)
 
     sub_service = AsyncMock(spec=SubscriptionService)
@@ -42,13 +34,7 @@ async def test_find_subscription_by_url() -> None:
 @pytest.mark.asyncio()
 async def test_find_subscription_by_name() -> None:
     sub_repo = InMemorySubscriptionRepository()
-    sub = Subscription.new(
-        uuid=UUID("291e0e31-46d4-4d7e-a39c-5bfd632a72cb"),
-        name="Test",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=AnyUrl("https://www.youtube.com/channel/UC6ZFN9Tx6xh-skXCuRHCDpQ"),
-        thumbnail=AnyUrl("https://i.ytimg.com/vi/4jNz0lG0k2U/maxresdefault.jpg"),
-    )
+    sub = mock_sub()
     await sub_repo.add(sub)
 
     sub_service = AsyncMock(spec=SubscriptionService)
@@ -68,13 +54,7 @@ async def test_find_subscription_by_name() -> None:
 @pytest.mark.asyncio()
 async def test_find_subscription_by_url_is_added_to_repo_if_not_exists() -> None:
     sub_repo = InMemorySubscriptionRepository()
-    sub = Subscription.new(
-        uuid=UUID("291e0e31-46d4-4d7e-a39c-5bfd632a72cb"),
-        name="Test",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=AnyUrl("https://www.youtube.com/channel/UC6ZFN9Tx6xh-skXCuRHCDpQ"),
-        thumbnail=AnyUrl("https://i.ytimg.com/vi/4jNz0lG0k2U/maxresdefault.jpg"),
-    )
+    sub = mock_sub()
 
     sub_service = AsyncMock(spec=SubscriptionService)
     sub_service.get_subscription_from_url.return_value = sub
@@ -128,13 +108,7 @@ async def test_find_subscription_by_non_existing_url() -> None:
 @pytest.mark.asyncio()
 async def test_find_subscription_by_name_that_does_not_exist_in_the_repository_but_exists_in_the_service() -> None:
     sub_repo = InMemorySubscriptionRepository()
-    sub = Subscription.new(
-        uuid=UUID("291e0e31-46d4-4d7e-a39c-5bfd632a72cb"),
-        name="Test",
-        provider=SubscriptionProvider.YOUTUBE,
-        url=AnyUrl("https://www.youtube.com/channel/UC6ZFN9Tx6xh-skXCuRHCDpQ"),
-        thumbnail=AnyUrl("https://i.ytimg.com/vi/4jNz0lG0k2U/maxresdefault.jpg"),
-    )
+    sub = mock_sub()
 
     sub_service = AsyncMock(spec=SubscriptionService)
     sub_service.get_subscription_from_url.return_value = None

@@ -195,6 +195,7 @@ class YoutubeService(SubscriptionService):
                         "channel_id": youtube_channel.channel_id,
                         "playlist_id": youtube_channel.playlist_id,
                     },
+                    description=youtube_channel.description,
                 )
         except YoutubeApiError as exception:
             logging.exception("Error while getting subscription from URL: %s", exception)
@@ -224,6 +225,7 @@ class YoutubeService(SubscriptionService):
                     "channel_id": channel.channel_id,
                     "playlist_id": channel.playlist_id,
                 },
+                description=channel.description,
             )]
 
         return []
@@ -255,4 +257,5 @@ def update_sub_info(sub: Subscription, youtube_channel: YoutubeChannel) -> Subsc
     updated_sub.external_data["channel_id"] = youtube_channel.channel_id
     updated_sub.external_data["playlist_id"] = youtube_channel.playlist_id
     updated_sub.updated_at = datetime_now()
+    updated_sub.description = youtube_channel.description
     return updated_sub

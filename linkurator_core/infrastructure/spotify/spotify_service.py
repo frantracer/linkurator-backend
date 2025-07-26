@@ -180,11 +180,13 @@ def map_spotify_show_to_subscription(spotify_show: Show, sub: Subscription | Non
             external_data={
                 SHOW_ID_KEY: spotify_show.id,
             },
+            description=spotify_show.description,
         )
 
     updated_sub = deepcopy(sub)
     updated_sub.name = spotify_show.name
     updated_sub.thumbnail = thumbnail.url
+    updated_sub.description = spotify_show.description
     return updated_sub
 
 

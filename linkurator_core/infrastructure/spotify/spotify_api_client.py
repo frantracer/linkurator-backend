@@ -27,6 +27,7 @@ class Show(BaseModel):
     images: list[ShowImage]
     name: str
     total_episodes: int
+    description: str
 
 
 class Episode(BaseModel):
@@ -215,6 +216,7 @@ def map_json_to_show(json: dict[str, Any]) -> Show:
         ],
         name=json["name"],
         total_episodes=json["total_episodes"],
+        description=json["description"],
     )
 
 
