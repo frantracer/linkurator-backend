@@ -44,7 +44,11 @@ async def main() -> None:
         topic_repository=topic_repository,
     )
     support_agent = create_agent(env_settings.OPENAI_API_KEY)
-    result = await support_agent.run('Group my subscriptions into topics', deps=deps)
+
+    result = await support_agent.run(
+        'Group my subscriptions into topics',
+        deps=deps,
+    )
     print(result.output)
 
     result = await support_agent.run(

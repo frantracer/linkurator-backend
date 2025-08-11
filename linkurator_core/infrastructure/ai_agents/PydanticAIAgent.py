@@ -8,13 +8,21 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
+from linkurator_core.domain.items.interaction import InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
-from linkurator_core.domain.items.item_repository import AnyItemInteraction, ItemFilterCriteria, ItemRepository
+from linkurator_core.domain.items.item_repository import (
+    AnyItemInteraction,
+    InteractionFilterCriteria,
+    ItemFilterCriteria,
+    ItemRepository,
+)
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.domain.users.user_repository import UserRepository
+
+ITEMS_PER_PAGE = 20
 
 
 @dataclass
@@ -133,8 +141,8 @@ class ItemForAI(BaseModel):
 
 
 class SupportOutput(BaseModel):
-    recommendation: str = Field(
-        description="Content recommendation for the user based on their query",
+    response: str = Field(
+        description="Response for the user based on their query",
     )
     topics: list[UUID] = Field(
         description="List of topics UUIDs created for the user to organize their subscriptions. "
@@ -171,6 +179,10 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
         system_prompt=(
             "You are a system to recommend videos, podcasts or articles to the user based on their query. "
             "Always use the customer's name in your responses. "
+            "When asking for recommendations, do not recommend content the user has already viewed or recommended. "
+            "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
+            "When creating topics, do not create similar topics if they already exist. "
+            "When finding items, try to find by a single keyword. If there are not results, try to list everything. "
         ),
     )
 
@@ -202,125 +214,70 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
         return [SubscriptionForAI.from_subscription(sub) for sub in subs]
 
     @ support_agent.tool
-    async def get_user_items(
+    async def find_items(
             ctx: RunContext[SupportDependencies],
-            page: int = 1,
-            limit: int = 20,
             text_search: str | None = None,
-            subscription_id: str | None = None,
-            provider: str | None = None,
-            interaction_type: str | None = None,
+            subscription_id: UUID | None = None,
     ) -> list[ItemForAI]:
         """
-        Gets items for the user with optional filtering.
+        Gets items for the user with optional filtering. When no filters are applied, it returns all items
 
         Args:
         ----
-            page: Page number for pagination (default: 1)
-            limit: Number of items per page (default: 20)
             text_search: Search in item names and descriptions
             subscription_id: Filter by subscription UUID
-            provider: Filter by provider ('youtube' or 'spotify')
-            interaction_type: Filter by user interaction ('recommended', 'discouraged', 'viewed', 'hidden')
 
         """
-        # Get user's subscriptions using the handler
-        handler = GetUserSubscriptionsHandler(
-            user_repository=ctx.deps.user_repository,
-            subscription_repository=ctx.deps.subscription_repository,
-        )
-        user_subscriptions = await handler.handle(user_id=ctx.deps.user_uuid)
-        subscription_ids = [sub.uuid for sub in user_subscriptions]
+        subscription_ids: list[UUID] | None = None
+        if subscription_id:
+            subscription_ids = [subscription_id]
 
         criteria = ItemFilterCriteria(
             subscription_ids=subscription_ids,
             text=text_search,
             interactions_from_user=ctx.deps.user_uuid,
+            interactions=AnyItemInteraction(without_interactions=True),
         )
 
-        # Apply additional filters
-        if subscription_id:
-            criteria.subscription_ids = [UUID(subscription_id)]
-
-        if provider:
-            from linkurator_core.domain.items.item import ItemProvider
-            criteria.provider = ItemProvider(provider.lower())
-
-        if interaction_type:
-            interaction = AnyItemInteraction()
-            if interaction_type == "recommended":
-                interaction.recommended = True
-            elif interaction_type == "discouraged":
-                interaction.discouraged = True
-            elif interaction_type == "viewed":
-                interaction.viewed = True
-            elif interaction_type == "hidden":
-                interaction.hidden = True
-            criteria.interactions = interaction
-
-        items = await ctx.deps.item_repository.find_items(criteria, page - 1, limit)
+        items = await ctx.deps.item_repository.find_items(
+            criteria=criteria,
+            page_number=0,
+            limit=ITEMS_PER_PAGE,
+        )
         return [ItemForAI.from_item(item) for item in items]
 
     @ support_agent.tool
-    async def search_items(
+    async def get_items_recommended_by_the_user(
             ctx: RunContext[SupportDependencies],
-            search_text: str,
-            page: int = 1,
-            limit: int = 20,
     ) -> list[ItemForAI]:
-        """Searches across all items accessible to the user by text in name and description."""
-        # Get user's subscriptions using the handler
-        handler = GetUserSubscriptionsHandler(
-            user_repository=ctx.deps.user_repository,
-            subscription_repository=ctx.deps.subscription_repository,
-        )
-        user_subscriptions = await handler.handle(user_id=ctx.deps.user_uuid)
-        subscription_ids = [sub.uuid for sub in user_subscriptions]
+        """
+        Get content the user viewed and recommended in the past
 
-        criteria = ItemFilterCriteria(
-            subscription_ids=subscription_ids,
-            text=search_text,
+        :param ctx: RunContext with dependencies
+        :return: list of ItemForAI
+        """
+        recommended_criteria = InteractionFilterCriteria(
+            user_ids=[ctx.deps.user_uuid],
+            interaction_types=[InteractionType.RECOMMENDED],
+        )
+        recommended_interactions = await ctx.deps.item_repository.find_interactions(
+            criteria=recommended_criteria,
+            page_number=0,
+            limit=ITEMS_PER_PAGE,
         )
 
-        items = await ctx.deps.item_repository.find_items(criteria, page - 1, limit)
+        items_uuids = {interaction.item_uuid for interaction in recommended_interactions}
+
+        items_criteria = ItemFilterCriteria(
+            item_ids=items_uuids,
+        )
+        items = await ctx.deps.item_repository.find_items(
+            criteria=items_criteria,
+            page_number=0,
+            limit=len(items_uuids),
+        )
+
         return [ItemForAI.from_item(item) for item in items]
-
-    @ support_agent.tool
-    async def get_user_recommendations(
-            ctx: RunContext[SupportDependencies],
-            limit: int = 10,
-    ) -> list[ItemForAI]:
-        """Gets items that the user has marked as recommended or that haven't been interacted with yet."""
-        # Get user's subscriptions using the handler
-        handler = GetUserSubscriptionsHandler(
-            user_repository=ctx.deps.user_repository,
-            subscription_repository=ctx.deps.subscription_repository,
-        )
-        user_subscriptions = await handler.handle(user_id=ctx.deps.user_uuid)
-        subscription_ids = [sub.uuid for sub in user_subscriptions]
-
-        # First try to get explicitly recommended items
-        recommended_criteria = ItemFilterCriteria(
-            subscription_ids=subscription_ids,
-            interactions_from_user=ctx.deps.user_uuid,
-            interactions=AnyItemInteraction(recommended=True),
-        )
-        recommended_items = await ctx.deps.item_repository.find_items(recommended_criteria, 0, limit)
-
-        # If we need more items, get items without interactions (potentially new content)
-        if len(recommended_items) < limit:
-            remaining_limit = limit - len(recommended_items)
-            uninteracted_criteria = ItemFilterCriteria(
-                subscription_ids=subscription_ids,
-                interactions_from_user=ctx.deps.user_uuid,
-                interactions=AnyItemInteraction(without_interactions=True),
-            )
-            uninteracted_items = await ctx.deps.item_repository.find_items(
-                uninteracted_criteria, 0, remaining_limit,
-            )
-            recommended_items.extend(uninteracted_items)
-
-        return [ItemForAI.from_item(item) for item in recommended_items]
 
     @ support_agent.tool
     async def get_user_topics(
