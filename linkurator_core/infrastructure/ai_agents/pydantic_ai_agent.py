@@ -8,6 +8,7 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
+from linkurator_core.domain.agents.query_agent_service import QueryAgentService, AgentQueryResult
 from linkurator_core.domain.items.interaction import InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import (
@@ -157,6 +158,43 @@ class SupportOutput(BaseModel):
                     "Can be empty if no items match.",
     )
 
+class PydanticQueryAgentService(QueryAgentService):
+    def __init__(
+            self,
+            user_repository: UserRepository,
+            subscription_repository: SubscriptionRepository,
+            item_repository: ItemRepository,
+            topic_repository: TopicRepository,
+            openai_api_key: str,
+    ) -> None:
+        self.user_repository = user_repository
+        self.subscription_repository = subscription_repository
+        self.item_repository = item_repository
+        self.topic_repository = topic_repository
+        self.agent = create_agent(openai_api_key)
+
+    async def query(self, user_id: UUID, query: str) -> AgentQueryResult:
+        deps = SupportDependencies(
+            user_uuid=user_id,
+            user_repository=self.user_repository,
+            subscription_repository=self.subscription_repository,
+            item_repository=self.item_repository,
+            topic_repository=self.topic_repository,
+        )
+
+        result = await self.agent.run(query, deps=deps)
+
+        topics = []
+        items = []
+        subscriptions = []
+
+        return AgentQueryResult(
+            message=result.output.response,
+            items=items,
+            topics=topics,
+            subscriptions=subscriptions,
+        )
+
 
 def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
     """
@@ -183,6 +221,7 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
             "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
             "When creating topics, do not create similar topics if they already exist. "
             "When finding items, try to find by a single keyword. If there are not results, try to list everything. "
+            "Find items can be called maximum five times in a single query. "
         ),
     )
 

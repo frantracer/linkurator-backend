@@ -3,7 +3,7 @@ from uuid import UUID
 
 import logfire
 
-from linkurator_core.infrastructure.ai_agents.PydanticAIAgent import SupportDependencies, create_agent
+from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import SupportDependencies, create_agent
 from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
@@ -37,7 +37,7 @@ async def main() -> None:
     )
 
     deps = SupportDependencies(
-        user_uuid=UUID('97fda3e1-8f3d-4068-a6a6-5583c1d9e220'),
+        user_uuid=UUID("97fda3e1-8f3d-4068-a6a6-5583c1d9e220"),
         user_repository=user_repository,
         subscription_repository=subscription_repository,
         item_repository=item_repository,
@@ -46,17 +46,17 @@ async def main() -> None:
     support_agent = create_agent(env_settings.OPENAI_API_KEY)
 
     result = await support_agent.run(
-        'Group my subscriptions into topics',
+        "Group my subscriptions into topics",
         deps=deps,
     )
     print(result.output)
 
     result = await support_agent.run(
-        'Recommend some content for me in Spanish or English',
+        "Recommend some content for me in Spanish or English",
         deps=deps,
     )
     print(result.output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

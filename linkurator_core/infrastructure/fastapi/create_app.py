@@ -7,6 +7,7 @@ from fastapi import Depends, Request
 from fastapi.applications import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from linkurator_core.application.agents.query_agent_handler import QueryAgentHandler
 from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
@@ -63,6 +64,7 @@ from linkurator_core.application.users.unfollow_curator_handler import UnfollowC
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import (
+    agent,
     authentication,
     credentials,
     curators,
@@ -124,6 +126,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     delete_external_credential_handler: DeleteExternalCredentialHandler
     get_platform_statistics: GetPlatformStatisticsHandler
     update_user_subscriptions_handler: UpdateUserSubscriptionsHandler
+    query_agent_handler: QueryAgentHandler
 
 
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
@@ -238,6 +241,13 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             add_external_credential_handler=handlers.add_external_credentials_handler,
             delete_external_credential_handler=handlers.delete_external_credential_handler),
         prefix="/credentials",
+    )
+    app.include_router(
+        tags=["Agent"],
+        router=agent.get_router(
+            get_session=get_current_session,
+            query_agent_handler=handlers.query_agent_handler),
+        prefix="/agent",
     )
 
     app.add_middleware(

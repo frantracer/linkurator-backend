@@ -1,8 +1,10 @@
 """Main file of the application."""
 import logging
 
+import logfire
 from fastapi.applications import FastAPI
 
+from linkurator_core.application.agents.query_agent_handler import QueryAgentHandler
 from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
@@ -56,6 +58,7 @@ from linkurator_core.application.users.unfollow_curator_handler import UnfollowC
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
+from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import PydanticQueryAgentService
 from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets, SpotifyClientSecrets
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
@@ -284,10 +287,22 @@ def app_handlers() -> Handlers:
             subscription_service=youtube_service,
             user_repository=user_repository,
             subscription_repository=subscription_repository),
+        query_agent_handler=QueryAgentHandler(
+            query_agent_service=PydanticQueryAgentService(
+                user_repository=user_repository,
+                subscription_repository=subscription_repository,
+                item_repository=item_repository,
+                topic_repository=topic_repository,
+                openai_api_key=env_settings.OPENAI_API_KEY,
+            ),
+        ),
     )
 
 
 def create_app() -> FastAPI:
+    env_settings = EnvSettings()
+    logfire.configure(token=env_settings.LOGFIRE_TOKEN, scrubbing=False)
+
     logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s",
                         level=logging.DEBUG, datefmt="%Y-%m-%d %H:%M:%S")
     return create_app_from_handlers(app_handlers())
