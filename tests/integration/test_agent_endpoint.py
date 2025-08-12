@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 from starlette import status
 
 from linkurator_core.application.agents.query_agent_handler import QueryAgentHandler
-from linkurator_core.domain.agents.query_agent_service import AgentQueryResult
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
+from linkurator_core.domain.agents.query_agent_service import AgentQueryResult
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 
@@ -34,7 +34,7 @@ def dummy_handlers(query_agent_handler: QueryAgentHandler) -> Handlers:
     dummy_validate_token_handler.handle.return_value = Session(
         user_id=USER_UUID,
         expires_at=datetime.fromisoformat("3000-01-01T00:00:00+00:00"),
-        token="token"
+        token="token",
     )
 
     return Handlers(
@@ -91,19 +91,19 @@ def dummy_handlers(query_agent_handler: QueryAgentHandler) -> Handlers:
 
 def test_query_agent_endpoint_returns_200(handlers: Handlers) -> None:
     client = TestClient(create_app_from_handlers(handlers))
-    
+
     response = client.post(
         "/agent/query",
         json={"query": "What should I watch today?"},
-        cookies={"token": "valid_token"}
+        cookies={"token": "valid_token"},
     )
-    
+
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    
+
     assert "message" in data
     assert "items" in data
-    assert "topics" in data  
+    assert "topics" in data
     assert "subscriptions" in data
     assert isinstance(data["items"], list)
     assert isinstance(data["topics"], list)
@@ -112,22 +112,22 @@ def test_query_agent_endpoint_returns_200(handlers: Handlers) -> None:
 
 def test_query_agent_endpoint_requires_authentication(handlers: Handlers) -> None:
     client = TestClient(create_app_from_handlers(handlers))
-    
+
     response = client.post(
         "/agent/query",
-        json={"query": "What should I watch today?"}
+        json={"query": "What should I watch today?"},
     )
-    
+
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_query_agent_endpoint_validates_request_body(handlers: Handlers) -> None:
     client = TestClient(create_app_from_handlers(handlers))
-    
+
     response = client.post(
         "/agent/query",
         json={},  # Missing required query field
-        cookies={"token": "valid_token"}
+        cookies={"token": "valid_token"},
     )
-    
+
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

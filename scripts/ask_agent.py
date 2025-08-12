@@ -3,7 +3,7 @@ from uuid import UUID
 
 import logfire
 
-from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import SupportDependencies, create_agent
+from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import AgentDependencies, create_agent
 from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
@@ -36,7 +36,7 @@ async def main() -> None:
         username=db_settings.user, password=db_settings.password,
     )
 
-    deps = SupportDependencies(
+    deps = AgentDependencies(
         user_uuid=UUID("97fda3e1-8f3d-4068-a6a6-5583c1d9e220"),
         user_repository=user_repository,
         subscription_repository=subscription_repository,

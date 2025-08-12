@@ -8,7 +8,7 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
-from linkurator_core.domain.agents.query_agent_service import QueryAgentService, AgentQueryResult
+from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
 from linkurator_core.domain.items.interaction import InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import (
@@ -18,7 +18,9 @@ from linkurator_core.domain.items.item_repository import (
     ItemRepository,
 )
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
-from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
+from linkurator_core.domain.subscriptions.subscription_repository import (
+    SubscriptionRepository,
+)
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.domain.users.user_repository import UserRepository
@@ -27,7 +29,7 @@ ITEMS_PER_PAGE = 20
 
 
 @dataclass
-class SupportDependencies:
+class AgentDependencies:
     user_uuid: UUID
     user_repository: UserRepository
     subscription_repository: SubscriptionRepository
@@ -141,22 +143,23 @@ class ItemForAI(BaseModel):
         )
 
 
-class SupportOutput(BaseModel):
+class AgentOutput(BaseModel):
     response: str = Field(
         description="Response for the user based on their query",
     )
-    topics: list[UUID] = Field(
+    topics_uuids: list[UUID] = Field(
         description="List of topics UUIDs created for the user to organize their subscriptions. "
                     "Can be empty if no topics match.",
     )
-    subscriptions: list[UUID] = Field(
+    subscriptions_uuids: list[UUID] = Field(
         description="List of subscriptions UUIDs that are relevant to the query. "
                     "Can be empty if no subscriptions match.",
     )
-    content_items: list[UUID] = Field(
+    items_uuids: list[UUID] = Field(
         description="List of content items UUIDs related to the user's query. "
                     "Can be empty if no items match.",
     )
+
 
 class PydanticQueryAgentService(QueryAgentService):
     def __init__(
@@ -174,7 +177,7 @@ class PydanticQueryAgentService(QueryAgentService):
         self.agent = create_agent(openai_api_key)
 
     async def query(self, user_id: UUID, query: str) -> AgentQueryResult:
-        deps = SupportDependencies(
+        deps = AgentDependencies(
             user_uuid=user_id,
             user_repository=self.user_repository,
             subscription_repository=self.subscription_repository,
@@ -184,9 +187,23 @@ class PydanticQueryAgentService(QueryAgentService):
 
         result = await self.agent.run(query, deps=deps)
 
+        output: AgentOutput = result.output
+
         topics = []
+        if len(output.topics_uuids) > 0:
+            topics = await self.topic_repository.find_topics(output.topics_uuids)
+
         items = []
+        if len(output.items_uuids) > 0:
+            items = await self.item_repository.find_items(
+                criteria=ItemFilterCriteria(item_ids=set(output.items_uuids)),
+                page_number=0,
+                limit=len(output.items_uuids),
+            )
+
         subscriptions = []
+        if len(output.subscriptions_uuids) > 0:
+            subscriptions = await self.subscription_repository.get_list(output.subscriptions_uuids)
 
         return AgentQueryResult(
             message=result.output.response,
@@ -196,7 +213,7 @@ class PydanticQueryAgentService(QueryAgentService):
         )
 
 
-def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
+def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     """
     Creates a support agent that can be used to handle user queries.
     The agent will provide recommendations based on the user's subscriptions and interactions.
@@ -210,10 +227,10 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
         provider=provider,
         model_name="gpt-4.1",
     )
-    support_agent = Agent[SupportDependencies, SupportOutput](
+    ai_agent = Agent[AgentDependencies, AgentOutput](
         llm_model,
-        deps_type=SupportDependencies,
-        output_type=SupportOutput,
+        deps_type=AgentDependencies,
+        output_type=AgentOutput,
         system_prompt=(
             "You are a system to recommend videos, podcasts or articles to the user based on their query. "
             "Always use the customer's name in your responses. "
@@ -225,8 +242,8 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
         ),
     )
 
-    @ support_agent.system_prompt
-    async def add_user_name(ctx: RunContext[SupportDependencies]) -> str:
+    @ ai_agent.system_prompt
+    async def add_user_name(ctx: RunContext[AgentDependencies]) -> str:
         user = await ctx.deps.user_repository.get(
             ctx.deps.user_uuid,
         )
@@ -238,9 +255,9 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
             return "The customer's name is unknown"
         return f"The customer's name is {user.first_name!r}"
 
-    @ support_agent.tool
+    @ ai_agent.tool
     async def user_subscriptions(
-            ctx: RunContext[SupportDependencies],
+            ctx: RunContext[AgentDependencies],
     ) -> list[SubscriptionForAI]:
         """Returns the user's subscriptions."""
         handler = GetUserSubscriptionsHandler(
@@ -252,9 +269,9 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
         )
         return [SubscriptionForAI.from_subscription(sub) for sub in subs]
 
-    @ support_agent.tool
+    @ ai_agent.tool
     async def find_items(
-            ctx: RunContext[SupportDependencies],
+            ctx: RunContext[AgentDependencies],
             text_search: str | None = None,
             subscription_id: UUID | None = None,
     ) -> list[ItemForAI]:
@@ -263,6 +280,7 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
 
         Args:
         ----
+            ctx: RunContext with dependencies
             text_search: Search in item names and descriptions
             subscription_id: Filter by subscription UUID
 
@@ -285,9 +303,9 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
         )
         return [ItemForAI.from_item(item) for item in items]
 
-    @ support_agent.tool
+    @ ai_agent.tool
     async def get_items_recommended_by_the_user(
-            ctx: RunContext[SupportDependencies],
+            ctx: RunContext[AgentDependencies],
     ) -> list[ItemForAI]:
         """
         Get content the user viewed and recommended in the past
@@ -318,17 +336,17 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
 
         return [ItemForAI.from_item(item) for item in items]
 
-    @ support_agent.tool
+    @ ai_agent.tool
     async def get_user_topics(
-            ctx: RunContext[SupportDependencies],
+            ctx: RunContext[AgentDependencies],
     ) -> list[TopicForAI]:
         """Returns the user's topics."""
         topics = await ctx.deps.topic_repository.get_by_user_id(ctx.deps.user_uuid)
         return [TopicForAI.from_topic(topic) for topic in topics]
 
-    @ support_agent.tool
+    @ ai_agent.tool
     async def create_topic(
-            ctx: RunContext[SupportDependencies],
+            ctx: RunContext[AgentDependencies],
             name: str,
             subscription_ids: list[str] | None = None,
     ) -> TopicForAI:
@@ -337,6 +355,7 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
 
         Args:
         ----
+            ctx: RunContext with dependencies
             name: Name of the new topic
             subscription_ids: Optional list of subscription UUIDs to add to this topic
 
@@ -367,4 +386,4 @@ def create_agent(api_key: str) -> Agent[SupportDependencies, SupportOutput]:
         await ctx.deps.topic_repository.add(topic)
         return TopicForAI.from_topic(topic)
 
-    return support_agent
+    return ai_agent
