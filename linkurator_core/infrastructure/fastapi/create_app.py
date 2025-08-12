@@ -14,6 +14,7 @@ from linkurator_core.application.auth.request_password_change import RequestPass
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
+from linkurator_core.application.chats.delete_chat_handler import DeleteChatHandler
 from linkurator_core.application.chats.get_chat_handler import GetChatHandler
 from linkurator_core.application.chats.get_user_chats_handler import GetUserChatsHandler
 from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
@@ -131,6 +132,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     query_agent_handler: QueryAgentHandler
     get_user_chats_handler: GetUserChatsHandler
     get_chat_handler: GetChatHandler
+    delete_chat_handler: DeleteChatHandler
 
 
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
@@ -253,6 +255,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             query_agent_handler=handlers.query_agent_handler,
             get_user_chats_handler=handlers.get_user_chats_handler,
             get_chat_handler=handlers.get_chat_handler,
+            delete_chat_handler=handlers.delete_chat_handler,
         ),
         prefix="/chats",
     )

@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request, status
 
+from linkurator_core.application.chats.delete_chat_handler import DeleteChatHandler
 from linkurator_core.application.chats.get_chat_handler import GetChatHandler
 from linkurator_core.application.chats.get_user_chats_handler import GetUserChatsHandler
 from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
@@ -20,6 +21,7 @@ def get_router(
     query_agent_handler: QueryAgentHandler,
     get_user_chats_handler: GetUserChatsHandler,
     get_chat_handler: GetChatHandler,
+    delete_chat_handler: DeleteChatHandler,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -63,6 +65,27 @@ def get_router(
             raise default_responses.not_found(msg)
 
         return ChatResponse.from_domain(chat)
+
+    @router.delete(
+        "/{chat_id}",
+        status_code=status.HTTP_204_NO_CONTENT,
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {"model": None},
+            status.HTTP_404_NOT_FOUND: {"model": None},
+        },
+    )
+    async def delete_chat(
+        chat_id: UUID,
+        session: Optional[Session] = Depends(get_session),
+    ) -> None:
+        """Delete a specific chat conversation."""
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        success = await delete_chat_handler.handle(chat_id=chat_id, user_id=session.user_id)
+        if not success:
+            msg = "Chat not found"
+            raise default_responses.not_found(msg)
 
     @router.post(
         "/{chat_id}/messages",
