@@ -91,6 +91,9 @@ def dummy_handlers() -> Handlers:
         get_platform_statistics=AsyncMock(),
         update_user_subscriptions_handler=AsyncMock(),
         query_agent_handler=AsyncMock(),
+        get_user_chats_handler=AsyncMock(),
+        get_chat_handler=AsyncMock(),
+        create_chat_handler=AsyncMock(),
     )
 
 

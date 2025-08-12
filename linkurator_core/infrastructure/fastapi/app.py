@@ -4,7 +4,7 @@ import logging
 import logfire
 from fastapi.applications import FastAPI
 
-from linkurator_core.application.agents.query_agent_handler import QueryAgentHandler
+from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
 from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
@@ -12,6 +12,8 @@ from linkurator_core.application.auth.request_password_change import RequestPass
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
+from linkurator_core.application.chats.get_user_chats_handler import GetUserChatsHandler
+from linkurator_core.application.chats.get_chat_handler import GetChatHandler
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
@@ -71,6 +73,7 @@ from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiC
 from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
+from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.password_change_request_repository import (
@@ -125,6 +128,9 @@ def app_handlers() -> Handlers:
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
     password_change_request_repository = MongoDBPasswordChangeRequestRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password)
+    chat_repository = MongoDBChatRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
@@ -295,7 +301,10 @@ def app_handlers() -> Handlers:
                 topic_repository=topic_repository,
                 openai_api_key=env_settings.OPENAI_API_KEY,
             ),
+            chat_repository=chat_repository,
         ),
+        get_user_chats_handler=GetUserChatsHandler(chat_repository=chat_repository),
+        get_chat_handler=GetChatHandler(chat_repository=chat_repository),
     )
 
 

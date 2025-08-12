@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 from uuid import UUID, uuid4
 
 import logfire
@@ -176,7 +177,7 @@ class PydanticQueryAgentService(QueryAgentService):
         self.topic_repository = topic_repository
         self.agent = create_agent(openai_api_key)
 
-    async def query(self, user_id: UUID, query: str) -> AgentQueryResult:
+    async def query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
         deps = AgentDependencies(
             user_uuid=user_id,
             user_repository=self.user_repository,

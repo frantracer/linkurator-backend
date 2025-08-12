@@ -17,5 +17,5 @@ class AgentQueryResult:
 
 class QueryAgentService(ABC):
     @abstractmethod
-    async def query(self, user_id: UUID, query: str) -> AgentQueryResult:
+    async def query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
         pass

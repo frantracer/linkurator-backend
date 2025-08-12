@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, Field
 
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult

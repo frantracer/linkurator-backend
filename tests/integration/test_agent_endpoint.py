@@ -6,10 +6,11 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from linkurator_core.application.agents.query_agent_handler import QueryAgentHandler
+from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult
 from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.common.mock_factory import mock_item, mock_topic, mock_sub
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 
 USER_UUID = uuid.UUID("8efe1fe3-906d-4aa4-8fbe-b47810c197d8")
@@ -20,9 +21,9 @@ def query_agent_handler_fixture() -> QueryAgentHandler:
     mock_handler = AsyncMock(spec=QueryAgentHandler)
     mock_result = AgentQueryResult(
         message="Here's what I found!",
-        items=[uuid.uuid4(), uuid.uuid4()],
-        topics=[uuid.uuid4()],
-        subscriptions=[uuid.uuid4(), uuid.uuid4()],
+        items=[mock_item(), mock_item()],
+        topics=[mock_topic()],
+        subscriptions=[mock_sub(), mock_sub()],
     )
     mock_handler.handle.return_value = mock_result
     return mock_handler
@@ -86,6 +87,9 @@ def dummy_handlers(query_agent_handler: QueryAgentHandler) -> Handlers:
         get_platform_statistics=AsyncMock(),
         update_user_subscriptions_handler=AsyncMock(),
         query_agent_handler=query_agent_handler,
+        get_user_chats_handler=AsyncMock(),
+        get_chat_handler=AsyncMock(),
+        create_chat_handler=AsyncMock(),
     )
 
 

@@ -1,0 +1,35 @@
+from uuid import UUID, uuid4
+
+from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
+from linkurator_core.domain.chats.chat import Chat
+from linkurator_core.domain.chats.chat_repository import ChatRepository
+from linkurator_core.domain.common.exceptions import InvalidChatError
+
+
+class QueryAgentHandler:
+    def __init__(self, query_agent_service: QueryAgentService, chat_repository: ChatRepository) -> None:
+        self.query_agent_service = query_agent_service
+        self.chat_repository = chat_repository
+
+    async def handle(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
+        chat = await self.chat_repository.get(chat_id)
+        if chat is None:
+            chat_id = uuid4()
+            title = query[:47] + "..." if len(query) > 50 else query
+            chat = Chat.new(uuid=chat_id, user_id=user_id, title=title)
+            await self.chat_repository.add(chat)
+
+        if chat.user_id != user_id:
+            raise InvalidChatError("Chat does not belong to the user")
+
+        # Get the AI response
+        result = await self.query_agent_service.query(user_id, query, chat_id)
+
+        # Add messages to chat
+        chat = await self.chat_repository.get(chat_id)
+        if chat is not None:
+            chat.add_user_message(query)
+            chat.add_assistant_message(result.message)
+            await self.chat_repository.update(chat)
+
+        return result
