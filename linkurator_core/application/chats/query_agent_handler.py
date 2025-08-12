@@ -1,4 +1,4 @@
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
 from linkurator_core.domain.chats.chat import Chat
@@ -14,7 +14,6 @@ class QueryAgentHandler:
     async def handle(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
         chat = await self.chat_repository.get(chat_id)
         if chat is None:
-            chat_id = uuid4()
             title = query[:47] + "..." if len(query) > 50 else query
             chat = Chat.new(uuid=chat_id, user_id=user_id, title=title)
             await self.chat_repository.add(chat)
