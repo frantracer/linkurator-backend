@@ -6,7 +6,7 @@ import pytest
 from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
 from linkurator_core.domain.chats.chat_repository import ChatRepository
-from linkurator_core.domain.common.mock_factory import mock_item, mock_topic, mock_sub
+from linkurator_core.domain.common.mock_factory import mock_item, mock_sub, mock_topic
 
 
 @pytest.fixture(name="query_agent_service")
@@ -31,12 +31,12 @@ def chat_repository_fixture() -> ChatRepository:
 
 @pytest.mark.asyncio()
 async def test_query_agent_handler(
-    query_agent_service: QueryAgentService, 
-    chat_repository: ChatRepository
+    query_agent_service: QueryAgentService,
+    chat_repository: ChatRepository,
 ) -> None:
     handler = QueryAgentHandler(
         query_agent_service=query_agent_service,
-        chat_repository=chat_repository
+        chat_repository=chat_repository,
     )
 
     user_id = uuid.uuid4()

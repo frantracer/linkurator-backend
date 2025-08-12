@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from uuid import UUID
 
 import logfire
@@ -49,13 +50,13 @@ async def main() -> None:
         "Group my subscriptions into topics",
         deps=deps,
     )
-    print(result.output)
+    logging.info(result.output)
 
     result = await support_agent.run(
         "Recommend some content for me in Spanish or English",
         deps=deps,
     )
-    print(result.output)
+    logging.info(result.output)
 
 
 if __name__ == "__main__":

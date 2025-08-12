@@ -7,7 +7,6 @@ from fastapi import Depends, Request
 from fastapi.applications import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
 from linkurator_core.application.auth.change_password_from_request import ChangePasswordFromRequest
 from linkurator_core.application.auth.register_new_user_with_email import RegisterNewUserWithEmail
 from linkurator_core.application.auth.register_new_user_with_google import RegisterUserHandler
@@ -15,8 +14,9 @@ from linkurator_core.application.auth.request_password_change import RequestPass
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
-from linkurator_core.application.chats.get_user_chats_handler import GetUserChatsHandler
 from linkurator_core.application.chats.get_chat_handler import GetChatHandler
+from linkurator_core.application.chats.get_user_chats_handler import GetUserChatsHandler
+from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler

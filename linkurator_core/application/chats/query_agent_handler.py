@@ -20,7 +20,7 @@ class QueryAgentHandler:
             await self.chat_repository.add(chat)
 
         if chat.user_id != user_id:
-            raise InvalidChatError("Chat does not belong to the user")
+            raise InvalidChatError()
 
         # Get the AI response
         result = await self.query_agent_service.query(user_id, query, chat_id)

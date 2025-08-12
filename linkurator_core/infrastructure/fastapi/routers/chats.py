@@ -10,8 +10,8 @@ from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.agent import AgentQueryRequest, AgentQueryResponse
 from linkurator_core.infrastructure.fastapi.models.chat import (
-    GetUserChatsResponse,
     ChatResponse,
+    GetUserChatsResponse,
 )
 
 
@@ -59,7 +59,8 @@ def get_router(
 
         chat = await get_chat_handler.handle(chat_id=chat_id, user_id=session.user_id)
         if chat is None:
-            raise default_responses.not_found("Chat not found")
+            msg = "Chat not found"
+            raise default_responses.not_found(msg)
 
         return ChatResponse.from_domain(chat)
 
