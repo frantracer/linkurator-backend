@@ -9,6 +9,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
+from linkurator_core.domain.chats.chat_repository import ChatRepository
 from linkurator_core.domain.items.interaction import InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import (
@@ -168,12 +169,14 @@ class PydanticQueryAgentService(QueryAgentService):
             subscription_repository: SubscriptionRepository,
             item_repository: ItemRepository,
             topic_repository: TopicRepository,
+            chat_repository: ChatRepository,
             openai_api_key: str,
     ) -> None:
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
         self.topic_repository = topic_repository
+        self.chat_repository = chat_repository
         self.agent = create_agent(openai_api_key)
 
     async def query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
@@ -185,7 +188,18 @@ class PydanticQueryAgentService(QueryAgentService):
             topic_repository=self.topic_repository,
         )
 
-        result = await self.agent.run(query, deps=deps)
+        context = ""
+        previously_chat = await self.chat_repository.get(chat_id)
+        if previously_chat is not None:
+            context = "Previous chat messages:\n"
+            for message in previously_chat.messages:
+                if message.role == "user":
+                    context += f"User: {message.content}\n"
+                elif message.role == "assistant":
+                    context += f"Assistant: {message.content}\n"
+            context += "End of previous chat messages.\n"
+
+        result = await self.agent.run(user_prompt=context + query, deps=deps)
 
         output: AgentOutput = result.output
 

@@ -299,6 +299,7 @@ def app_handlers() -> Handlers:
                 subscription_repository=subscription_repository,
                 item_repository=item_repository,
                 topic_repository=topic_repository,
+                chat_repository=chat_repository,
                 openai_api_key=env_settings.OPENAI_API_KEY,
             ),
             chat_repository=chat_repository,
