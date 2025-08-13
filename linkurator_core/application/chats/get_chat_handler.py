@@ -48,26 +48,29 @@ class GetChatHandler:
         enriched_messages = []
         for message in chat.messages:
             # Collect all UUIDs from the message
-            all_item_uuids = set(message.item_uuids)
-            all_subscription_uuids = set(message.subscription_uuids)
-            all_topic_uuids = set(message.topic_uuids)
+            referenced_items_uuids = set(message.item_uuids)
+            referenced_subs_uuids = set(message.subscription_uuids)
+            referenced_topics_uuids = set(message.topic_uuids)
 
             # Fetch referenced objects
             items = []
-            if all_item_uuids:
+            if referenced_items_uuids:
                 items = await self.item_repository.find_items(
-                    criteria=ItemFilterCriteria(item_ids=all_item_uuids),
+                    criteria=ItemFilterCriteria(item_ids=referenced_items_uuids),
                     page_number=0,
-                    limit=len(all_item_uuids),
+                    limit=len(referenced_items_uuids),
                 )
 
+            related_subs_uuids = {item.subscription_uuid for item in items if item.subscription_uuid}
+            all_subs_uuids = referenced_subs_uuids.union(related_subs_uuids)
+
             subscriptions = []
-            if all_subscription_uuids:
-                subscriptions = await self.subscription_repository.get_list(list(all_subscription_uuids))
+            if all_subs_uuids:
+                subscriptions = await self.subscription_repository.get_list(list(all_subs_uuids))
 
             topics = []
-            if all_topic_uuids:
-                topics = await self.topic_repository.find_topics(list(all_topic_uuids))
+            if referenced_topics_uuids:
+                topics = await self.topic_repository.find_topics(list(referenced_topics_uuids))
 
             enriched_message = EnrichedChatMessage(
                 message=message,
