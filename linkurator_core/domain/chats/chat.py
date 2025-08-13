@@ -16,6 +16,9 @@ class ChatMessage:
     role: ChatRole
     content: str
     timestamp: datetime
+    item_uuids: list[UUID]
+    subscription_uuids: list[UUID]
+    topic_uuids: list[UUID]
 
     @classmethod
     def new_user_message(cls, content: str) -> ChatMessage:
@@ -23,14 +26,26 @@ class ChatMessage:
             role=ChatRole.USER,
             content=content,
             timestamp=datetime.now(timezone.utc),
+            item_uuids=[],
+            subscription_uuids=[],
+            topic_uuids=[],
         )
 
     @classmethod
-    def new_assistant_message(cls, content: str) -> ChatMessage:
+    def new_assistant_message(
+        cls,
+        content: str,
+        item_uuids: list[UUID] | None = None,
+        subscription_uuids: list[UUID] | None = None,
+        topic_uuids: list[UUID] | None = None,
+    ) -> ChatMessage:
         return cls(
             role=ChatRole.ASSISTANT,
             content=content,
             timestamp=datetime.now(timezone.utc),
+            item_uuids=item_uuids or [],
+            subscription_uuids=subscription_uuids or [],
+            topic_uuids=topic_uuids or [],
         )
 
 
@@ -63,8 +78,19 @@ class Chat:
         message = ChatMessage.new_user_message(content)
         self.add_message(message)
 
-    def add_assistant_message(self, content: str) -> None:
-        message = ChatMessage.new_assistant_message(content)
+    def add_assistant_message(
+        self,
+        content: str,
+        item_uuids: list[UUID] | None = None,
+        subscription_uuids: list[UUID] | None = None,
+        topic_uuids: list[UUID] | None = None,
+    ) -> None:
+        message = ChatMessage.new_assistant_message(
+            content,
+            item_uuids=item_uuids,
+            subscription_uuids=subscription_uuids,
+            topic_uuids=topic_uuids,
+        )
         self.add_message(message)
 
     def update_title(self, title: str) -> None:

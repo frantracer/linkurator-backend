@@ -306,7 +306,12 @@ def app_handlers() -> Handlers:
             chat_repository=chat_repository,
         ),
         get_user_chats_handler=GetUserChatsHandler(chat_repository=chat_repository),
-        get_chat_handler=GetChatHandler(chat_repository=chat_repository),
+        get_chat_handler=GetChatHandler(
+            chat_repository=chat_repository,
+            item_repository=item_repository,
+            subscription_repository=subscription_repository,
+            topic_repository=topic_repository,
+        ),
         delete_chat_handler=DeleteChatHandler(chat_repository=chat_repository),
     )
 

@@ -59,12 +59,12 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        chat = await get_chat_handler.handle(chat_id=chat_id, user_id=session.user_id)
-        if chat is None:
+        enriched_chat = await get_chat_handler.handle(chat_id=chat_id, user_id=session.user_id)
+        if enriched_chat is None:
             msg = "Chat not found"
             raise default_responses.not_found(msg)
 
-        return ChatResponse.from_domain(chat)
+        return ChatResponse.from_enriched_chat(enriched_chat=enriched_chat)
 
     @router.delete(
         "/{chat_id}",

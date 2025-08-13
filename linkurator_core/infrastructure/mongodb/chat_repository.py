@@ -7,7 +7,7 @@ from uuid import UUID
 from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from linkurator_core.domain.chats.chat import Chat, ChatMessage, ChatRole
 from linkurator_core.domain.chats.chat_repository import ChatRepository
@@ -19,6 +19,9 @@ class MongoDBChatMessage(BaseModel):
     role: str
     content: str
     timestamp: datetime
+    item_uuids: list[UUID] = Field(default_factory=list)
+    subscription_uuids: list[UUID] = Field(default_factory=list)
+    topic_uuids: list[UUID] = Field(default_factory=list)
 
     @staticmethod
     def from_domain_message(message: ChatMessage) -> MongoDBChatMessage:
@@ -26,6 +29,9 @@ class MongoDBChatMessage(BaseModel):
             role=message.role,
             content=message.content,
             timestamp=message.timestamp,
+            item_uuids=message.item_uuids,
+            subscription_uuids=message.subscription_uuids,
+            topic_uuids=message.topic_uuids,
         )
 
     def to_domain_message(self) -> ChatMessage:
@@ -33,6 +39,9 @@ class MongoDBChatMessage(BaseModel):
             role=ChatRole(self.role),
             content=self.content,
             timestamp=self.timestamp,
+            item_uuids=self.item_uuids,
+            subscription_uuids=self.subscription_uuids,
+            topic_uuids=self.topic_uuids,
         )
 
 

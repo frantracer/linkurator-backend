@@ -28,7 +28,12 @@ class QueryAgentHandler:
         chat = await self.chat_repository.get(chat_id)
         if chat is not None:
             chat.add_user_message(query)
-            chat.add_assistant_message(result.message)
+            chat.add_assistant_message(
+                result.message,
+                item_uuids=[item.uuid for item in result.items],
+                subscription_uuids=[sub.uuid for sub in result.subscriptions],
+                topic_uuids=[topic.uuid for topic in result.topics],
+            )
             await self.chat_repository.update(chat)
 
         return result

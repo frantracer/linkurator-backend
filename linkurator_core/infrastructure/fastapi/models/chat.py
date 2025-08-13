@@ -3,20 +3,41 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from linkurator_core.application.chats.get_chat_handler import EnrichedChat
 from linkurator_core.domain.chats.chat import Chat, ChatMessage
+from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 
 
 class ChatMessageResponse(BaseModel):
     role: str = Field(description="Message role: 'user' or 'assistant'")
     content: str = Field(description="Message content")
     timestamp: datetime = Field(description="Message timestamp")
+    items: list[ItemSchema] = Field(default_factory=list, description="Items referenced in this message")
 
     @classmethod
-    def from_domain(cls, message: ChatMessage) -> "ChatMessageResponse":
+    def from_domain(
+        cls,
+        message: ChatMessage,
+        items: list[Item] | None = None,
+        subscriptions: list[Subscription] | None = None,
+    ) -> "ChatMessageResponse":
+        indexed_subscriptions = {sub.uuid: sub for sub in (subscriptions or [])}
+
+        item_responses = [
+            ItemSchema.from_domain_item(
+                item=item,
+                subscription=indexed_subscriptions[item.subscription_uuid],
+            )
+            for item in (items or [])
+        ]
+
         return cls(
             role=message.role,
             content=message.content,
             timestamp=message.timestamp,
+            items=item_responses,
         )
 
 
@@ -37,6 +58,27 @@ class ChatResponse(BaseModel):
             messages=[ChatMessageResponse.from_domain(msg) for msg in chat.messages],
             created_at=chat.created_at,
             updated_at=chat.updated_at,
+        )
+
+    @classmethod
+    def from_enriched_chat(cls, enriched_chat: EnrichedChat) -> "ChatResponse":
+        """Create ChatResponse from EnrichedChat with populated objects."""
+        enriched_messages = []
+        for enriched_msg in enriched_chat.enriched_messages:
+            chat_msg_response = ChatMessageResponse.from_domain(
+                message=enriched_msg.message,
+                items=enriched_msg.items,
+                subscriptions=enriched_msg.subscriptions,
+            )
+            enriched_messages.append(chat_msg_response)
+
+        return cls(
+            uuid=enriched_chat.chat.uuid,
+            user_id=enriched_chat.chat.user_id,
+            title=enriched_chat.chat.title,
+            messages=enriched_messages,
+            created_at=enriched_chat.chat.created_at,
+            updated_at=enriched_chat.chat.updated_at,
         )
 
 
