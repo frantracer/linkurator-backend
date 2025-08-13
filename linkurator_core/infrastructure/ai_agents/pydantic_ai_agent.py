@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 import logfire
@@ -286,6 +287,12 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             )
             return "The customer's name is unknown"
         return f"The customer's name is {user.first_name!r}"
+
+    @ ai_agent.system_prompt
+    async def add_today_date(_ctx: RunContext[AgentDependencies]) -> str:
+        """Returns today's date in Weekday YYYY-MM-DD format."""
+        now = datetime.now(tz=timezone.utc)
+        return f"Today is {now.strftime("%A %Y-%m-%d")}"
 
     @ ai_agent.tool
     async def user_subscriptions(
