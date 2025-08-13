@@ -148,6 +148,15 @@ class ItemForAI(BaseModel):
         )
 
 
+class UserSubscriptionsAndTopics(BaseModel):
+    subscriptions: list[SubscriptionForAI] = Field(
+        description="List of user's subscriptions",
+    )
+    topics: list[TopicForAI] = Field(
+        description="List of user's topics",
+    )
+
+
 class AgentOutput(BaseModel):
     response: str = Field(
         description="Response for the user based on their query",
@@ -268,13 +277,15 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         system_prompt=(
             "You are a system to recommend videos, podcasts or articles to the user based on their query. "
             "Always use the customer's name in your responses. "
-            "When asking for recommendations, do not recommend content the user has already viewed or recommended. "
+            "Always review the user's subscriptions and topics before answering. "
             "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
             "When creating topics, do not create similar topics if they already exist. "
-            "When finding items, try to find by a single keyword. If there are not results, try to list everything. "
-            "Find items can be called maximum five times in a single query. "
-            "It is ok to return empty lists of items if there are no matching items to the query. "
-            "When the user asks for specific publish dates, ensure you do not return any items that were published before the date. "
+            "Items that belongs to a subscription included in any of the user topics are considered more relevant. "
+            "Try first to find items from subscriptions before using keyword search. "
+            "When finding items, try to find by a single keyword. "
+            "Find items by keyword, subscription or topics can be called maximum five times in a single query. "
+            "It is ok to return empty lists of items ids if there are no matching items to the query. "
+            "When the user asks for specific dates, ensure you do not return any items that were published before the date. "
         ),
     )
 
@@ -312,9 +323,37 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         return [SubscriptionForAI.from_subscription(sub) for sub in subs]
 
     @ ai_agent.tool
-    async def find_items(
+    async def user_subscriptions_and_topics(
             ctx: RunContext[AgentDependencies],
-            text_search: str | None = None,
+    ) -> UserSubscriptionsAndTopics:
+        """
+        Returns the user's subscriptions and topics.
+
+        Args:
+        ----
+            ctx: RunContext with dependencies
+
+        """
+        handler = GetUserSubscriptionsHandler(
+            user_repository=ctx.deps.user_repository,
+            subscription_repository=ctx.deps.subscription_repository,
+        )
+        subs = await handler.handle(
+            user_id=ctx.deps.user_uuid,
+        )
+        subscriptions = [SubscriptionForAI.from_subscription(sub) for sub in subs]
+
+        topics = await ctx.deps.topic_repository.get_by_user_id(ctx.deps.user_uuid)
+        topics_for_ai = [TopicForAI.from_topic(topic) for topic in topics]
+
+        return UserSubscriptionsAndTopics(
+            subscriptions=subscriptions,
+            topics=topics_for_ai,
+        )
+
+    @ ai_agent.tool
+    async def find_subscriptions_items(
+            ctx: RunContext[AgentDependencies],
             topic_ids: list[UUID] | None = None,
             subscription_ids: list[UUID] | None = None,
     ) -> list[ItemForAI]:
@@ -324,7 +363,6 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         Args:
         ----
             ctx: RunContext with dependencies
-            text_search: Search in item names and descriptions
             topic_ids: Filter by topic UUIDs
             subscription_ids: Filter by subscription UUIDs
 
@@ -343,6 +381,32 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
 
         criteria = ItemFilterCriteria(
             subscription_ids=None if len(all_subs_ids) == 0 else list(all_subs_ids),
+            interactions_from_user=ctx.deps.user_uuid,
+            interactions=AnyItemInteraction(without_interactions=True),
+        )
+
+        items = await ctx.deps.item_repository.find_items(
+            criteria=criteria,
+            page_number=0,
+            limit=ITEMS_PER_PAGE,
+        )
+        return [ItemForAI.from_item(item) for item in items]
+
+    @ ai_agent.tool
+    async def find_items_from_keyword(
+            ctx: RunContext[AgentDependencies],
+            text_search: str,
+    ) -> list[ItemForAI]:
+        """
+        Finds items based on a single keyword search.
+
+        Args:
+        ----
+            ctx: RunContext with dependencies
+            text_search: Keyword to search for in item names
+
+        """
+        criteria = ItemFilterCriteria(
             text=text_search,
             interactions_from_user=ctx.deps.user_uuid,
             interactions=AnyItemInteraction(without_interactions=True),
