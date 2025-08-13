@@ -4,8 +4,10 @@ from uuid import UUID, uuid4
 import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
+from pydantic_ai.models.fallback import FallbackModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.settings import ModelSettings
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
@@ -237,10 +239,26 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     provider = OpenAIProvider(
         api_key=api_key,
     )
-    llm_model = OpenAIModel(
+    gpt4_model = OpenAIModel(
         provider=provider,
         model_name="gpt-4.1",
+        settings=ModelSettings(
+            temperature=0.5,
+            max_tokens=1000,
+        ),
     )
+
+    gpt4_mini_model = OpenAIModel(
+        provider=provider,
+        model_name="gpt-4.1-mini",
+        settings=ModelSettings(
+            temperature=0.5,
+            max_tokens=1000,
+        ),
+    )
+
+    llm_model = FallbackModel(gpt4_model, gpt4_mini_model)
+
     ai_agent = Agent[AgentDependencies, AgentOutput](
         llm_model,
         deps_type=AgentDependencies,
