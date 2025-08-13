@@ -13,11 +13,9 @@ from pydantic_ai.settings import ModelSettings
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
 from linkurator_core.domain.chats.chat_repository import ChatRepository
-from linkurator_core.domain.items.interaction import InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import (
     AnyItemInteraction,
-    InteractionFilterCriteria,
     ItemFilterCriteria,
     ItemRepository,
 )
@@ -312,7 +310,8 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     async def find_items(
             ctx: RunContext[AgentDependencies],
             text_search: str | None = None,
-            subscription_id: UUID | None = None,
+            topic_ids: list[UUID] | None = None,
+            subscription_ids: list[UUID] | None = None,
     ) -> list[ItemForAI]:
         """
         Gets items for the user with optional filtering. When no filters are applied, it returns all items
@@ -321,15 +320,24 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         ----
             ctx: RunContext with dependencies
             text_search: Search in item names and descriptions
-            subscription_id: Filter by subscription UUID
+            topic_ids: Filter by topic UUIDs
+            subscription_ids: Filter by subscription UUIDs
 
         """
-        subscription_ids: list[UUID] | None = None
-        if subscription_id:
-            subscription_ids = [subscription_id]
+        topics = await ctx.deps.topic_repository.find_topics(
+            [] if topic_ids is None else topic_ids,
+        )
+
+        all_subs_ids = set()
+
+        if subscription_ids is not None:
+            all_subs_ids.update(subscription_ids)
+
+        for topic in topics:
+            all_subs_ids.update(topic.subscriptions_ids)
 
         criteria = ItemFilterCriteria(
-            subscription_ids=subscription_ids,
+            subscription_ids=None if len(all_subs_ids) == 0 else list(all_subs_ids),
             text=text_search,
             interactions_from_user=ctx.deps.user_uuid,
             interactions=AnyItemInteraction(without_interactions=True),
@@ -340,39 +348,6 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             page_number=0,
             limit=ITEMS_PER_PAGE,
         )
-        return [ItemForAI.from_item(item) for item in items]
-
-    @ ai_agent.tool
-    async def get_items_recommended_by_the_user(
-            ctx: RunContext[AgentDependencies],
-    ) -> list[ItemForAI]:
-        """
-        Get content the user viewed and recommended in the past
-
-        :param ctx: RunContext with dependencies
-        :return: list of ItemForAI
-        """
-        recommended_criteria = InteractionFilterCriteria(
-            user_ids=[ctx.deps.user_uuid],
-            interaction_types=[InteractionType.RECOMMENDED],
-        )
-        recommended_interactions = await ctx.deps.item_repository.find_interactions(
-            criteria=recommended_criteria,
-            page_number=0,
-            limit=ITEMS_PER_PAGE,
-        )
-
-        items_uuids = {interaction.item_uuid for interaction in recommended_interactions}
-
-        items_criteria = ItemFilterCriteria(
-            item_ids=items_uuids,
-        )
-        items = await ctx.deps.item_repository.find_items(
-            criteria=items_criteria,
-            page_number=0,
-            limit=len(items_uuids),
-        )
-
         return [ItemForAI.from_item(item) for item in items]
 
     @ ai_agent.tool
