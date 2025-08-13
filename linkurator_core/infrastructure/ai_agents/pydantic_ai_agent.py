@@ -115,12 +115,14 @@ class ItemForAI(BaseModel):
     name: str = Field(
         description="Name of the item",
     )
-    description: str | None = Field(
-        default=None,
-        description="Description of the item, if available",
+    description: str = Field(
+        description="Description of the item",
     )
     provider: ItemProvider = Field(
         description="Provider of the item (e.g., 'youtube', 'spotify')",
+    )
+    published_at: datetime = Field(
+        description="Publication date of the item, if available",
     )
 
     @classmethod
@@ -142,6 +144,7 @@ class ItemForAI(BaseModel):
             name=item.name,
             description=item.description,
             provider=item.provider,
+            published_at=item.published_at,
         )
 
 
@@ -270,6 +273,8 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "When creating topics, do not create similar topics if they already exist. "
             "When finding items, try to find by a single keyword. If there are not results, try to list everything. "
             "Find items can be called maximum five times in a single query. "
+            "It is ok to return empty lists of items if there are no matching items to the query. "
+            "When the user asks for specific publish dates, ensure you do not return any items that were published before the date. "
         ),
     )
 
