@@ -203,7 +203,7 @@ class PydanticQueryAgentService(QueryAgentService):
 
         context = ""
         previously_chat = await self.chat_repository.get(chat_id)
-        if previously_chat is not None:
+        if previously_chat is not None and len(previously_chat.messages) > 0:
             context = "Previous chat messages:\n"
             for message in previously_chat.messages:
                 if message.role == "user":
@@ -284,6 +284,9 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "Find items by keyword, subscription or topics can be called maximum five times in a single query. "
             "It is ok to return empty lists of items ids if there are no matching items to the query. "
             "When the user asks for specific dates, ensure you do not return any items that were published before the date. "
+            "Use markdown formatting, make titles bold and bullet points for lists. "
+            "Do not include any links in the response, only item names. Summarize the titles if they are similar. "
+            "You do not have access to the content, it is important not to offer details or summaries about the content. "
         ),
     )
 
