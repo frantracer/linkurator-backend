@@ -14,6 +14,10 @@ from linkurator_core.application.auth.request_password_change import RequestPass
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
+from linkurator_core.application.chats.delete_chat_handler import DeleteChatHandler
+from linkurator_core.application.chats.get_chat_handler import GetChatHandler
+from linkurator_core.application.chats.get_user_chats_handler import GetUserChatsHandler
+from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
@@ -64,6 +68,7 @@ from linkurator_core.application.users.update_user_subscriptions_handler import 
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import (
     authentication,
+    chats,
     credentials,
     curators,
     items,
@@ -124,6 +129,10 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     delete_external_credential_handler: DeleteExternalCredentialHandler
     get_platform_statistics: GetPlatformStatisticsHandler
     update_user_subscriptions_handler: UpdateUserSubscriptionsHandler
+    query_agent_handler: QueryAgentHandler
+    get_user_chats_handler: GetUserChatsHandler
+    get_chat_handler: GetChatHandler
+    delete_chat_handler: DeleteChatHandler
 
 
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
@@ -238,6 +247,17 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             add_external_credential_handler=handlers.add_external_credentials_handler,
             delete_external_credential_handler=handlers.delete_external_credential_handler),
         prefix="/credentials",
+    )
+    app.include_router(
+        tags=["Chats"],
+        router=chats.get_router(
+            get_session=get_current_session,
+            query_agent_handler=handlers.query_agent_handler,
+            get_user_chats_handler=handlers.get_user_chats_handler,
+            get_chat_handler=handlers.get_chat_handler,
+            delete_chat_handler=handlers.delete_chat_handler,
+        ),
+        prefix="/chats",
     )
 
     app.add_middleware(

@@ -10,6 +10,10 @@ from linkurator_core.application.auth.request_password_change import RequestPass
 from linkurator_core.application.auth.validate_new_user_request import ValidateNewUserRequest
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.application.auth.validate_user_password import ValidateUserPassword
+from linkurator_core.application.chats.delete_chat_handler import DeleteChatHandler
+from linkurator_core.application.chats.get_chat_handler import GetChatHandler
+from linkurator_core.application.chats.get_user_chats_handler import GetUserChatsHandler
+from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
@@ -56,10 +60,9 @@ from linkurator_core.application.users.unfollow_curator_handler import UnfollowC
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
-from linkurator_core.infrastructure.config.env_settings import EnvSettings
+from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import PydanticQueryAgentService
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets, SpotifyClientSecrets
-from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
-from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
+from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 from linkurator_core.infrastructure.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService, GoogleDomainAccountService
@@ -68,6 +71,8 @@ from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiC
 from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
+from linkurator_core.infrastructure.logger import configure_logging
+from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.password_change_request_repository import (
@@ -84,14 +89,14 @@ from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscr
 
 
 def app_handlers() -> Handlers:
-    env_settings = EnvSettings()
+    settings = ApplicationSettings.from_file()
 
-    spotify_secrets = SpotifyClientSecrets(env_settings.SPOTIFY_SECRET_PATH)
-    google_secrets = GoogleClientSecrets(env_settings.GOOGLE_SECRET_PATH)
+    spotify_secrets = SpotifyClientSecrets.from_file(settings.env.SPOTIFY_SECRET_PATH)
+    google_secrets = GoogleClientSecrets.from_file(settings.env.GOOGLE_SECRET_PATH)
     account_service = GoogleAccountService(
         client_id=google_secrets.client_id,
         client_secret=google_secrets.client_secret)
-    google_secrets_youtube = GoogleClientSecrets(env_settings.GOOGLE_YOUTUBE_SECRET_PATH)
+    google_secrets_youtube = GoogleClientSecrets.from_file(settings.env.GOOGLE_YOUTUBE_SECRET_PATH)
     youtube_account_service = GoogleAccountService(
         client_id=google_secrets_youtube.client_id,
         client_secret=google_secrets_youtube.client_secret,
@@ -99,7 +104,7 @@ def app_handlers() -> Handlers:
 
     logging.getLogger("pymongo").setLevel(logging.INFO)
 
-    db_settings = MongoDBSettings()
+    db_settings = settings.mongodb
     user_repository = MongoDBUserRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
@@ -122,6 +127,9 @@ def app_handlers() -> Handlers:
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
     password_change_request_repository = MongoDBPasswordChangeRequestRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password)
+    chat_repository = MongoDBChatRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
@@ -153,18 +161,18 @@ def app_handlers() -> Handlers:
         youtube_service=youtube_service,
     )
 
-    rabbitmq_settings = RabbitMQSettings()
+    rabbitmq_settings = settings.rabbitmq
     event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,
                                  username=rabbitmq_settings.user, password=rabbitmq_settings.password)
 
     google_domain_service = GoogleDomainAccountService(
         service_credentials_path=google_secrets.email_service_credentials_path,
-        email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        email=settings.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
     )
     email_sender = GmailEmailSender(account_service=google_domain_service)
 
-    RegistrationRequest.valid_domains = env_settings.VALID_DOMAINS
-    PasswordChangeRequest.valid_domains = env_settings.VALID_DOMAINS
+    RegistrationRequest.valid_domains = settings.env.VALID_DOMAINS
+    PasswordChangeRequest.valid_domains = settings.env.VALID_DOMAINS
 
     return Handlers(
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
@@ -284,10 +292,29 @@ def app_handlers() -> Handlers:
             subscription_service=youtube_service,
             user_repository=user_repository,
             subscription_repository=subscription_repository),
+        query_agent_handler=QueryAgentHandler(
+            query_agent_service=PydanticQueryAgentService(
+                user_repository=user_repository,
+                subscription_repository=subscription_repository,
+                item_repository=item_repository,
+                topic_repository=topic_repository,
+                chat_repository=chat_repository,
+                openai_api_key=settings.openai.api_key,
+            ),
+            chat_repository=chat_repository,
+        ),
+        get_user_chats_handler=GetUserChatsHandler(chat_repository=chat_repository),
+        get_chat_handler=GetChatHandler(
+            chat_repository=chat_repository,
+            item_repository=item_repository,
+            subscription_repository=subscription_repository,
+            topic_repository=topic_repository,
+        ),
+        delete_chat_handler=DeleteChatHandler(chat_repository=chat_repository),
     )
 
 
 def create_app() -> FastAPI:
-    logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s",
-                        level=logging.DEBUG, datefmt="%Y-%m-%d %H:%M:%S")
+    configure_logging(ApplicationSettings.from_file().log)
+
     return create_app_from_handlers(app_handlers())

@@ -2,7 +2,7 @@ import argparse
 import asyncio
 from datetime import datetime, timezone
 
-from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
+from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 
 
@@ -15,7 +15,7 @@ async def main() -> None:
     playlist_id = parsed_args.playlist_id
     from_date = parsed_args.from_date
 
-    secrets = GoogleClientSecrets()
+    secrets = ApplicationSettings.from_file().google
 
     client = YoutubeApiClient()
     videos = await client.get_youtube_videos_from_playlist(

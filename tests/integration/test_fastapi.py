@@ -90,6 +90,10 @@ def dummy_handlers() -> Handlers:
         unfavorite_topic_handler=AsyncMock(),
         get_platform_statistics=AsyncMock(),
         update_user_subscriptions_handler=AsyncMock(),
+        query_agent_handler=AsyncMock(),
+        get_user_chats_handler=AsyncMock(),
+        get_chat_handler=AsyncMock(),
+        delete_chat_handler=AsyncMock(),
     )
 
 

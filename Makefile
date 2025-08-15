@@ -88,10 +88,14 @@ link-config:
 	fi
 
 link-dev-config: decrypt-secrets
-	ln -sfn ../config/app_config_develop.ini secrets/app_config.ini
+	if [ ! -f .config.ini ] ; then \
+		rm -f .config.ini; \
+		cp config/app_config_develop.ini .config.ini; \
+	fi
 
 link-prod-config: decrypt-secrets
-	ln -sfn app_config_production.ini secrets/app_config.ini
+	rm -f .config.ini
+	cp secrets/app_config_production.ini .config.ini
 
 ####################
 # Test
@@ -208,3 +212,13 @@ deploy-rabbitmq: check-ssh-connection
 
 tunnel-rabbitmq: check-ssh-connection
 	ssh -L 15000:localhost:15672 -N root@$(SSH_IP_ADDRESS)
+
+
+####################
+# Scripts
+####################
+mcp-server:
+	.venv/bin/python3 scripts/mcp_server.py /home/frantracer/Projects/linkurator-backend/scripts/mcp_server.py
+
+mcp-client:
+	.venv/bin/python3 scripts/mcp_client.py http://localhost:8000

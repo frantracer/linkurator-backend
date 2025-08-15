@@ -12,3 +12,5 @@ coverage.xml
 
 .idea
 .vscode
+
+.config.ini

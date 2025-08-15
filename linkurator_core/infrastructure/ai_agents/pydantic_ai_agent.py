@@ -1,0 +1,473 @@
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from uuid import UUID, uuid4
+
+import logfire
+from pydantic import BaseModel, Field
+from pydantic_ai import Agent, RunContext
+from pydantic_ai.models.fallback import FallbackModel
+from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.settings import ModelSettings
+
+from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
+from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
+from linkurator_core.domain.chats.chat_repository import ChatRepository
+from linkurator_core.domain.items.item import Item, ItemProvider
+from linkurator_core.domain.items.item_repository import (
+    AnyItemInteraction,
+    ItemFilterCriteria,
+    ItemRepository,
+)
+from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription_repository import (
+    SubscriptionRepository,
+)
+from linkurator_core.domain.topics.topic import Topic
+from linkurator_core.domain.topics.topic_repository import TopicRepository
+from linkurator_core.domain.users.user_repository import UserRepository
+
+ITEMS_PER_PAGE = 20
+
+
+@dataclass
+class AgentDependencies:
+    user_uuid: UUID
+    user_repository: UserRepository
+    subscription_repository: SubscriptionRepository
+    item_repository: ItemRepository
+    topic_repository: TopicRepository
+
+
+class TopicForAI(BaseModel):
+    uuid: UUID = Field(
+        description="Unique identifier for the topic",
+    )
+    name: str = Field(
+        description="Name of the topic",
+    )
+    subscription_ids: list[UUID] = Field(
+        description="List of subscription UUIDs associated with this topic",
+    )
+
+    @classmethod
+    def from_topic(cls, topic: Topic) -> "TopicForAI":
+        """
+        Converts a Topic domain object to a TopicForAI model.
+
+        Args:
+        ----
+            topic: The Topic domain object to convert.
+
+        Returns:
+        -------
+            A TopicForAI instance with the same data as the provided topic.
+
+        """
+        return cls(
+            uuid=topic.uuid,
+            name=topic.name,
+            subscription_ids=topic.subscriptions_ids,
+        )
+
+
+class SubscriptionForAI(BaseModel):
+    uuid: UUID = Field(
+        description="Unique identifier for the subscription",
+    )
+    name: str = Field(
+        description="Name of the subscription",
+    )
+    description: str | None = Field(
+        default=None,
+        description="Description of the subscription, if available",
+    )
+    provider: SubscriptionProvider = Field(
+        description="Provider of the subscription (e.g., 'youtube', 'spotify')",
+    )
+
+    @classmethod
+    def from_subscription(cls, subscription: Subscription) -> "SubscriptionForAI":
+        """
+        Converts a Subscription domain object to a SubscriptionForAI model.
+
+        Args:
+        ----
+            subscription: The Subscription domain object to convert.
+
+        Returns:
+        -------
+            A SubscriptionForAI instance with the same data as the provided subscription.
+
+        """
+        return cls(
+            uuid=subscription.uuid,
+            name=subscription.name,
+            description=subscription.description,
+            provider=subscription.provider,
+        )
+
+
+class ItemForAI(BaseModel):
+    uuid: UUID = Field(
+        description="Unique identifier for the item",
+    )
+    name: str = Field(
+        description="Name of the item",
+    )
+    description: str = Field(
+        description="Description of the item",
+    )
+    provider: ItemProvider = Field(
+        description="Provider of the item (e.g., 'youtube', 'spotify')",
+    )
+    published_at: datetime = Field(
+        description="Publication date of the item, if available",
+    )
+
+    @classmethod
+    def from_item(cls, item: Item) -> "ItemForAI":
+        """
+        Converts an Item domain object to an ItemForAI model.
+
+        Args:
+        ----
+            item: The Item domain object to convert.
+
+        Returns:
+        -------
+            An ItemForAI instance with the same data as the provided item.
+
+        """
+        return cls(
+            uuid=item.uuid,
+            name=item.name,
+            description=item.description,
+            provider=item.provider,
+            published_at=item.published_at,
+        )
+
+
+class UserSubscriptionsAndTopics(BaseModel):
+    subscriptions: list[SubscriptionForAI] = Field(
+        description="List of user's subscriptions",
+    )
+    topics: list[TopicForAI] = Field(
+        description="List of user's topics",
+    )
+
+
+class AgentOutput(BaseModel):
+    response: str = Field(
+        description="Response for the user based on their query",
+    )
+    topics_uuids: list[UUID] = Field(
+        description="List of topics UUIDs created for the user to organize their subscriptions. "
+                    "Can be empty if no topics match.",
+    )
+    subscriptions_uuids: list[UUID] = Field(
+        description="List of subscriptions UUIDs that are relevant to the query. "
+                    "Can be empty if no subscriptions match.",
+    )
+    items_uuids: list[UUID] = Field(
+        description="List of content items UUIDs related to the user's query. "
+                    "Can be empty if no items match.",
+    )
+
+
+class PydanticQueryAgentService(QueryAgentService):
+    def __init__(
+            self,
+            user_repository: UserRepository,
+            subscription_repository: SubscriptionRepository,
+            item_repository: ItemRepository,
+            topic_repository: TopicRepository,
+            chat_repository: ChatRepository,
+            openai_api_key: str,
+    ) -> None:
+        self.user_repository = user_repository
+        self.subscription_repository = subscription_repository
+        self.item_repository = item_repository
+        self.topic_repository = topic_repository
+        self.chat_repository = chat_repository
+        self.agent = create_agent(openai_api_key)
+
+    async def query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
+        deps = AgentDependencies(
+            user_uuid=user_id,
+            user_repository=self.user_repository,
+            subscription_repository=self.subscription_repository,
+            item_repository=self.item_repository,
+            topic_repository=self.topic_repository,
+        )
+
+        context = ""
+        previously_chat = await self.chat_repository.get(chat_id)
+        if previously_chat is not None and len(previously_chat.messages) > 0:
+            context = "Previous chat messages:\n"
+            for message in previously_chat.messages:
+                if message.role == "user":
+                    context += f"User: {message.content}\n"
+                elif message.role == "assistant":
+                    context += f"Assistant: {message.content}\n"
+            context += "End of previous chat messages.\n"
+
+        result = await self.agent.run(user_prompt=context + query, deps=deps)
+
+        output: AgentOutput = result.output
+
+        topics = []
+        if len(output.topics_uuids) > 0:
+            topics = await self.topic_repository.find_topics(output.topics_uuids)
+
+        items = []
+        if len(output.items_uuids) > 0:
+            items = await self.item_repository.find_items(
+                criteria=ItemFilterCriteria(item_ids=set(output.items_uuids)),
+                page_number=0,
+                limit=len(output.items_uuids),
+            )
+
+        subscriptions = []
+        if len(output.subscriptions_uuids) > 0:
+            subscriptions = await self.subscription_repository.get_list(output.subscriptions_uuids)
+
+        return AgentQueryResult(
+            message=result.output.response,
+            items=items,
+            topics=topics,
+            subscriptions=subscriptions,
+        )
+
+
+def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
+    """
+    Creates a support agent that can be used to handle user queries.
+    The agent will provide recommendations based on the user's subscriptions and interactions.
+    """
+    provider = OpenAIProvider(
+        api_key=api_key,
+    )
+    gpt4_model = OpenAIModel(
+        provider=provider,
+        model_name="gpt-4.1",
+        settings=ModelSettings(
+            temperature=0.5,
+            max_tokens=1000,
+        ),
+    )
+
+    gpt4_mini_model = OpenAIModel(
+        provider=provider,
+        model_name="gpt-4.1-mini",
+        settings=ModelSettings(
+            temperature=0.5,
+            max_tokens=1000,
+        ),
+    )
+
+    llm_model = FallbackModel(gpt4_model, gpt4_mini_model)
+
+    ai_agent = Agent[AgentDependencies, AgentOutput](
+        llm_model,
+        deps_type=AgentDependencies,
+        output_type=AgentOutput,
+        system_prompt=(
+            "You are a system to recommend videos, podcasts or articles to the user based on their query. "
+            "Always use the customer's name in your responses. "
+            "Always review the user's subscriptions and topics before answering. "
+            "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
+            "When creating topics, do not create similar topics if they already exist. "
+            "Items that belongs to a subscription included in any of the user topics are considered more relevant. "
+            "Try first to find items from subscriptions before using keyword search. "
+            "When finding items, try to find by a single keyword. "
+            "Find items by keyword, subscription or topics can be called maximum five times in a single query. "
+            "It is ok to return empty lists of items ids if there are no matching items to the query. "
+            "When the user asks for specific dates, ensure you do not return any items that were published before the date. "
+            "Use markdown formatting, make titles bold and bullet points for lists. "
+            "Do not include any links in the response, only item names. Summarize the titles if they are similar. "
+            "You do not have access to the content, it is important not to offer details or summaries about the content. "
+        ),
+    )
+
+    @ ai_agent.system_prompt
+    async def add_user_name(ctx: RunContext[AgentDependencies]) -> str:
+        user = await ctx.deps.user_repository.get(
+            ctx.deps.user_uuid,
+        )
+        if user is None:
+            logfire.warning(
+                "User not found for customer UUID",
+                customer_uuid=ctx.deps.user_uuid,
+            )
+            return "The customer's name is unknown"
+        return f"The customer's name is {user.first_name!r}"
+
+    @ ai_agent.system_prompt
+    async def add_today_date(_ctx: RunContext[AgentDependencies]) -> str:
+        """Returns today's date in Weekday YYYY-MM-DD format."""
+        now = datetime.now(tz=timezone.utc)
+        return f"Today is {now.strftime("%A %Y-%m-%d")}"
+
+    @ ai_agent.tool
+    async def user_subscriptions(
+            ctx: RunContext[AgentDependencies],
+    ) -> list[SubscriptionForAI]:
+        """Returns the user's subscriptions."""
+        handler = GetUserSubscriptionsHandler(
+            user_repository=ctx.deps.user_repository,
+            subscription_repository=ctx.deps.subscription_repository,
+        )
+        subs = await handler.handle(
+            user_id=ctx.deps.user_uuid,
+        )
+        return [SubscriptionForAI.from_subscription(sub) for sub in subs]
+
+    @ ai_agent.tool
+    async def user_subscriptions_and_topics(
+            ctx: RunContext[AgentDependencies],
+    ) -> UserSubscriptionsAndTopics:
+        """
+        Returns the user's subscriptions and topics.
+
+        Args:
+        ----
+            ctx: RunContext with dependencies
+
+        """
+        handler = GetUserSubscriptionsHandler(
+            user_repository=ctx.deps.user_repository,
+            subscription_repository=ctx.deps.subscription_repository,
+        )
+        subs = await handler.handle(
+            user_id=ctx.deps.user_uuid,
+        )
+        subscriptions = [SubscriptionForAI.from_subscription(sub) for sub in subs]
+
+        topics = await ctx.deps.topic_repository.get_by_user_id(ctx.deps.user_uuid)
+        topics_for_ai = [TopicForAI.from_topic(topic) for topic in topics]
+
+        return UserSubscriptionsAndTopics(
+            subscriptions=subscriptions,
+            topics=topics_for_ai,
+        )
+
+    @ ai_agent.tool
+    async def find_subscriptions_items(
+            ctx: RunContext[AgentDependencies],
+            topic_ids: list[UUID] | None = None,
+            subscription_ids: list[UUID] | None = None,
+    ) -> list[ItemForAI]:
+        """
+        Gets items for the user with optional filtering. When no filters are applied, it returns all items
+
+        Args:
+        ----
+            ctx: RunContext with dependencies
+            topic_ids: Filter by topic UUIDs
+            subscription_ids: Filter by subscription UUIDs
+
+        """
+        topics = await ctx.deps.topic_repository.find_topics(
+            [] if topic_ids is None else topic_ids,
+        )
+
+        all_subs_ids = set()
+
+        if subscription_ids is not None:
+            all_subs_ids.update(subscription_ids)
+
+        for topic in topics:
+            all_subs_ids.update(topic.subscriptions_ids)
+
+        criteria = ItemFilterCriteria(
+            subscription_ids=None if len(all_subs_ids) == 0 else list(all_subs_ids),
+            interactions_from_user=ctx.deps.user_uuid,
+            interactions=AnyItemInteraction(without_interactions=True),
+        )
+
+        items = await ctx.deps.item_repository.find_items(
+            criteria=criteria,
+            page_number=0,
+            limit=ITEMS_PER_PAGE,
+        )
+        return [ItemForAI.from_item(item) for item in items]
+
+    @ ai_agent.tool
+    async def find_items_from_keyword(
+            ctx: RunContext[AgentDependencies],
+            text_search: str,
+    ) -> list[ItemForAI]:
+        """
+        Finds items based on a single keyword search.
+
+        Args:
+        ----
+            ctx: RunContext with dependencies
+            text_search: Keyword to search for in item names
+
+        """
+        criteria = ItemFilterCriteria(
+            text=text_search,
+            interactions_from_user=ctx.deps.user_uuid,
+            interactions=AnyItemInteraction(without_interactions=True),
+        )
+
+        items = await ctx.deps.item_repository.find_items(
+            criteria=criteria,
+            page_number=0,
+            limit=ITEMS_PER_PAGE,
+        )
+        return [ItemForAI.from_item(item) for item in items]
+
+    @ ai_agent.tool
+    async def get_user_topics(
+            ctx: RunContext[AgentDependencies],
+    ) -> list[TopicForAI]:
+        """Returns the user's topics."""
+        topics = await ctx.deps.topic_repository.get_by_user_id(ctx.deps.user_uuid)
+        return [TopicForAI.from_topic(topic) for topic in topics]
+
+    @ ai_agent.tool
+    async def create_topic(
+            ctx: RunContext[AgentDependencies],
+            name: str,
+            subscription_ids: list[str] | None = None,
+    ) -> TopicForAI:
+        """
+        Creates a new topic for the user to organize their subscriptions.
+
+        Args:
+        ----
+            ctx: RunContext with dependencies
+            name: Name of the new topic
+            subscription_ids: Optional list of subscription UUIDs to add to this topic
+
+        """
+        topic_uuid = uuid4()
+        subscription_uuids = [UUID(sid) for sid in subscription_ids] if subscription_ids else []
+
+        # Verify user owns the subscriptions
+        if subscription_uuids:
+            # Get user's subscriptions using the handler
+            handler = GetUserSubscriptionsHandler(
+                user_repository=ctx.deps.user_repository,
+                subscription_repository=ctx.deps.subscription_repository,
+            )
+            user_subscriptions = await handler.handle(user_id=ctx.deps.user_uuid)
+            user_subscription_ids = {sub.uuid for sub in user_subscriptions}
+
+            # Filter to only include subscriptions the user actually owns
+            subscription_uuids = [sid for sid in subscription_uuids if sid in user_subscription_ids]
+
+        topic = Topic.new(
+            uuid=topic_uuid,
+            name=name,
+            user_id=ctx.deps.user_uuid,
+            subscription_ids=subscription_uuids,
+        )
+
+        await ctx.deps.topic_repository.add(topic)
+        return TopicForAI.from_topic(topic)
+
+    return ai_agent

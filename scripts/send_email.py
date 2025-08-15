@@ -4,8 +4,7 @@ import logging
 from dataclasses import dataclass
 from uuid import uuid4
 
-from linkurator_core.infrastructure.config.env_settings import EnvSettings
-from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets
+from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.google.account_service import GoogleDomainAccountService
 from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
 
@@ -47,8 +46,9 @@ async def main() -> None:
     subject = input_arguments.subject
     message_text = input_arguments.message_text + f"\n{uuid4()}"
 
-    google_client_secrets = GoogleClientSecrets()
-    env_settings = EnvSettings()
+    settings = ApplicationSettings.from_file()
+    google_client_secrets = settings.google
+    env_settings = settings.env
     google_account_service = GoogleDomainAccountService(
         email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL,
         service_credentials_path=google_client_secrets.email_service_credentials_path)

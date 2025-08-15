@@ -64,3 +64,7 @@ class UsernameAlreadyInUseError(Exception):
 
 class NonExistingFileError(Exception):
     pass
+
+
+class InvalidChatError(Exception):
+    pass
