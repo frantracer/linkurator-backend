@@ -1,6 +1,6 @@
 import configparser
-import os
 from ipaddress import IPv4Address
+from pathlib import Path
 
 from pydantic import BaseModel
 
@@ -14,16 +14,17 @@ class MongoDBSettings(BaseModel):
 
     @classmethod
     def from_file(cls, config_file_path: str) -> "MongoDBSettings":
-        if not os.path.exists(config_file_path):
-            raise FileNotFoundError(f'Configuration file not found at {config_file_path}')
+        if not Path(config_file_path).exists():
+            msg = f"Configuration file not found at {config_file_path}"
+            raise FileNotFoundError(msg)
 
         config = configparser.ConfigParser()
         config.read(config_file_path)
 
         return MongoDBSettings(
-            address=IPv4Address(config['MONGODB']['ip_address']),
-            port=int(config['MONGODB']['port']),
-            db_name=config['MONGODB']['database'],
-            user=config['MONGODB']['user'],
-            password=config['MONGODB']['password']
+            address=IPv4Address(config["MONGODB"]["ip_address"]),
+            port=int(config["MONGODB"]["port"]),
+            db_name=config["MONGODB"]["database"],
+            user=config["MONGODB"]["user"],
+            password=config["MONGODB"]["password"],
         )

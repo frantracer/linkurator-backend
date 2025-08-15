@@ -5,8 +5,8 @@ from pydantic import BaseModel
 
 
 class LogfireEnvironment(StrEnum):
-    PROD = 'prod'
-    DEV = 'dev'
+    PROD = "prod"
+    DEV = "dev"
 
 
 class LogSettings(BaseModel):
@@ -21,8 +21,8 @@ class LogSettings(BaseModel):
         config.read(config_path)
 
         return cls(
-            level=config.get('LOGGING', 'level', fallback='INFO'),
-            logfire_enabled=config.getboolean('LOGFIRE', 'enabled', fallback=False),
-            logfire_token=config.get('LOGFIRE', 'token', fallback=''),
-            logfire_environment=LogfireEnvironment(config.get('LOGFIRE', 'environment', fallback=LogfireEnvironment.DEV)),
+            level=config.get("LOGGING", "level", fallback="INFO"),
+            logfire_enabled=config.getboolean("LOGFIRE", "enabled", fallback=False),
+            logfire_token=config.get("LOGFIRE", "token", fallback=""),
+            logfire_environment=LogfireEnvironment(config.get("LOGFIRE", "environment", fallback=LogfireEnvironment.DEV)),
         )

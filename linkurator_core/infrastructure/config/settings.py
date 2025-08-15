@@ -7,7 +7,8 @@ from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.openai import OpenAISettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 
-DEFAULT_CONFIG_FILENAME = '.config.ini'
+DEFAULT_CONFIG_FILENAME = ".config.ini"
+
 
 class ApplicationSettings(BaseModel):
     """
