@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.domain.items.item_repository import ItemFilterCriteria
-from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
+from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
@@ -19,7 +19,7 @@ async def main() -> None:
     parser.add_argument("--admin-email", type=str, required=True)
     args = parser.parse_args()
 
-    db_settings = MongoDBSettings()
+    db_settings = ApplicationSettings.from_file().mongodb
     item_repository = MongoDBItemRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)

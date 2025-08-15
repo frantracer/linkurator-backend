@@ -88,10 +88,14 @@ link-config:
 	fi
 
 link-dev-config: decrypt-secrets
-	ln -sfn ../config/app_config_develop.ini secrets/app_config.ini
+	if [ ! -f .config.ini ] ; then \
+		rm -f .config.ini; \
+		cp config/app_config_develop.ini .config.ini; \
+	fi
 
 link-prod-config: decrypt-secrets
-	ln -sfn app_config_production.ini secrets/app_config.ini
+	rm -f .config.ini
+	cp secrets/app_config_production.ini .config.ini
 
 ####################
 # Test

@@ -5,10 +5,8 @@ from dataclasses import dataclass
 
 import uvicorn.server
 
-from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
+from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.mongodb.repositories import run_mongodb_migrations
-
-logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 
 
 @dataclass
@@ -20,26 +18,19 @@ class ApiArguments:
     with_gunicorn: bool
 
 
-@dataclass
-class Settings:
-    api: ApiArguments
-    db: MongoDBSettings  # pylint: disable=invalid-name
-
-
 async def main() -> None:
-    settings = Settings(
-        api=parse_args(),
-        db=MongoDBSettings(),
-    )
+    api_settings = parse_args()
+    app_settings = ApplicationSettings.from_file()
 
     # Migrations
-    run_mongodb_migrations(settings.db.address, settings.db.port, settings.db.db_name, settings.db.user,
-                           settings.db.password)
+    run_mongodb_migrations(
+        app_settings.mongodb.address, app_settings.mongodb.port, app_settings.mongodb.db_name,
+        app_settings.mongodb.user, app_settings.mongodb.password)
 
     # API
     api_server = ApiServer(app_path="linkurator_core.infrastructure.fastapi.app:create_app",
-                           port=settings.api.port, workers=settings.api.workers, debug=settings.api.debug,
-                           reload=settings.api.reload, with_gunicorn=settings.api.with_gunicorn)
+                           port=api_settings.port, workers=api_settings.workers, debug=api_settings.debug,
+                           reload=api_settings.reload, with_gunicorn=api_settings.with_gunicorn)
 
     await api_server.start()
 

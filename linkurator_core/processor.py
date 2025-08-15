@@ -25,10 +25,7 @@ from linkurator_core.domain.common.event import (
 )
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
-from linkurator_core.infrastructure.config.env_settings import EnvSettings
-from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets, SpotifyClientSecrets
-from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
-from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
+from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.infrastructure.google.account_service import GoogleDomainAccountService
 from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
@@ -49,11 +46,12 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=log
 
 async def main() -> None:  # pylint: disable=too-many-locals
     # Read settings
-    env_settings = EnvSettings()
-    db_settings = MongoDBSettings()
-    google_secrets = GoogleClientSecrets(env_settings.GOOGLE_SECRET_PATH)
-    spotify_secrets = SpotifyClientSecrets(env_settings.SPOTIFY_SECRET_PATH)
-    rabbitmq_settings = RabbitMQSettings()
+    settings = ApplicationSettings.from_file()
+    db_settings = settings.mongodb
+    google_secrets = settings.google
+    spotify_secrets = settings.spotify
+    rabbitmq_settings = settings.rabbitmq
+    env_settings = settings.env
 
     # Repositories
     user_repository = MongoDBUserRepository(

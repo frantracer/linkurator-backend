@@ -245,8 +245,6 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     Creates a support agent that can be used to handle user queries.
     The agent will provide recommendations based on the user's subscriptions and interactions.
     """
-    logfire.instrument_pydantic_ai()
-
     provider = OpenAIProvider(
         api_key=api_key,
     )

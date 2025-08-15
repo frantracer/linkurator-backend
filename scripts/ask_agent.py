@@ -5,8 +5,7 @@ from uuid import UUID
 import logfire
 
 from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import AgentDependencies, create_agent
-from linkurator_core.infrastructure.config.env_settings import EnvSettings
-from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
+from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
@@ -14,10 +13,10 @@ from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRe
 
 
 async def main() -> None:
-    env_settings = EnvSettings()
-    db_settings = MongoDBSettings()
+    settings = ApplicationSettings.from_file()
+    db_settings = settings.mongodb
 
-    logfire.configure(token=env_settings.LOGFIRE_TOKEN, scrubbing=False)
+    logfire.configure(token=settings.log.logfire_token, scrubbing=False)
 
     # Repositories
     user_repository = MongoDBUserRepository(
@@ -44,7 +43,7 @@ async def main() -> None:
         item_repository=item_repository,
         topic_repository=topic_repository,
     )
-    support_agent = create_agent(env_settings.OPENAI_API_KEY)
+    support_agent = create_agent(settings.openai.api_key)
 
     result = await support_agent.run(
         "Group my subscriptions into topics",
