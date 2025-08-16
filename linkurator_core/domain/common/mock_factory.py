@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
+from linkurator_core.domain.chats.chat import Chat, ChatMessage, ChatRole
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
@@ -151,4 +152,52 @@ def mock_interaction(
         item_uuid=item_id,
         created_at=created_at,
         type=interaction_type,
+    )
+
+
+def mock_chat(
+        uuid: UUID | None = None,
+        user_id: UUID | None = None,
+        title: str | None = None,
+        messages: list[ChatMessage] | None = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
+) -> Chat:
+    uuid = uuid or uuid4()
+    user_id = user_id or uuid4()
+    title = title or f"Test Chat {uuid}"
+    created_at = created_at or datetime.now(tz=timezone.utc)
+    updated_at = updated_at or datetime.now(tz=timezone.utc)
+
+    return Chat(
+        uuid=uuid,
+        user_id=user_id,
+        title=title,
+        messages=messages or [],
+        created_at=created_at,
+        updated_at=updated_at,
+    )
+
+
+def mock_chat_message(
+        role: ChatRole = ChatRole.USER,
+        content: str | None = None,
+        timestamp: datetime | None = None,
+        item_uuids: list[UUID] | None = None,
+        subscription_uuids: list[UUID] | None = None,
+        topic_uuids: list[UUID] | None = None,
+) -> ChatMessage:
+    content = content or f"Test message from {role}"
+    timestamp = timestamp or datetime.now(tz=timezone.utc)
+    item_uuids = item_uuids or []
+    subscription_uuids = subscription_uuids or []
+    topic_uuids = topic_uuids or []
+
+    return ChatMessage(
+        role=role,
+        content=content,
+        timestamp=timestamp,
+        item_uuids=item_uuids,
+        subscription_uuids=subscription_uuids,
+        topic_uuids=topic_uuids,
     )

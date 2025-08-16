@@ -114,7 +114,7 @@ format:
 test:
 	.venv/bin/coverage run -m pytest -v tests
 	.venv/bin/coverage xml
-	.venv/bin/coverage report --fail-under 90
+	.venv/bin/coverage report --fail-under 91
 
 ####################
 # Docker

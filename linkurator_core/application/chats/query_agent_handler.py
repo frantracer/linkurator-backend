@@ -1,9 +1,9 @@
 from uuid import UUID
 
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
-from linkurator_core.domain.chats.chat import Chat
+from linkurator_core.domain.chats.chat import Chat, ChatRole
 from linkurator_core.domain.chats.chat_repository import ChatRepository
-from linkurator_core.domain.common.exceptions import InvalidChatError
+from linkurator_core.domain.common.exceptions import InvalidChatError, QueryRateLimitError
 
 
 class QueryAgentHandler:
@@ -20,6 +20,10 @@ class QueryAgentHandler:
 
         if chat.user_id != user_id:
             raise InvalidChatError()
+
+        user_message_count = sum(1 for message in chat.messages if message.role == ChatRole.USER)
+        if user_message_count >= 5:
+            raise QueryRateLimitError()
 
         # Get the AI response
         result = await self.query_agent_service.query(user_id, query, chat_id)

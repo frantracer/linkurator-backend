@@ -7,6 +7,7 @@ from linkurator_core.application.chats.delete_chat_handler import DeleteChatHand
 from linkurator_core.application.chats.get_chat_handler import GetChatHandler
 from linkurator_core.application.chats.get_user_chats_handler import GetUserChatsHandler
 from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
+from linkurator_core.domain.common.exceptions import QueryRateLimitError
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.agent import AgentQueryRequest, AgentQueryResponse
@@ -95,6 +96,7 @@ def get_router(
             status.HTTP_401_UNAUTHORIZED: {"model": None},
             status.HTTP_400_BAD_REQUEST: {"model": None},
             status.HTTP_404_NOT_FOUND: {"model": None},
+            status.HTTP_429_TOO_MANY_REQUESTS: {"model": None},
         },
     )
     async def query_agent_with_chat(
@@ -106,11 +108,14 @@ def get_router(
         if session is None:
             raise default_responses.not_authenticated()
 
-        result = await query_agent_handler.handle(
-            user_id=session.user_id,
-            query=request.query,
-            chat_id=chat_id,
-        )
+        try:
+            result = await query_agent_handler.handle(
+                user_id=session.user_id,
+                query=request.query,
+                chat_id=chat_id,
+            )
+        except QueryRateLimitError as e:
+            raise default_responses.rate_limit_exceeded(str(e))
 
         return AgentQueryResponse.from_domain(result)
 

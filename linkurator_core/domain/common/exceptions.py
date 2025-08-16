@@ -68,3 +68,7 @@ class NonExistingFileError(Exception):
 
 class InvalidChatError(Exception):
     pass
+
+
+class QueryRateLimitError(Exception):
+    pass
