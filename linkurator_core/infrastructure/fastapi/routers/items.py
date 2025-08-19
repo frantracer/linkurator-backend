@@ -2,6 +2,7 @@ from typing import Any, Callable, Coroutine, Optional
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Request, status
+from fastapi.responses import RedirectResponse
 
 from linkurator_core.application.items.create_item_interaction_handler import CreateItemInteractionHandler
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
@@ -77,6 +78,27 @@ def get_router(
                 item=response.item,
                 subscription=response.subscription,
                 interactions=response.interactions)
+        except ItemNotFoundError as error:
+            msg = "Item not found"
+            raise default_responses.not_found(msg) from error
+
+    @router.get("/{item_id}/url",
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+                responses={
+                    status.HTTP_401_UNAUTHORIZED: {"model": None},
+                    status.HTTP_404_NOT_FOUND: {"model": None},
+                })
+    async def redirect_to_item_url(
+            item_id: UUID,
+            session: Optional[Session] = Depends(get_session),
+    ) -> RedirectResponse:
+        """Redirect to the item's external URL."""
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        try:
+            response = await get_item_handler.handle(user_id=session.user_id, item_id=item_id)
+            return RedirectResponse(url=str(response.item.url), status_code=status.HTTP_307_TEMPORARY_REDIRECT)
         except ItemNotFoundError as error:
             msg = "Item not found"
             raise default_responses.not_found(msg) from error
