@@ -189,6 +189,7 @@ class PydanticQueryAgentService(QueryAgentService):
             item_repository: ItemRepository,
             topic_repository: TopicRepository,
             chat_repository: ChatRepository,
+            api_base_url: str,
             google_api_key: str,
     ) -> None:
         self.user_repository = user_repository
@@ -196,6 +197,7 @@ class PydanticQueryAgentService(QueryAgentService):
         self.item_repository = item_repository
         self.topic_repository = topic_repository
         self.chat_repository = chat_repository
+        self.api_base_url = api_base_url
         self.agent = create_agent(google_api_key)
 
     async def query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
@@ -240,7 +242,7 @@ class PydanticQueryAgentService(QueryAgentService):
 
         final_message = re.sub(
             r"https://linkurator\.com/items/([a-f0-9\-]+)",
-            r"http://localhost:9000/items/\1/url",
+            lambda match: f"{self.api_base_url}/items/{match.group(1)}/url",
             output.response,
         )
 

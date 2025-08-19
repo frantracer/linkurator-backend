@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from linkurator_core.infrastructure.config.api import ApiSettings
 from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.google import GoogleSettings
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets, SpotifyClientSecrets
@@ -16,6 +17,7 @@ class ApplicationSettings(BaseModel):
     """
 
     env: EnvSettings
+    api: ApiSettings
     google: GoogleClientSecrets
     spotify: SpotifyClientSecrets
     mongodb: MongoDBSettings
@@ -27,6 +29,7 @@ class ApplicationSettings(BaseModel):
     def from_file(cls, file_path: str = DEFAULT_CONFIG_FILENAME) -> "ApplicationSettings":
         return cls(
             env=EnvSettings(),
+            api=ApiSettings.from_file(file_path),
             google=GoogleClientSecrets.from_file(),
             spotify=SpotifyClientSecrets.from_file(),
             mongodb=MongoDBSettings.from_file(file_path),
