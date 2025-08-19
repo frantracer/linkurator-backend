@@ -299,7 +299,7 @@ def app_handlers() -> Handlers:
                 item_repository=item_repository,
                 topic_repository=topic_repository,
                 chat_repository=chat_repository,
-                openai_api_key=settings.openai.api_key,
+                google_api_key=settings.google_ai.api_key,
             ),
             chat_repository=chat_repository,
         ),

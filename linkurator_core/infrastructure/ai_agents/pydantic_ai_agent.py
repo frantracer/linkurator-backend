@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
@@ -6,8 +7,8 @@ import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.fallback import FallbackModel
-from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.models.google import GoogleModel
+from pydantic_ai.providers.google import GoogleProvider
 from pydantic_ai.settings import ModelSettings
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
@@ -115,6 +116,9 @@ class ItemForAI(BaseModel):
     name: str = Field(
         description="Name of the item",
     )
+    subscription_name: str = Field(
+        description="Name of the subscription this item belongs to",
+    )
     description: str = Field(
         description="Description of the item",
     )
@@ -126,13 +130,14 @@ class ItemForAI(BaseModel):
     )
 
     @classmethod
-    def from_item(cls, item: Item) -> "ItemForAI":
+    def from_item(cls, item: Item, sub_name: str) -> "ItemForAI":
         """
         Converts an Item domain object to an ItemForAI model.
 
         Args:
         ----
             item: The Item domain object to convert.
+            sub_name: The name of the subscription this item belongs to.
 
         Returns:
         -------
@@ -142,6 +147,7 @@ class ItemForAI(BaseModel):
         return cls(
             uuid=item.uuid,
             name=item.name,
+            subscription_name=sub_name,
             description=item.description,
             provider=item.provider,
             published_at=item.published_at,
@@ -183,14 +189,14 @@ class PydanticQueryAgentService(QueryAgentService):
             item_repository: ItemRepository,
             topic_repository: TopicRepository,
             chat_repository: ChatRepository,
-            openai_api_key: str,
+            google_api_key: str,
     ) -> None:
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
         self.topic_repository = topic_repository
         self.chat_repository = chat_repository
-        self.agent = create_agent(openai_api_key)
+        self.agent = create_agent(google_api_key)
 
     async def query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
         deps = AgentDependencies(
@@ -232,8 +238,14 @@ class PydanticQueryAgentService(QueryAgentService):
         if len(output.subscriptions_uuids) > 0:
             subscriptions = await self.subscription_repository.get_list(output.subscriptions_uuids)
 
+        final_message = re.sub(
+            r"https://linkurator\.com/items/([a-f0-9\-]+)",
+            r"http://localhost:9000/items/\1/url",
+            output.response,
+        )
+
         return AgentQueryResult(
-            message=result.output.response,
+            message=final_message,
             items=items,
             topics=topics,
             subscriptions=subscriptions,
@@ -245,28 +257,28 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     Creates a support agent that can be used to handle user queries.
     The agent will provide recommendations based on the user's subscriptions and interactions.
     """
-    provider = OpenAIProvider(
+    provider = GoogleProvider(
         api_key=api_key,
     )
-    gpt4_model = OpenAIModel(
+    gemini_pro_model = GoogleModel(
         provider=provider,
-        model_name="gpt-4.1",
+        model_name="gemini-2.5-pro",
         settings=ModelSettings(
             temperature=0.5,
-            max_tokens=1000,
+            max_tokens=2048,
         ),
     )
 
-    gpt4_mini_model = OpenAIModel(
+    gemini_flash_model = GoogleModel(
         provider=provider,
-        model_name="gpt-4.1-mini",
+        model_name="gemini-2.5-flash",
         settings=ModelSettings(
             temperature=0.5,
-            max_tokens=1000,
+            max_tokens=2048,
         ),
     )
 
-    llm_model = FallbackModel(gpt4_model, gpt4_mini_model)
+    llm_model = FallbackModel(gemini_pro_model, gemini_flash_model)
 
     ai_agent = Agent[AgentDependencies, AgentOutput](
         llm_model,
@@ -275,7 +287,6 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         system_prompt=(
             "You are a system to recommend videos, podcasts or articles to the user based on their query. "
             "Always use the customer's name in your responses. "
-            "Always review the user's subscriptions and topics before answering. "
             "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
             "When creating topics, do not create similar topics if they already exist. "
             "Items that belongs to a subscription included in any of the user topics are considered more relevant. "
@@ -285,8 +296,13 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "It is ok to return empty lists of items ids if there are no matching items to the query. "
             "When the user asks for specific dates, ensure you do not return any items that were published before the date. "
             "Use markdown formatting, make titles bold and bullet points for lists. "
-            "Do not include any links in the response, only item names. Summarize the titles if they are similar. "
+            "Summarize the titles if they are similar and provide the subscription names as links to the item. "
+            "If the same title from different providers is found, summarize them in a single item with links. "
+            "Add the provider name (youtube or spotify) to the links if it is required to distinguish between items. "
             "You do not have access to the content, it is important not to offer details or summaries about the content. "
+            "Answer the user's query using items, subscriptions and topics that are relevant to the query. "
+            "Do not ask the user to provide more information, use the information you have. "
+            "If an item is referenced in the response, use a markdown link to the url https://linkurator.com/items/{item.uuid} "
         ),
     )
 
@@ -309,24 +325,10 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         now = datetime.now(tz=timezone.utc)
         return f"Today is {now.strftime("%A %Y-%m-%d")}"
 
-    @ ai_agent.tool
-    async def user_subscriptions(
-            ctx: RunContext[AgentDependencies],
-    ) -> list[SubscriptionForAI]:
-        """Returns the user's subscriptions."""
-        handler = GetUserSubscriptionsHandler(
-            user_repository=ctx.deps.user_repository,
-            subscription_repository=ctx.deps.subscription_repository,
-        )
-        subs = await handler.handle(
-            user_id=ctx.deps.user_uuid,
-        )
-        return [SubscriptionForAI.from_subscription(sub) for sub in subs]
-
-    @ ai_agent.tool
+    @ ai_agent.system_prompt
     async def user_subscriptions_and_topics(
             ctx: RunContext[AgentDependencies],
-    ) -> UserSubscriptionsAndTopics:
+    ) -> str:
         """
         Returns the user's subscriptions and topics.
 
@@ -350,7 +352,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         return UserSubscriptionsAndTopics(
             subscriptions=subscriptions,
             topics=topics_for_ai,
-        )
+        ).model_dump_json()
 
     @ ai_agent.tool
     async def find_subscriptions_items(
@@ -391,7 +393,13 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             page_number=0,
             limit=ITEMS_PER_PAGE,
         )
-        return [ItemForAI.from_item(item) for item in items]
+
+        subscriptions = await ctx.deps.subscription_repository.get_list(
+            [item.subscription_uuid for item in items],
+        )
+        indexed_subs_names = {sub.uuid: sub.name for sub in subscriptions}
+
+        return [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
 
     @ ai_agent.tool
     async def find_items_from_keyword(
@@ -418,15 +426,13 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             page_number=0,
             limit=ITEMS_PER_PAGE,
         )
-        return [ItemForAI.from_item(item) for item in items]
 
-    @ ai_agent.tool
-    async def get_user_topics(
-            ctx: RunContext[AgentDependencies],
-    ) -> list[TopicForAI]:
-        """Returns the user's topics."""
-        topics = await ctx.deps.topic_repository.get_by_user_id(ctx.deps.user_uuid)
-        return [TopicForAI.from_topic(topic) for topic in topics]
+        subscriptions = await ctx.deps.subscription_repository.get_list(
+            [item.subscription_uuid for item in items],
+        )
+        indexed_subs_names = {sub.uuid: sub.name for sub in subscriptions}
+
+        return [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
 
     @ ai_agent.tool
     async def create_topic(

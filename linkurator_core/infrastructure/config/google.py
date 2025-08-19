@@ -4,11 +4,11 @@ from pathlib import Path
 from pydantic import BaseModel
 
 
-class OpenAISettings(BaseModel):
+class GoogleSettings(BaseModel):
     api_key: str
 
     @classmethod
-    def from_file(cls, config_file_path: str) -> "OpenAISettings":
+    def from_file(cls, config_file_path: str) -> "GoogleSettings":
         if not Path(config_file_path).exists():
             msg = f"Configuration file not found at {config_file_path}"
             raise FileNotFoundError(msg)
@@ -17,5 +17,5 @@ class OpenAISettings(BaseModel):
         config.read(config_file_path)
 
         return cls(
-            api_key=config["OPENAI"]["api_key"],
+            api_key=config["GOOGLE"]["api_key"],
         )

@@ -43,7 +43,7 @@ async def main() -> None:
         item_repository=item_repository,
         topic_repository=topic_repository,
     )
-    support_agent = create_agent(settings.openai.api_key)
+    support_agent = create_agent(settings.google_ai.api_key)
 
     result = await support_agent.run(
         "Group my subscriptions into topics",
