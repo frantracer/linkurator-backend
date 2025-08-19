@@ -346,15 +346,26 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         subs = await handler.handle(
             user_id=ctx.deps.user_uuid,
         )
-        subscriptions = [SubscriptionForAI.from_subscription(sub) for sub in subs]
+        subs_for_ai = [SubscriptionForAI.from_subscription(sub) for sub in subs]
 
         topics = await ctx.deps.topic_repository.get_by_user_id(ctx.deps.user_uuid)
         topics_for_ai = [TopicForAI.from_topic(topic) for topic in topics]
 
-        return UserSubscriptionsAndTopics(
-            subscriptions=subscriptions,
-            topics=topics_for_ai,
-        ).model_dump_json()
+        context = "User's subscriptions:\n"
+        if len(subs_for_ai) == 0:
+            context += "The user has no subscriptions.\n"
+        else:
+            context += "\n".join([sub.model_dump_json() for sub in subs_for_ai]) + "\n"
+
+        context += "\nUser's topics:\n"
+        if len(topics_for_ai) == 0:
+            context += "The user has no topics.\n"
+        else:
+            context += "\n".join([topic_ai.model_dump_json() for topic_ai in topics_for_ai]) + "\n"
+
+        context += "End of user's subscriptions and topics.\n"
+
+        return context
 
     @ ai_agent.tool
     async def find_subscriptions_items(
@@ -363,13 +374,13 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             subscription_ids: list[UUID] | None = None,
     ) -> list[ItemForAI]:
         """
-        Gets items for the user with optional filtering. When no filters are applied, it returns all items
+        Get items from subscriptions and topics.
 
         Args:
         ----
             ctx: RunContext with dependencies
-            topic_ids: Filter by topic UUIDs
-            subscription_ids: Filter by subscription UUIDs
+            topic_ids: List of topic UUIDs to filter items by
+            subscription_ids: List of subscription UUIDs to filter items by
 
         """
         topics = await ctx.deps.topic_repository.find_topics(
