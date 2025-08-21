@@ -107,6 +107,7 @@ def mock_item(
         url: str | None = None,
         version: int | None = None,
         duration: int | None = None,
+        provider: ItemProvider = ItemProvider.YOUTUBE,
 ) -> Item:
     random_uuid = item_uuid if item_uuid is not None else uuid4()
     random_name = f"some name {random_uuid}" if name is None else name
@@ -131,7 +132,7 @@ def mock_item(
         updated_at=random_updated_at,
         version=version,
         duration=duration,
-        provider=ItemProvider.YOUTUBE,
+        provider=provider,
     )
 
 

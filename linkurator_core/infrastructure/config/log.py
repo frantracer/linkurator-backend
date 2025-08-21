@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class LogfireEnvironment(StrEnum):
     PROD = "prod"
     DEV = "dev"
+    TEST = "test"
 
 
 class LogSettings(BaseModel):

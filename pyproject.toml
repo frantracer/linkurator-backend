@@ -4,6 +4,11 @@ version = "1.0.0"
 dynamic = ["version"]
 requires-python = "==3.13.5"
 
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+log_cli = true
+log_cli_level = "INFO"
+
 [tool.mypy]
 plugins = [
     "pydantic.mypy"
