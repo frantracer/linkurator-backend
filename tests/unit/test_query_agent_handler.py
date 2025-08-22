@@ -25,6 +25,7 @@ def query_agent_service_fixture() -> AsyncMock:
         items=[mock_item(), mock_item()],
         topics=[mock_topic()],
         subscriptions=[mock_sub(), mock_sub()],
+        topics_were_created=False,
     )
     mock_service.query.return_value = expected_result
     return mock_service

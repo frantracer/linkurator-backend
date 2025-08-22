@@ -29,6 +29,9 @@ class AgentQueryResponse(BaseModel):
         description="List of subscription UUIDs referenced by the AI agent",
         default_factory=list,
     )
+    topics_were_created: bool = Field(
+        description="Whether new topics were created during the query",
+    )
 
     @classmethod
     def from_domain(cls, result: AgentQueryResult) -> "AgentQueryResponse":
@@ -37,4 +40,5 @@ class AgentQueryResponse(BaseModel):
             items=result.items,
             topics=result.topics,
             subscriptions=result.subscriptions,
+            topics_were_created=result.topics_were_created,
         )

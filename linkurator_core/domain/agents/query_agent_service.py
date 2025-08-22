@@ -13,6 +13,7 @@ class AgentQueryResult:
     items: list[Item]
     topics: list[Topic]
     subscriptions: list[Subscription]
+    topics_were_created: bool
 
 
 class QueryAgentService(ABC):

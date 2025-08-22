@@ -179,6 +179,9 @@ class AgentOutput(BaseModel):
         description="List of content items UUIDs related to the user's query. "
                     "Can be empty if no items match.",
     )
+    topics_were_created: bool = Field(
+        description="Indicates whether any topics were created during the query processing.",
+    )
 
 
 class PydanticQueryAgentService(QueryAgentService):
@@ -251,6 +254,7 @@ class PydanticQueryAgentService(QueryAgentService):
             items=items,
             topics=topics,
             subscriptions=subscriptions,
+            topics_were_created=output.topics_were_created,
         )
 
 
@@ -291,6 +295,8 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "Always use the customer's name in your responses. "
             "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
             "When creating topics, do not create similar topics if they already exist. "
+            "Before creating topics, tell the user which exact subscriptions you are going to add to each topic. "
+            "Do not create any topic without explicitly user consent. "
             "Items that belongs to a subscription included in any of the user topics are considered more relevant. "
             "Try first to find items from subscriptions before using keyword search. "
             "When finding items, try to find by a single keyword. "
