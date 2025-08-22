@@ -25,15 +25,13 @@ class QueryAgentHandler:
         if user_message_count >= 5:
             raise QueryRateLimitError()
 
-        chat.add_user_message(query)
-        await self.chat_repository.update(chat)
-
         # Get the AI response
         result = await self.query_agent_service.query(user_id, query, chat_id)
 
-        # Add reply to chat
+        # Add messages to chat
         chat = await self.chat_repository.get(chat_id)
         if chat is not None:
+            chat.add_user_message(query)
             chat.add_assistant_message(
                 result.message,
                 item_uuids=[item.uuid for item in result.items],

@@ -123,7 +123,7 @@ async def test_find_items_performance(mongodb_item_repo: ItemRepository) -> None
             ),
             limit=100,
             check_items_result=False,
-            max_expected_time=baseline_time * 15.0,
+            max_expected_time=baseline_time * 3.0,
         )
 
         logging.info("Test 3: Find 100 any items (no filter)")
