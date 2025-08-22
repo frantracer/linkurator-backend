@@ -436,8 +436,6 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         """
         criteria = ItemFilterCriteria(
             text=text_search,
-            interactions_from_user=ctx.deps.user_uuid,
-            interactions=AnyItemInteraction(without_interactions=True),
         )
 
         items = await ctx.deps.item_repository.find_items(
