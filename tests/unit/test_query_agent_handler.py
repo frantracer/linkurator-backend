@@ -6,7 +6,7 @@ import pytest
 from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
 from linkurator_core.domain.chats.chat import ChatRole
-from linkurator_core.domain.common.exceptions import InvalidChatError, QueryRateLimitError
+from linkurator_core.domain.common.exceptions import InvalidChatError, MessageIsBeingProcessedError, QueryRateLimitError
 from linkurator_core.domain.common.mock_factory import (
     mock_chat,
     mock_chat_message,
@@ -340,3 +340,42 @@ async def test_query_agent_handler_allows_up_to_5_queries(
     assert len(updated_chat.messages) == 10  # Original 8 + 2 new messages
 
     query_agent_service.query.assert_called_once_with(user_id, query, chat_id)
+
+
+@pytest.mark.asyncio()
+async def test_query_agent_rejects_query_if_a_previous_one_is_being_processed(
+    query_agent_service: AsyncMock,
+    chat_repository: InMemoryChatRepository,
+) -> None:
+    user_id = uuid.uuid4()
+    chat_id = uuid.uuid4()
+
+    # Create a chat where the last message is from the user and recent
+    messages = [
+        mock_chat_message(role=ChatRole.USER, content="Recent query"),
+    ]
+
+    existing_chat = mock_chat(
+        uuid=chat_id,
+        user_id=user_id,
+        messages=messages,
+    )
+
+    await chat_repository.add(existing_chat)
+
+    handler = QueryAgentHandler(
+        query_agent_service=query_agent_service,
+        chat_repository=chat_repository,
+    )
+
+    query = "Another query while processing"
+
+    with pytest.raises(MessageIsBeingProcessedError):
+        await handler.handle(user_id=user_id, query=query, chat_id=chat_id)
+
+    # Verify chat was not modified
+    unchanged_chat = await chat_repository.get(chat_id)
+    assert unchanged_chat is not None
+    assert len(unchanged_chat.messages) == 1  # Still the original message
+
+    query_agent_service.query.assert_not_called()

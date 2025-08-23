@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from uuid import UUID
 
@@ -96,3 +96,11 @@ class Chat:
     def update_title(self, title: str) -> None:
         self.title = title
         self.updated_at = datetime.now(timezone.utc)
+
+    def is_waiting_for_response(self) -> bool:
+        if len(self.messages) == 0:
+            return False
+        last_message = self.messages[-1]
+
+        now = datetime.now(timezone.utc)
+        return last_message.role == ChatRole.USER and now - last_message.timestamp < timedelta(minutes=5)

@@ -3,7 +3,7 @@ from uuid import UUID
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
 from linkurator_core.domain.chats.chat import Chat, ChatRole
 from linkurator_core.domain.chats.chat_repository import ChatRepository
-from linkurator_core.domain.common.exceptions import InvalidChatError, QueryRateLimitError
+from linkurator_core.domain.common.exceptions import InvalidChatError, MessageIsBeingProcessedError, QueryRateLimitError
 
 
 class QueryAgentHandler:
@@ -24,6 +24,9 @@ class QueryAgentHandler:
         user_message_count = sum(1 for message in chat.messages if message.role == ChatRole.USER)
         if user_message_count >= 5:
             raise QueryRateLimitError()
+
+        if chat.is_waiting_for_response():
+            raise MessageIsBeingProcessedError()
 
         chat.add_user_message(query)
         await self.chat_repository.update(chat)

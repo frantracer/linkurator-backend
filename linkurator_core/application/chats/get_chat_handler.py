@@ -24,6 +24,7 @@ class EnrichedChatMessage:
 class EnrichedChat:
     chat: Chat
     enriched_messages: list[EnrichedChatMessage]
+    is_waiting_for_response: bool
 
 
 class GetChatHandler:
@@ -83,4 +84,5 @@ class GetChatHandler:
         return EnrichedChat(
             chat=chat,
             enriched_messages=enriched_messages,
+            is_waiting_for_response=chat.is_waiting_for_response(),
         )

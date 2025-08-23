@@ -46,6 +46,7 @@ class ChatResponse(BaseModel):
     user_id: UUID = Field(description="User ID who owns the chat")
     title: str = Field(description="Chat title")
     messages: list[ChatMessageResponse] = Field(description="Chat messages")
+    is_waiting_for_response: bool = Field(description="Indicates if the chat is waiting for an AI response")
     created_at: datetime = Field(description="Chat creation timestamp")
     updated_at: datetime = Field(description="Chat last update timestamp")
 
@@ -56,6 +57,7 @@ class ChatResponse(BaseModel):
             user_id=chat.user_id,
             title=chat.title,
             messages=[ChatMessageResponse.from_domain(msg) for msg in chat.messages],
+            is_waiting_for_response=chat.is_waiting_for_response(),
             created_at=chat.created_at,
             updated_at=chat.updated_at,
         )
@@ -77,6 +79,7 @@ class ChatResponse(BaseModel):
             user_id=enriched_chat.chat.user_id,
             title=enriched_chat.chat.title,
             messages=enriched_messages,
+            is_waiting_for_response=enriched_chat.is_waiting_for_response,
             created_at=enriched_chat.chat.created_at,
             updated_at=enriched_chat.chat.updated_at,
         )

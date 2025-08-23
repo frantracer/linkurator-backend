@@ -72,3 +72,7 @@ class InvalidChatError(Exception):
 
 class QueryRateLimitError(Exception):
     pass
+
+
+class MessageIsBeingProcessedError(Exception):
+    pass

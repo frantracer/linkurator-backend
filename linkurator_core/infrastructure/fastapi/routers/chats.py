@@ -7,7 +7,7 @@ from linkurator_core.application.chats.delete_chat_handler import DeleteChatHand
 from linkurator_core.application.chats.get_chat_handler import GetChatHandler
 from linkurator_core.application.chats.get_user_chats_handler import GetUserChatsHandler
 from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
-from linkurator_core.domain.common.exceptions import QueryRateLimitError
+from linkurator_core.domain.common.exceptions import MessageIsBeingProcessedError, QueryRateLimitError
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.agent import AgentQueryRequest, AgentQueryResponse
@@ -116,6 +116,8 @@ def get_router(
             )
         except QueryRateLimitError as e:
             raise default_responses.rate_limit_exceeded(str(e))
+        except MessageIsBeingProcessedError as e:
+            raise default_responses.bad_request(str(e))
 
         return AgentQueryResponse.from_domain(result)
 
