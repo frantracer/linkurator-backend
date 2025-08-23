@@ -212,13 +212,3 @@ deploy-rabbitmq: check-ssh-connection
 
 tunnel-rabbitmq: check-ssh-connection
 	ssh -L 15000:localhost:15672 -N root@$(SSH_IP_ADDRESS)
-
-
-####################
-# Scripts
-####################
-mcp-server:
-	.venv/bin/python3 scripts/mcp_server.py /home/frantracer/Projects/linkurator-backend/scripts/mcp_server.py
-
-mcp-client:
-	.venv/bin/python3 scripts/mcp_client.py http://localhost:8000
