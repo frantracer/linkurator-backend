@@ -192,7 +192,7 @@ class PydanticQueryAgentService(QueryAgentService):
             item_repository: ItemRepository,
             topic_repository: TopicRepository,
             chat_repository: ChatRepository,
-            api_base_url: str,
+            base_url: str,
             google_api_key: str,
     ) -> None:
         self.user_repository = user_repository
@@ -200,7 +200,7 @@ class PydanticQueryAgentService(QueryAgentService):
         self.item_repository = item_repository
         self.topic_repository = topic_repository
         self.chat_repository = chat_repository
-        self.api_base_url = api_base_url
+        self.base_url = base_url
         self.agent = create_agent(google_api_key)
 
     async def query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
@@ -244,8 +244,8 @@ class PydanticQueryAgentService(QueryAgentService):
             subscriptions = await self.subscription_repository.get_list(output.subscriptions_uuids)
 
         final_message = re.sub(
-            r"https://linkurator\.com/items/([a-f0-9\-]+)",
-            lambda match: f"{self.api_base_url}/items/{match.group(1)}/url",
+            r"https://linkurator\.com/(items|subscriptions)/([0-9a-fA-F-]{36})",
+            lambda match: f"{self.base_url}/{match.group(1)}/{match.group(2)}/url",
             output.response,
         )
 
@@ -311,6 +311,8 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "Answer the user's query using items, subscriptions and topics that are relevant to the query. "
             "Do not ask the user to provide more information, use the information you have. "
             "If an item is referenced in the response, use a markdown link to the url https://linkurator.com/items/{item.uuid} "
+            "If a subscription is referenced in the response, use a markdown link to the url https://linkurator.com/subscriptions/{subscription.uuid} "
+            "Link titles cannot be multiline in markdown. "
         ),
     )
 

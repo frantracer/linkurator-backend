@@ -11,7 +11,6 @@ class ApiSettings(BaseModel):
     debug: bool
     reload: bool
     with_gunicorn: bool
-    base_url: str
 
     @classmethod
     def from_file(cls, config_file_path: str) -> "ApiSettings":
@@ -29,5 +28,4 @@ class ApiSettings(BaseModel):
             debug=config.getboolean("API", "debug"),
             reload=config.getboolean("API", "reload"),
             with_gunicorn=config.getboolean("API", "with_gunicorn"),
-            base_url=config["API"]["base_url"],
         )
