@@ -26,7 +26,11 @@ class FindTopicsByNameHandler:
 
         curators = await self._get_curators(topics)
 
-        return [CuratorTopic(topic=topic, curator=curators[topic.user_id]) for topic in topics]
+        return [
+            CuratorTopic(topic=topic, curator=curators[topic.user_id])
+            for topic in topics
+            if topic.user_id in curators
+        ]
 
     async def _get_curators(self, topics: list[Topic]) -> dict[UUID, User]:
         user_ids = {topic.user_id for topic in topics}
