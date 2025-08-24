@@ -328,6 +328,26 @@ def get_router(  # pylint: disable=too-many-statements
             msg = "Subscription already updated"
             raise default_responses.too_many_requests(msg) from error
 
+    @router.get("/{sub_id}/url",
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+                responses={
+                    status.HTTP_404_NOT_FOUND: {"model": None},
+                })
+    async def redirect_to_subscription_url(
+            sub_id: UUID,
+            session: Session | None = Depends(get_session),
+    ) -> RedirectResponse:
+        """Redirect to the subscription's external URL."""
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        try:
+            subscription = await get_subscription_handler.handle(sub_id)
+            return RedirectResponse(url=str(subscription.url), status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+        except SubscriptionNotFoundError as error:
+            msg = "Subscription not found"
+            raise default_responses.not_found(msg) from error
+
     @router.get("/sync/youtube",
                 status_code=status.HTTP_204_NO_CONTENT)
     async def sync_youtube_subscriptions(
