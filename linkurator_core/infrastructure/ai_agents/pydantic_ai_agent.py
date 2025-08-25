@@ -6,7 +6,6 @@ from uuid import UUID, uuid4
 import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.fallback import FallbackModel
 from pydantic_ai.models.google import GoogleModel
 from pydantic_ai.providers.google import GoogleProvider
 from pydantic_ai.settings import ModelSettings
@@ -266,32 +265,23 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     provider = GoogleProvider(
         api_key=api_key,
     )
-    gemini_pro_model = GoogleModel(
-        provider=provider,
-        model_name="gemini-2.5-pro",
-        settings=ModelSettings(
-            temperature=0.5,
-            max_tokens=2048,
-        ),
-    )
-
     gemini_flash_model = GoogleModel(
         provider=provider,
         model_name="gemini-2.5-flash",
         settings=ModelSettings(
             temperature=0.5,
-            max_tokens=2048,
+            max_tokens=4096,
         ),
     )
 
-    llm_model = FallbackModel(gemini_pro_model, gemini_flash_model)
-
     ai_agent = Agent[AgentDependencies, AgentOutput](
-        llm_model,
+        gemini_flash_model,
         deps_type=AgentDependencies,
         output_type=AgentOutput,
         system_prompt=(
             "You are a system to recommend videos, podcasts or articles to the user based on their query. "
+            "You are able to create topics for the user to organize their subscriptions. "
+            "Answer in the same language the user is using. "
             "Always use the customer's name in your responses. "
             "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
             "When creating topics, do not create similar topics if they already exist. "
@@ -306,7 +296,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "Use markdown formatting, make titles bold and bullet points for lists. "
             "Summarize the titles if they are similar and provide the subscription names as links to the item. "
             "If the same title from different providers is found, summarize them in a single item with links. "
-            "Add the provider name (youtube or spotify) to the links if it is required to distinguish between items. "
+            "Add the provider name (YouTube or Spotify) to the links if it is required to distinguish between items. "
             "You do not have access to the content, it is important not to offer details or summaries about the content. "
             "Answer the user's query using items, subscriptions and topics that are relevant to the query. "
             "Do not ask the user to provide more information, use the information you have. "
