@@ -42,6 +42,7 @@ async def main() -> None:
         subscription_repository=subscription_repository,
         item_repository=item_repository,
         topic_repository=topic_repository,
+        previous_chat=None,
     )
     support_agent = create_agent(settings.google_ai.api_key)
 

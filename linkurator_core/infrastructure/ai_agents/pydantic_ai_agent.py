@@ -12,6 +12,7 @@ from pydantic_ai.settings import ModelSettings
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
+from linkurator_core.domain.chats.chat import Chat, ChatRole
 from linkurator_core.domain.chats.chat_repository import ChatRepository
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import (
@@ -37,6 +38,7 @@ class AgentDependencies:
     subscription_repository: SubscriptionRepository
     item_repository: ItemRepository
     topic_repository: TopicRepository
+    previous_chat: Chat | None
 
 
 class TopicForAI(BaseModel):
@@ -209,6 +211,7 @@ class PydanticQueryAgentService(QueryAgentService):
             subscription_repository=self.subscription_repository,
             item_repository=self.item_repository,
             topic_repository=self.topic_repository,
+            previous_chat=await self.chat_repository.get(chat_id),
         )
 
         context = ""
@@ -362,6 +365,52 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             context += "\n".join([topic_ai.model_dump_json() for topic_ai in topics_for_ai]) + "\n"
 
         context += "End of user's subscriptions and topics.\n"
+
+        return context
+
+    @ ai_agent.system_prompt
+    async def previous_items_information(
+            ctx: RunContext[AgentDependencies],
+    ) -> str:
+        """
+        Returns information about previously recommended items to avoid repetition.
+
+        Args:
+        ----
+            ctx: RunContext with dependencies
+
+        """
+        chat = ctx.deps.previous_chat
+        if chat is None:
+            return ""
+
+        items_uuids: set[UUID] = set()
+        for message in chat.messages:
+            if message.role == ChatRole.ASSISTANT:
+                items_uuids = items_uuids.union(set(message.item_uuids))
+
+        if len(items_uuids) == 0:
+            return ""
+
+        items = await ctx.deps.item_repository.find_items(
+            criteria=ItemFilterCriteria(
+                item_ids=items_uuids,
+            ),
+            page_number=0,
+            limit=100,
+        )
+
+        subscriptions = await ctx.deps.subscription_repository.get_list(
+            [item.subscription_uuid for item in items],
+        )
+        indexed_subs_names = {sub.uuid: sub.name for sub in subscriptions}
+
+        context = "Items recommended to the user in the chat:\n"
+        context += "\n".join([
+            ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]).model_dump_json()
+            for item in items
+        ]) + "\n"
+        context += "End of previously recommended items.\n"
 
         return context
 
