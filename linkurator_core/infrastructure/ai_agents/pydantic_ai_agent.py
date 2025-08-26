@@ -167,14 +167,6 @@ class AgentOutput(BaseModel):
     response: str = Field(
         description="Response for the user based on their query",
     )
-    topics_uuids: list[UUID] = Field(
-        description="List of topics UUIDs created for the user to organize their subscriptions. "
-                    "Can be empty if no topics match.",
-    )
-    subscriptions_uuids: list[UUID] = Field(
-        description="List of subscriptions UUIDs that are relevant to the query. "
-                    "Can be empty if no subscriptions match.",
-    )
     items_uuids: list[UUID] = Field(
         description="List of content items UUIDs related to the user's query. "
                     "Can be empty if no items match.",
@@ -228,10 +220,6 @@ class PydanticQueryAgentService(QueryAgentService):
 
         output: AgentOutput = result.output
 
-        topics = []
-        if len(output.topics_uuids) > 0:
-            topics = await self.topic_repository.find_topics(output.topics_uuids)
-
         items = []
         if len(output.items_uuids) > 0:
             items = await self.item_repository.find_items(
@@ -240,9 +228,10 @@ class PydanticQueryAgentService(QueryAgentService):
                 limit=len(output.items_uuids),
             )
 
+        subscriptions_uuids = list({item.subscription_uuid for item in items})
         subscriptions = []
-        if len(output.subscriptions_uuids) > 0:
-            subscriptions = await self.subscription_repository.get_list(output.subscriptions_uuids)
+        if len(subscriptions_uuids) > 0:
+            subscriptions = await self.subscription_repository.get_list(subscriptions_uuids)
 
         final_message = re.sub(
             r"https://linkurator\.com/(items|subscriptions)/([0-9a-fA-F-]{36})",
@@ -253,7 +242,6 @@ class PydanticQueryAgentService(QueryAgentService):
         return AgentQueryResult(
             message=final_message,
             items=items,
-            topics=topics,
             subscriptions=subscriptions,
             topics_were_created=output.topics_were_created,
         )

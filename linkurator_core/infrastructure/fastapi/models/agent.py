@@ -38,7 +38,6 @@ class AgentQueryResponse(BaseModel):
         return cls(
             message=result.message,
             items=result.items,
-            topics=result.topics,
             subscriptions=result.subscriptions,
             topics_were_created=result.topics_were_created,
         )

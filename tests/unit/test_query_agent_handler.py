@@ -12,7 +12,6 @@ from linkurator_core.domain.common.mock_factory import (
     mock_chat_message,
     mock_item,
     mock_sub,
-    mock_topic,
 )
 from linkurator_core.infrastructure.in_memory.chat_repository import InMemoryChatRepository
 
@@ -23,7 +22,6 @@ def query_agent_service_fixture() -> AsyncMock:
     expected_result = AgentQueryResult(
         message="Here's your answer!",
         items=[mock_item(), mock_item()],
-        topics=[mock_topic()],
         subscriptions=[mock_sub(), mock_sub()],
         topics_were_created=False,
     )

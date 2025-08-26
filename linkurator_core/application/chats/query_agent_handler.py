@@ -41,7 +41,6 @@ class QueryAgentHandler:
                 result.message,
                 item_uuids=[item.uuid for item in result.items],
                 subscription_uuids=[sub.uuid for sub in result.subscriptions],
-                topic_uuids=[topic.uuid for topic in result.topics],
             )
             await self.chat_repository.update(chat)
 
