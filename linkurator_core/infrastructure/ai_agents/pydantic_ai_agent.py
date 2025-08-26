@@ -6,9 +6,8 @@ from uuid import UUID, uuid4
 import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.google import GoogleModel
+from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
 from pydantic_ai.providers.google import GoogleProvider
-from pydantic_ai.settings import ModelSettings
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
@@ -268,12 +267,14 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     provider = GoogleProvider(
         api_key=api_key,
     )
+
     gemini_flash_model = GoogleModel(
         provider=provider,
         model_name="gemini-2.5-flash",
-        settings=ModelSettings(
+        settings=GoogleModelSettings(
             temperature=0.2,
             max_tokens=4096,
+            google_thinking_config={"thinking_budget": 8096},
         ),
     )
 
