@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
 from pydantic_ai.providers.google import GoogleProvider
+from pydantic_ai.usage import RunUsage
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
@@ -222,7 +223,11 @@ class PydanticQueryAgentService(QueryAgentService):
                     context += f"Assistant: {message.content}\n"
             context += "End of previous chat messages.\n"
 
-        result = await self.agent.run(user_prompt=context + query, deps=deps)
+        result = await self.agent.run(
+            user_prompt=context + query,
+            deps=deps,
+            usage=RunUsage(requests=10),
+        )
 
         output: AgentOutput = result.output
 
