@@ -22,6 +22,5 @@ python-dotenv==1.0.1
 jinja2==3.1.4
 google-auth==2.36.0
 cryptography==45.0.4
-pydantic-ai[google]==0.4.7
-pydantic_ai==0.4.7
+pydantic_ai==0.7.5
 logfire==4.0.0
