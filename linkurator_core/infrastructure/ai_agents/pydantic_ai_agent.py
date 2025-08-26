@@ -274,7 +274,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         settings=GoogleModelSettings(
             temperature=0.2,
             max_tokens=4096,
-            google_thinking_config={"thinking_budget": 8096},
+            google_thinking_config={"thinking_budget": 0},
         ),
     )
 
