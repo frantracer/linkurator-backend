@@ -272,7 +272,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         provider=provider,
         model_name="gemini-2.5-flash",
         settings=ModelSettings(
-            temperature=0.5,
+            temperature=0.2,
             max_tokens=4096,
         ),
     )
