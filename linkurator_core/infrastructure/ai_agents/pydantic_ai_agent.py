@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import re
 from dataclasses import dataclass
@@ -294,7 +295,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "Items that belongs to a subscription included in any of the user topics are considered more relevant. "
             "Try first to find items from subscriptions before using keyword search. "
             "When finding items, try to find by a single keyword. "
-            "Find items by keyword, subscription or topics can be called maximum five times in a single query. "
+            "Find items by keywords can be called maximum once with maximum ten keywords. "
             "It is ok to return empty lists of items ids if there are no matching items to the query. "
             "When the user asks for specific dates, ensure you do not return any items that were published before the date. "
             "Use markdown formatting, make titles bold and bullet points for lists. "
@@ -464,9 +465,9 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         return [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
 
     @ ai_agent.tool
-    async def find_items_from_keyword(
+    async def find_items_by_keywords(
             ctx: RunContext[AgentDependencies],
-            text_search: str,
+            keywords: list[str],
     ) -> list[ItemForAI]:
         """
         Finds items based on a single keyword search.
@@ -474,18 +475,27 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         Args:
         ----
             ctx: RunContext with dependencies
-            text_search: Keyword to search for in item names
+            keywords: Keywords to search for in item titles. Maximum of ten keywords.
 
         """
-        criteria = ItemFilterCriteria(
-            text=text_search,
-        )
+        keywords = keywords.copy()[:10]
 
-        items = await ctx.deps.item_repository.find_items(
-            criteria=criteria,
-            page_number=0,
-            limit=ITEMS_PER_PAGE,
-        )
+        tasks = []
+        for keyword in keywords:
+            criteria = ItemFilterCriteria(
+                text=keyword,
+            )
+
+            task = ctx.deps.item_repository.find_items(
+                criteria=criteria,
+                page_number=0,
+                limit=ITEMS_PER_PAGE,
+            )
+
+            tasks.append(task)
+
+        results = await asyncio.gather(*tasks)
+        items = [item for sublist in results for item in sublist]
 
         subscriptions = await ctx.deps.subscription_repository.get_list(
             [item.subscription_uuid for item in items],
