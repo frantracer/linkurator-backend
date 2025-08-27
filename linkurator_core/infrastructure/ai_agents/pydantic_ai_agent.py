@@ -174,13 +174,16 @@ class UserSubscriptionsAndTopics(BaseModel):
 
 class AgentOutput(BaseModel):
     response: str = Field(
+        default="",
         description="Response for the user based on their query",
     )
-    items_uuids: list[UUID] = Field(
-        description="List of content items UUIDs related to the user's query. "
+    items_uuids: list[str] = Field(
+        default_factory=list,
+        description="List of content items UUIDs (32 hex) related to the user's query. "
                     "Can be empty if no items match.",
     )
     topics_were_created: bool = Field(
+        default=False,
         description="Indicates whether any topics were created during the query processing.",
     )
 
@@ -234,9 +237,10 @@ class PydanticQueryAgentService(QueryAgentService):
         output: AgentOutput = result.output
 
         items = []
+        item_uuids = set(parse_ids_to_uuids(output.items_uuids))
         if len(output.items_uuids) > 0:
             items = await self.item_repository.find_items(
-                criteria=ItemFilterCriteria(item_ids=set(output.items_uuids)),
+                criteria=ItemFilterCriteria(item_uuids),
                 page_number=0,
                 limit=len(output.items_uuids),
             )
