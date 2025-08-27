@@ -1,3 +1,4 @@
+import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -417,8 +418,8 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     @ ai_agent.tool
     async def find_subscriptions_items(
             ctx: RunContext[AgentDependencies],
-            topic_ids: list[UUID] | None = None,
-            subscription_ids: list[UUID] | None = None,
+            topic_ids: list[str] | None = None,
+            subscription_ids: list[str] | None = None,
     ) -> list[ItemForAI]:
         """
         Get items from subscriptions and topics.
@@ -426,18 +427,19 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         Args:
         ----
             ctx: RunContext with dependencies
-            topic_ids: List of topic UUIDs to filter items by
-            subscription_ids: List of subscription UUIDs to filter items by
+            topic_ids: List of topic UUIDs (32 hex) to filter items by
+            subscription_ids: List of subscription UUIDs (32 hex) to filter items by
 
         """
-        topics = await ctx.deps.topic_repository.find_topics(
-            [] if topic_ids is None else topic_ids,
-        )
+        topic_uuids: list[UUID] = parse_ids_to_uuids(topic_ids)
+        subscription_uuids: list[UUID] = parse_ids_to_uuids(subscription_ids)
+
+        topics = await ctx.deps.topic_repository.find_topics(topic_uuids)
 
         all_subs_ids = set()
 
-        if subscription_ids is not None:
-            all_subs_ids.update(subscription_ids)
+        if subscription_uuids is not None:
+            all_subs_ids.update(subscription_uuids)
 
         for topic in topics:
             all_subs_ids.update(topic.subscriptions_ids)
@@ -535,3 +537,17 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         return TopicForAI.from_topic(topic)
 
     return ai_agent
+
+
+def parse_ids_to_uuids(ids: list[str] | None) -> list[UUID]:
+    if ids is None:
+        return []
+
+    valid_uuids: list[UUID] = []
+    for id_str in ids:
+        try:
+            valid_uuids.append(UUID(id_str))
+        except ValueError as e:
+            logging.exception(f"Failed to parse UUID {id_str}: {e}")
+
+    return valid_uuids
