@@ -41,6 +41,8 @@ class AgentDependencies:
     item_repository: ItemRepository
     topic_repository: TopicRepository
     previous_chat: Chat | None
+    find_items_by_keywords_calls: int = 0
+    find_subscriptions_items_calls: int = 0
 
 
 class TopicForAI(BaseModel):
@@ -427,7 +429,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             subscription_ids: list[str] | None = None,
     ) -> list[ItemForAI]:
         """
-        Get items from subscriptions and topics.
+        Get items from subscriptions and topics. Maximum three calls per query.
 
         Args:
         ----
@@ -436,6 +438,10 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             subscription_ids: List of subscription UUIDs (32 hex) to filter items by
 
         """
+        ctx.deps.find_subscriptions_items_calls += 1
+        if ctx.deps.find_subscriptions_items_calls > 3:
+            return []
+
         topic_uuids: list[UUID] = parse_ids_to_uuids(topic_ids)
         subscription_uuids: list[UUID] = parse_ids_to_uuids(subscription_ids)
 
@@ -474,7 +480,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             keywords: list[str],
     ) -> list[ItemForAI]:
         """
-        Finds items based on a single keyword search.
+        Finds items based on a single keyword search. Maximum one call per query with up to ten keywords.
 
         Args:
         ----
@@ -482,6 +488,10 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             keywords: Keywords to search for in item titles. Maximum of ten keywords.
 
         """
+        ctx.deps.find_items_by_keywords_calls += 1
+        if ctx.deps.find_items_by_keywords_calls > 1:
+            return []
+
         keywords = keywords.copy()[:10]
 
         tasks = []
