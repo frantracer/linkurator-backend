@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
+from pydantic_ai.exceptions import UnexpectedModelBehavior
 from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
 from pydantic_ai.providers.google import GoogleProvider
 from pydantic_ai.usage import RunUsage
@@ -16,6 +17,7 @@ from linkurator_core.application.subscriptions.get_user_subscriptions_handler im
 from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
 from linkurator_core.domain.chats.chat import Chat, ChatRole
 from linkurator_core.domain.chats.chat_repository import ChatRepository
+from linkurator_core.domain.common.exceptions import QueryAgentError
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import (
     AnyItemInteraction,
@@ -210,6 +212,19 @@ class PydanticQueryAgentService(QueryAgentService):
         self.agent = create_agent(google_api_key)
 
     async def query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
+        retry = 0
+        max_retries = 3
+        while retry < max_retries:
+            try:
+                return await self._perform_query(user_id, query, chat_id)
+            except UnexpectedModelBehavior as e:
+                logging.exception(f"Error during AI agent query, retry {retry + 1}/{max_retries}: {e}")
+                retry += 1
+        msg = "AI agent failed to process the query after multiple attempts"
+        logging.error(msg)
+        raise QueryAgentError(msg)
+
+    async def _perform_query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
         deps = AgentDependencies(
             user_uuid=user_id,
             user_repository=self.user_repository,

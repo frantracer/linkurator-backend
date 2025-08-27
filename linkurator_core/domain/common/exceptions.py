@@ -76,3 +76,7 @@ class QueryRateLimitError(Exception):
 
 class MessageIsBeingProcessedError(Exception):
     pass
+
+
+class QueryAgentError(Exception):
+    pass
