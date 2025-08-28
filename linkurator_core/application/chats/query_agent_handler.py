@@ -1,17 +1,21 @@
 from uuid import UUID
 
-from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
 from linkurator_core.domain.chats.chat import Chat, ChatRole
 from linkurator_core.domain.chats.chat_repository import ChatRepository
+from linkurator_core.domain.common.event import NewChatQueryEvent
+from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.exceptions import InvalidChatError, MessageIsBeingProcessedError, QueryRateLimitError
 
 
 class QueryAgentHandler:
-    def __init__(self, query_agent_service: QueryAgentService, chat_repository: ChatRepository) -> None:
-        self.query_agent_service = query_agent_service
+    def __init__(self,
+                 chat_repository: ChatRepository,
+                 event_bus: EventBusService,
+                 ) -> None:
         self.chat_repository = chat_repository
+        self.event_bus = event_bus
 
-    async def handle(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
+    async def handle(self, user_id: UUID, query: str, chat_id: UUID) -> None:
         chat = await self.chat_repository.get(chat_id)
         if chat is None:
             title = query[:47] + "..." if len(query) > 50 else query
@@ -31,17 +35,6 @@ class QueryAgentHandler:
         chat.add_user_message(query)
         await self.chat_repository.update(chat)
 
-        # Get the AI response
-        result = await self.query_agent_service.query(user_id, query, chat_id)
-
-        # Add reply to chat
-        chat = await self.chat_repository.get(chat_id)
-        if chat is not None:
-            chat.add_assistant_message(
-                result.message,
-                item_uuids=[item.uuid for item in result.items],
-                subscription_uuids=[sub.uuid for sub in result.subscriptions],
-            )
-            await self.chat_repository.update(chat)
-
-        return result
+        await self.event_bus.publish(
+            NewChatQueryEvent.new(chat_id=chat_id, query=query),
+        )

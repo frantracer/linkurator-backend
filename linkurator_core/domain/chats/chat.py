@@ -9,6 +9,7 @@ from uuid import UUID
 class ChatRole(StrEnum):
     USER = "user"
     ASSISTANT = "assistant"
+    ERROR = "error"
 
 
 @dataclass
@@ -19,6 +20,7 @@ class ChatMessage:
     item_uuids: list[UUID]
     subscription_uuids: list[UUID]
     topic_uuids: list[UUID]
+    topic_were_created: bool
 
     @classmethod
     def new_user_message(cls, content: str) -> ChatMessage:
@@ -29,6 +31,7 @@ class ChatMessage:
             item_uuids=[],
             subscription_uuids=[],
             topic_uuids=[],
+            topic_were_created=False,
         )
 
     @classmethod
@@ -38,6 +41,7 @@ class ChatMessage:
         item_uuids: list[UUID] | None = None,
         subscription_uuids: list[UUID] | None = None,
         topic_uuids: list[UUID] | None = None,
+        topic_were_created: bool = False,
     ) -> ChatMessage:
         return cls(
             role=ChatRole.ASSISTANT,
@@ -46,6 +50,19 @@ class ChatMessage:
             item_uuids=item_uuids or [],
             subscription_uuids=subscription_uuids or [],
             topic_uuids=topic_uuids or [],
+            topic_were_created=topic_were_created,
+        )
+
+    @classmethod
+    def new_error_message(cls, content: str) -> ChatMessage:
+        return cls(
+            role=ChatRole.ERROR,
+            content=content,
+            timestamp=datetime.now(timezone.utc),
+            item_uuids=[],
+            subscription_uuids=[],
+            topic_uuids=[],
+            topic_were_created=False,
         )
 
 
@@ -84,13 +101,19 @@ class Chat:
         item_uuids: list[UUID] | None = None,
         subscription_uuids: list[UUID] | None = None,
         topic_uuids: list[UUID] | None = None,
+        topic_were_created: bool = False,
     ) -> None:
         message = ChatMessage.new_assistant_message(
             content,
             item_uuids=item_uuids,
             subscription_uuids=subscription_uuids,
             topic_uuids=topic_uuids,
+            topic_were_created=topic_were_created,
         )
+        self.add_message(message)
+
+    def add_error_message(self, content: str) -> None:
+        message = ChatMessage.new_error_message(content)
         self.add_message(message)
 
     def update_title(self, title: str) -> None:

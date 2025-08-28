@@ -1,8 +1,8 @@
 import asyncio
-import logging
 
 from linkurator_core.application.auth.send_validate_new_user_email import SendValidateNewUserEmail
 from linkurator_core.application.auth.send_welcome_email import SendWelcomeEmail
+from linkurator_core.application.chats.process_user_query_handler import ProcessUserQueryHandler
 from linkurator_core.application.common.event_handler import EventHandler
 from linkurator_core.application.items.find_deprecated_items_handler import FindDeprecatedItemsHandler
 from linkurator_core.application.items.find_zero_duration_items import FindZeroDurationItems
@@ -18,11 +18,13 @@ from linkurator_core.application.subscriptions.update_subscription_items_handler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.common.event import (
     ItemsBecameOutdatedEvent,
+    NewChatQueryEvent,
     SubscriptionBecameOutdatedEvent,
     SubscriptionItemsBecameOutdatedEvent,
     UserRegisteredEvent,
     UserRegisterRequestSentEvent,
 )
+from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import PydanticQueryAgentService
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
@@ -32,16 +34,17 @@ from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailS
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
+from linkurator_core.infrastructure.logger import configure_logging
+from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.registration_request_repository import MongoDBRegistrationRequestRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
+from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient
 from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscriptionService
-
-logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 
 
 async def main() -> None:  # pylint: disable=too-many-locals
@@ -62,6 +65,10 @@ async def main() -> None:  # pylint: disable=too-many-locals
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password,
     )
+    topic_repository = MongoDBTopicRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password,
+    )
     item_repository = MongoDBItemRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password,
@@ -71,6 +78,10 @@ async def main() -> None:  # pylint: disable=too-many-locals
         username=db_settings.user, password=db_settings.password,
     )
     registration_request_repository = MongoDBRegistrationRequestRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password,
+    )
+    chat_repository = MongoDBChatRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password,
     )
@@ -108,6 +119,16 @@ async def main() -> None:  # pylint: disable=too-many-locals
         email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL,
     )
     gmail_email_sender = GmailEmailSender(account_service=google_domain_service)
+
+    ai_agent_service = PydanticQueryAgentService(
+        chat_repository=chat_repository,
+        user_repository=user_repository,
+        topic_repository=topic_repository,
+        item_repository=item_repository,
+        subscription_repository=subscription_repository,
+        base_url=settings.ai_agent.base_url,
+        google_api_key=settings.google_ai.api_key,
+    )
 
     # Event bus
     event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,
@@ -150,6 +171,10 @@ async def main() -> None:  # pylint: disable=too-many-locals
         email_sender=gmail_email_sender,
         base_url=env_settings.WEBSITE_URL,
     )
+    process_user_query_handler = ProcessUserQueryHandler(
+        chat_repository=chat_repository,
+        query_agent_service=ai_agent_service,
+    )
 
     event_handler = EventHandler(
         update_user_subscriptions_handler=update_user_subscriptions,
@@ -158,6 +183,7 @@ async def main() -> None:  # pylint: disable=too-many-locals
         refresh_items_handler=refresh_items_handler,
         send_validate_new_user_email=send_validate_new_user_email,
         send_welcome_email=send_welcome_email,
+        process_user_query_handler=process_user_query_handler,
     )
 
     event_bus.subscribe(SubscriptionItemsBecameOutdatedEvent, event_handler.handle)
@@ -165,6 +191,7 @@ async def main() -> None:  # pylint: disable=too-many-locals
     event_bus.subscribe(ItemsBecameOutdatedEvent, event_handler.handle)
     event_bus.subscribe(UserRegisterRequestSentEvent, event_handler.handle)
     event_bus.subscribe(UserRegisteredEvent, event_handler.handle)
+    event_bus.subscribe(NewChatQueryEvent, event_handler.handle)
 
     # Task scheduler
     scheduler = TaskScheduler()
@@ -172,6 +199,8 @@ async def main() -> None:  # pylint: disable=too-many-locals
     scheduler.schedule_recurring_task(task=find_outdated_subscriptions.handle, interval_seconds=60 * 5)
     scheduler.schedule_recurring_task(task=find_deprecated_items.handle, interval_seconds=60 * 5)
     scheduler.schedule_recurring_task(task=find_zero_duration_items.handle, interval_seconds=60 * 5)
+
+    configure_logging(settings.log)
 
     await run_parallel(
         event_bus.start(),

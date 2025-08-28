@@ -312,7 +312,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
             "When creating topics, do not create similar topics if they already exist. "
             "Before creating topics, tell the user which exact subscriptions you are going to add to each topic. "
-            "Do not create any topic without explicitly user consent. "
+            "Help the user by proposing topics, but do not create them without explicitly user consent. "
             "Items that belongs to a subscription included in any of the user topics are considered more relevant. "
             "Try first to find items from subscriptions before using keyword search. "
             "When finding items, try to find by a single keyword. "

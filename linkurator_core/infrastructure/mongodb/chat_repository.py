@@ -22,6 +22,7 @@ class MongoDBChatMessage(BaseModel):
     item_uuids: list[UUID] = Field(default_factory=list)
     subscription_uuids: list[UUID] = Field(default_factory=list)
     topic_uuids: list[UUID] = Field(default_factory=list)
+    topics_were_created: bool = False
 
     @staticmethod
     def from_domain_message(message: ChatMessage) -> MongoDBChatMessage:
@@ -32,6 +33,7 @@ class MongoDBChatMessage(BaseModel):
             item_uuids=message.item_uuids,
             subscription_uuids=message.subscription_uuids,
             topic_uuids=message.topic_uuids,
+            topics_were_created=message.topic_were_created,
         )
 
     def to_domain_message(self) -> ChatMessage:
@@ -42,6 +44,7 @@ class MongoDBChatMessage(BaseModel):
             item_uuids=self.item_uuids,
             subscription_uuids=self.subscription_uuids,
             topic_uuids=self.topic_uuids,
+            topic_were_created=self.topics_were_created,
         )
 
 

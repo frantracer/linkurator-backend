@@ -109,3 +109,17 @@ class UserRegisteredEvent(Event):
             created_at=datetime.now(timezone.utc),
             user_id=user_id,
         )
+
+
+class NewChatQueryEvent(Event):
+    chat_id: UUID
+    query: str
+
+    @classmethod
+    def new(cls, chat_id: UUID, query: str) -> NewChatQueryEvent:
+        return cls(
+            id=uuid4(),
+            created_at=datetime.now(timezone.utc),
+            chat_id=chat_id,
+            query=query,
+        )

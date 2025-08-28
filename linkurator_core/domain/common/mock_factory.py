@@ -187,6 +187,7 @@ def mock_chat_message(
         item_uuids: list[UUID] | None = None,
         subscription_uuids: list[UUID] | None = None,
         topic_uuids: list[UUID] | None = None,
+        topic_were_created: bool = False,
 ) -> ChatMessage:
     content = content or f"Test message from {role}"
     timestamp = timestamp or datetime.now(tz=timezone.utc)
@@ -201,4 +202,5 @@ def mock_chat_message(
         item_uuids=item_uuids,
         subscription_uuids=subscription_uuids,
         topic_uuids=topic_uuids,
+        topic_were_created=topic_were_created,
     )

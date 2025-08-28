@@ -10,7 +10,7 @@ from linkurator_core.application.chats.query_agent_handler import QueryAgentHand
 from linkurator_core.domain.common.exceptions import MessageIsBeingProcessedError, QueryRateLimitError
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
-from linkurator_core.infrastructure.fastapi.models.agent import AgentQueryRequest, AgentQueryResponse
+from linkurator_core.infrastructure.fastapi.models.agent import AgentQueryRequest
 from linkurator_core.infrastructure.fastapi.models.chat import (
     ChatResponse,
     GetUserChatsResponse,
@@ -90,8 +90,7 @@ def get_router(
 
     @router.post(
         "/{chat_id}/messages",
-        status_code=status.HTTP_200_OK,
-        response_model=AgentQueryResponse,
+        status_code=status.HTTP_202_ACCEPTED,
         responses={
             status.HTTP_401_UNAUTHORIZED: {"model": None},
             status.HTTP_400_BAD_REQUEST: {"model": None},
@@ -103,13 +102,13 @@ def get_router(
         chat_id: UUID,
         request: AgentQueryRequest,
         session: Optional[Session] = Depends(get_session),
-    ) -> AgentQueryResponse:
+    ) -> ChatResponse:
         """Send a query to the AI agent within a specific chat context."""
         if session is None:
             raise default_responses.not_authenticated()
 
         try:
-            result = await query_agent_handler.handle(
+            await query_agent_handler.handle(
                 user_id=session.user_id,
                 query=request.query,
                 chat_id=chat_id,
@@ -119,6 +118,11 @@ def get_router(
         except MessageIsBeingProcessedError as e:
             raise default_responses.bad_request(str(e))
 
-        return AgentQueryResponse.from_domain(result)
+        enriched_chat = await get_chat_handler.handle(chat_id=chat_id, user_id=session.user_id)
+        if enriched_chat is None:
+            msg = "Chat not found after query submission"
+            raise default_responses.not_found(msg)
+
+        return ChatResponse.from_enriched_chat(enriched_chat=enriched_chat)
 
     return router

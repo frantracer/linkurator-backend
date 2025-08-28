@@ -60,7 +60,6 @@ from linkurator_core.application.users.unfollow_curator_handler import UnfollowC
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
-from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import PydanticQueryAgentService
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets, SpotifyClientSecrets
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
@@ -293,16 +292,8 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             subscription_repository=subscription_repository),
         query_agent_handler=QueryAgentHandler(
-            query_agent_service=PydanticQueryAgentService(
-                user_repository=user_repository,
-                subscription_repository=subscription_repository,
-                item_repository=item_repository,
-                topic_repository=topic_repository,
-                chat_repository=chat_repository,
-                base_url=settings.ai_agent.base_url,
-                google_api_key=settings.google_ai.api_key,
-            ),
             chat_repository=chat_repository,
+            event_bus=event_bus,
         ),
         get_user_chats_handler=GetUserChatsHandler(chat_repository=chat_repository),
         get_chat_handler=GetChatHandler(

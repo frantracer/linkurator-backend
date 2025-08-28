@@ -15,6 +15,7 @@ class ChatMessageResponse(BaseModel):
     content: str = Field(description="Message content")
     timestamp: datetime = Field(description="Message timestamp")
     items: list[ItemSchema] = Field(default_factory=list, description="Items referenced in this message")
+    topics_were_created: bool = Field(description="Indicates if new topics were created as a result of this message")
 
     @classmethod
     def from_domain(
@@ -38,6 +39,7 @@ class ChatMessageResponse(BaseModel):
             content=message.content,
             timestamp=message.timestamp,
             items=item_responses,
+            topics_were_created=message.topic_were_created,
         )
 
 

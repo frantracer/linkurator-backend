@@ -75,7 +75,7 @@ async def test_add_chat_with_messages(chat_repo: ChatRepository) -> None:
     chat_id = uuid.uuid4()
     messages = [
         mock_chat_message(role=ChatRole.USER, content="Hello"),
-        mock_chat_message(role=ChatRole.ASSISTANT, content="Hi there!"),
+        mock_chat_message(role=ChatRole.ASSISTANT, content="Hi there!", topic_were_created=True),
     ]
     chat = mock_chat(uuid=chat_id, user_id=user_id, messages=messages)
 
@@ -86,8 +86,10 @@ async def test_add_chat_with_messages(chat_repo: ChatRepository) -> None:
     assert len(retrieved_chat.messages) == 2
     assert retrieved_chat.messages[0].role == ChatRole.USER
     assert retrieved_chat.messages[0].content == "Hello"
+    assert retrieved_chat.messages[0].topic_were_created is False
     assert retrieved_chat.messages[1].role == ChatRole.ASSISTANT
     assert retrieved_chat.messages[1].content == "Hi there!"
+    assert retrieved_chat.messages[1].topic_were_created is True
 
 
 @pytest.mark.asyncio()
