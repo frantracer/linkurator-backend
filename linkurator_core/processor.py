@@ -1,4 +1,11 @@
 import asyncio
+import contextlib
+import logging
+from pathlib import Path
+from typing import Any
+
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 from linkurator_core.application.auth.send_validate_new_user_email import SendValidateNewUserEmail
 from linkurator_core.application.auth.send_welcome_email import SendWelcomeEmail
@@ -47,7 +54,23 @@ from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApi
 from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscriptionService
 
 
-async def main() -> None:  # pylint: disable=too-many-locals
+class ProcessorReloadHandler(FileSystemEventHandler):
+    """File system event handler for processor auto-reload."""
+
+    def __init__(self) -> None:
+        self.restart_needed = False
+
+    def on_modified(self, event: Any) -> None:
+        if event.is_directory:
+            return
+
+        # Only restart for Python files
+        if event.src_path.endswith(".py"):
+            logging.info(f"File changed: {event.src_path}")
+            self.restart_needed = True
+
+
+async def run_processor() -> None:  # pylint: disable=too-many-locals
     # Read settings
     settings = ApplicationSettings.from_file()
     db_settings = settings.mongodb
@@ -200,8 +223,6 @@ async def main() -> None:  # pylint: disable=too-many-locals
     scheduler.schedule_recurring_task(task=find_deprecated_items.handle, interval_seconds=60 * 5)
     scheduler.schedule_recurring_task(task=find_zero_duration_items.handle, interval_seconds=60 * 5)
 
-    configure_logging(settings.log)
-
     await run_parallel(
         event_bus.start(),
         run_sequence(
@@ -209,6 +230,58 @@ async def main() -> None:  # pylint: disable=too-many-locals
             scheduler.start(),
         ),
     )
+
+
+async def main() -> None:
+    """Main entry point that handles auto-reload functionality."""
+    settings = ApplicationSettings.from_file()
+
+    configure_logging(settings.log)
+
+    if settings.api.reload:
+        logging.info("Auto-reload enabled. Watching for file changes...")
+
+        # Setup file watcher
+        event_handler = ProcessorReloadHandler()
+        observer = Observer()
+
+        # Watch the linkurator_core directory
+        project_root = Path(__file__).parent.parent
+        watch_path = project_root / "linkurator_core"
+        observer.schedule(event_handler, str(watch_path), recursive=True)
+        observer.start()
+
+        try:
+            while True:
+                # Run processor in a task so we can check for reload requests
+                processor_task = asyncio.create_task(run_processor())
+
+                # Check for file changes every second
+                while not processor_task.done() and not event_handler.restart_needed:
+                    await asyncio.sleep(1)
+
+                if event_handler.restart_needed:
+                    logging.info("Restarting processor due to file changes...")
+                    processor_task.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await processor_task
+
+                    # Reset the restart flag
+                    event_handler.restart_needed = False
+                    await asyncio.sleep(1)  # Brief pause before restart
+                else:
+                    # Processor finished normally
+                    await processor_task
+                    break
+
+        except KeyboardInterrupt:
+            logging.info("\nShutting down processor...")
+        finally:
+            observer.stop()
+            observer.join()
+    else:
+        # No auto-reload, run processor directly
+        await run_processor()
 
 
 if __name__ == "__main__":

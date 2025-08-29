@@ -24,3 +24,4 @@ google-auth==2.36.0
 cryptography==45.0.4
 pydantic_ai==0.7.5
 logfire==4.0.0
+watchdog==6.0.0
