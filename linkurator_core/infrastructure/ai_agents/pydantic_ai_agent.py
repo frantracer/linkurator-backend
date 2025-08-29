@@ -294,6 +294,9 @@ async def filter_tools(
         elif tool_def.name == "find_items_by_keywords":
             if ctx.deps.find_items_by_keywords_calls < 1:
                 filtered_tools.append(tool_def)
+        elif tool_def.name == "create_topic":
+            if ctx.deps.find_items_by_keywords_calls == 0 and ctx.deps.find_subscriptions_items_calls == 0:
+                filtered_tools.append(tool_def)
         else:
             filtered_tools.append(tool_def)
     return filtered_tools
