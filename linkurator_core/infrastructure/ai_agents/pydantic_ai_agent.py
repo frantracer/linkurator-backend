@@ -519,7 +519,9 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         """
         Finds items based on a single keyword search.
 
-        Maximum one call per query with up to ten keywords. Maximum 100 items returned.
+        Maximum one call per query with up to ten keywords.
+        Maximum two words per keyword.
+        Maximum 100 items returned.
 
         Args:
         ----
@@ -534,7 +536,8 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         tasks = []
         for keyword in keywords:
             criteria = ItemFilterCriteria(
-                text=keyword,
+                # Use only the first two words of the keyword to speed up the search
+                text=" ".join(keyword.split(" ")[:2]),
             )
 
             task = ctx.deps.item_repository.find_items(
