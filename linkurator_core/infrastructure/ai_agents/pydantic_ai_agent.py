@@ -309,9 +309,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     )
 
     gemini_flash_model = GoogleModel(
-        provider=GoogleProvider(
-            api_key=api_key,
-        ),
+        provider=provider,
         model_name="gemini-2.5-flash",
         settings=GoogleModelSettings(
             temperature=0.2,
