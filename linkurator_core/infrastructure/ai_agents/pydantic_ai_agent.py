@@ -309,7 +309,9 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     )
 
     gemini_flash_model = GoogleModel(
-        provider=provider,
+        provider=GoogleProvider(
+            api_key=api_key,
+        ),
         model_name="gemini-2.5-flash",
         settings=GoogleModelSettings(
             temperature=0.2,
@@ -346,6 +348,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "If a subscription is referenced in the response, use a markdown link to the url https://linkurator.com/subscriptions/{subscription.uuid} "
             "Link titles cannot be multiline in markdown. "
             "The response must contains a list with the items you are recommending. "
+            "The response must have 1000 words maximum. "
         ),
         prepare_tools=filter_tools,
     )
