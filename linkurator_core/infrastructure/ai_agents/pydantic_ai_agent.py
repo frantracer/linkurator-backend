@@ -3,6 +3,7 @@ import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Union
 from uuid import UUID, uuid4
 
 import logfire
@@ -11,6 +12,7 @@ from pydantic_ai import Agent, RunContext
 from pydantic_ai.exceptions import UnexpectedModelBehavior
 from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
 from pydantic_ai.providers.google import GoogleProvider
+from pydantic_ai.tools import ToolDefinition
 from pydantic_ai.usage import RunUsage
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
@@ -281,6 +283,22 @@ class PydanticQueryAgentService(QueryAgentService):
         )
 
 
+async def filter_tools(
+        ctx: RunContext[AgentDependencies], tool_defs: list[ToolDefinition],
+) -> Union[list[ToolDefinition], None]:
+    filtered_tools = []
+    for tool_def in tool_defs:
+        if tool_def.name == "find_subscriptions_items":
+            if ctx.deps.find_subscriptions_items_calls < 3:
+                filtered_tools.append(tool_def)
+        elif tool_def.name == "find_items_by_keywords":
+            if ctx.deps.find_items_by_keywords_calls < 1:
+                filtered_tools.append(tool_def)
+        else:
+            filtered_tools.append(tool_def)
+    return filtered_tools
+
+
 def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
     """
     Creates a support agent that can be used to handle user queries.
@@ -331,6 +349,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "If a subscription is referenced in the response, use a markdown link to the url https://linkurator.com/subscriptions/{subscription.uuid} "
             "Link titles cannot be multiline in markdown. "
         ),
+        prepare_tools=filter_tools,
     )
 
     @ ai_agent.system_prompt
@@ -438,7 +457,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
 
         return context
 
-    @ ai_agent.tool
+    @ ai_agent.tool()
     async def find_subscriptions_items(
             ctx: RunContext[AgentDependencies],
             topic_ids: list[str] | None = None,
@@ -455,8 +474,6 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
 
         """
         ctx.deps.find_subscriptions_items_calls += 1
-        if ctx.deps.find_subscriptions_items_calls > 3:
-            return []
 
         topic_uuids: list[UUID] = parse_ids_to_uuids(topic_ids)
         subscription_uuids: list[UUID] = parse_ids_to_uuids(subscription_ids)
@@ -490,7 +507,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
 
         return [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
 
-    @ ai_agent.tool
+    @ ai_agent.tool()
     async def find_items_by_keywords(
             ctx: RunContext[AgentDependencies],
             keywords: list[str],
@@ -505,8 +522,6 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
 
         """
         ctx.deps.find_items_by_keywords_calls += 1
-        if ctx.deps.find_items_by_keywords_calls > 1:
-            return []
 
         keywords = keywords.copy()[:10]
 
