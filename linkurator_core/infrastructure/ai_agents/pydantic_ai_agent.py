@@ -289,7 +289,7 @@ async def filter_tools(
     filtered_tools = []
     for tool_def in tool_defs:
         if tool_def.name == "find_subscriptions_items":
-            if ctx.deps.find_subscriptions_items_calls < 3:
+            if ctx.deps.find_subscriptions_items_calls < 1:
                 filtered_tools.append(tool_def)
         elif tool_def.name == "find_items_by_keywords":
             if ctx.deps.find_items_by_keywords_calls < 1:
@@ -327,7 +327,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "Answer in the same language the user is using. "
             "Always use the customer's name in your responses. "
             "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
-            "When creating topics, do not   create similar topics if they already exist. "
+            "When creating topics, do not create similar topics if they already exist. "
             "Before creating topics, tell the user which exact subscriptions you are going to add to each topic. "
             "Help the user by proposing topics, but do not create them without explicitly user consent. "
             "Items that belongs to a subscription included in any of the user topics are considered more relevant. "
@@ -462,7 +462,9 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             subscription_ids: list[str] | None = None,
     ) -> list[ItemForAI]:
         """
-        Get items from subscriptions and topics. Maximum three calls per query.
+        Get items from subscriptions and topics.
+
+        Maximum one call per query. Maximum 100 items returned.
 
         Args:
         ----
@@ -503,6 +505,9 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         )
         indexed_subs_names = {sub.uuid: sub.name for sub in subscriptions}
 
+        items = sorted(items, key=lambda item: item.created_at, reverse=True)
+        items = items[:100]
+
         return [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
 
     @ ai_agent.tool()
@@ -511,7 +516,9 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             keywords: list[str],
     ) -> list[ItemForAI]:
         """
-        Finds items based on a single keyword search. Maximum one call per query with up to ten keywords.
+        Finds items based on a single keyword search.
+
+        Maximum one call per query with up to ten keywords. Maximum 100 items returned.
 
         Args:
         ----
@@ -544,6 +551,13 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             [item.subscription_uuid for item in items],
         )
         indexed_subs_names = {sub.uuid: sub.name for sub in subscriptions}
+
+        items = sorted(items, key=lambda item: item.created_at, reverse=True)
+        unique_items = {}
+        for item in items:
+            if item.uuid not in unique_items:
+                unique_items[item.uuid] = item
+        items = list(unique_items.values())[:100]
 
         return [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
 
