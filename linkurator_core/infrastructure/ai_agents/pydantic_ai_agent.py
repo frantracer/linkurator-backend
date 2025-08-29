@@ -313,7 +313,6 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         model_name="gemini-2.5-flash",
         settings=GoogleModelSettings(
             temperature=0.2,
-            max_tokens=4096,
             google_thinking_config={"thinking_budget": 0},
         ),
     )
@@ -328,26 +327,25 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "Answer in the same language the user is using. "
             "Always use the customer's name in your responses. "
             "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
-            "When creating topics, do not create similar topics if they already exist. "
+            "When creating topics, do not   create similar topics if they already exist. "
             "Before creating topics, tell the user which exact subscriptions you are going to add to each topic. "
             "Help the user by proposing topics, but do not create them without explicitly user consent. "
             "Items that belongs to a subscription included in any of the user topics are considered more relevant. "
             "Try first to find items from subscriptions before using keyword search. "
             "When finding items, try to find by a single keyword. "
-            "Find items by keywords can be called maximum once with maximum ten keywords. "
             "It is ok to return empty lists of items ids if there are no matching items to the query. "
             "When the user asks for specific dates, ensure you do not return any items that were published before the date. "
             "Use markdown formatting, make titles bold and bullet points for lists. "
             "Summarize the titles if they are similar and provide the subscription names as links to the item. "
             "If the same title from different providers is found, summarize them in a single item with links. "
             "Add the provider name (YouTube or Spotify) to the links if it is required to distinguish between items. "
-            "You do not have access to the content, only to a brief description. "
-            "It is important not to offer details or summaries about the content. "
+            "You do not have access to the content, only to a brief description and the title. "
             "Answer the user's query using items, subscriptions and topics that are relevant to the query. "
             "Do not ask the user to provide more information, use the information you have. "
             "If an item is referenced in the response, use a markdown link to the url https://linkurator.com/items/{item.uuid} "
             "If a subscription is referenced in the response, use a markdown link to the url https://linkurator.com/subscriptions/{subscription.uuid} "
             "Link titles cannot be multiline in markdown. "
+            "The response must contains a list with the items you are recommending. "
         ),
         prepare_tools=filter_tools,
     )
