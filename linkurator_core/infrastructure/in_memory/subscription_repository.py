@@ -73,12 +73,20 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
         return sorted(subs, key=lambda x: x.created_at, reverse=True)
 
     async def find(self, criteria: SubscriptionFilterCriteria) -> list[Subscription]:
-        subs = [
-            subscription
-            for subscription in self.subscriptions.values()
-            if criteria.updated_before is None
-            or subscription.updated_at < criteria.updated_before
-        ]
+        subs = []
+        for subscription in self.subscriptions.values():
+            # Check updated_before criteria
+            if criteria.updated_before is not None and subscription.updated_at >= criteria.updated_before:
+                continue
+
+            # Check has_summary criteria
+            if criteria.has_summary is not None:
+                has_summary = subscription.summary is not None and subscription.summary.strip() != ""
+                if criteria.has_summary != has_summary:
+                    continue
+
+            subs.append(subscription)
+
         return sorted(subs, key=lambda x: x.created_at, reverse=True)
 
     def _find_by_url(self, url: AnyUrl) -> Subscription | None:

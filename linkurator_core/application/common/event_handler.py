@@ -6,6 +6,7 @@ from linkurator_core.application.auth.send_validate_new_user_email import (
 from linkurator_core.application.auth.send_welcome_email import SendWelcomeEmail
 from linkurator_core.application.chats.process_user_query_handler import ProcessUserQueryHandler
 from linkurator_core.application.items.refresh_items_handler import RefreshItemsHandler
+from linkurator_core.application.subscriptions.summarize_subscription_handler import SummarizeSubscriptionHandler
 from linkurator_core.application.subscriptions.update_subscription_handler import UpdateSubscriptionHandler
 from linkurator_core.application.subscriptions.update_subscription_items_handler import (
     UpdateSubscriptionItemsHandler,
@@ -19,6 +20,7 @@ from linkurator_core.domain.common.event import (
     NewChatQueryEvent,
     SubscriptionBecameOutdatedEvent,
     SubscriptionItemsBecameOutdatedEvent,
+    SubscriptionNeedsSummarizationEvent,
     UserRegisteredEvent,
     UserRegisterRequestSentEvent,
 )
@@ -33,6 +35,7 @@ class EventHandler:
     send_validate_new_user_email: SendValidateNewUserEmail
     send_welcome_email: SendWelcomeEmail
     process_user_query_handler: ProcessUserQueryHandler
+    summarize_subscription_handler: SummarizeSubscriptionHandler
 
     async def handle(self, event: Event) -> None:
         if isinstance(event, SubscriptionItemsBecameOutdatedEvent):
@@ -47,5 +50,7 @@ class EventHandler:
             await self.send_welcome_email.handle(event.user_id)
         elif isinstance(event, NewChatQueryEvent):
             await self.process_user_query_handler.handle(event.chat_id, event.query)
+        elif isinstance(event, SubscriptionNeedsSummarizationEvent):
+            await self.summarize_subscription_handler.handle(event.subscription_id)
         else:
             pass

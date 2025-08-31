@@ -48,6 +48,7 @@ def mock_sub(uuid: UUID | None = None,
              created_at: datetime | None = None,
              scanned_at: datetime | None = None,
              external_data: dict[str, str] | None = None,
+             summary: str | None = None,
              ) -> Subscription:
     uuid = uuid or uuid4()
     sub = Subscription.new(
@@ -58,6 +59,7 @@ def mock_sub(uuid: UUID | None = None,
         thumbnail=parse_url(f"https://www.youtube.com/channel/{uuid}/thumbnail"),
         external_data={} if external_data is None else external_data,
         description=f"Description for {name}",
+        summary="" if summary is None else summary,
     )
     if created_at is not None:
         sub.created_at = created_at

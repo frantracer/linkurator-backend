@@ -165,6 +165,7 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
         scanned_at=datetime.fromtimestamp(0, tz=timezone.utc),
         last_published_at=datetime.fromtimestamp(0, tz=timezone.utc),
         description="test description",
+        summary="subscription summary",
     )
     await subscription_repo.add(sub)
 
@@ -178,6 +179,7 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
     sub.scanned_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     sub.last_published_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     sub.description = "new description"
+    sub.summary = "new summary"
 
     await subscription_repo.update(sub)
     updated_subscription = await subscription_repo.get(sub.uuid)
@@ -192,6 +194,7 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
     assert updated_subscription.scanned_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     assert updated_subscription.last_published_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     assert updated_subscription.description == "new description"
+    assert updated_subscription.summary == "new summary"
 
 
 @pytest.mark.asyncio()

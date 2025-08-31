@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime, timezone
 
+from linkurator_core.domain.common.event import SubscriptionNeedsSummarizationEvent
+from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.exceptions import InvalidCredentialError
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -12,10 +14,12 @@ class UpdateUserSubscriptionsHandler:
     def __init__(self,
                  subscription_service: SubscriptionService,
                  user_repository: UserRepository,
-                 subscription_repository: SubscriptionRepository) -> None:
+                 subscription_repository: SubscriptionRepository,
+                 event_bus_service: EventBusService) -> None:
         self.subscription_service = subscription_service
         self.subscription_repository = subscription_repository
         self.user_repository = user_repository
+        self.event_bus_service = event_bus_service
 
     async def handle(self, user_id: uuid.UUID, access_token: str) -> None:
         user = await self.user_repository.get(user_id)
@@ -38,5 +42,8 @@ class UpdateUserSubscriptionsHandler:
         registered_subscription = await self.subscription_repository.find_by_url(subscription.url)
         if registered_subscription is None:
             await self.subscription_repository.add(subscription)
+            # Publish event for new subscription that needs summarization
+            event = SubscriptionNeedsSummarizationEvent.new(subscription.uuid)
+            await self.event_bus_service.publish(event)
             return subscription
         return registered_subscription

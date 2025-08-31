@@ -16,6 +16,7 @@ from linkurator_core.domain.subscriptions.subscription import (
 @dataclass
 class SubscriptionFilterCriteria:
     updated_before: datetime | None = None
+    has_summary: bool | None = None
 
 
 class SubscriptionRepository(ABC):

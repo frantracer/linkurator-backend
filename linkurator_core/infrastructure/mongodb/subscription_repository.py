@@ -39,6 +39,7 @@ class MongoDBSubscription(BaseModel):
     scanned_at: datetime
     last_published_at: datetime = datetime.fromtimestamp(0, tz=timezone.utc)
     description: str = ""
+    summary: str | None = None
 
     @staticmethod
     def from_domain_subscription(subscription: Subscription) -> MongoDBSubscription:
@@ -54,6 +55,7 @@ class MongoDBSubscription(BaseModel):
             scanned_at=subscription.scanned_at,
             last_published_at=subscription.last_published_at,
             description=subscription.description,
+            summary=subscription.summary,
         )
 
     def to_domain_subscription(self) -> Subscription:
@@ -69,6 +71,7 @@ class MongoDBSubscription(BaseModel):
             scanned_at=self.scanned_at,
             last_published_at=self.last_published_at,
             description=self.description,
+            summary="" if self.summary is None else self.summary,
         )
 
 
@@ -180,9 +183,18 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
 
     async def find(self, criteria: SubscriptionFilterCriteria) -> list[Subscription]:
         collection = await self._subscription_collection()
-        query = {}
+        query: dict[str, Any] = {}
         if criteria.updated_before is not None:
             query["updated_at"] = {"$lt": criteria.updated_before}
+        if criteria.has_summary is not None:
+            if criteria.has_summary:
+                query["summary"] = {"$ne": None, "$exists": True}
+            else:
+                query["$or"] = [
+                    {"summary": {"$exists": False}},
+                    {"summary": None},
+                    {"summary": ""},
+                ]
         subscriptions: list[dict[str, Any]] = await collection.find(query).to_list(
             length=None,
         )

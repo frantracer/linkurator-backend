@@ -22,6 +22,7 @@ def dummy_event_handler() -> EventHandler:
         send_validate_new_user_email=AsyncMock(),
         send_welcome_email=AsyncMock(),
         process_user_query_handler=AsyncMock(),
+        summarize_subscription_handler=AsyncMock(),
     )
 
 

@@ -362,6 +362,7 @@ async def test_youtube_service_returns_subscription_items() -> None:
             "playlist_id": "playlist_123",
         },
         description="channel_description",
+        summary="",
     )
 
     video = YoutubeVideo(

@@ -290,7 +290,8 @@ def app_handlers() -> Handlers:
         update_user_subscriptions_handler=UpdateUserSubscriptionsHandler(
             subscription_service=youtube_service,
             user_repository=user_repository,
-            subscription_repository=subscription_repository),
+            subscription_repository=subscription_repository,
+            event_bus_service=event_bus),
         query_agent_handler=QueryAgentHandler(
             chat_repository=chat_repository,
             event_bus=event_bus,

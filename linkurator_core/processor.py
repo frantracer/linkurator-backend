@@ -17,9 +17,13 @@ from linkurator_core.application.items.refresh_items_handler import RefreshItems
 from linkurator_core.application.subscriptions.find_outdated_subscriptions_handler import (
     FindOutdatedSubscriptionsHandler,
 )
+from linkurator_core.application.subscriptions.find_subscriptions_for_summarization_handler import (
+    FindSubscriptionsForSummarizationHandler,
+)
 from linkurator_core.application.subscriptions.find_subscriptions_with_outdated_items_handler import (
     FindSubscriptionsWithOutdatedItemsHandler,
 )
+from linkurator_core.application.subscriptions.summarize_subscription_handler import SummarizeSubscriptionHandler
 from linkurator_core.application.subscriptions.update_subscription_handler import UpdateSubscriptionHandler
 from linkurator_core.application.subscriptions.update_subscription_items_handler import UpdateSubscriptionItemsHandler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
@@ -28,10 +32,12 @@ from linkurator_core.domain.common.event import (
     NewChatQueryEvent,
     SubscriptionBecameOutdatedEvent,
     SubscriptionItemsBecameOutdatedEvent,
+    SubscriptionNeedsSummarizationEvent,
     UserRegisteredEvent,
     UserRegisterRequestSentEvent,
 )
 from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import PydanticQueryAgentService
+from linkurator_core.infrastructure.ai_agents.subscription_summarizer import SubscriptionSummarizerService
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
@@ -153,13 +159,17 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         google_api_key=settings.google_ai.api_key,
     )
 
+    subscription_summarizer_service = SubscriptionSummarizerService(
+        google_api_key=settings.google_ai.api_key,
+    )
+
     # Event bus
     event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,
                                  username=rabbitmq_settings.user, password=rabbitmq_settings.password)
 
     # Event handlers
     update_user_subscriptions = UpdateUserSubscriptionsHandler(
-        general_subscription_service, user_repository, subscription_repository)
+        general_subscription_service, user_repository, subscription_repository, event_bus)
     update_subscriptions_items = UpdateSubscriptionItemsHandler(
         subscription_repository=subscription_repository,
         item_repository=item_repository,
@@ -198,6 +208,14 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         chat_repository=chat_repository,
         query_agent_service=ai_agent_service,
     )
+    summarize_subscription_handler = SummarizeSubscriptionHandler(
+        subscription_repository=subscription_repository,
+        summarizer_service=subscription_summarizer_service,
+    )
+    find_subscriptions_for_summarization = FindSubscriptionsForSummarizationHandler(
+        subscription_repository=subscription_repository,
+        event_bus=event_bus,
+    )
 
     event_handler = EventHandler(
         update_user_subscriptions_handler=update_user_subscriptions,
@@ -207,6 +225,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         send_validate_new_user_email=send_validate_new_user_email,
         send_welcome_email=send_welcome_email,
         process_user_query_handler=process_user_query_handler,
+        summarize_subscription_handler=summarize_subscription_handler,
     )
 
     event_bus.subscribe(SubscriptionItemsBecameOutdatedEvent, event_handler.handle)
@@ -215,6 +234,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     event_bus.subscribe(UserRegisterRequestSentEvent, event_handler.handle)
     event_bus.subscribe(UserRegisteredEvent, event_handler.handle)
     event_bus.subscribe(NewChatQueryEvent, event_handler.handle)
+    event_bus.subscribe(SubscriptionNeedsSummarizationEvent, event_handler.handle)
 
     # Task scheduler
     scheduler = TaskScheduler()
@@ -222,6 +242,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     scheduler.schedule_recurring_task(task=find_outdated_subscriptions.handle, interval_seconds=60 * 5)
     scheduler.schedule_recurring_task(task=find_deprecated_items.handle, interval_seconds=60 * 5)
     scheduler.schedule_recurring_task(task=find_zero_duration_items.handle, interval_seconds=60 * 5)
+    scheduler.schedule_recurring_task(task=find_subscriptions_for_summarization.handle, interval_seconds=60 * 60 * 4)
 
     await run_parallel(
         event_bus.start(),

@@ -123,3 +123,15 @@ class NewChatQueryEvent(Event):
             chat_id=chat_id,
             query=query,
         )
+
+
+class SubscriptionNeedsSummarizationEvent(Event):
+    subscription_id: UUID
+
+    @classmethod
+    def new(cls, subscription_id: UUID) -> SubscriptionNeedsSummarizationEvent:
+        return cls(
+            id=uuid4(),
+            created_at=datetime.now(timezone.utc),
+            subscription_id=subscription_id,
+        )
