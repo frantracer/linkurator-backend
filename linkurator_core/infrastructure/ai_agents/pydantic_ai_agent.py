@@ -80,7 +80,7 @@ class TopicForAI(BaseModel):
             subscription_ids=topic.subscriptions_ids,
         )
 
-    def __str__(self) -> str:
+    def as_context(self) -> str:
         return f"{self.name} - {self.uuid}"
 
 
@@ -116,12 +116,12 @@ class SubscriptionForAI(BaseModel):
         return cls(
             uuid=subscription.uuid,
             name=subscription.name,
-            description=subscription.description,
+            description=subscription.summary,
             provider=subscription.provider,
         )
 
-    def __str__(self) -> str:
-        return f"- {self.name} ({self.provider}) - {self.uuid} - {self.description or 'No description'}"
+    def as_context(self) -> str:
+        return f"{self.name} ({self.provider.value}) - {self.uuid} - {self.description or 'No description'}"
 
 
 class ItemForAI(BaseModel):
@@ -401,13 +401,13 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         if len(subs_for_ai) == 0:
             context += "The user has no subscriptions.\n"
         else:
-            context += "\n".join([str(sub) for sub in subs_for_ai]) + "\n"
+            context += "\n\n".join([sub_ai.as_context() for sub_ai in subs_for_ai]) + "\n"
 
         context += "\nUser's topics:\n"
         if len(topics_for_ai) == 0:
             context += "The user has no topics.\n"
         else:
-            context += "\n".join([str(topic_ai) for topic_ai in topics_for_ai]) + "\n"
+            context += "\n\n".join([topic_ai.as_context() for topic_ai in topics_for_ai]) + "\n"
 
         context += "End of user's subscriptions and topics.\n"
 
