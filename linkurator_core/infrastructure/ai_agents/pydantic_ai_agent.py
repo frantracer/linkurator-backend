@@ -81,7 +81,7 @@ class TopicForAI(BaseModel):
         )
 
     def as_context(self) -> str:
-        return f"{self.name} - {self.uuid}"
+        return f"Name: {self.name} | UUID: {self.uuid}"
 
 
 class SubscriptionForAI(BaseModel):
@@ -121,7 +121,8 @@ class SubscriptionForAI(BaseModel):
         )
 
     def as_context(self) -> str:
-        return f"{self.name} ({self.provider.value}) - {self.uuid} - {self.description or 'No description'}"
+        return (f"Name: {self.name} | UUID: {self.uuid} | Provider: {self.provider.value} | "
+                f"Description: {self.description or 'No description'}")
 
 
 class ItemForAI(BaseModel):
