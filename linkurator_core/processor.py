@@ -177,6 +177,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     update_subscription = UpdateSubscriptionHandler(
         subscription_repository=subscription_repository,
         subscription_service=general_subscription_service,
+        event_bus=event_bus,
     )
     refresh_items_handler = RefreshItemsHandler(
         item_repository=item_repository,

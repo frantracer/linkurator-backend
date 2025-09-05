@@ -43,6 +43,7 @@ def mock_user(
 
 def mock_sub(uuid: UUID | None = None,
              name: str = "Test",
+             description: str | None = None,
              url: str | None = None,
              provider: SubscriptionProvider = SubscriptionProvider.YOUTUBE,
              created_at: datetime | None = None,
@@ -58,7 +59,7 @@ def mock_sub(uuid: UUID | None = None,
         url=parse_url(f"https://www.youtube.com/channel/{uuid}") if url is None else parse_url(url),
         thumbnail=parse_url(f"https://www.youtube.com/channel/{uuid}/thumbnail"),
         external_data={} if external_data is None else external_data,
-        description=f"Description for {name}",
+        description=f"Description for {name}" if description is None else description,
         summary="" if summary is None else summary,
     )
     if created_at is not None:
