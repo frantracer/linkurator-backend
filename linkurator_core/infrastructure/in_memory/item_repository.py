@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from unidecode import unidecode
+
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import InteractionFilterCriteria, ItemFilterCriteria, ItemRepository
 
 
 def _item_contains_text(text: str, item: Item) -> bool:
-    text_inputs = text.lower().strip('"').strip("'").split()
-    item_text = item.name.lower()
+    text_inputs = unidecode(text.lower().strip('"').strip("'")).split()
+    item_text = unidecode(item.name.lower())
     return all(text_input in item_text for text_input in text_inputs)
 
 

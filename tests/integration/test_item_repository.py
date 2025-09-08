@@ -384,6 +384,56 @@ async def test_find_items_for_a_subscription_with_text_search_criteria(item_repo
 
 
 @pytest.mark.asyncio()
+async def test_find_items_with_accents(item_repo: ItemRepository) -> None:
+    sub1_uuid = UUID("b76f981e-083f-4cee-9e5c-9f46f010546f")
+    item1 = mock_item(
+        name="Cafe is cool",
+        item_uuid=UUID("412ec7ea-b5ba-48aa-b370-771352858795"),
+        sub_uuid=sub1_uuid,
+    )
+    item2 = mock_item(
+        name="Cafe is not the same as café",
+        item_uuid=UUID("1f63bdf9-5cf5-43e1-a5b1-6e4d97842005"),
+        sub_uuid=sub1_uuid,
+    )
+    item3 = mock_item(
+        name="Café is for naïve people",
+        item_uuid=UUID("0183fd38-501d-442c-ac90-d2baad84f6eb"),
+        sub_uuid=sub1_uuid,
+    )
+
+    await item_repo.delete_all_items()
+    await item_repo.upsert_items([item1, item2, item3])
+
+    found_items = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub1_uuid],
+            text="café"),
+        page_number=0,
+        limit=3,
+    )
+    assert len(found_items) == 3
+
+    found_items = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub1_uuid],
+            text="cafe"),
+        page_number=0,
+        limit=3,
+    )
+    assert len(found_items) == 3
+
+    found_items = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub1_uuid],
+            text="naive cafe"),
+        page_number=0,
+        limit=3,
+    )
+    assert len(found_items) == 1
+
+
+@pytest.mark.asyncio()
 async def test_filter_with_empty_string_returns_all_items(item_repo: ItemRepository) -> None:
     sub1_uuid = UUID("b76f981e-083f-4cee-9e5c-9f46f010546f")
     item1 = mock_item(

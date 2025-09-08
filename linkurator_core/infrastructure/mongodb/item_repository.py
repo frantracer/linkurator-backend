@@ -16,7 +16,11 @@ from linkurator_core.domain.common.units import Seconds
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import InteractionFilterCriteria, ItemFilterCriteria, ItemRepository
-from linkurator_core.infrastructure.mongodb.common import MongoDBMapping, normalize_text_search
+from linkurator_core.infrastructure.mongodb.common import (
+    MongoDBMapping,
+    extract_keywords_from_text,
+    normalize_text_search,
+)
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 ITEM_COLLECTION_NAME = "items"
@@ -122,8 +126,8 @@ def _generate_filter_query(criteria: ItemFilterCriteria) -> dict[str, Any]:
     if criteria.provider is not None:
         filter_query["provider"] = criteria.provider.value
     if criteria.text is not None and len(criteria.text) > 0:
-        filter_query["$text"] = {"$search": normalize_text_search(criteria.text)}
-
+        keywords = extract_keywords_from_text(criteria.text)
+        filter_query["$text"] = {"$search": normalize_text_search(" ".join(keywords))}
     if criteria.max_duration is not None and criteria.min_duration is not None:
         filter_query["duration"] = {"$gte": criteria.min_duration, "$lte": criteria.max_duration}
     elif criteria.max_duration is not None:
