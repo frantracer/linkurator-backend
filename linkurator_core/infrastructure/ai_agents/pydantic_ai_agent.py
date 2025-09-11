@@ -541,8 +541,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         tasks = []
         for keyword in keywords:
             criteria = ItemFilterCriteria(
-                # Use only the first two words of the keyword to speed up the search
-                text=" ".join(keyword.split(" ")[:2]),
+                text=keyword,
             )
 
             task = ctx.deps.item_repository.find_items(
