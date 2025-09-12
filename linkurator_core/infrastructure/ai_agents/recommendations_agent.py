@@ -124,6 +124,11 @@ class ItemForAI(BaseModel):
             published_at=item.published_at,
         )
 
+    def as_context(self) -> str:
+        published_str = self.published_at.strftime("%Y-%m-%d")
+        return (f"Title: {self.name}\nUUID: {self.uuid}\nSubscription: {self.subscription_name}\n"
+                f"Provider: {self.provider.value}\nPublished at: {published_str}\nDescription: {self.description}")
+
 
 class RecommendationsOutput(BaseModel):
     response: str = Field(
@@ -258,11 +263,10 @@ class RecommendationsAgent:
             )
             indexed_subs_names = {sub.uuid: sub.name for sub in subscriptions}
 
-            context = "Items recommended to the user in the chat:\n"
-            context += "\n".join([
-                ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]).model_dump_json()
-                for item in items
-            ]) + "\n"
+            ai_items = [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
+
+            context = "Items recommended to the user in previous chats:\n"
+            context += "\n---\n".join(ai_item.as_context() for ai_item in ai_items) + "\n"
             context += "End of previously recommended items.\n"
 
             return context
