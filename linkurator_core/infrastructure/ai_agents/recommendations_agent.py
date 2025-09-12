@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Union
@@ -383,7 +384,17 @@ class RecommendationsAgent:
 
     async def handle_query(self, deps: RecommendationsDependencies, query: str) -> RecommendationsOutput:
         result = await self.agent.run(user_prompt=query, deps=deps)
-        return result.output
+
+        final_message = re.sub(
+            r"https://linkurator\.com/(items|subscriptions)/([0-9a-fA-F-]{36})",
+            lambda match: f"{self.base_url}/{match.group(1)}/{match.group(2)}/url",
+            result.output,
+        )
+
+        return RecommendationsOutput(
+            response=final_message,
+            items_uuids=result.output.items_uuids,
+        )
 
 
 async def filter_tools(

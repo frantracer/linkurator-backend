@@ -1,5 +1,4 @@
 import logging
-import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Union
@@ -114,9 +113,6 @@ class CoreRouterAgent(QueryAgentService):
                 "Use tools to handle different types of queries:\n\n"
                 "For content recommendations, searching for videos/podcasts, or finding items: use recommendation tools.\n"
                 "For creating, managing, or organizing topics: use topic management tools.\n\n"
-                "Use markdown formatting, make titles bold and bullet points for lists. "
-                "If an item is referenced in the response, use a markdown link to https://linkurator.com/items/{item.uuid} "
-                "If a subscription is referenced in the response, use a markdown link to https://linkurator.com/subscriptions/{subscription.uuid} "
                 "The response must have 1000 words maximum."
             ),
             prepare_tools=filter_tools,
@@ -258,14 +254,8 @@ class CoreRouterAgent(QueryAgentService):
         if len(subscriptions_uuids) > 0:
             subscriptions = await self.subscription_repository.get_list(subscriptions_uuids)
 
-        final_message = re.sub(
-            r"https://linkurator\.com/(items|subscriptions)/([0-9a-fA-F-]{36})",
-            lambda match: f"{self.base_url}/{match.group(1)}/{match.group(2)}/url",
-            response,
-        )
-
         return AgentQueryResult(
-            message=final_message,
+            message=response,
             items=items,
             subscriptions=subscriptions,
             topics_were_created=topics_were_created,
