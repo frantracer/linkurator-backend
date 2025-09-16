@@ -23,7 +23,7 @@ class GetItemHandler:
         self.item_repository = item_repository
         self.subscription_repository = subscription_repository
 
-    async def handle(self, user_id: UUID, item_id: UUID) -> GetItemResponse:
+    async def handle(self, user_id: UUID | None, item_id: UUID) -> GetItemResponse:
         item = await self.item_repository.get_item(item_id)
         if item is None:
             raise ItemNotFoundError(item_id)
@@ -32,5 +32,7 @@ class GetItemHandler:
         if subscription is None:
             raise SubscriptionNotFoundError(item.subscription_uuid)
 
-        interactions = await self.item_repository.get_user_interactions_by_item_id(user_id, [item_id])
+        interactions: dict[UUID, list[Interaction]] = {}
+        if user_id is not None:
+            interactions = await self.item_repository.get_user_interactions_by_item_id(user_id, [item_id])
         return GetItemResponse(item=item, interactions=interactions.get(item_id, []), subscription=subscription)

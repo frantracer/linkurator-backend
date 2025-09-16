@@ -93,11 +93,10 @@ def get_router(
             session: Optional[Session] = Depends(get_session),
     ) -> RedirectResponse:
         """Redirect to the item's external URL."""
-        if session is None:
-            raise default_responses.not_authenticated()
+        user_id = None if session is None else session.user_id
 
         try:
-            response = await get_item_handler.handle(user_id=session.user_id, item_id=item_id)
+            response = await get_item_handler.handle(user_id=user_id, item_id=item_id)
             return RedirectResponse(url=str(response.item.url), status_code=status.HTTP_307_TEMPORARY_REDIRECT)
         except ItemNotFoundError as error:
             msg = "Item not found"
