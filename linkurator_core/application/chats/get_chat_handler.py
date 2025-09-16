@@ -40,7 +40,7 @@ class GetChatHandler:
         self.subscription_repository = subscription_repository
         self.topic_repository = topic_repository
 
-    async def handle(self, chat_id: UUID, user_id: UUID) -> Optional[EnrichedChat]:
+    async def handle(self, chat_id: UUID, user_id: UUID | None) -> Optional[EnrichedChat]:
         chat = await self.chat_repository.get(chat_id)
         if chat is None or chat.user_id != user_id:
             return None

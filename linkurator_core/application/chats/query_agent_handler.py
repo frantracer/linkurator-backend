@@ -15,7 +15,7 @@ class QueryAgentHandler:
         self.chat_repository = chat_repository
         self.event_bus = event_bus
 
-    async def handle(self, user_id: UUID, query: str, chat_id: UUID) -> None:
+    async def handle(self, user_id: UUID | None, query: str, chat_id: UUID) -> None:
         chat = await self.chat_repository.get(chat_id)
         if chat is None:
             title = query[:47] + "..." if len(query) > 50 else query

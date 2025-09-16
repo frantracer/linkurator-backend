@@ -57,10 +57,9 @@ def get_router(
         session: Optional[Session] = Depends(get_session),
     ) -> ChatResponse:
         """Get a specific chat with all its messages."""
-        if session is None:
-            raise default_responses.not_authenticated()
+        user_id = None if session is None else session.user_id
 
-        enriched_chat = await get_chat_handler.handle(chat_id=chat_id, user_id=session.user_id)
+        enriched_chat = await get_chat_handler.handle(chat_id=chat_id, user_id=user_id)
         if enriched_chat is None:
             msg = "Chat not found"
             raise default_responses.not_found(msg)
@@ -104,12 +103,11 @@ def get_router(
         session: Optional[Session] = Depends(get_session),
     ) -> ChatResponse:
         """Send a query to the AI agent within a specific chat context."""
-        if session is None:
-            raise default_responses.not_authenticated()
+        user_id = None if session is None else session.user_id
 
         try:
             await query_agent_handler.handle(
-                user_id=session.user_id,
+                user_id=user_id,
                 query=request.query,
                 chat_id=chat_id,
             )
@@ -118,7 +116,7 @@ def get_router(
         except MessageIsBeingProcessedError as e:
             raise default_responses.bad_request(str(e))
 
-        enriched_chat = await get_chat_handler.handle(chat_id=chat_id, user_id=session.user_id)
+        enriched_chat = await get_chat_handler.handle(chat_id=chat_id, user_id=user_id)
         if enriched_chat is None:
             msg = "Chat not found after query submission"
             raise default_responses.not_found(msg)

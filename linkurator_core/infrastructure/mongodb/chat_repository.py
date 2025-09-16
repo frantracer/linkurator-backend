@@ -50,7 +50,7 @@ class MongoDBChatMessage(BaseModel):
 
 class MongoDBChat(BaseModel):
     uuid: UUID
-    user_id: UUID
+    user_id: UUID | None
     title: str
     messages: list[MongoDBChatMessage]
     created_at: datetime

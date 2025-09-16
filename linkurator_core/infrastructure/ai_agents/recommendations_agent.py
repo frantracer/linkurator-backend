@@ -34,7 +34,7 @@ ITEMS_PER_PAGE = 20
 
 @dataclass
 class RecommendationsDependencies:
-    user_uuid: UUID
+    user_uuid: UUID | None
     user_repository: UserRepository
     subscription_repository: SubscriptionRepository
     item_repository: ItemRepository
@@ -162,7 +162,7 @@ class RecommendationsAgent:
     async def query(
             self,
             query: str,
-            user_id: UUID,
+            user_id: UUID | None,
             previous_chat: Chat | None,
             usage: RunUsage,
     ) -> RecommendationsOutput:
@@ -233,7 +233,11 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
 
     @ai_agent.system_prompt
     async def add_user_name(ctx: RunContext[RecommendationsDependencies]) -> str:
-        user = await ctx.deps.user_repository.get(ctx.deps.user_uuid)
+        user_uuid = ctx.deps.user_uuid
+        if user_uuid is None:
+            return "The customer's name is unknown"
+
+        user = await ctx.deps.user_repository.get(user_uuid)
         if user is None:
             logfire.warning(
                 "User not found for customer UUID",
@@ -255,11 +259,17 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
             user_repository=ctx.deps.user_repository,
             subscription_repository=ctx.deps.subscription_repository,
         )
-        subs = await handler.handle(user_id=ctx.deps.user_uuid)
-        subs_for_ai = [SubscriptionForAI.from_subscription(sub) for sub in subs]
+        user_uuid = ctx.deps.user_uuid
 
-        topics = await ctx.deps.topic_repository.get_by_user_id(ctx.deps.user_uuid)
-        topics_for_ai = [TopicForAI.from_topic(topic) for topic in topics]
+        subs_for_ai: list[SubscriptionForAI] = []
+        if user_uuid is not None:
+            subs = await handler.handle(user_id=user_uuid)
+            subs_for_ai = [SubscriptionForAI.from_subscription(sub) for sub in subs]
+
+        topics_for_ai: list[TopicForAI] = []
+        if user_uuid is not None:
+            topics = await ctx.deps.topic_repository.get_by_user_id(user_uuid)
+            topics_for_ai = [TopicForAI.from_topic(topic) for topic in topics]
 
         context = "User's subscriptions:\n"
         if len(subs_for_ai) == 0:

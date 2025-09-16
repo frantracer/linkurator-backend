@@ -64,7 +64,7 @@ class MainQueryAgent(QueryAgentService):
             topic_repository=topic_repository,
         )
 
-    async def query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
+    async def query(self, user_id: UUID | None, query: str, chat_id: UUID) -> AgentQueryResult:
         with logfire.span("MainAgent", user_id=str(user_id), chat_id=str(chat_id)):
             previous_chat = await self.chat_repository.get(chat_id)
             usage = RunUsage()
@@ -81,7 +81,7 @@ class MainQueryAgent(QueryAgentService):
             logging.error(msg)
             raise QueryAgentError(msg)
 
-    async def _perform_query(self, user_id: UUID, query: str, chat: Chat | None, usage: RunUsage) -> AgentQueryResult:
+    async def _perform_query(self, user_id: UUID | None, query: str, chat: Chat | None, usage: RunUsage) -> AgentQueryResult:
         context = build_chat_context(chat)
         prompt = f"{context}\n{query}"
 
@@ -94,14 +94,14 @@ class MainQueryAgent(QueryAgentService):
         # Step 2: Handle the query with the appropriate specialized agent
         if routing_result.agent_type == "recommendations":
             return await self._handle_recommendations_query(user_id, prompt, chat, usage)
-        if routing_result.agent_type == "topic_manager":
+        if routing_result.agent_type == "topic_manager" and user_id is not None:
             return await self._handle_topic_manager_query(user_id, prompt, chat, usage)
         # Default to recommendations if routing fails
         return await self._handle_recommendations_query(user_id, prompt, chat, usage)
 
     async def _handle_recommendations_query(
             self,
-            user_id: UUID,
+            user_id: UUID | None,
             query: str,
             chat: Chat | None,
             usage: RunUsage,

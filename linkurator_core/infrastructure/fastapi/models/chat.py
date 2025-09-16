@@ -45,7 +45,7 @@ class ChatMessageResponse(BaseModel):
 
 class ChatResponse(BaseModel):
     uuid: UUID = Field(description="Chat unique identifier")
-    user_id: UUID = Field(description="User ID who owns the chat")
+    user_id: UUID | None = Field(description="User ID who owns the chat")
     title: str = Field(description="Chat title")
     messages: list[ChatMessageResponse] = Field(description="Chat messages")
     is_waiting_for_response: bool = Field(description="Indicates if the chat is waiting for an AI response")
@@ -103,7 +103,7 @@ class CreateChatResponse(BaseModel):
 
 class ChatSummaryResponse(BaseModel):
     uuid: UUID = Field(description="Chat unique identifier")
-    user_id: UUID = Field(description="User ID who owns the chat")
+    user_id: UUID | None = Field(description="User ID who owns the chat")
     title: str = Field(description="Chat title")
     created_at: datetime = Field(description="Chat creation timestamp")
     updated_at: datetime = Field(description="Chat last update timestamp")

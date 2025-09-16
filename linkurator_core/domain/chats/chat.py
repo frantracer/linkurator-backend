@@ -69,14 +69,14 @@ class ChatMessage:
 @dataclass
 class Chat:
     uuid: UUID
-    user_id: UUID
+    user_id: UUID | None
     title: str
     messages: list[ChatMessage]
     created_at: datetime
     updated_at: datetime
 
     @classmethod
-    def new(cls, uuid: UUID, user_id: UUID, title: str) -> Chat:
+    def new(cls, uuid: UUID, user_id: UUID | None, title: str) -> Chat:
         now = datetime.now(timezone.utc)
         return cls(
             uuid=uuid,
