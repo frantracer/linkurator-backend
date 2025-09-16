@@ -26,6 +26,7 @@ from linkurator_core.domain.subscriptions.subscription_repository import Subscri
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.domain.users.user_repository import UserRepository
+from linkurator_core.infrastructure.ai_agents.keyword_generator_agent import KeywordGeneratorAgent
 from linkurator_core.infrastructure.ai_agents.utils import parse_ids_to_uuids
 
 ITEMS_PER_PAGE = 20
@@ -38,6 +39,7 @@ class RecommendationsDependencies:
     subscription_repository: SubscriptionRepository
     item_repository: ItemRepository
     topic_repository: TopicRepository
+    keyword_generator_agent: KeywordGeneratorAgent
     previous_chat: Chat | None
     find_items_by_keywords_calls: int = 0
     find_subscriptions_items_calls: int = 0
@@ -155,6 +157,7 @@ class RecommendationsAgent:
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
         self.topic_repository = topic_repository
+        self.keyword_generator_agent = KeywordGeneratorAgent(google_api_key)
 
     async def query(
             self,
@@ -169,6 +172,7 @@ class RecommendationsAgent:
             subscription_repository=self.subscription_repository,
             item_repository=self.item_repository,
             topic_repository=self.topic_repository,
+            keyword_generator_agent=self.keyword_generator_agent,
             previous_chat=previous_chat,
         )
         result = await self.recommendations_agent.run(query, deps=deps, usage=usage)
@@ -208,8 +212,6 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
             "Always use the customer's name in your responses. "
             "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
             "Items that belongs to a subscription included in any of the user topics are considered more relevant. "
-            "Try first to find items from subscriptions before using keyword search. "
-            "When finding items, try to find by a single keyword. "
             "It is ok to return empty lists of items ids if there are no matching items to the query. "
             "When the user asks for specific dates, ensure you do not return any items that were published before the date. "
             "Use markdown formatting, make titles bold and bullet points for lists. "
@@ -224,6 +226,7 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
             "Link titles cannot be multiline in markdown. "
             "The response must contains a list with the items you are recommending. "
             "The response must have 1000 words maximum. "
+            "The response must contains a summary of the recommendations. "
         ),
         prepare_tools=filter_tools,
     )
@@ -370,24 +373,28 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
     @ai_agent.tool()
     async def find_items_by_keywords(
         ctx: RunContext[RecommendationsDependencies],
-        keywords: list[str],
+        user_query: str,
     ) -> list[ItemForAI]:
         """
-        Finds items based on a single keyword search.
+        Finds items based on keyword search generated from user query.
 
-        Maximum one call per query with up to ten keywords.
-        Maximum two words per keyword.
+        Maximum one call per query.
         Maximum 100 items returned.
 
         Args:
         ----
             ctx: RunContext with dependencies
-            keywords: Keywords to search for in item titles. Maximum of ten keywords.
+            user_query: User query to generate keywords from and search for relevant items.
 
         """
         ctx.deps.find_items_by_keywords_calls += 1
 
-        keywords = keywords.copy()[:10]
+        # Generate keywords from user query using the keyword generator agent
+        usage = RunUsage()
+        keywords = await ctx.deps.keyword_generator_agent.generate_keywords(user_query, usage)
+
+        # Limit to 10 keywords for performance
+        keywords = keywords[:10]
 
         tasks = []
         for keyword in keywords:
