@@ -19,35 +19,7 @@ class SubscriptionSummarizerService(SummarizeAgentService):
 
     def __init__(self, google_api_key: str) -> None:
         """Initialize the summarizer with Google API credentials."""
-        self.agent = self._create_agent(google_api_key)
-
-    def _create_agent(self, api_key: str) -> Agent[None, SummaryOutput]:
-        """Create the PydanticAI agent for summarization."""
-        provider = GoogleProvider(api_key=api_key)
-
-        model = GoogleModel(
-            provider=provider,
-            model_name="gemini-2.5-flash",
-            settings=GoogleModelSettings(
-                temperature=0.1,  # Low temperature for consistent summaries
-                google_thinking_config={"thinking_budget": 0},
-            ),
-        )
-
-        return Agent[None, SummaryOutput](
-            model,
-            output_type=SummaryOutput,
-            system_prompt=(
-                "You are a content summarization expert. Your task is to create concise, "
-                "informative summaries of subscription descriptions. "
-                "Focus on the main topics, content style, and target audience. "
-                "Do not include email addresses, URLs, or any promotional language. "
-                "Keep summaries to 2-3 sentences maximum. "
-                "Be factual and avoid subjective language. "
-                "Start the summary with the name of the subscription. "
-                "End the summary with a period. "
-            ),
-        )
+        self.agent = create_summarize_subscriptions_agent(google_api_key)
 
     async def summarize(self, subscription: Subscription) -> SummarizeAgentResult:
         """
@@ -83,3 +55,33 @@ class SubscriptionSummarizerService(SummarizeAgentService):
                 break
 
         return SummarizeAgentResult(summary=summary)
+
+
+def create_summarize_subscriptions_agent(api_key: str) -> Agent[None, SummaryOutput]:
+    """Create the PydanticAI agent for summarization."""
+    provider = GoogleProvider(api_key=api_key)
+
+    model = GoogleModel(
+        provider=provider,
+        model_name="gemini-2.5-flash",
+        settings=GoogleModelSettings(
+            temperature=0.1,  # Low temperature for consistent summaries
+            google_thinking_config={"thinking_budget": 0},
+        ),
+    )
+
+    return Agent[None, SummaryOutput](
+        model,
+        name="SubscriptionSummarizerAgent",
+        output_type=SummaryOutput,
+        system_prompt=(
+            "You are a content summarization expert. Your task is to create concise, "
+            "informative summaries of subscription descriptions. "
+            "Focus on the main topics, content style, and target audience. "
+            "Do not include email addresses, URLs, or any promotional language. "
+            "Keep summaries to 2-3 sentences maximum. "
+            "Be factual and avoid subjective language. "
+            "Start the summary with the name of the subscription. "
+            "End the summary with a period. "
+        ),
+    )

@@ -36,7 +36,7 @@ from linkurator_core.domain.common.event import (
     UserRegisteredEvent,
     UserRegisterRequestSentEvent,
 )
-from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import PydanticQueryAgentService
+from linkurator_core.infrastructure.ai_agents.main_query_agent import MainQueryAgent
 from linkurator_core.infrastructure.ai_agents.subscription_summarizer import SubscriptionSummarizerService
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
@@ -149,7 +149,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     )
     gmail_email_sender = GmailEmailSender(account_service=google_domain_service)
 
-    ai_agent_service = PydanticQueryAgentService(
+    ai_agent_service = MainQueryAgent(
         chat_repository=chat_repository,
         user_repository=user_repository,
         topic_repository=topic_repository,

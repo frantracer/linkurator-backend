@@ -1,25 +1,20 @@
 import asyncio
-import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Union
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.exceptions import UnexpectedModelBehavior
 from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
 from pydantic_ai.providers.google import GoogleProvider
 from pydantic_ai.tools import ToolDefinition
 from pydantic_ai.usage import RunUsage
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
-from linkurator_core.domain.agents.query_agent_service import AgentQueryResult, QueryAgentService
 from linkurator_core.domain.chats.chat import Chat, ChatRole
-from linkurator_core.domain.chats.chat_repository import ChatRepository
-from linkurator_core.domain.common.exceptions import QueryAgentError
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import (
     AnyItemInteraction,
@@ -27,18 +22,17 @@ from linkurator_core.domain.items.item_repository import (
     ItemRepository,
 )
 from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
-from linkurator_core.domain.subscriptions.subscription_repository import (
-    SubscriptionRepository,
-)
+from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.domain.users.user_repository import UserRepository
+from linkurator_core.infrastructure.ai_agents.utils import parse_ids_to_uuids
 
 ITEMS_PER_PAGE = 20
 
 
 @dataclass
-class AgentDependencies:
+class RecommendationsDependencies:
     user_uuid: UUID
     user_repository: UserRepository
     subscription_repository: SubscriptionRepository
@@ -62,18 +56,6 @@ class TopicForAI(BaseModel):
 
     @classmethod
     def from_topic(cls, topic: Topic) -> "TopicForAI":
-        """
-        Converts a Topic domain object to a TopicForAI model.
-
-        Args:
-        ----
-            topic: The Topic domain object to convert.
-
-        Returns:
-        -------
-            A TopicForAI instance with the same data as the provided topic.
-
-        """
         return cls(
             uuid=topic.uuid,
             name=topic.name,
@@ -101,18 +83,6 @@ class SubscriptionForAI(BaseModel):
 
     @classmethod
     def from_subscription(cls, subscription: Subscription) -> "SubscriptionForAI":
-        """
-        Converts a Subscription domain object to a SubscriptionForAI model.
-
-        Args:
-        ----
-            subscription: The Subscription domain object to convert.
-
-        Returns:
-        -------
-            A SubscriptionForAI instance with the same data as the provided subscription.
-
-        """
         return cls(
             uuid=subscription.uuid,
             name=subscription.name,
@@ -147,19 +117,6 @@ class ItemForAI(BaseModel):
 
     @classmethod
     def from_item(cls, item: Item, sub_name: str) -> "ItemForAI":
-        """
-        Converts an Item domain object to an ItemForAI model.
-
-        Args:
-        ----
-            item: The Item domain object to convert.
-            sub_name: The name of the subscription this item belongs to.
-
-        Returns:
-        -------
-            An ItemForAI instance with the same data as the provided item.
-
-        """
         return cls(
             uuid=item.uuid,
             name=item.name,
@@ -170,16 +127,7 @@ class ItemForAI(BaseModel):
         )
 
 
-class UserSubscriptionsAndTopics(BaseModel):
-    subscriptions: list[SubscriptionForAI] = Field(
-        description="List of user's subscriptions",
-    )
-    topics: list[TopicForAI] = Field(
-        description="List of user's topics",
-    )
-
-
-class AgentOutput(BaseModel):
+class RecommendationsOutput(BaseModel):
     response: str = Field(
         default="",
         description="Response for the user based on their query",
@@ -189,128 +137,56 @@ class AgentOutput(BaseModel):
         description="List of content items UUIDs (32 hex) related to the user's query. "
                     "Can be empty if no items match.",
     )
-    topics_were_created: bool = Field(
-        default=False,
-        description="Indicates whether any topics were created during the query processing.",
-    )
 
 
-class PydanticQueryAgentService(QueryAgentService):
+class RecommendationsAgent:
     def __init__(
             self,
+            google_api_key: str,
+            base_url: str,
             user_repository: UserRepository,
             subscription_repository: SubscriptionRepository,
             item_repository: ItemRepository,
             topic_repository: TopicRepository,
-            chat_repository: ChatRepository,
-            base_url: str,
-            google_api_key: str,
     ) -> None:
+        self.recommendations_agent = create_recommendations_agent(google_api_key)
+        self.base_url = base_url
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
         self.topic_repository = topic_repository
-        self.chat_repository = chat_repository
-        self.base_url = base_url
-        self.agent = create_agent(google_api_key)
 
-    async def query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
-        retry = 0
-        max_retries = 3
-        while retry < max_retries:
-            try:
-                return await self._perform_query(user_id, query, chat_id)
-            except UnexpectedModelBehavior as e:
-                logging.exception(f"Error during AI agent query, retry {retry + 1}/{max_retries}: {e}")
-                retry += 1
-        msg = "AI agent failed to process the query after multiple attempts"
-        logging.error(msg)
-        raise QueryAgentError(msg)
-
-    async def _perform_query(self, user_id: UUID, query: str, chat_id: UUID) -> AgentQueryResult:
-        deps = AgentDependencies(
+    async def query(
+            self,
+            query: str,
+            user_id: UUID,
+            previous_chat: Chat | None,
+            usage: RunUsage,
+    ) -> RecommendationsOutput:
+        deps = RecommendationsDependencies(
             user_uuid=user_id,
             user_repository=self.user_repository,
             subscription_repository=self.subscription_repository,
             item_repository=self.item_repository,
             topic_repository=self.topic_repository,
-            previous_chat=await self.chat_repository.get(chat_id),
+            previous_chat=previous_chat,
         )
-
-        context = ""
-        previously_chat = await self.chat_repository.get(chat_id)
-        if previously_chat is not None and len(previously_chat.messages) > 0:
-            context = "Previous chat messages:\n"
-            for message in previously_chat.messages:
-                if message.role == "user":
-                    context += f"User: {message.content}\n"
-                elif message.role == "assistant":
-                    context += f"Assistant: {message.content}\n"
-            context += "End of previous chat messages.\n"
-
-        result = await self.agent.run(
-            user_prompt=context + query,
-            deps=deps,
-            usage=RunUsage(requests=10),
-        )
-
-        output: AgentOutput = result.output
-
-        items = []
-        item_uuids = set(parse_ids_to_uuids(output.items_uuids))
-        if len(output.items_uuids) > 0:
-            items = await self.item_repository.find_items(
-                criteria=ItemFilterCriteria(item_uuids),
-                page_number=0,
-                limit=len(output.items_uuids),
-            )
-
-        subscriptions_uuids = list({item.subscription_uuid for item in items})
-        subscriptions = []
-        if len(subscriptions_uuids) > 0:
-            subscriptions = await self.subscription_repository.get_list(subscriptions_uuids)
+        result = await self.recommendations_agent.run(query, deps=deps, usage=usage)
 
         final_message = re.sub(
             r"https://linkurator\.com/(items|subscriptions)/([0-9a-fA-F-]{36})",
             lambda match: f"{self.base_url}/{match.group(1)}/{match.group(2)}/url",
-            output.response,
+            result.output.response,
         )
 
-        return AgentQueryResult(
-            message=final_message,
-            items=items,
-            subscriptions=subscriptions,
-            topics_were_created=output.topics_were_created,
+        return RecommendationsOutput(
+            response=final_message,
+            items_uuids=result.output.items_uuids,
         )
 
 
-async def filter_tools(
-        ctx: RunContext[AgentDependencies], tool_defs: list[ToolDefinition],
-) -> Union[list[ToolDefinition], None]:
-    filtered_tools = []
-    for tool_def in tool_defs:
-        if tool_def.name == "find_subscriptions_items":
-            if ctx.deps.find_subscriptions_items_calls < 1:
-                filtered_tools.append(tool_def)
-        elif tool_def.name == "find_items_by_keywords":
-            if ctx.deps.find_items_by_keywords_calls < 1:
-                filtered_tools.append(tool_def)
-        elif tool_def.name == "create_topic":
-            if ctx.deps.find_items_by_keywords_calls == 0 and ctx.deps.find_subscriptions_items_calls == 0:
-                filtered_tools.append(tool_def)
-        else:
-            filtered_tools.append(tool_def)
-    return filtered_tools
-
-
-def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
-    """
-    Creates a support agent that can be used to handle user queries.
-    The agent will provide recommendations based on the user's subscriptions and interactions.
-    """
-    provider = GoogleProvider(
-        api_key=api_key,
-    )
+def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependencies, RecommendationsOutput]:
+    provider = GoogleProvider(api_key=api_key)
 
     gemini_flash_model = GoogleModel(
         provider=provider,
@@ -321,20 +197,16 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         ),
     )
 
-    ai_agent = Agent[AgentDependencies, AgentOutput](
+    ai_agent = Agent[RecommendationsDependencies, RecommendationsOutput](
         gemini_flash_model,
-        deps_type=AgentDependencies,
-        output_type=AgentOutput,
+        name="RecommendationsAgent",
+        deps_type=RecommendationsDependencies,
+        output_type=RecommendationsOutput,
         system_prompt=(
-            "You are a system to recommend videos, podcasts or articles to the user based on their query. "
-            "You are able to create topics for the user to organize their subscriptions. "
+            "You are a content recommendation system that helps users find videos, podcasts or articles based on their query. "
             "Answer in the same language the user is using. "
             "Always use the customer's name in your responses. "
             "If the user has no subscriptions, inform them that you cannot recommend content without subscriptions. "
-            "When creating topics, do not create similar topics if they already exist. "
-            "Before creating topics, tell the user which exact subscriptions you are going to add to each topic. "
-            "Help the user by proposing topics when the user requires it. "
-            "Only create topics if you have explicitly been asked to do so. "
             "Items that belongs to a subscription included in any of the user topics are considered more relevant. "
             "Try first to find items from subscriptions before using keyword search. "
             "When finding items, try to find by a single keyword. "
@@ -346,7 +218,7 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             "Add the provider name (YouTube or Spotify) to the links if it is required to distinguish between items. "
             "You do not have access to the content, only to a brief description and the title. "
             "Answer the user's query using items, subscriptions and topics that are relevant to the query. "
-            "Do not ask the user to provide more information, use the information you have. "
+            "Avoid asking the user to provide more information, use the information you have. "
             "If an item is referenced in the response, use a markdown link to the url https://linkurator.com/items/{item.uuid} "
             "If a subscription is referenced in the response, use a markdown link to the url https://linkurator.com/subscriptions/{subscription.uuid} "
             "Link titles cannot be multiline in markdown. "
@@ -356,11 +228,9 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
         prepare_tools=filter_tools,
     )
 
-    @ ai_agent.system_prompt
-    async def add_user_name(ctx: RunContext[AgentDependencies]) -> str:
-        user = await ctx.deps.user_repository.get(
-            ctx.deps.user_uuid,
-        )
+    @ai_agent.system_prompt
+    async def add_user_name(ctx: RunContext[RecommendationsDependencies]) -> str:
+        user = await ctx.deps.user_repository.get(ctx.deps.user_uuid)
         if user is None:
             logfire.warning(
                 "User not found for customer UUID",
@@ -369,31 +239,20 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
             return "The customer's name is unknown"
         return f"The customer's name is {user.first_name!r}"
 
-    @ ai_agent.system_prompt
-    async def add_today_date(_ctx: RunContext[AgentDependencies]) -> str:
-        """Returns today's date in Weekday YYYY-MM-DD format."""
+    @ai_agent.system_prompt
+    async def add_today_date(_ctx: RunContext[RecommendationsDependencies]) -> str:
         now = datetime.now(tz=timezone.utc)
-        return f"Today is {now.strftime("%A %Y-%m-%d")}"
+        return f"Today is {now.strftime('%A %Y-%m-%d')}"
 
-    @ ai_agent.system_prompt
+    @ai_agent.system_prompt
     async def user_subscriptions_and_topics(
-            ctx: RunContext[AgentDependencies],
+        ctx: RunContext[RecommendationsDependencies],
     ) -> str:
-        """
-        Returns the user's subscriptions and topics.
-
-        Args:
-        ----
-            ctx: RunContext with dependencies
-
-        """
         handler = GetUserSubscriptionsHandler(
             user_repository=ctx.deps.user_repository,
             subscription_repository=ctx.deps.subscription_repository,
         )
-        subs = await handler.handle(
-            user_id=ctx.deps.user_uuid,
-        )
+        subs = await handler.handle(user_id=ctx.deps.user_uuid)
         subs_for_ai = [SubscriptionForAI.from_subscription(sub) for sub in subs]
 
         topics = await ctx.deps.topic_repository.get_by_user_id(ctx.deps.user_uuid)
@@ -415,18 +274,10 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
 
         return context
 
-    @ ai_agent.system_prompt
+    @ai_agent.system_prompt
     async def previous_items_information(
-            ctx: RunContext[AgentDependencies],
+        ctx: RunContext[RecommendationsDependencies],
     ) -> str:
-        """
-        Returns information about previously recommended items to avoid repetition.
-
-        Args:
-        ----
-            ctx: RunContext with dependencies
-
-        """
         chat = ctx.deps.previous_chat
         if chat is None:
             return ""
@@ -461,11 +312,11 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
 
         return context
 
-    @ ai_agent.tool()
+    @ai_agent.tool()
     async def find_subscriptions_items(
-            ctx: RunContext[AgentDependencies],
-            topic_ids: list[str] | None = None,
-            subscription_ids: list[str] | None = None,
+        ctx: RunContext[RecommendationsDependencies],
+        topic_ids: list[str] | None = None,
+        subscription_ids: list[str] | None = None,
     ) -> list[ItemForAI]:
         """
         Get items from subscriptions and topics.
@@ -516,10 +367,10 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
 
         return [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
 
-    @ ai_agent.tool()
+    @ai_agent.tool()
     async def find_items_by_keywords(
-            ctx: RunContext[AgentDependencies],
-            keywords: list[str],
+        ctx: RunContext[RecommendationsDependencies],
+        keywords: list[str],
     ) -> list[ItemForAI]:
         """
         Finds items based on a single keyword search.
@@ -569,60 +420,20 @@ def create_agent(api_key: str) -> Agent[AgentDependencies, AgentOutput]:
 
         return [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
 
-    @ ai_agent.tool
-    async def create_topic(
-            ctx: RunContext[AgentDependencies],
-            name: str,
-            subscription_ids: list[str] | None = None,
-    ) -> TopicForAI:
-        """
-        Creates a new topic for the user to organize their subscriptions.
-
-        Args:
-        ----
-            ctx: RunContext with dependencies
-            name: Name of the new topic
-            subscription_ids: Optional list of subscription UUIDs to add to this topic
-
-        """
-        topic_uuid = uuid4()
-        subscription_uuids = [UUID(sid) for sid in subscription_ids] if subscription_ids else []
-
-        # Verify user owns the subscriptions
-        if subscription_uuids:
-            # Get user's subscriptions using the handler
-            handler = GetUserSubscriptionsHandler(
-                user_repository=ctx.deps.user_repository,
-                subscription_repository=ctx.deps.subscription_repository,
-            )
-            user_subscriptions = await handler.handle(user_id=ctx.deps.user_uuid)
-            user_subscription_ids = {sub.uuid for sub in user_subscriptions}
-
-            # Filter to only include subscriptions the user actually owns
-            subscription_uuids = [sid for sid in subscription_uuids if sid in user_subscription_ids]
-
-        topic = Topic.new(
-            uuid=topic_uuid,
-            name=name,
-            user_id=ctx.deps.user_uuid,
-            subscription_ids=subscription_uuids,
-        )
-
-        await ctx.deps.topic_repository.add(topic)
-        return TopicForAI.from_topic(topic)
-
     return ai_agent
 
 
-def parse_ids_to_uuids(ids: list[str] | None) -> list[UUID]:
-    if ids is None:
-        return []
-
-    valid_uuids: list[UUID] = []
-    for id_str in ids:
-        try:
-            valid_uuids.append(UUID(id_str))
-        except ValueError as e:
-            logging.exception(f"Failed to parse UUID {id_str}: {e}")
-
-    return valid_uuids
+async def filter_tools(
+    ctx: RunContext[RecommendationsDependencies], tool_defs: list[ToolDefinition],
+) -> Union[list[ToolDefinition], None]:
+    filtered_tools = []
+    for tool_def in tool_defs:
+        if tool_def.name == "find_subscriptions_items":
+            if ctx.deps.find_subscriptions_items_calls < 1:
+                filtered_tools.append(tool_def)
+        elif tool_def.name == "find_items_by_keywords":
+            if ctx.deps.find_items_by_keywords_calls < 1:
+                filtered_tools.append(tool_def)
+        else:
+            filtered_tools.append(tool_def)
+    return filtered_tools

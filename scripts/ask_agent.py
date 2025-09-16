@@ -1,15 +1,17 @@
 import asyncio
 import logging
-from uuid import UUID
+from uuid import uuid4
 
 import logfire
 
-from linkurator_core.infrastructure.ai_agents.pydantic_ai_agent import AgentDependencies, create_agent
+from linkurator_core.domain.common.mock_factory import mock_user
+from linkurator_core.infrastructure.ai_agents.main_query_agent import MainQueryAgent
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
+from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
+from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
-from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 
 
 async def main() -> None:
@@ -19,10 +21,7 @@ async def main() -> None:
     logfire.configure(token=settings.log.logfire_token, scrubbing=False)
 
     # Repositories
-    user_repository = MongoDBUserRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
-        username=db_settings.user, password=db_settings.password,
-    )
+    user_repository = InMemoryUserRepository()
     subscription_repository = MongoDBSubscriptionRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password,
@@ -35,28 +34,37 @@ async def main() -> None:
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password,
     )
+    chat_repository = MongoDBChatRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password,
+    )
 
-    deps = AgentDependencies(
-        user_uuid=UUID("97fda3e1-8f3d-4068-a6a6-5583c1d9e220"),
+    user = mock_user()
+    await user_repository.add(user)
+
+    agent = MainQueryAgent(
         user_repository=user_repository,
         subscription_repository=subscription_repository,
         item_repository=item_repository,
         topic_repository=topic_repository,
-        previous_chat=None,
+        chat_repository=chat_repository,
+        base_url="http://localhost:8000",
+        google_api_key=settings.google_ai.api_key,
     )
-    support_agent = create_agent(settings.google_ai.api_key)
 
-    result = await support_agent.run(
-        "Group my subscriptions into topics",
-        deps=deps,
+    result = await agent.query(
+        user_id=user.uuid,
+        query="Group my subscriptions into topics",
+        chat_id=uuid4(),
     )
-    logging.info(result.output)
+    logging.info(result.message)
 
-    result = await support_agent.run(
-        "Recommend some content for me in Spanish or English",
-        deps=deps,
+    result = await agent.query(
+        user_id=user.uuid,
+        query="Recommend some content for me in Spanish or English",
+        chat_id=uuid4(),
     )
-    logging.info(result.output)
+    logging.info(result.message)
 
 
 if __name__ == "__main__":
