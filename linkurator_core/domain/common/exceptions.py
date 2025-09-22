@@ -70,7 +70,7 @@ class InvalidChatError(Exception):
     pass
 
 
-class QueryRateLimitError(Exception):
+class MaxMessagePerChatError(Exception):
     pass
 
 

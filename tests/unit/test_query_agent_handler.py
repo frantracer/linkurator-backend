@@ -6,7 +6,11 @@ import pytest
 from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
 from linkurator_core.domain.chats.chat import ChatRole
 from linkurator_core.domain.common.event_bus_service import EventBusService
-from linkurator_core.domain.common.exceptions import InvalidChatError, MessageIsBeingProcessedError, QueryRateLimitError
+from linkurator_core.domain.common.exceptions import (
+    InvalidChatError,
+    MaxMessagePerChatError,
+    MessageIsBeingProcessedError,
+)
 from linkurator_core.domain.common.mock_factory import (
     mock_chat,
     mock_chat_message,
@@ -111,7 +115,7 @@ async def test_query_agent_handler_rate_limit_exactly_5_queries() -> None:
 
     query = "Sixth query should be blocked"
 
-    with pytest.raises(QueryRateLimitError):
+    with pytest.raises(MaxMessagePerChatError):
         await handler.handle(user_id=user_id, query=query, chat_id=chat_id)
 
     # Verify chat was not modified

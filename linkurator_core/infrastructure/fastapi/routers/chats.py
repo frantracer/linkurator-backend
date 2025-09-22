@@ -7,7 +7,10 @@ from linkurator_core.application.chats.delete_chat_handler import DeleteChatHand
 from linkurator_core.application.chats.get_chat_handler import GetChatHandler
 from linkurator_core.application.chats.get_user_chats_handler import GetUserChatsHandler
 from linkurator_core.application.chats.query_agent_handler import QueryAgentHandler
-from linkurator_core.domain.common.exceptions import MessageIsBeingProcessedError, QueryRateLimitError
+from linkurator_core.domain.common.exceptions import (
+    MaxMessagePerChatError,
+    MessageIsBeingProcessedError,
+)
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.agent import AgentQueryRequest
@@ -15,6 +18,7 @@ from linkurator_core.infrastructure.fastapi.models.chat import (
     ChatResponse,
     GetUserChatsResponse,
 )
+from linkurator_core.infrastructure.rate_limiter import AnonymousUserRateLimiter
 
 
 def get_router(
@@ -25,6 +29,7 @@ def get_router(
     delete_chat_handler: DeleteChatHandler,
 ) -> APIRouter:
     router = APIRouter()
+    query_ai_agent_rate_limiter = AnonymousUserRateLimiter(max_requests=1, window_minutes=60)
 
     @router.get(
         "",
@@ -99,21 +104,27 @@ def get_router(
     )
     async def query_agent_with_chat(
         chat_id: UUID,
-        request: AgentQueryRequest,
+        query_request: AgentQueryRequest,
+        request: Request,
         session: Optional[Session] = Depends(get_session),
     ) -> ChatResponse:
         """Send a query to the AI agent within a specific chat context."""
         user_id = None if session is None else session.user_id
 
+        # Get client IP for anonymous users
+        if user_id is None:
+            client_ip = get_client_ip(request)
+            if query_ai_agent_rate_limiter.is_rate_limit_exceeded(client_ip):
+                msg = "Rate limit exceeded. Please try again later."
+                raise default_responses.rate_limit_exceeded(msg)
+
         try:
             await query_agent_handler.handle(
                 user_id=user_id,
-                query=request.query,
+                query=query_request.query,
                 chat_id=chat_id,
             )
-        except QueryRateLimitError as e:
-            raise default_responses.rate_limit_exceeded(str(e))
-        except MessageIsBeingProcessedError as e:
+        except (MaxMessagePerChatError, MessageIsBeingProcessedError) as e:
             raise default_responses.bad_request(str(e))
 
         enriched_chat = await get_chat_handler.handle(chat_id=chat_id, user_id=user_id)
@@ -124,3 +135,13 @@ def get_router(
         return ChatResponse.from_enriched_chat(enriched_chat=enriched_chat)
 
     return router
+
+
+def get_client_ip(request: Request) -> str:
+    """Extract the client's IP address from the request, considering possible proxy headers."""
+    client_ip = request.client.host if request.client else "unknown"
+    # Handle forwarded headers for reverse proxy scenarios
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        client_ip = forwarded_for.split(",")[0].strip()
+    return client_ip

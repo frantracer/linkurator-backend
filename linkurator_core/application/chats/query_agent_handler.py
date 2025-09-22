@@ -4,7 +4,11 @@ from linkurator_core.domain.chats.chat import Chat, ChatRole
 from linkurator_core.domain.chats.chat_repository import ChatRepository
 from linkurator_core.domain.common.event import NewChatQueryEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
-from linkurator_core.domain.common.exceptions import InvalidChatError, MessageIsBeingProcessedError, QueryRateLimitError
+from linkurator_core.domain.common.exceptions import (
+    InvalidChatError,
+    MaxMessagePerChatError,
+    MessageIsBeingProcessedError,
+)
 
 
 class QueryAgentHandler:
@@ -27,7 +31,7 @@ class QueryAgentHandler:
 
         user_message_count = sum(1 for message in chat.messages if message.role == ChatRole.USER)
         if user_message_count >= 5:
-            raise QueryRateLimitError()
+            raise MaxMessagePerChatError()
 
         if chat.is_waiting_for_response():
             raise MessageIsBeingProcessedError()
