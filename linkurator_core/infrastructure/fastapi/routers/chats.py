@@ -29,7 +29,7 @@ def get_router(
     delete_chat_handler: DeleteChatHandler,
 ) -> APIRouter:
     router = APIRouter()
-    query_ai_agent_rate_limiter = AnonymousUserRateLimiter(max_requests=1, window_minutes=60)
+    query_ai_agent_rate_limiter = AnonymousUserRateLimiter(max_requests=5, window_minutes=60)
 
     @router.get(
         "",
