@@ -98,11 +98,9 @@ class SpotifyApiClient:
                     shows = body.get("shows", {}).get("items", [])
 
                     for show in shows:
-                        if unidecode(show["name"].lower()) == unidecode(query.lower()):
+                        if unidecode(query.lower()) in unidecode(show["name"].lower()):
                             return map_json_to_show(show)
 
-                    if len(shows) > 0:
-                        return map_json_to_show(shows[0])
                     return None
 
                 logging.error("Failed to retrieve show: %s -> %s", response.status, await response.text())
