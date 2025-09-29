@@ -27,7 +27,6 @@ from linkurator_core.application.subscriptions.unfollow_subscription_handler imp
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
 from linkurator_core.domain.common.exceptions import (
-    CannotUnfollowAssignedSubscriptionError,
     SubscriptionAlreadyUpdatedError,
     SubscriptionNotFoundError,
 )
@@ -261,11 +260,7 @@ def get_router(  # pylint: disable=too-many-statements
         if session is None:
             raise default_responses.not_authenticated()
 
-        try:
-            await unfollow_subscription_handler.handle(user_id=session.user_id, subscription_id=sub_id)
-        except CannotUnfollowAssignedSubscriptionError as error:
-            msg = "You can't unfollow an assigned subscription"
-            raise default_responses.forbidden(msg) from error
+        await unfollow_subscription_handler.handle(user_id=session.user_id, subscription_id=sub_id)
 
         return EmptyResponse()
 

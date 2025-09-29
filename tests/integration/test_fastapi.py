@@ -25,7 +25,6 @@ from linkurator_core.application.topics.get_user_topics_handler import CuratorTo
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.exceptions import (
-    CannotUnfollowAssignedSubscriptionError,
     SubscriptionNotFoundError,
     TopicNotFoundError,
 )
@@ -579,16 +578,6 @@ def test_unfollow_subscription_returns_204(handlers: Handlers) -> None:
     response = client.delete("/subscriptions/36477a42-3874-45c8-9472-baab09204484/follow")
     assert response.status_code == 204
     assert response.content == b""
-
-
-def test_unfollow_assigned_subscription_returns_403(handlers: Handlers) -> None:
-    dummy_handler = AsyncMock()
-    dummy_handler.handle.side_effect = CannotUnfollowAssignedSubscriptionError
-    handlers.unfollow_subscription_handler = dummy_handler
-    client = TestClient(create_app_from_handlers(handlers), cookies={"token": "token"})
-
-    response = client.delete("/subscriptions/362a9ddb-1838-419e-acef-0159b0f27e2b/follow")
-    assert response.status_code == 403
 
 
 def test_favorite_topic_returns_201(handlers: Handlers) -> None:

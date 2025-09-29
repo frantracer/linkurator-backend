@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from linkurator_core.domain.common.exceptions import CannotUnfollowAssignedSubscriptionError, UserNotFoundError
+from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.domain.users.user_repository import UserRepository
@@ -21,10 +21,6 @@ class UnfollowSubscriptionHandler:
         user = await self.user_repository.get(user_id)
         if user is None:
             raise UserNotFoundError(user_id)
-
-        topics = await self.topic_repository.get_by_user_id(user_id)
-        if any(subscription_id in topic.subscriptions_ids for topic in topics):
-            raise CannotUnfollowAssignedSubscriptionError(subscription_id)
 
         user.unfollow_subscription(subscription_id)
 
