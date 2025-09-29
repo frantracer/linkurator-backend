@@ -22,6 +22,9 @@ from linkurator_core.application.items.create_item_interaction_handler import Cr
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.items.get_curator_items_handler import GetCuratorItemsHandler
+from linkurator_core.application.items.get_followed_subscriptions_items_handler import (
+    GetFollowedSubscriptionsItemsHandler,
+)
 from linkurator_core.application.items.get_item_handler import GetItemHandler
 from linkurator_core.application.items.get_subscription_items_handler import GetSubscriptionItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
@@ -124,6 +127,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_item_handler: GetItemHandler
     create_item_interaction_handler: CreateItemInteractionHandler
     delete_item_interaction_handler: DeleteItemInteractionHandler
+    get_followed_subscriptions_items_handler: GetFollowedSubscriptionsItemsHandler
     add_external_credentials_handler: AddExternalCredentialsHandler
     get_user_external_credentials_handler: GetUserExternalCredentialsHandler
     delete_external_credential_handler: DeleteExternalCredentialHandler
@@ -229,6 +233,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             delete_subscription_items_handler=handlers.delete_subscription_items_handler,
             refresh_subscription_handler=handlers.refresh_subscription_handler,
             update_user_subscriptions_handler=handlers.update_user_subscriptions_handler,
+            get_followed_subscriptions_items_handler=handlers.get_followed_subscriptions_items_handler,
         ),
         prefix="/subscriptions")
     app.include_router(

@@ -7,6 +7,11 @@ from fastapi.testclient import TestClient
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
+from linkurator_core.application.items.get_followed_subscriptions_items_handler import (
+    GetFollowedSubscriptionsItemsHandler,
+    GetFollowedSubscriptionsItemsResponse,
+    ItemWithSubscriptionAndInteractions,
+)
 from linkurator_core.application.items.get_subscription_items_handler import (
     GetSubscriptionItemsHandler,
     GetSubscriptionItemsResponse,
@@ -81,6 +86,7 @@ def dummy_handlers() -> Handlers:
         get_item_handler=AsyncMock(),
         create_item_interaction_handler=AsyncMock(),
         delete_item_interaction_handler=AsyncMock(),
+        get_followed_subscriptions_items_handler=AsyncMock(),
         get_user_external_credentials_handler=AsyncMock(),
         add_external_credentials_handler=AsyncMock(),
         delete_external_credential_handler=AsyncMock(),
@@ -623,3 +629,83 @@ def test_unfavorite_topic_without_authentication_returns_401(handlers: Handlers)
 
     response = client.delete("/topics/f22b92da-5b90-455f-8141-fb4a37f07805/favorite")
     assert response.status_code == 401
+
+
+def test_get_followed_subscriptions_items_returns_200(handlers: Handlers) -> None:
+    sub1 = mock_sub()
+    sub2 = mock_sub()
+    dummy_handler = AsyncMock(spec=GetFollowedSubscriptionsItemsHandler)
+    item1 = Item.new(
+        uuid=uuid.UUID("1f897d4d-e4bc-40fb-8b58-5d7168c5c5ac"),
+        name="item1",
+        description="description1",
+        subscription_uuid=sub1.uuid,
+        url=utils.parse_url("https://item1.com"),
+        thumbnail=utils.parse_url("https://item1.com/thumbnail.png"),
+        published_at=datetime.fromtimestamp(0, tz=timezone.utc))
+    item2 = Item.new(
+        uuid=uuid.UUID("2f897d4d-e4bc-40fb-8b58-5d7168c5c5ad"),
+        name="item2",
+        description="description2",
+        subscription_uuid=sub2.uuid,
+        url=utils.parse_url("https://item2.com"),
+        thumbnail=utils.parse_url("https://item2.com/thumbnail.png"),
+        published_at=datetime.fromtimestamp(1, tz=timezone.utc))
+
+    dummy_handler.handle.return_value = GetFollowedSubscriptionsItemsResponse(
+        items=[
+            ItemWithSubscriptionAndInteractions(
+                item_with_interactions=ItemWithInteractions(item=item1, interactions=[]),
+                subscription=sub1,
+            ),
+            ItemWithSubscriptionAndInteractions(
+                item_with_interactions=ItemWithInteractions(item=item2, interactions=[]),
+                subscription=sub2,
+            ),
+        ],
+    )
+    handlers.get_followed_subscriptions_items_handler = dummy_handler
+
+    client = TestClient(create_app_from_handlers(handlers), cookies={"token": "token"})
+
+    response = client.get("/subscriptions/items?created_before_ts=999.0&page_number=0&page_size=10")
+    assert response.status_code == 200
+    assert len(response.json()["elements"]) == 2
+    # Since we have 2 items and page size is 10, there's no next page
+    assert response.json()["next_page"] is None
+    assert response.json()["previous_page"] is None
+
+
+def test_get_followed_subscriptions_items_without_authentication_returns_401(handlers: Handlers) -> None:
+    client = TestClient(create_app_from_handlers(handlers))
+
+    response = client.get("/subscriptions/items")
+    assert response.status_code == 401
+
+
+def test_get_followed_subscriptions_items_parses_query_parameters(handlers: Handlers) -> None:
+    dummy_handler = AsyncMock(spec=GetFollowedSubscriptionsItemsHandler)
+    dummy_handler.handle.return_value = GetFollowedSubscriptionsItemsResponse(items=[])
+    handlers.get_followed_subscriptions_items_handler = dummy_handler
+
+    client = TestClient(create_app_from_handlers(handlers), cookies={"token": "token"})
+
+    client.get(
+        "/subscriptions/items?"
+        "page_number=0&page_size=1&search=test&created_before_ts=0&"
+        "max_duration=100&min_duration=10&"
+        "include_interactions=without_interactions,recommended,viewed,hidden,discouraged")
+    dummy_handler.handle.assert_called_once_with(
+        user_id=USER_UUID,
+        created_before=datetime.fromtimestamp(0, tz=timezone.utc),
+        page_number=0,
+        page_size=1,
+        text_filter="test",
+        min_duration=10,
+        max_duration=100,
+        include_items_without_interactions=True,
+        include_recommended_items=True,
+        include_discouraged_items=True,
+        include_viewed_items=True,
+        include_hidden_items=True,
+    )
