@@ -59,15 +59,18 @@ from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTo
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
+from linkurator_core.application.users.delete_user_filter_handler import DeleteUserFilterHandler
 from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
 from linkurator_core.application.users.edit_user_profile import EditUserProfile
 from linkurator_core.application.users.find_user_handler import FindCuratorHandler
 from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
+from linkurator_core.application.users.get_user_filter_handler import GetUserFilterHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
+from linkurator_core.application.users.upsert_user_filter_handler import UpsertUserFilterHandler
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import (
     authentication,
@@ -78,6 +81,7 @@ from linkurator_core.infrastructure.fastapi.routers import (
     profile,
     subscriptions,
     topics,
+    user_filter,
 )
 from linkurator_core.infrastructure.fastapi.routers.authentication import check_basic_auth
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
@@ -137,6 +141,9 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_user_chats_handler: GetUserChatsHandler
     get_chat_handler: GetChatHandler
     delete_chat_handler: DeleteChatHandler
+    get_user_filter_handler: GetUserFilterHandler
+    upsert_user_filter_handler: UpsertUserFilterHandler
+    delete_user_filter_handler: DeleteUserFilterHandler
 
 
 def create_app_from_handlers(handlers: Handlers) -> FastAPI:
@@ -263,6 +270,16 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             delete_chat_handler=handlers.delete_chat_handler,
         ),
         prefix="/chats",
+    )
+    app.include_router(
+        tags=["User Filter"],
+        router=user_filter.get_router(
+            get_session=get_current_session,
+            get_user_filter_handler=handlers.get_user_filter_handler,
+            upsert_user_filter_handler=handlers.upsert_user_filter_handler,
+            delete_user_filter_handler=handlers.delete_user_filter_handler,
+        ),
+        prefix="/filters",
     )
 
     app.add_middleware(

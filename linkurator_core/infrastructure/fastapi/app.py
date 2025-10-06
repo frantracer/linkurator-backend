@@ -52,15 +52,18 @@ from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTo
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
 from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
 from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
+from linkurator_core.application.users.delete_user_filter_handler import DeleteUserFilterHandler
 from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
 from linkurator_core.application.users.edit_user_profile import EditUserProfile
 from linkurator_core.application.users.find_user_handler import FindCuratorHandler
 from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
 from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
+from linkurator_core.application.users.get_user_filter_handler import GetUserFilterHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
+from linkurator_core.application.users.upsert_user_filter_handler import UpsertUserFilterHandler
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
 from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets, SpotifyClientSecrets
@@ -84,6 +87,7 @@ from linkurator_core.infrastructure.mongodb.registration_request_repository impo
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
+from linkurator_core.infrastructure.mongodb.user_filter_repository import MongoDBUserFilterRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient
@@ -132,6 +136,9 @@ def app_handlers() -> Handlers:
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
     chat_repository = MongoDBChatRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password)
+    user_filter_repository = MongoDBUserFilterRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
@@ -311,6 +318,9 @@ def app_handlers() -> Handlers:
             topic_repository=topic_repository,
         ),
         delete_chat_handler=DeleteChatHandler(chat_repository=chat_repository),
+        get_user_filter_handler=GetUserFilterHandler(user_filter_repository=user_filter_repository),
+        upsert_user_filter_handler=UpsertUserFilterHandler(user_filter_repository=user_filter_repository),
+        delete_user_filter_handler=DeleteUserFilterHandler(user_filter_repository=user_filter_repository),
     )
 
 

@@ -12,6 +12,7 @@ from linkurator_core.domain.subscriptions.subscription import Subscription, Subs
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.domain.users.user import User, Username
+from linkurator_core.domain.users.user_filter import UserFilter
 
 
 def mock_user(
@@ -206,4 +207,29 @@ def mock_chat_message(
         subscription_uuids=subscription_uuids,
         topic_uuids=topic_uuids,
         topic_were_created=topic_were_created,
+    )
+
+
+def mock_user_filter(
+        user_id: UUID | None = None,
+        text_filter: str | None = None,
+        min_duration: int | None = None,
+        max_duration: int | None = None,
+        include_items_without_interactions: bool = True,
+        include_recommended_items: bool = True,
+        include_discouraged_items: bool = True,
+        include_viewed_items: bool = True,
+        include_hidden_items: bool = True,
+) -> UserFilter:
+    user_id = user_id or uuid4()
+    return UserFilter.new(
+        user_id=user_id,
+        text_filter=text_filter,
+        min_duration=min_duration,
+        max_duration=max_duration,
+        include_items_without_interactions=include_items_without_interactions,
+        include_recommended_items=include_recommended_items,
+        include_discouraged_items=include_discouraged_items,
+        include_viewed_items=include_viewed_items,
+        include_hidden_items=include_hidden_items,
     )

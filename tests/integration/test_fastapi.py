@@ -99,6 +99,9 @@ def dummy_handlers() -> Handlers:
         get_user_chats_handler=AsyncMock(),
         get_chat_handler=AsyncMock(),
         delete_chat_handler=AsyncMock(),
+        get_user_filter_handler=AsyncMock(),
+        upsert_user_filter_handler=AsyncMock(),
+        delete_user_filter_handler=AsyncMock(),
     )
 
 
