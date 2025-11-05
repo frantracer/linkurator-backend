@@ -1,8 +1,8 @@
-from datetime import datetime
 from uuid import uuid4
 
 from linkurator_core.domain.common.exceptions import ItemNotFoundError
 from linkurator_core.domain.common.types import DateGenerator, UuidGenerator
+from linkurator_core.domain.common.utils import datetime_now
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item_repository import ItemRepository
 
@@ -14,7 +14,7 @@ class CreateItemInteractionHandler:
             self,
             item_repository: ItemRepository,
             uuid_generator: UuidGenerator = uuid4,
-            date_generator: DateGenerator = datetime.utcnow,
+            date_generator: DateGenerator = datetime_now,
     ) -> None:
         self.item_repository = item_repository
         self.uuid_generator = uuid_generator
@@ -36,6 +36,18 @@ class CreateItemInteractionHandler:
 
         await self.item_repository.add_interaction(new_interaction)
 
+        # Remove conflicting interactions
+        if new_interaction.type == InteractionType.DISCOURAGED and InteractionType.RECOMMENDED in current_interaction_types:
+            for interaction in current_item_interactions:
+                if interaction.type == InteractionType.RECOMMENDED:
+                    await self.item_repository.delete_interaction(interaction.uuid)
+
+        if new_interaction.type == InteractionType.RECOMMENDED and InteractionType.DISCOURAGED in current_interaction_types:
+            for interaction in current_item_interactions:
+                if interaction.type == InteractionType.DISCOURAGED:
+                    await self.item_repository.delete_interaction(interaction.uuid)
+
+        # Automatically add a "viewed" interaction for recommendations/discouragements
         is_recommendation = new_interaction.type in [InteractionType.DISCOURAGED, InteractionType.RECOMMENDED]
         is_viewed = InteractionType.VIEWED in current_interaction_types
         if is_recommendation and not is_viewed:
