@@ -66,7 +66,7 @@ from linkurator_core.application.users.update_user_subscriptions_handler import 
 from linkurator_core.application.users.upsert_user_filter_handler import UpsertUserFilterHandler
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
-from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets, SpotifyClientSecrets
+from linkurator_core.infrastructure.config.secrets import GoogleClientSecrets, SpotifyClientSecrets
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 from linkurator_core.infrastructure.general_subscription_service import GeneralSubscriptionService
@@ -90,7 +90,7 @@ from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopic
 from linkurator_core.infrastructure.mongodb.user_filter_repository import MongoDBUserFilterRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
-from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient
+from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient, SpotifyCredentials
 from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscriptionService
 
 
@@ -154,8 +154,13 @@ def app_handlers() -> Handlers:
     )
 
     spotify_client = SpotifyApiClient(
-        client_id=spotify_secrets.client_id,
-        client_secret=spotify_secrets.client_secret,
+        credentials=[
+            SpotifyCredentials(
+                client_id=cred.client_id,
+                client_secret=cred.client_secret,
+            )
+            for cred in spotify_secrets.credentials
+        ],
     )
 
     spotify_service = SpotifySubscriptionService(

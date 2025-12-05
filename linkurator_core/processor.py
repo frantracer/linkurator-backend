@@ -56,7 +56,7 @@ from linkurator_core.infrastructure.mongodb.subscription_repository import Mongo
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
-from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient
+from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient, SpotifyCredentials
 from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscriptionService
 
 
@@ -128,8 +128,13 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         youtube_rss_client=youtube_rss_client,
     )
     spotify_client = SpotifyApiClient(
-        client_id=spotify_secrets.client_id,
-        client_secret=spotify_secrets.client_secret,
+        credentials=[
+            SpotifyCredentials(
+                client_id=cred.client_id,
+                client_secret=cred.client_secret,
+            )
+            for cred in spotify_secrets.credentials
+        ],
     )
     spotify_service = SpotifySubscriptionService(
         spotify_client=spotify_client,

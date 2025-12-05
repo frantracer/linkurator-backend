@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import random
 from base64 import b64encode
 from enum import Enum
 from typing import Any
@@ -49,16 +50,34 @@ class SpotifyApiHttpError(Exception):
     pass
 
 
-class SpotifyApiClient:
+class SpotifyCredentials:
+    """Container for a single Spotify credential pair."""
+
     def __init__(self, client_id: str, client_secret: str) -> None:
         self.client_id = client_id
         self.client_secret = client_secret
 
+
+class SpotifyApiClient:
+    def __init__(self, credentials: list[SpotifyCredentials]) -> None:
+        if len(credentials) == 0:
+            msg = "At least one Spotify credential pair is required"
+            raise ValueError(msg)
+        self.credentials = credentials
+
+    def _get_next_credentials(self) -> SpotifyCredentials:
+        """Get the next credentials randomly."""
+        random_index = random.randint(0, len(self.credentials) - 1)
+        return self.credentials[random_index]
+
     async def get_access_token(self) -> str | None:
         auth_url = "https://accounts.spotify.com/api/token"
 
+        # Get next credentials in rotation
+        creds = self._get_next_credentials()
+
         # Encode client_id and client_secret in base64
-        auth_header = b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode("utf-8")
+        auth_header = b64encode(f"{creds.client_id}:{creds.client_secret}".encode()).decode("utf-8")
         headers = {
             "Authorization": f"Basic {auth_header}",
         }

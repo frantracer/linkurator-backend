@@ -2,7 +2,7 @@ import argparse
 import asyncio
 from dataclasses import dataclass
 
-from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient
+from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient, SpotifyCredentials
 
 
 @dataclass
@@ -27,7 +27,9 @@ def parse_arguments() -> Arguments:
 async def main() -> None:
     args = parse_arguments()
 
-    client = SpotifyApiClient(client_id=args.client_id, client_secret=args.client_secret)
+    client = SpotifyApiClient(
+        credentials=[SpotifyCredentials(client_id=args.client_id, client_secret=args.client_secret)],
+    )
 
     show = await client.find_show(args.show)
     if show is None:

@@ -43,23 +43,42 @@ class GoogleClientSecrets(BaseModel):
         )
 
 
-class SpotifyClientSecrets(BaseModel):
+class SpotifyCredentialPair(BaseModel):
     client_id: str
     client_secret: str
 
+
+class SpotifyClientSecrets(BaseModel):
+    credentials: list[SpotifyCredentialPair]
+
     @classmethod
     def from_file(cls, file_path: str = "") -> "SpotifyClientSecrets":
+        """
+        Load Spotify credentials from a JSON file.
+        :param file_path:
+        :return:
+        :raises ValueError: If no credentials are found in the file.
+        :raises TypeError: If the file format is invalid.
+        """
         current_path = Path(__file__).parent.absolute()
         secrets_path = Path(f"{current_path}/../../../secrets")
 
         if file_path == "":
             file_path = f"{secrets_path}/spotify_credentials.json"
         with open(file_path, encoding="UTF-8") as secrets_file:
-            secrets = json.loads(secrets_file.read())
-        client_id = secrets["client_id"]
-        client_secret = secrets["client_secret"]
+            try:
+                data = json.loads(secrets_file.read())
+            except json.JSONDecodeError as e:
+                msg = "Invalid spotify_credentials.json format"
+                raise TypeError(msg) from e
 
-        return cls(
-            client_id=client_id,
-            client_secret=client_secret,
-        )
+            credentials = [SpotifyCredentialPair(
+                client_id=cred["client_id"],
+                client_secret=cred["client_secret"],
+            ) for cred in data]
+
+            if len(credentials) == 0:
+                msg = "No Spotify credentials found in configuration file"
+                raise ValueError(msg)
+
+            return cls(credentials=credentials)

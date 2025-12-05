@@ -4,10 +4,10 @@ from linkurator_core.infrastructure.config.ai_agent import AIAgentSettings
 from linkurator_core.infrastructure.config.api import ApiSettings
 from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.google import GoogleSettings
-from linkurator_core.infrastructure.config.google_secrets import GoogleClientSecrets, SpotifyClientSecrets
 from linkurator_core.infrastructure.config.log import LogSettings
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
+from linkurator_core.infrastructure.config.secrets import GoogleClientSecrets, SpotifyClientSecrets
 
 DEFAULT_CONFIG_FILENAME = ".config.ini"
 
