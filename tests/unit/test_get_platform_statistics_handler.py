@@ -3,8 +3,10 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from linkurator_core.application.statistics.get_platform_statistics import GetPlatformStatisticsHandler
-from linkurator_core.domain.common.mock_factory import mock_sub, mock_user
+from linkurator_core.domain.common.mock_factory import mock_item, mock_sub, mock_user
+from linkurator_core.domain.items.item import ItemProvider
 from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider
+from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
@@ -29,7 +31,15 @@ async def test_get_platform_statistics_handler() -> None:
     await subscription_repository.add(subscription2)
     await subscription_repository.add(subscription3)
 
-    handler = GetPlatformStatisticsHandler(user_repository, subscription_repository)
+    item_repository = InMemoryItemRepository()
+    item1 = mock_item(provider=ItemProvider.YOUTUBE)
+    item2 = mock_item(provider=ItemProvider.SPOTIFY)
+    item3 = mock_item(provider=ItemProvider.YOUTUBE)
+    item4 = mock_item(provider=ItemProvider.SPOTIFY)
+    item5 = mock_item(provider=ItemProvider.YOUTUBE)
+    await item_repository.upsert_items([item1, item2, item3, item4, item5])
+
+    handler = GetPlatformStatisticsHandler(user_repository, subscription_repository, item_repository)
 
     # When
     statistics = await handler.handle()
@@ -40,3 +50,6 @@ async def test_get_platform_statistics_handler() -> None:
     assert statistics.subscriptions.total == 3
     assert statistics.subscriptions.youtube == 2
     assert statistics.subscriptions.spotify == 1
+    assert statistics.items.total == 5
+    assert statistics.items.youtube == 3
+    assert statistics.items.spotify == 2

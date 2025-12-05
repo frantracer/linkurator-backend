@@ -485,6 +485,13 @@ class MongoDBItemRepository(ItemRepository):
         collection = self._interaction_collection()
         await collection.delete_many({})
 
+    async def count_items(self, provider: ItemProvider | None = None) -> int:
+        collection = self._item_collection()
+        query: dict[str, Any] = {"deleted_at": None}
+        if provider is not None:
+            query["provider"] = provider.value
+        return await collection.count_documents(query)
+
     def _item_collection(self) -> Any:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
         return self.client.get_database(self.db_name).get_collection(

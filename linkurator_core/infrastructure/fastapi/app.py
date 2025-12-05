@@ -305,7 +305,8 @@ def app_handlers() -> Handlers:
             credentials_repository=credentials_repository),
         get_platform_statistics=GetPlatformStatisticsHandler(
             user_repository=user_repository,
-            subscription_repository=subscription_repository),
+            subscription_repository=subscription_repository,
+            item_repository=item_repository),
         update_user_subscriptions_handler=UpdateUserSubscriptionsHandler(
             subscription_service=youtube_service,
             user_repository=user_repository,

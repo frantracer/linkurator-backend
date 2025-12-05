@@ -5,7 +5,7 @@ from uuid import UUID
 from unidecode import unidecode
 
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
-from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import InteractionFilterCriteria, ItemFilterCriteria, ItemRepository
 
 
@@ -148,3 +148,13 @@ class InMemoryItemRepository(ItemRepository):
             reverse=True)
 
         return sorted_interactions[page_number * limit: (page_number + 1) * limit]
+
+    async def count_items(self, provider: ItemProvider | None = None) -> int:
+        count = 0
+        for item in self.items.values():
+            if item.deleted_at is not None:
+                continue
+            if provider is not None and item.provider != provider:
+                continue
+            count += 1
+        return count

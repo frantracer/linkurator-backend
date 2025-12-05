@@ -1,6 +1,8 @@
 import asyncio
 from dataclasses import dataclass
 
+from linkurator_core.domain.items.item import ItemProvider
+from linkurator_core.domain.items.item_repository import ItemRepository
 from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import (
     SubscriptionRepository,
@@ -22,9 +24,17 @@ class SubscriptionsPlatformStatistics:
 
 
 @dataclass
+class ItemsPlatformStatistics:
+    total: int
+    youtube: int
+    spotify: int
+
+
+@dataclass
 class PlatformStatistics:
     users: UserPlatformStatistics
     subscriptions: SubscriptionsPlatformStatistics
+    items: ItemsPlatformStatistics
 
 
 class GetPlatformStatisticsHandler:
@@ -32,9 +42,11 @@ class GetPlatformStatisticsHandler:
         self,
         user_repository: UserRepository,
         subscription_repository: SubscriptionRepository,
+        item_repository: ItemRepository,
     ) -> None:
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
+        self.item_repository = item_repository
 
     async def handle(self) -> PlatformStatistics:
         results = await asyncio.gather(
@@ -46,11 +58,20 @@ class GetPlatformStatisticsHandler:
             self.subscription_repository.count_subscriptions(
                 provider=SubscriptionProvider.SPOTIFY,
             ),
+            self.item_repository.count_items(
+                provider=ItemProvider.YOUTUBE,
+            ),
+            self.item_repository.count_items(
+                provider=ItemProvider.SPOTIFY,
+            ),
         )
 
         return PlatformStatistics(
             users=UserPlatformStatistics(registered=results[0], active=results[1]),
             subscriptions=SubscriptionsPlatformStatistics(
                 total=results[2] + results[3], youtube=results[2], spotify=results[3],
+            ),
+            items=ItemsPlatformStatistics(
+                total=results[4] + results[5], youtube=results[4], spotify=results[5],
             ),
         )

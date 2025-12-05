@@ -99,3 +99,7 @@ class ItemRepository(abc.ABC):
             self, criteria: InteractionFilterCriteria, page_number: int, limit: int,
     ) -> list[Interaction]:
         raise NotImplementedError
+
+    @abc.abstractmethod
+    async def count_items(self, provider: ItemProvider | None = None) -> int:
+        raise NotImplementedError
