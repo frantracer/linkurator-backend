@@ -490,7 +490,15 @@ class MongoDBItemRepository(ItemRepository):
         query: dict[str, Any] = {"deleted_at": None}
         if provider is not None:
             query["provider"] = provider.value
-        return await collection.count_documents(query)
+
+        # Use aggregation pipeline with index hint for better performance
+        pipeline: list[dict[str, Any]] = [
+            {"$match": query},
+            {"$count": "total"},
+        ]
+
+        result = await collection.aggregate(pipeline).to_list(length=1)
+        return result[0]["total"] if result else 0
 
     def _item_collection(self) -> Any:
         codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)  # type: ignore
