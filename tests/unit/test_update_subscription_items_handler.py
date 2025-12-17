@@ -102,7 +102,10 @@ async def test_update_subscriptions_items_with_items_that_are_already_registered
     assert subscription_repository.get.call_args == call(sub1.uuid)
     assert item_repository.find_items.call_count == 1
     assert item_repository.find_items.call_args == call(
-        criteria=ItemFilterCriteria(url=item1.url),
+        criteria=ItemFilterCriteria(
+            subscription_ids=[sub1.uuid],
+            url=item1.url,
+        ),
         page_number=0,
         limit=1)
     assert item_repository.upsert_items.call_count == 1

@@ -16,9 +16,11 @@ class UpdateSubscriptionItemsHandler:
     item_repository: ItemRepository
     subscriptions_being_updated: dict[uuid.UUID, datetime] = {}
 
-    def __init__(self, subscription_service: SubscriptionService,
+    def __init__(self,
+                 subscription_service: SubscriptionService,
                  subscription_repository: SubscriptionRepository,
-                 item_repository: ItemRepository) -> None:
+                 item_repository: ItemRepository,
+    ) -> None:
         self.subscription_service = subscription_service
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
@@ -43,16 +45,20 @@ class UpdateSubscriptionItemsHandler:
                 from_date=subscription.last_published_at)
             item_count = 0
             new_filtered_items: list[Item] = []
-            for item in new_items:
+            for new_item in new_items:
                 if item_count % 100 == 0:
                     logging.debug("%s items processed", item_count)
                 item_count += 1
 
-                items = await self.item_repository.find_items(criteria=ItemFilterCriteria(url=item.url),
-                                                        page_number=0, limit=1)
+                existing_items = await self.item_repository.find_items(
+                    criteria=ItemFilterCriteria(
+                        subscription_ids=[subscription_id],
+                        url=new_item.url,
+                    ),
+                    page_number=0, limit=1)
 
-                if len(items) == 0:
-                    new_filtered_items.append(item)
+                if len(existing_items) == 0:
+                    new_filtered_items.append(new_item)
 
             await self.item_repository.upsert_items(new_filtered_items)
 
