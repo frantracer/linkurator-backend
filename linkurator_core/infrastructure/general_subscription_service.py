@@ -11,15 +11,18 @@ from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
+from linkurator_core.infrastructure.rss.rss_service import RssSubscriptionService
 from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscriptionService
 
 
 class GeneralSubscriptionService(SubscriptionService):
     def __init__(self,
                  spotify_service: SpotifySubscriptionService,
-                 youtube_service: YoutubeService) -> None:
+                 youtube_service: YoutubeService,
+                 rss_service: RssSubscriptionService) -> None:
         self.spotify_service = spotify_service
         self.youtube_service = youtube_service
+        self.rss_service = rss_service
 
     async def get_subscriptions(
             self,
@@ -30,8 +33,9 @@ class GeneralSubscriptionService(SubscriptionService):
         results = await asyncio.gather(
             self.spotify_service.get_subscriptions(user_id=user_id, credential=credential, access_token=access_token),
             self.youtube_service.get_subscriptions(user_id=user_id, credential=credential, access_token=access_token),
+            self.rss_service.get_subscriptions(user_id=user_id, credential=credential, access_token=access_token),
         )
-        return results[0] + results[1]
+        return results[0] + results[1] + results[2]
 
     async def get_subscription(
             self,
@@ -41,9 +45,10 @@ class GeneralSubscriptionService(SubscriptionService):
         results = await asyncio.gather(
             self.spotify_service.get_subscription(sub_id, credential),
             self.youtube_service.get_subscription(sub_id, credential),
+            self.rss_service.get_subscription(sub_id, credential),
         )
 
-        return results[0] or results[1]
+        return results[0] or results[1] or results[2]
 
     async def get_items(
             self,
@@ -53,9 +58,10 @@ class GeneralSubscriptionService(SubscriptionService):
         results = await asyncio.gather(
             self.spotify_service.get_items(item_ids, credential),
             self.youtube_service.get_items(item_ids, credential),
+            self.rss_service.get_items(item_ids, credential),
         )
 
-        return results[0] | results[1]
+        return results[0] | results[1] | results[2]
 
     async def get_subscription_items(
             self,
@@ -66,9 +72,10 @@ class GeneralSubscriptionService(SubscriptionService):
         results = await asyncio.gather(
             self.spotify_service.get_subscription_items(sub_id, from_date, credential),
             self.youtube_service.get_subscription_items(sub_id, from_date, credential),
+            self.rss_service.get_subscription_items(sub_id, from_date, credential),
         )
 
-        return results[0] + results[1]
+        return results[0] + results[1] + results[2]
 
     async def get_subscription_from_url(
             self,
@@ -78,9 +85,10 @@ class GeneralSubscriptionService(SubscriptionService):
         results = await asyncio.gather(
             self.spotify_service.get_subscription_from_url(url, credential),
             self.youtube_service.get_subscription_from_url(url, credential),
+            self.rss_service.get_subscription_from_url(url, credential),
         )
 
-        return results[0] or results[1]
+        return results[0] or results[1] or results[2]
 
     async def get_subscriptions_from_name(
             self,
@@ -90,6 +98,7 @@ class GeneralSubscriptionService(SubscriptionService):
         results = await asyncio.gather(
             self.spotify_service.get_subscriptions_from_name(name, credential),
             self.youtube_service.get_subscriptions_from_name(name, credential),
+            self.rss_service.get_subscriptions_from_name(name, credential),
         )
 
-        return results[0] + results[1]
+        return results[0] + results[1] + results[2]

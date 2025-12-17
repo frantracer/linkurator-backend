@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:custom="http://example.com/custom-ns" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+    <channel>
+        <title>Simple Test Feed</title>
+        <description>A simple test feed with two items</description>
+        <language>en</language>
+        <link>https://example.com</link>
+        <item>
+            <guid isPermaLink="true">https://example.com/article1</guid>
+            <title>First Article</title>
+            <pubDate>Mon, 01 Jan 2024 10:00:00 GMT</pubDate>
+            <link>https://example.com/article1</link>
+            <dc:creator>John Doe</dc:creator>
+            <description>This is the first article description</description>
+            <media:thumbnail url="https://example.com/thumb1.jpg" width="320" height="200"/>
+        </item>
+        <item>
+            <guid isPermaLink="false">article-2-guid</guid>
+            <title>Second Article</title>
+            <pubDate>Tue, 02 Jan 2024 15:30:00 GMT</pubDate>
+            <link>https://example.com/article2</link>
+            <dc:creator>Jane Smith</dc:creator>
+            <description>This is the second article description</description>
+            <category>Technology</category>
+            <media:content url="https://example.com/image2.jpg" medium="image" type="image/jpeg">
+                <media:thumbnail url="https://example.com/thumb2.jpg"/>
+            </media:content>
+        </item>
+    </channel>
+</rss>

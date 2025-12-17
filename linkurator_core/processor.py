@@ -52,10 +52,13 @@ from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRe
 from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.registration_request_repository import MongoDBRegistrationRequestRepository
+from linkurator_core.infrastructure.mongodb.rss_data_repository import MongoDBRssDataRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
+from linkurator_core.infrastructure.rss.rss_feed_client import RssFeedClient
+from linkurator_core.infrastructure.rss.rss_service import RssSubscriptionService
 from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient, SpotifyCredentials
 from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscriptionService
 
@@ -114,6 +117,10 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password,
     )
+    rss_data_repository = MongoDBRssDataRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password,
+    )
 
     # Services
     youtube_client = YoutubeApiClient()
@@ -143,9 +150,17 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         subscription_repository=subscription_repository,
     )
 
+    rss_service = RssSubscriptionService(
+        subscription_repository=subscription_repository,
+        item_repository=item_repository,
+        rss_feed_client=RssFeedClient(),
+        rss_data_repository=rss_data_repository,
+    )
+
     general_subscription_service = GeneralSubscriptionService(
         spotify_service=spotify_service,
         youtube_service=youtube_service,
+        rss_service=rss_service,
     )
 
     google_domain_service = GoogleDomainAccountService(

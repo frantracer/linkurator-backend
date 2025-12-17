@@ -38,6 +38,10 @@ class InvalidYoutubeRssFeedError(Exception):
     pass
 
 
+class InvalidRssFeedError(Exception):
+    pass
+
+
 class CannotFollowOwnedTopicError(Exception):
     pass
 

@@ -18,6 +18,7 @@ YOUTUBE_ITEM_VERSION = 1
 class ItemProvider(str, Enum):
     YOUTUBE = "youtube"
     SPOTIFY = "spotify"
+    RSS = "rss"
 
 
 @dataclass

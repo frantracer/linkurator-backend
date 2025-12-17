@@ -13,6 +13,7 @@ from linkurator_core.domain.common.utils import datetime_now
 class SubscriptionProvider(str, Enum):
     YOUTUBE = "youtube"
     SPOTIFY = "spotify"
+    RSS = "rss"
 
 
 class Subscription(BaseModel):

@@ -14,3 +14,7 @@ class AsyncHttpClient:
         async with ClientSession() as session, session.get(url) as response:
             text = await response.text()
             return HttpResponse(text=text, status=response.status)
+
+    async def check(self, url: str) -> int:
+        async with ClientSession() as session, session.get(url) as response:
+            return response.status

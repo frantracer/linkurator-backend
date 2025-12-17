@@ -84,12 +84,15 @@ from linkurator_core.infrastructure.mongodb.password_change_request_repository i
     MongoDBPasswordChangeRequestRepository,
 )
 from linkurator_core.infrastructure.mongodb.registration_request_repository import MongoDBRegistrationRequestRepository
+from linkurator_core.infrastructure.mongodb.rss_data_repository import MongoDBRssDataRepository
 from linkurator_core.infrastructure.mongodb.session_repository import MongoDBSessionRepository
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
 from linkurator_core.infrastructure.mongodb.user_filter_repository import MongoDBUserFilterRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
+from linkurator_core.infrastructure.rss.rss_feed_client import RssFeedClient
+from linkurator_core.infrastructure.rss.rss_service import RssSubscriptionService
 from linkurator_core.infrastructure.spotify.spotify_api_client import SpotifyApiClient, SpotifyCredentials
 from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscriptionService
 
@@ -141,6 +144,9 @@ def app_handlers() -> Handlers:
     user_filter_repository = MongoDBUserFilterRepository(
         ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
         username=db_settings.user, password=db_settings.password)
+    rss_data_repository = MongoDBRssDataRepository(
+        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
 
     youtube_service = YoutubeService(
@@ -170,9 +176,17 @@ def app_handlers() -> Handlers:
         item_repository=item_repository,
     )
 
+    rss_service = RssSubscriptionService(
+        subscription_repository=subscription_repository,
+        item_repository=item_repository,
+        rss_feed_client=RssFeedClient(),
+        rss_data_repository=rss_data_repository,
+    )
+
     general_subscription_service = GeneralSubscriptionService(
         spotify_service=spotify_service,
         youtube_service=youtube_service,
+        rss_service=rss_service,
     )
 
     rabbitmq_settings = settings.rabbitmq
