@@ -33,7 +33,8 @@ install-requirements:
 
 install:
 	rm -rf .venv
-	uv venv --python=python3.13.4 .venv
+	uv venv --python=python3.13.5 .venv
+	uv pip install pip --upgrade
 	uv pip install -r requirements.txt
 	@echo
 	@echo "Run 'source .venv/bin/activate' to activate the virtual environment."
