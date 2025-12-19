@@ -131,9 +131,15 @@ def _generate_filter_query(criteria: ItemFilterCriteria) -> dict[str, Any]:
     if criteria.max_duration is not None and criteria.min_duration is not None:
         filter_query["duration"] = {"$gte": criteria.min_duration, "$lte": criteria.max_duration}
     elif criteria.max_duration is not None:
-        filter_query["duration"] = {"$lte": criteria.max_duration}
+        filter_query["$or"] = [
+            {"duration": None},
+            {"duration": {"$lte": criteria.max_duration}},
+        ]
     elif criteria.min_duration is not None:
-        filter_query["duration"] = {"$gte": criteria.min_duration}
+        filter_query["$or"] = [
+            {"duration": None},
+            {"duration": {"$gte": criteria.min_duration}},
+        ]
 
     return filter_query
 

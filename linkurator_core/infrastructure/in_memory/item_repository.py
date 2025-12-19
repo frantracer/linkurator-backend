@@ -60,7 +60,7 @@ class InMemoryItemRepository(ItemRepository):
                 continue
             if criteria.text is not None and not _item_contains_text(criteria.text, item):
                 continue
-            if item.duration is None and not (criteria.min_duration is None and criteria.max_duration is None):
+            if item.duration is None and (criteria.min_duration is not None and criteria.max_duration is not None):
                 continue
             if item.duration is not None:
                 if criteria.min_duration is not None and item.duration < criteria.min_duration:

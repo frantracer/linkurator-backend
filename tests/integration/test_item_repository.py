@@ -778,8 +778,8 @@ async def test_find_items_with_max_and_min_duration(item_repo: ItemRepository) -
         limit=10,
         page_number=0)
 
-    assert len(found_items) == 2
-    assert {item4, item1} == set(found_items)
+    assert len(found_items) == 3
+    assert {item4, item1, item2} == set(found_items)
 
     found_items = await item_repo.find_items(
         criteria=ItemFilterCriteria(
@@ -788,8 +788,8 @@ async def test_find_items_with_max_and_min_duration(item_repo: ItemRepository) -
         limit=10,
         page_number=0)
 
-    assert len(found_items) == 2
-    assert {item3, item1} == set(found_items)
+    assert len(found_items) == 3
+    assert {item3, item1, item2} == set(found_items)
 
     found_items = await item_repo.find_items(
         criteria=ItemFilterCriteria(
@@ -823,8 +823,86 @@ async def test_find_zero_duration_items(item_repo: ItemRepository) -> None:
         limit=10,
         page_number=0)
 
+    assert len(found_items) == 2
+    assert {item1, item2} == set(found_items)
+
+
+@pytest.mark.asyncio()
+async def test_filter_with_only_max_duration_includes_none_duration_items(item_repo: ItemRepository) -> None:
+    await item_repo.delete_all_items()
+
+    item1 = mock_item(item_uuid=UUID("ea04f10a-8c2b-4f3f-82be-0534eb5a0326"),
+                      duration=500)
+    item2 = mock_item(item_uuid=UUID("841ce05f-baf8-45b1-80c2-82c4b716339b"),
+                      duration=None)
+    item3 = mock_item(item_uuid=UUID("cc3596f9-512a-4bd0-94eb-9a2640ba1b51"),
+                      duration=700)
+
+    await item_repo.upsert_items([item1, item2, item3])
+
+    # When filtering with only max_duration, items with None duration should be included
+    found_items = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            max_duration=600,
+        ),
+        limit=10,
+        page_number=0)
+
+    assert len(found_items) == 2
+    assert {item1, item2} == set(found_items)
+
+
+@pytest.mark.asyncio()
+async def test_filter_with_only_min_duration_includes_none_duration_items(item_repo: ItemRepository) -> None:
+    await item_repo.delete_all_items()
+
+    item1 = mock_item(item_uuid=UUID("ea04f10a-8c2b-4f3f-82be-0534eb5a0326"),
+                      duration=500)
+    item2 = mock_item(item_uuid=UUID("841ce05f-baf8-45b1-80c2-82c4b716339b"),
+                      duration=None)
+    item3 = mock_item(item_uuid=UUID("cc3596f9-512a-4bd0-94eb-9a2640ba1b51"),
+                      duration=700)
+
+    await item_repo.upsert_items([item1, item2, item3])
+
+    # When filtering with only min_duration, items with None duration should be included
+    found_items = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            min_duration=600,
+        ),
+        limit=10,
+        page_number=0)
+
+    assert len(found_items) == 2
+    assert {item2, item3} == set(found_items)
+
+
+@pytest.mark.asyncio()
+async def test_filter_with_both_min_and_max_duration_excludes_none_duration_items(item_repo: ItemRepository) -> None:
+    await item_repo.delete_all_items()
+
+    item1 = mock_item(item_uuid=UUID("ea04f10a-8c2b-4f3f-82be-0534eb5a0326"),
+                      duration=500)
+    item2 = mock_item(item_uuid=UUID("841ce05f-baf8-45b1-80c2-82c4b716339b"),
+                      duration=None)
+    item3 = mock_item(item_uuid=UUID("cc3596f9-512a-4bd0-94eb-9a2640ba1b51"),
+                      duration=700)
+    item4 = mock_item(item_uuid=UUID("1a2de48e-c2f9-47c5-b91f-a98d86cdb25d"),
+                      duration=600)
+
+    await item_repo.upsert_items([item1, item2, item3, item4])
+
+    # When filtering with both min and max duration, items with None duration should be excluded
+    found_items = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            min_duration=550,
+            max_duration=650,
+        ),
+        limit=10,
+        page_number=0)
+
     assert len(found_items) == 1
-    assert {item1} == set(found_items)
+    assert {item4} == set(found_items)
 
 
 @pytest.mark.asyncio()
