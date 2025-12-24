@@ -42,6 +42,13 @@ def el_pais_xml() -> str:
         return f.read()
 
 
+@pytest.fixture()
+def vandal_xml() -> str:
+    sample_file = Path(__file__).parent / "rss" / "vandal_rss_sample.xml"
+    with sample_file.open() as f:
+        return f.read()
+
+
 def test_parse_feed_info_from_rss_feed(client: RssFeedClient, rss_xml: str) -> None:
     feed_info = client.parse_feed_info(rss_xml)
 
@@ -165,6 +172,38 @@ def test_parse_el_pais_rss_feed(client: RssFeedClient, el_pais_xml: str) -> None
     assert "seleccion-preparacion-mundial" in items[5].link
     assert items[5].published == datetime(2025, 12, 4, 10, 0, 0, tzinfo=timezone.utc)
     assert "futbol-2025-thumb.jpg" in items[5].thumbnail
+
+
+def test_parse_vandal_rss_feed(client: RssFeedClient, vandal_xml: str) -> None:
+    """Test parsing a real-world RSS feed from Vandal gaming news site."""
+    # Test feed info parsing
+    feed_info = client.parse_feed_info(vandal_xml)
+
+    assert feed_info.title == "Vandal"
+    assert feed_info.link == "https://vandal.elespanol.com"
+    assert "Portal especializado en videojuegos" in feed_info.description
+    assert feed_info.language == "es-es"
+    assert feed_info.thumbnail == "https://www.vandalimg.com/logo.gif"
+
+    # Test feed items parsing
+    items = client.parse_feed_items(vandal_xml)
+
+    assert len(items) == 2
+
+    # Check first item (Xbox profit margin article)
+    # Note: No standard media:content or enclosure, so uses default feed icon
+    assert items[0].title == "Microsoft niega que Xbox tenga como objetivo un margen de beneficio del 30 %"
+    assert "microsoft-niega-que-xbox-tenga-como-objetivo-un-margen-de-beneficio-del-30" in items[0].link
+    assert items[0].published == datetime(2025, 12, 23, 9, 35, 0, tzinfo=timezone.utc)
+    assert items[0].thumbnail == "https://upload.wikimedia.org/wikipedia/en/4/43/Feed-icon.svg"
+    assert "La compañía aclara que no ha impuesto ese objetivo" in items[0].description
+
+    # Check second item (Battlefield 6 article)
+    assert items[1].title == "Los 25 del 25: Battlefield 6, el regreso del rey de la guerra total"
+    assert "battlefield-6-el-regreso-del-rey-de-la-guerra-total" in items[1].link
+    assert items[1].published == datetime(2025, 12, 23, 9, 26, 0, tzinfo=timezone.utc)
+    assert items[1].thumbnail == "https://upload.wikimedia.org/wikipedia/en/4/43/Feed-icon.svg"
+    assert "La destrucción total ha vuelto" in items[1].description
 
 
 def test_raw_data_includes_root_and_item_tags(client: RssFeedClient, simple_rss_xml: str) -> None:
