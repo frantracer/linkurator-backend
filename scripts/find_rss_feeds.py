@@ -12,6 +12,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from linkurator_core.domain.common.utils import parse_url
+from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.rss_data_repository import InMemoryRssDataRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
@@ -25,20 +26,13 @@ logging.basicConfig(
 )
 
 
-async def find_rss_feeds() -> None:
+async def find_rss_feeds(client: RssFeedClient, feed_urls: list[str]) -> None:
     """Test RSS feed client with a real RSS feed."""
     logging.info("=" * 60)
     logging.info("Testing RSS Feed Client")
     logging.info("=" * 60)
 
-    client = RssFeedClient()
-
-    # Test with NASA RSS feed (reliable, public feed)
-    test_feeds = [
-        "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada",
-    ]
-
-    for feed_url in test_feeds:
+    for feed_url in feed_urls:
         logging.info("")
         logging.info("Testing feed: %s", feed_url)
         logging.info("-" * 60)
@@ -72,7 +66,7 @@ async def find_rss_feeds() -> None:
             logging.exception("✗ Error: %s", e)
 
 
-async def find_rss_details() -> None:
+async def find_rss_details(client: RssFeedClient, feed_urls: list[str]) -> None:
     """Test RSS subscription service with a real feed."""
     logging.info("")
     logging.info("=" * 60)
@@ -82,7 +76,6 @@ async def find_rss_details() -> None:
     sub_repo = InMemorySubscriptionRepository()
     item_repo = InMemoryItemRepository()
     rss_data_repo = InMemoryRssDataRepository()
-    client = RssFeedClient()
     service = RssSubscriptionService(
         subscription_repository=sub_repo,
         item_repository=item_repo,
@@ -91,49 +84,49 @@ async def find_rss_details() -> None:
     )
 
     # Test getting subscription from URL
-    test_url = "https://www.nasa.gov/rss/dyn/breaking_news.rss"
-    logging.info("")
-    logging.info("Creating subscription from URL: %s", test_url)
-    logging.info("-" * 60)
+    for feed_url in feed_urls:
+        logging.info("")
+        logging.info("Creating subscription from URL: %s", feed_url)
+        logging.info("-" * 60)
 
-    try:
-        subscription = await service.get_subscription_from_url(parse_url(test_url))
+        try:
+            subscription = await service.get_subscription_from_url(parse_url(feed_url))
 
-        if subscription:
-            logging.info("✓ Subscription created: %s", subscription.name)
-            logging.info("✓ Provider: %s", subscription.provider)
-            logging.info("✓ URL: %s", subscription.url)
-            logging.info("✓ Description: %s...", subscription.description[:100])
-            logging.info("✓ Feed URL: %s", subscription.external_data.get("feed_url"))
+            if subscription:
+                logging.info("✓ Subscription created: %s", subscription.name)
+                logging.info("✓ Provider: %s", subscription.provider)
+                logging.info("✓ URL: %s", subscription.url)
+                logging.info("✓ Description: %s...", subscription.description[:100])
+                logging.info("✓ Feed URL: %s", subscription.external_data.get("feed_url"))
 
-            # Save subscription
-            await sub_repo.add(subscription)
-            logging.info("✓ Subscription saved with ID: %s", subscription.uuid)
+                # Save subscription
+                await sub_repo.add(subscription)
+                logging.info("✓ Subscription saved with ID: %s", subscription.uuid)
 
-            # Test getting items
-            from_date = datetime.now(tz=timezone.utc) - timedelta(days=30)
-            logging.info("")
-            logging.info("Getting items published after %s", from_date.date())
-            logging.info("-" * 60)
-
-            items = await service.get_subscription_items(subscription.uuid, from_date)
-            logging.info("✓ Found %d items", len(items))
-
-            if items:
+                # Test getting items
+                from_date = datetime.now(tz=timezone.utc) - timedelta(days=30)
                 logging.info("")
-                logging.info("First 3 items:")
-                for i, item in enumerate(items[:3], 1):
+                logging.info("Getting items published after %s", from_date.date())
+                logging.info("-" * 60)
+
+                items = await service.get_subscription_items(subscription.uuid, from_date)
+                logging.info("✓ Found %d items", len(items))
+
+                if items:
                     logging.info("")
-                    logging.info("  %d. %s", i, item.name)
-                    logging.info("     URL: %s", item.url)
-                    logging.info("     Provider: %s", item.provider)
-                    logging.info("     Published: %s", item.published_at)
+                    logging.info("First 3 items:")
+                    for i, item in enumerate(items[:3], 1):
+                        logging.info("")
+                        logging.info("  %d. %s", i, item.name)
+                        logging.info("     URL: %s", item.url)
+                        logging.info("     Provider: %s", item.provider)
+                        logging.info("     Published: %s", item.published_at)
 
-        else:
-            logging.error("✗ Failed to create subscription")
+            else:
+                logging.error("✗ Failed to create subscription")
 
-    except Exception:
-        logging.exception("✗ Error:")
+        except Exception:
+            logging.exception("✗ Error:")
 
 
 async def main() -> None:
@@ -143,8 +136,17 @@ async def main() -> None:
     logging.info("RSS FEED IMPLEMENTATION - MANUAL TEST")
     logging.info("=" * 60)
 
-    await find_rss_feeds()
-    await find_rss_details()
+    test_feeds = [
+        "https://www.nasa.gov/rss/dyn/breaking_news.rss",
+        "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada",
+        "https://vandal.elespanol.com/xml.cgi",
+    ]
+
+    http_client = AsyncHttpClient(contact_email="test@email.com")
+    rss_client = RssFeedClient(http_client=http_client)
+
+    await find_rss_feeds(rss_client, test_feeds)
+    await find_rss_details(rss_client, test_feeds)
 
     logging.info("")
     logging.info("=" * 60)
