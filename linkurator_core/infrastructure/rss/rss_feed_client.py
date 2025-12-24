@@ -75,6 +75,9 @@ class RssFeedClient:
             InvalidRssFeedError: If XML parsing fails or format is unknown
 
         """
+        # Pre-process XML to wrap description content in CDATA
+        xml_string = self._wrap_descriptions_in_cdata(xml_string)
+
         # Register any namespaces found in the XML to preserve them during serialization
         self._register_namespaces_from_xml(xml_string)
 
@@ -121,6 +124,9 @@ class RssFeedClient:
             InvalidRssFeedError: If XML parsing fails or format is unknown
 
         """
+        # Pre-process XML to wrap description content in CDATA
+        xml_string = self._wrap_descriptions_in_cdata(xml_string)
+
         # Register any namespaces found in the XML to preserve them during serialization
         self._register_namespaces_from_xml(xml_string)
 
@@ -394,3 +400,25 @@ class RssFeedClient:
             except Exception as e:
                 # Skip if registration fails (e.g., invalid prefix)
                 logging.debug("Failed to register namespace %s=%s: %s", prefix, uri, e)
+
+    def _wrap_descriptions_in_cdata(self, xml_string: str) -> str:
+        """
+        Wrap description tag content in CDATA sections if it contains HTML.
+
+        This allows RSS feeds with HTML content in descriptions to be parsed correctly.
+        """
+        # Pattern to match description tags that don't already have CDATA
+        # and contain HTML-like content (tags with < and >)
+        pattern = r"<description>(?!<!\[CDATA\[)(.*?)</description>"
+
+        def wrap_if_has_html(match: re.Match[str]) -> str:
+            content = match.group(1)
+            # Check if content contains HTML tags (excluding HTML comments which are OK in XML)
+            if "<" in content and ">" in content:
+                # Check if it's not just HTML comments
+                content_without_comments = re.sub(r"<!--.*?-->", "", content, flags=re.DOTALL)
+                if "<" in content_without_comments and ">" in content_without_comments:
+                    return f"<description><![CDATA[{content}]]></description>"
+            return match.group(0)
+
+        return re.sub(pattern, wrap_if_has_html, xml_string, flags=re.DOTALL)

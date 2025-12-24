@@ -66,6 +66,7 @@ from linkurator_core.application.users.update_user_subscriptions_handler import 
 from linkurator_core.application.users.upsert_user_filter_handler import UpsertUserFilterHandler
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
+from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
 from linkurator_core.infrastructure.config.secrets import GoogleClientSecrets, SpotifyClientSecrets
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
@@ -149,6 +150,9 @@ def app_handlers() -> Handlers:
         username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
 
+    http_client = AsyncHttpClient(contact_email=settings.env.GOOGLE_SERVICE_ACCOUNT_EMAIL)
+    rss_feed_client = RssFeedClient(http_client=http_client)
+
     youtube_service = YoutubeService(
         subscription_repository=subscription_repository,
         user_repository=user_repository,
@@ -179,7 +183,7 @@ def app_handlers() -> Handlers:
     rss_service = RssSubscriptionService(
         subscription_repository=subscription_repository,
         item_repository=item_repository,
-        rss_feed_client=RssFeedClient(),
+        rss_feed_client=rss_feed_client,
         rss_data_repository=rss_data_repository,
     )
 

@@ -38,6 +38,7 @@ from linkurator_core.domain.common.event import (
 )
 from linkurator_core.infrastructure.ai_agents.main_query_agent import MainQueryAgent
 from linkurator_core.infrastructure.ai_agents.subscription_summarizer import SubscriptionSummarizerService
+from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
@@ -150,10 +151,13 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         subscription_repository=subscription_repository,
     )
 
+    http_client = AsyncHttpClient(contact_email=settings.env.GOOGLE_SERVICE_ACCOUNT_EMAIL)
+    rss_client = RssFeedClient(http_client=http_client)
+
     rss_service = RssSubscriptionService(
         subscription_repository=subscription_repository,
         item_repository=item_repository,
-        rss_feed_client=RssFeedClient(),
+        rss_feed_client=rss_client,
         rss_data_repository=rss_data_repository,
     )
 
