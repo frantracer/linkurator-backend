@@ -407,12 +407,16 @@ class RssFeedClient:
 
         This allows RSS feeds with HTML content in descriptions to be parsed correctly.
         """
-        # Pattern to match description tags that don't already have CDATA
-        # and contain HTML-like content (tags with < and >)
-        pattern = r"<description>(?!<!\[CDATA\[)(.*?)</description>"
+        # Pattern to match description tags
+        pattern = r"<description>(.*?)</description>"
 
         def wrap_if_has_html(match: re.Match[str]) -> str:
             content = match.group(1)
+
+            # Don't wrap if content already has CDATA
+            if "<![CDATA[" in content:
+                return match.group(0)
+
             # Check if content contains HTML tags (excluding HTML comments which are OK in XML)
             if "<" in content and ">" in content:
                 # Check if it's not just HTML comments

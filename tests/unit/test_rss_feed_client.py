@@ -49,6 +49,34 @@ def vandal_xml() -> str:
         return f.read()
 
 
+@pytest.fixture()
+def rss_without_cdata() -> str:
+    sample_file = Path(__file__).parent / "rss" / "rss_without_cdata.xml"
+    with sample_file.open() as f:
+        return f.read()
+
+
+@pytest.fixture()
+def rss_with_cdata() -> str:
+    sample_file = Path(__file__).parent / "rss" / "rss_with_cdata.xml"
+    with sample_file.open() as f:
+        return f.read()
+
+
+@pytest.fixture()
+def rss_plain_text() -> str:
+    sample_file = Path(__file__).parent / "rss" / "rss_plain_text.xml"
+    with sample_file.open() as f:
+        return f.read()
+
+
+@pytest.fixture()
+def rss_mixed_descriptions() -> str:
+    sample_file = Path(__file__).parent / "rss" / "rss_mixed_descriptions.xml"
+    with sample_file.open() as f:
+        return f.read()
+
+
 def test_parse_feed_info_from_rss_feed(client: RssFeedClient, rss_xml: str) -> None:
     feed_info = client.parse_feed_info(rss_xml)
 
@@ -236,3 +264,40 @@ def test_raw_data_includes_root_and_entry_tags_for_atom(client: RssFeedClient, a
 
     assert item1.raw_data == reparsed_item1[0].raw_data
     assert item2.raw_data == reparsed_item2[0].raw_data
+
+
+def test_wrap_descriptions_in_cdata_does_not_double_wrap(
+    client: RssFeedClient,
+    rss_without_cdata: str,
+    rss_with_cdata: str,
+    rss_plain_text: str,
+    rss_mixed_descriptions: str,
+) -> None:
+    """Test that _wrap_descriptions_in_cdata doesn't wrap descriptions that already have CDATA."""
+    # Test case 1: Description with HTML but no CDATA - should be wrapped
+    result = client._wrap_descriptions_in_cdata(rss_without_cdata)
+    assert "<![CDATA[This has <b>HTML</b> content]]>" in result
+    assert result.count("<![CDATA[") == 1  # Only wrapped once
+
+    # Test case 2: Description already has CDATA - should NOT be wrapped again
+    result = client._wrap_descriptions_in_cdata(rss_with_cdata)
+    assert "<![CDATA[This has <b>HTML</b> content]]>" in result
+    assert result.count("<![CDATA[") == 1  # Still only one CDATA section
+    # Ensure it wasn't double-wrapped
+    assert "<![CDATA[<![CDATA[" not in result
+
+    # Test case 3: Description without HTML tags - should NOT be wrapped
+    result = client._wrap_descriptions_in_cdata(rss_plain_text)
+    assert "<![CDATA[" not in result
+    assert "This is plain text without HTML" in result
+
+    # Test case 4: Multiple descriptions with mixed content
+    result = client._wrap_descriptions_in_cdata(rss_mixed_descriptions)
+    # First description: no CDATA (plain text)
+    assert "Plain text" in result
+    # Second description: should be wrapped
+    assert '<![CDATA[Has <a href="test">link</a>]]>' in result
+    # Third description: should remain as-is
+    assert "<![CDATA[Already has <b>CDATA</b>]]>" in result
+    # Should have exactly 2 CDATA sections (one already existed, one added)
+    assert result.count("<![CDATA[") == 2

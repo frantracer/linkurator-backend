@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<rss version="2.0">
+    <channel>
+        <title>Test</title>
+        <item>
+            <description>This is plain text without HTML</description>
+        </item>
+    </channel>
+</rss>
