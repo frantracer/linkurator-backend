@@ -159,6 +159,7 @@ async def test_get_subscription_items_filters_by_date() -> None:
             raw_data="",
         ),
     ]
+    rss_client_mock.get_feed_items_with_thumbnails.side_effect = lambda rss_items: rss_items
 
     service = RssSubscriptionService(
         subscription_repository=sub_repo,

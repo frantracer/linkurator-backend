@@ -6,7 +6,7 @@ import pytest
 
 from linkurator_core.domain.common.exceptions import InvalidRssFeedError
 from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient, HttpResponse
-from linkurator_core.infrastructure.rss.rss_feed_client import RssFeedClient
+from linkurator_core.infrastructure.rss.rss_feed_client import OpenGraphImageParser, RssFeedClient
 
 
 @pytest.fixture()
@@ -301,3 +301,31 @@ def test_wrap_descriptions_in_cdata_does_not_double_wrap(
     assert "<![CDATA[Already has <b>CDATA</b>]]>" in result
     # Should have exactly 2 CDATA sections (one already existed, one added)
     assert result.count("<![CDATA[") == 2
+
+
+def test_opengraph_parser_extracts_og_image() -> None:
+    """Test that OpenGraphImageParser extracts og:image from HTML."""
+    html = '<html><head><meta property="og:image" content="https://example.com/item1-og.jpg"></head></html>'
+
+    parser = OpenGraphImageParser()
+    parser.feed(html)
+    assert parser.og_image == "https://example.com/item1-og.jpg"
+
+
+@pytest.mark.asyncio()
+async def test_get_feed_items_keeps_default_thumbnail_when_opengraph_fails(vandal_xml: str) -> None:
+    """Test that items keep default thumbnail when OpenGraph fetch fails."""
+    http_client_mock = AsyncMock(spec=AsyncHttpClient)
+    http_client_mock.get.side_effect = [
+        HttpResponse(status=200, text=vandal_xml),  # First call: RSS feed
+        HttpResponse(status=404, text=""),  # Second call: Failed fetch
+        HttpResponse(status=200, text="<html><head></head></html>"),  # Third call: No og:image
+    ]
+
+    client = RssFeedClient(http_client=http_client_mock)
+    items = await client.get_feed_items("https://example.com/feed.xml")
+
+    assert len(items) == 2
+    # Both items should keep default thumbnail
+    assert items[0].thumbnail == "https://upload.wikimedia.org/wikipedia/en/4/43/Feed-icon.svg"
+    assert items[1].thumbnail == "https://upload.wikimedia.org/wikipedia/en/4/43/Feed-icon.svg"

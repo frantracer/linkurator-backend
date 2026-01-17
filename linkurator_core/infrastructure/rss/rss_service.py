@@ -109,23 +109,26 @@ class RssSubscriptionService(SubscriptionService):
             return []
 
         try:
-            rss_items = await self.rss_feed_client.get_feed_items(feed_url)
+            rss_items = [rss_item for rss_item
+                         in await self.rss_feed_client.get_feed_items(feed_url)
+                         if rss_item.published > from_date]
+
+            rss_items = await self.rss_feed_client.get_feed_items_with_thumbnails(rss_items)
 
             # Filter items published after from_date and convert to domain Items
             items: list[Item] = []
             raw_data_records: list[RawDataRecord] = []
             for rss_item in rss_items:
-                if rss_item.published > from_date:
-                    item = _map_rss_feed_item_to_item(rss_item, sub_id)
-                    items.append(item)
+                item = _map_rss_feed_item_to_item(rss_item, sub_id)
+                items.append(item)
 
-                    # Store raw RSS data in repository
-                    raw_data_record = RawDataRecord(
-                        rss_url=feed_url,
-                        item_url=rss_item.link,
-                        raw_data=rss_item.raw_data,
-                    )
-                    raw_data_records.append(raw_data_record)
+                # Store raw RSS data in repository
+                raw_data_record = RawDataRecord(
+                    rss_url=feed_url,
+                    item_url=rss_item.link,
+                    raw_data=rss_item.raw_data,
+                )
+                raw_data_records.append(raw_data_record)
 
             await self.rss_data_repository.set_raw_data(raw_data_records)
 

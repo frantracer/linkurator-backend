@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import copy
 import logging
 import re
@@ -7,6 +8,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+from html.parser import HTMLParser
 from urllib.parse import urljoin
 
 from linkurator_core.domain.common.exceptions import InvalidRssFeedError
@@ -34,6 +36,23 @@ class RssFeedInfo:
     language: str
 
 
+class OpenGraphImageParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.og_image: str | None = None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() != "meta":
+            return
+
+        attrs_dict = {k.lower(): v for k, v in attrs}
+        property_value = attrs_dict.get("property", "")
+        if property_value and property_value.lower() == "og:image":
+            content = attrs_dict.get("content")
+            if content and content.strip():
+                self.og_image = content.strip()
+
+
 class RssFeedClient:
     def __init__(self, http_client: AsyncHttpClient = AsyncHttpClient()) -> None:
         self.http_client = http_client
@@ -57,6 +76,29 @@ class RssFeedClient:
                 feed_info.thumbnail = favicon_url
 
         return feed_info
+
+    async def _get_opengraph_image(self, url: str) -> str | None:
+        """Try to extract og:image from the HTML page at the given URL."""
+        try:
+            response = await self.http_client.get(url)
+            if response.status != 200:
+                return None
+
+            return self._parse_opengraph_image(response.text)
+        except Exception as e:
+            logging.exception("Failed to fetch OpenGraph image from %s: %s", url, e)
+            return None
+
+    def _parse_opengraph_image(self, html: str) -> str | None:
+        """Parse og:image from HTML content using proper HTML parsing."""
+        parser = OpenGraphImageParser()
+        try:
+            parser.feed(html)
+        except Exception as e:
+            logging.debug("Failed to parse HTML for OpenGraph image: %s", e)
+            return None
+
+        return parser.og_image
 
     def parse_feed_info(self, xml_string: str) -> RssFeedInfo:
         """
@@ -106,6 +148,31 @@ class RssFeedClient:
             raise InvalidRssFeedError(msg)
 
         return self.parse_feed_items(response.text)
+
+    async def get_feed_items_with_thumbnails(self, items: list[RssFeedItem]) -> list[RssFeedItem]:
+        # Find items with default thumbnails and try to get OpenGraph images
+        items = copy.deepcopy(items)
+        items_needing_thumbnail = [(i, item) for i, item in enumerate(items) if item.thumbnail == DEFAULT_FEED_ICON]
+
+        if items_needing_thumbnail:
+            # Fetch OpenGraph images in parallel
+            og_results = await asyncio.gather(
+                *[self._get_opengraph_image(item.link) for _, item in items_needing_thumbnail],
+            )
+
+            # Update items with OpenGraph thumbnails
+            for (idx, item), og_image in zip(items_needing_thumbnail, og_results):
+                if og_image is not None:
+                    items[idx] = RssFeedItem(
+                        title=item.title,
+                        link=item.link,
+                        description=item.description,
+                        published=item.published,
+                        thumbnail=og_image,
+                        raw_data=item.raw_data,
+                    )
+
+        return items
 
     def parse_feed_items(self, xml_string: str) -> list[RssFeedItem]:
         """
