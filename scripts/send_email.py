@@ -48,9 +48,9 @@ async def main() -> None:
 
     settings = ApplicationSettings.from_file()
     google_client_secrets = settings.google
-    env_settings = settings.env
+    secrets_settings = settings.secrets
     google_account_service = GoogleDomainAccountService(
-        email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        email=secrets_settings.google_service_account_email,
         service_credentials_path=google_client_secrets.email_service_credentials_path)
     email_sender = GmailEmailSender(account_service=google_account_service)
 

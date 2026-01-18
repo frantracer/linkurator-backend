@@ -87,7 +87,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     google_secrets = settings.google
     spotify_secrets = settings.spotify
     rabbitmq_settings = settings.rabbitmq
-    env_settings = settings.env
+    secrets_settings = settings.secrets
 
     # Repositories
     user_repository = MongoDBUserRepository(
@@ -151,7 +151,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         subscription_repository=subscription_repository,
     )
 
-    http_client = AsyncHttpClient(contact_email=settings.env.GOOGLE_SERVICE_ACCOUNT_EMAIL)
+    http_client = AsyncHttpClient(contact_email=settings.secrets.google_service_account_email)
     rss_client = RssFeedClient(http_client=http_client)
 
     rss_service = RssSubscriptionService(
@@ -169,7 +169,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
 
     google_domain_service = GoogleDomainAccountService(
         service_credentials_path=google_secrets.email_service_credentials_path,
-        email=env_settings.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        email=secrets_settings.google_service_account_email,
     )
     gmail_email_sender = GmailEmailSender(account_service=google_domain_service)
 
@@ -227,7 +227,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     send_welcome_email = SendWelcomeEmail(
         user_repository=user_repository,
         email_sender=gmail_email_sender,
-        base_url=env_settings.WEBSITE_URL,
+        base_url=secrets_settings.website_url,
     )
     process_user_query_handler = ProcessUserQueryHandler(
         chat_repository=chat_repository,

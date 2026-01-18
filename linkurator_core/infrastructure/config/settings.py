@@ -2,12 +2,12 @@ from pydantic import BaseModel
 
 from linkurator_core.infrastructure.config.ai_agent import AIAgentSettings
 from linkurator_core.infrastructure.config.api import ApiSettings
-from linkurator_core.infrastructure.config.env_settings import EnvSettings
 from linkurator_core.infrastructure.config.google import GoogleSettings
 from linkurator_core.infrastructure.config.log import LogSettings
 from linkurator_core.infrastructure.config.mongodb import MongoDBSettings
 from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.config.secrets import GoogleClientSecrets, SpotifyClientSecrets
+from linkurator_core.infrastructure.config.secrets_settings import SecretsSettings
 
 DEFAULT_CONFIG_FILENAME = ".config.ini"
 
@@ -17,7 +17,7 @@ class ApplicationSettings(BaseModel):
     Settings for the application.
     """
 
-    env: EnvSettings
+    secrets: SecretsSettings
     api: ApiSettings
     ai_agent: AIAgentSettings
     google: GoogleClientSecrets
@@ -30,7 +30,7 @@ class ApplicationSettings(BaseModel):
     @classmethod
     def from_file(cls, file_path: str = DEFAULT_CONFIG_FILENAME) -> "ApplicationSettings":
         return cls(
-            env=EnvSettings(),
+            secrets=SecretsSettings.from_file(file_path),
             api=ApiSettings.from_file(file_path),
             ai_agent=AIAgentSettings.from_file(file_path),
             google=GoogleClientSecrets.from_file(),

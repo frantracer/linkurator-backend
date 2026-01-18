@@ -101,12 +101,12 @@ from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscr
 def app_handlers() -> Handlers:
     settings = ApplicationSettings.from_file()
 
-    spotify_secrets = SpotifyClientSecrets.from_file(settings.env.SPOTIFY_SECRET_PATH)
-    google_secrets = GoogleClientSecrets.from_file(settings.env.GOOGLE_SECRET_PATH)
+    spotify_secrets = SpotifyClientSecrets.from_file(settings.secrets.spotify_secret_path)
+    google_secrets = GoogleClientSecrets.from_file(settings.secrets.google_secret_path)
     account_service = GoogleAccountService(
         client_id=google_secrets.client_id,
         client_secret=google_secrets.client_secret)
-    google_secrets_youtube = GoogleClientSecrets.from_file(settings.env.GOOGLE_YOUTUBE_SECRET_PATH)
+    google_secrets_youtube = GoogleClientSecrets.from_file(settings.secrets.google_youtube_secret_path)
     youtube_account_service = GoogleAccountService(
         client_id=google_secrets_youtube.client_id,
         client_secret=google_secrets_youtube.client_secret,
@@ -150,7 +150,7 @@ def app_handlers() -> Handlers:
         username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
 
-    http_client = AsyncHttpClient(contact_email=settings.env.GOOGLE_SERVICE_ACCOUNT_EMAIL)
+    http_client = AsyncHttpClient(contact_email=settings.secrets.google_service_account_email)
     rss_feed_client = RssFeedClient(http_client=http_client)
 
     youtube_service = YoutubeService(
@@ -199,12 +199,12 @@ def app_handlers() -> Handlers:
 
     google_domain_service = GoogleDomainAccountService(
         service_credentials_path=google_secrets.email_service_credentials_path,
-        email=settings.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        email=settings.secrets.google_service_account_email,
     )
     email_sender = GmailEmailSender(account_service=google_domain_service)
 
-    RegistrationRequest.valid_domains = settings.env.VALID_DOMAINS
-    PasswordChangeRequest.valid_domains = settings.env.VALID_DOMAINS
+    RegistrationRequest.valid_domains = settings.secrets.valid_domains
+    PasswordChangeRequest.valid_domains = settings.secrets.valid_domains
 
     return Handlers(
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
