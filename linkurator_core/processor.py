@@ -131,7 +131,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         subscription_repository=subscription_repository,
         item_repository=item_repository,
         credentials_repository=credentials_repository,
-        api_keys=google_secrets.api_keys,
+        api_keys=settings.google_ai.youtube_api_keys,
         youtube_client=youtube_client,
         youtube_rss_client=youtube_rss_client,
     )
@@ -180,11 +180,11 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         item_repository=item_repository,
         subscription_repository=subscription_repository,
         base_url=settings.ai_agent.base_url,
-        google_api_key=settings.google_ai.api_key,
+        google_api_key=settings.google_ai.gemini_api_key,
     )
 
     subscription_summarizer_service = SubscriptionSummarizerService(
-        google_api_key=settings.google_ai.api_key,
+        google_api_key=settings.google_ai.gemini_api_key,
     )
 
     # Event bus

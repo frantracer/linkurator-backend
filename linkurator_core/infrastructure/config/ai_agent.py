@@ -1,5 +1,6 @@
-import configparser
+import json
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -13,9 +14,9 @@ class AIAgentSettings(BaseModel):
             msg = f"Configuration file not found at {config_file_path}"
             raise FileNotFoundError(msg)
 
-        config = configparser.ConfigParser()
-        config.read(config_file_path)
+        with open(config_file_path, encoding="utf-8") as f:
+            config: dict[str, Any] = json.load(f)
 
         return cls(
-            base_url=config["AIAGENT"]["base_url"],
+            base_url=config["ai_agent"]["base_url"],
         )

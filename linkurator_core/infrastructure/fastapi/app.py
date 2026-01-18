@@ -160,7 +160,7 @@ def app_handlers() -> Handlers:
         credentials_repository=credentials_repository,
         youtube_client=YoutubeApiClient(),
         youtube_rss_client=YoutubeRssClient(),
-        api_keys=google_secrets.api_keys,
+        api_keys=settings.google_ai.youtube_api_keys,
     )
 
     spotify_client = SpotifyApiClient(

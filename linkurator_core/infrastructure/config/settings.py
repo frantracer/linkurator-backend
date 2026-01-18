@@ -9,7 +9,7 @@ from linkurator_core.infrastructure.config.rabbitmq import RabbitMQSettings
 from linkurator_core.infrastructure.config.secrets import GoogleClientSecrets, SpotifyClientSecrets
 from linkurator_core.infrastructure.config.secrets_settings import SecretsSettings
 
-DEFAULT_CONFIG_FILENAME = ".config.ini"
+DEFAULT_CONFIG_FILENAME = ".config.json"
 
 
 class ApplicationSettings(BaseModel):

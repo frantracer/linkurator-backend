@@ -1,5 +1,6 @@
-import configparser
+import json
 from pathlib import Path
+from typing import Any
 
 from pydantic import AnyUrl, BaseModel
 
@@ -18,14 +19,18 @@ class SecretsSettings(BaseModel):
             msg = f"Configuration file not found at {config_file_path}"
             raise FileNotFoundError(msg)
 
-        config = configparser.ConfigParser()
-        config.read(config_file_path)
+        with open(config_file_path, encoding="utf-8") as f:
+            config: dict[str, Any] = json.load(f)
+
+        secrets = config["secrets"]
+        website = config["website"]
+        google = config["google"]
 
         return cls(
-            google_secret_path=config["SECRETS"]["google_secret_path"],
-            google_youtube_secret_path=config["SECRETS"]["google_youtube_secret_path"],
-            spotify_secret_path=config["SECRETS"]["spotify_secret_path"],
-            website_url=AnyUrl(config["WEBSITE"]["host"]),
-            valid_domains=config["WEBSITE"]["valid_domains"].split(","),
-            google_service_account_email=config["GOOGLE"]["service_account_email"],
+            google_secret_path=secrets["google_secret_path"],
+            google_youtube_secret_path=secrets["google_youtube_secret_path"],
+            spotify_secret_path=secrets["spotify_secret_path"],
+            website_url=AnyUrl(website["host"]),
+            valid_domains=website["valid_domains"],
+            google_service_account_email=google["service_account_email"],
         )

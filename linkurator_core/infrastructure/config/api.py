@@ -1,5 +1,6 @@
-import configparser
+import json
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -18,14 +19,15 @@ class ApiSettings(BaseModel):
             msg = f"Configuration file not found at {config_file_path}"
             raise FileNotFoundError(msg)
 
-        config = configparser.ConfigParser()
-        config.read(config_file_path)
+        with open(config_file_path, encoding="utf-8") as f:
+            config: dict[str, Any] = json.load(f)
 
+        api = config["api"]
         return cls(
-            host=config["API"]["host"],
-            port=config.getint("API", "port"),
-            workers=config.getint("API", "workers"),
-            debug=config.getboolean("API", "debug"),
-            reload=config.getboolean("API", "reload"),
-            with_gunicorn=config.getboolean("API", "with_gunicorn"),
+            host=api["host"],
+            port=api["port"],
+            workers=api["workers"],
+            debug=api["debug"],
+            reload=api["reload"],
+            with_gunicorn=api["with_gunicorn"],
         )

@@ -64,8 +64,7 @@ encrypt-secrets: check-password
 	rm -rf config/*.enc
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/client_secret.json config/client_secret.json.enc
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/client_secret_youtube.json config/client_secret_youtube.json.enc
-	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/app_config_production.ini config/app_config_production.ini.enc
-	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/google_api_key.txt config/google_api_key.txt.enc
+	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/app_config_production.json config/app_config_production.json.enc
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/domain_service_credentials.json config/domain_service_credentials.json.enc
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/spotify_credentials.json config/spotify_credentials.json.enc
 
@@ -73,8 +72,7 @@ decrypt-secrets: check-password
 	mkdir -p secrets
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/client_secret.json.enc secrets/client_secret.json
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/client_secret_youtube.json.enc secrets/client_secret_youtube.json
-	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/app_config_production.ini.enc secrets/app_config_production.ini
-	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/google_api_key.txt.enc secrets/google_api_key.txt
+	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/app_config_production.json.enc secrets/app_config_production.json
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/domain_service_credentials.json.enc secrets/domain_service_credentials.json
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/spotify_credentials.json.enc secrets/spotify_credentials.json
 
@@ -89,14 +87,14 @@ link-config:
 	fi
 
 link-dev-config: decrypt-secrets
-	if [ ! -f .config.ini ] ; then \
-		rm -f .config.ini; \
-		cp config/app_config_develop.ini .config.ini; \
+	if [ ! -f .config.json ] ; then \
+		rm -f .config.json; \
+		cp config/app_config_develop.json .config.json; \
 	fi
 
 link-prod-config: decrypt-secrets
-	rm -f .config.ini
-	cp secrets/app_config_production.ini .config.ini
+	rm -f .config.json
+	cp secrets/app_config_production.json .config.json
 
 ####################
 # Test

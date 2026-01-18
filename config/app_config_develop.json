@@ -1,0 +1,48 @@
+{
+  "api": {
+    "host": "127.0.0.1",
+    "port": 9000,
+    "workers": 1,
+    "debug": true,
+    "reload": true,
+    "with_gunicorn": false
+  },
+  "mongodb": {
+    "ip_address": "127.0.0.1",
+    "port": 27017,
+    "database": "main",
+    "user": "develop",
+    "password": "develop"
+  },
+  "rabbitmq": {
+    "ip_address": "127.0.0.1",
+    "port": 5672,
+    "user": "develop",
+    "password": "develop"
+  },
+  "logging": {
+    "level": "INFO"
+  },
+  "logfire": {
+    "enabled": false,
+    "token": "",
+    "environment": "dev"
+  },
+  "secrets": {
+    "google_secret_path": "secrets/client_secret.json",
+    "google_youtube_secret_path": "secrets/client_secret_youtube.json",
+    "spotify_secret_path": "secrets/spotify_credentials.json"
+  },
+  "google": {
+    "gemini_api_key": "",
+    "youtube_api_keys": [],
+    "service_account_email": ""
+  },
+  "ai_agent": {
+    "base_url": "http://localhost:9000"
+  },
+  "website": {
+    "host": "http://localhost:9000/docs",
+    "valid_domains": ["localhost"]
+  }
+}

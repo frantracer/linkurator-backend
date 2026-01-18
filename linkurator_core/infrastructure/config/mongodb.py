@@ -1,6 +1,7 @@
-import configparser
+import json
 from ipaddress import IPv4Address
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -18,13 +19,14 @@ class MongoDBSettings(BaseModel):
             msg = f"Configuration file not found at {config_file_path}"
             raise FileNotFoundError(msg)
 
-        config = configparser.ConfigParser()
-        config.read(config_file_path)
+        with open(config_file_path, encoding="utf-8") as f:
+            config: dict[str, Any] = json.load(f)
 
+        mongodb = config["mongodb"]
         return MongoDBSettings(
-            address=IPv4Address(config["MONGODB"]["ip_address"]),
-            port=int(config["MONGODB"]["port"]),
-            db_name=config["MONGODB"]["database"],
-            user=config["MONGODB"]["user"],
-            password=config["MONGODB"]["password"],
+            address=IPv4Address(mongodb["ip_address"]),
+            port=mongodb["port"],
+            db_name=mongodb["database"],
+            user=mongodb["user"],
+            password=mongodb["password"],
         )

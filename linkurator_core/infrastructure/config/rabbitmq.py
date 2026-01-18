@@ -1,6 +1,7 @@
-import configparser
+import json
 from ipaddress import IPv4Address
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -17,12 +18,13 @@ class RabbitMQSettings(BaseModel):
             msg = f"Configuration file not found at {config_file_path}"
             raise FileNotFoundError(msg)
 
-        config = configparser.ConfigParser()
-        config.read(config_file_path)
+        with open(config_file_path, encoding="utf-8") as f:
+            config: dict[str, Any] = json.load(f)
 
+        rabbitmq = config["rabbitmq"]
         return RabbitMQSettings(
-            address=IPv4Address(config["RABBITMQ"]["ip_address"]),
-            port=int(config["RABBITMQ"]["port"]),
-            user=config["RABBITMQ"]["user"],
-            password=config["RABBITMQ"]["password"],
+            address=IPv4Address(rabbitmq["ip_address"]),
+            port=rabbitmq["port"],
+            user=rabbitmq["user"],
+            password=rabbitmq["password"],
         )

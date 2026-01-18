@@ -1,11 +1,13 @@
-import configparser
+import json
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel
 
 
 class GoogleSettings(BaseModel):
-    api_key: str
+    gemini_api_key: str
+    youtube_api_keys: list[str]
 
     @classmethod
     def from_file(cls, config_file_path: str) -> "GoogleSettings":
@@ -13,9 +15,11 @@ class GoogleSettings(BaseModel):
             msg = f"Configuration file not found at {config_file_path}"
             raise FileNotFoundError(msg)
 
-        config = configparser.ConfigParser()
-        config.read(config_file_path)
+        with open(config_file_path, encoding="utf-8") as f:
+            config: dict[str, Any] = json.load(f)
 
+        google = config["google"]
         return cls(
-            api_key=config["GOOGLE"]["api_key"],
+            gemini_api_key=google["gemini_api_key"],
+            youtube_api_keys=google["youtube_api_keys"],
         )

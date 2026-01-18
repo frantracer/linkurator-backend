@@ -15,11 +15,11 @@ async def main() -> None:
     playlist_id = parsed_args.playlist_id
     from_date = parsed_args.from_date
 
-    secrets = ApplicationSettings.from_file().google
+    settings = ApplicationSettings.from_file()
 
     client = YoutubeApiClient()
     videos = await client.get_youtube_videos_from_playlist(
-        api_key=secrets.api_keys[0],
+        api_key=settings.google_ai.youtube_api_keys[0],
         playlist_id=playlist_id,
         from_date=from_date)
 

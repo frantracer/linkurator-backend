@@ -17,7 +17,7 @@ async def main() -> None:
     configure_logging(settings.log)
 
     # Get API key from environment or use a placeholder
-    api_key = settings.google_ai.api_key
+    api_key = settings.google_ai.gemini_api_key
 
     # Create test subscriptions
     test_subscriptions = [
