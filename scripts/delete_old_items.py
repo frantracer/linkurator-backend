@@ -21,15 +21,15 @@ async def main() -> None:
 
     db_settings = ApplicationSettings.from_file().mongodb
     item_repository = MongoDBItemRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
 
     subscription_repository = MongoDBSubscriptionRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
 
     user_repository = MongoDBUserRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
 
     delete_subscription_items = DeleteSubscriptionItemsHandler(

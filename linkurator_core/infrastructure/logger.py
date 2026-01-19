@@ -2,7 +2,7 @@ import logging
 
 import logfire
 
-from linkurator_core.infrastructure.config.log import LogSettings
+from linkurator_core.infrastructure.config.settings import LogSettings
 
 
 def configure_logging(
@@ -16,11 +16,11 @@ def configure_logging(
         level=logging.getLevelNamesMapping()[settings.level.upper()],
         datefmt="%Y-%m-%d %H:%M:%S")
 
-    if settings.logfire_enabled:
+    if settings.logfire.enabled:
         logfire.configure(
-            token=settings.logfire_token,
+            token=settings.logfire.token,
             scrubbing=False,
-            environment=settings.logfire_environment,
+            environment=settings.logfire.environment,
             service_name="linkurator",
         )
 

@@ -112,37 +112,37 @@ def app_handlers() -> Handlers:
 
     db_settings = settings.mongodb
     user_repository = MongoDBUserRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     session_repository = MongoDBSessionRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     subscription_repository = MongoDBSubscriptionRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     item_repository = MongoDBItemRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     topic_repository = MongoDBTopicRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     credentials_repository = MongodDBExternalCredentialRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     registration_request_repository = MongoDBRegistrationRequestRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     password_change_request_repository = MongoDBPasswordChangeRequestRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     chat_repository = MongoDBChatRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     user_filter_repository = MongoDBUserFilterRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     rss_data_repository = MongoDBRssDataRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
 
@@ -190,7 +190,7 @@ def app_handlers() -> Handlers:
     )
 
     rabbitmq_settings = settings.rabbitmq
-    event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,
+    event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.ip_address), port=rabbitmq_settings.port,
                                  username=rabbitmq_settings.user, password=rabbitmq_settings.password)
 
     google_domain_service = GoogleDomainAccountService(
@@ -345,6 +345,6 @@ def app_handlers() -> Handlers:
 
 
 def create_app() -> FastAPI:
-    configure_logging(ApplicationSettings.from_file().log)
+    configure_logging(ApplicationSettings.from_file().logging)
 
     return create_app_from_handlers(app_handlers())

@@ -18,24 +18,24 @@ async def main() -> None:
     settings = ApplicationSettings.from_file()
     db_settings = settings.mongodb
 
-    logfire.configure(token=settings.log.logfire_token, scrubbing=False)
+    logfire.configure(token=settings.logging.logfire.token, scrubbing=False)
 
     # Repositories
     user_repository = InMemoryUserRepository()
     subscription_repository = MongoDBSubscriptionRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
     item_repository = MongoDBItemRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
     topic_repository = MongoDBTopicRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
     chat_repository = MongoDBChatRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
 

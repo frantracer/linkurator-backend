@@ -14,7 +14,7 @@ async def main() -> None:
     """Test the subscription summarizer agent with mock data."""
     settings = ApplicationSettings.from_file()
 
-    configure_logging(settings.log)
+    configure_logging(settings.logging)
 
     # Get API key from environment or use a placeholder
     api_key = settings.google.gemini_api_key

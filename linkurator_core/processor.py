@@ -89,35 +89,35 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
 
     # Repositories
     user_repository = MongoDBUserRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
     subscription_repository = MongoDBSubscriptionRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
     topic_repository = MongoDBTopicRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
     item_repository = MongoDBItemRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
     credentials_repository = MongodDBExternalCredentialRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
     registration_request_repository = MongoDBRegistrationRequestRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
     chat_repository = MongoDBChatRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
     rss_data_repository = MongoDBRssDataRepository(
-        ip=db_settings.address, port=db_settings.port, db_name=db_settings.db_name,
+        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
 
@@ -186,7 +186,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     )
 
     # Event bus
-    event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.address), port=rabbitmq_settings.port,
+    event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.ip_address), port=rabbitmq_settings.port,
                                  username=rabbitmq_settings.user, password=rabbitmq_settings.password)
 
     # Event handlers
@@ -225,7 +225,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     send_welcome_email = SendWelcomeEmail(
         user_repository=user_repository,
         email_sender=gmail_email_sender,
-        base_url=settings.website.website_url,
+        base_url=settings.website.host,
     )
     process_user_query_handler = ProcessUserQueryHandler(
         chat_repository=chat_repository,
@@ -280,7 +280,7 @@ async def main() -> None:
     """Main entry point that handles auto-reload functionality."""
     settings = ApplicationSettings.from_file()
 
-    configure_logging(settings.log)
+    configure_logging(settings.logging)
 
     if settings.api.reload:
         logging.info("Auto-reload enabled. Watching for file changes...")

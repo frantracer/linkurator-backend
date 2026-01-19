@@ -13,7 +13,7 @@ async def main() -> None:
 
     # Migrations
     run_mongodb_migrations(
-        app_settings.mongodb.address, app_settings.mongodb.port, app_settings.mongodb.db_name,
+        app_settings.mongodb.ip_address, app_settings.mongodb.port, app_settings.mongodb.database,
         app_settings.mongodb.user, app_settings.mongodb.password)
 
     # API

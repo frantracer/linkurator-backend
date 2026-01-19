@@ -21,12 +21,12 @@
     "password": "develop"
   },
   "logging": {
-    "level": "INFO"
-  },
-  "logfire": {
-    "enabled": false,
-    "token": "",
-    "environment": "dev"
+    "level": "INFO",
+    "logfire": {
+      "enabled": false,
+      "token": "",
+      "environment": "dev"
+    }
   },
   "google": {
     "gemini_api_key": "",
@@ -71,6 +71,8 @@
   },
   "website": {
     "host": "http://localhost:9000/docs",
-    "valid_domains": ["localhost"]
+    "valid_domains": [
+      "localhost"
+    ]
   }
 }
