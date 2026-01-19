@@ -28,15 +28,43 @@
     "token": "",
     "environment": "dev"
   },
-  "secrets": {
-    "google_secret_path": "secrets/client_secret.json",
-    "google_youtube_secret_path": "secrets/client_secret_youtube.json",
-    "spotify_secret_path": "secrets/spotify_credentials.json"
-  },
   "google": {
     "gemini_api_key": "",
     "youtube_api_keys": [],
+    "oauth": {
+      "web": {
+        "client_id": "",
+        "project_id": "",
+        "auth_uri": "",
+        "token_uri": "",
+        "auth_provider_x509_cert_url": "",
+        "client_secret": "",
+        "redirect_uris": [],
+        "javascript_origins": []
+      }
+    },
+    "email_service_credentials": {
+      "type": "",
+      "project_id": "",
+      "private_key_id": "",
+      "private_key": "",
+      "client_email": "",
+      "client_id": "",
+      "auth_uri": "",
+      "token_uri": "",
+      "auth_provider_x509_cert_url": "",
+      "client_x509_cert_url": "",
+      "universe_domain": ""
+    },
     "service_account_email": ""
+  },
+  "spotify": {
+    "credentials": [
+      {
+        "client_id": "",
+        "client_secret": ""
+      }
+    ]
   },
   "ai_agent": {
     "base_url": "http://localhost:9000"

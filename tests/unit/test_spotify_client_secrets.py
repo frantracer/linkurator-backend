@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from linkurator_core.infrastructure.config.secrets import SpotifyClientSecrets
+from linkurator_core.infrastructure.config.spotify import SpotifyClientSecrets
 
 
 def test_spotify_client_secrets_from_file() -> None:

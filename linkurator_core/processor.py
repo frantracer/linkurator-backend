@@ -84,10 +84,8 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     # Read settings
     settings = ApplicationSettings.from_file()
     db_settings = settings.mongodb
-    google_secrets = settings.google
     spotify_secrets = settings.spotify
     rabbitmq_settings = settings.rabbitmq
-    secrets_settings = settings.secrets
 
     # Repositories
     user_repository = MongoDBUserRepository(
@@ -131,7 +129,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         subscription_repository=subscription_repository,
         item_repository=item_repository,
         credentials_repository=credentials_repository,
-        api_keys=settings.google_ai.youtube_api_keys,
+        api_keys=settings.google.youtube_api_keys,
         youtube_client=youtube_client,
         youtube_rss_client=youtube_rss_client,
     )
@@ -151,7 +149,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         subscription_repository=subscription_repository,
     )
 
-    http_client = AsyncHttpClient(contact_email=settings.secrets.google_service_account_email)
+    http_client = AsyncHttpClient(contact_email=settings.google.service_account_email)
     rss_client = RssFeedClient(http_client=http_client)
 
     rss_service = RssSubscriptionService(
@@ -168,8 +166,8 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     )
 
     google_domain_service = GoogleDomainAccountService(
-        service_credentials_path=google_secrets.email_service_credentials_path,
-        email=secrets_settings.google_service_account_email,
+        service_credentials=settings.google.email_service_credentials,
+        email=settings.google.service_account_email,
     )
     gmail_email_sender = GmailEmailSender(account_service=google_domain_service)
 
@@ -180,11 +178,11 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         item_repository=item_repository,
         subscription_repository=subscription_repository,
         base_url=settings.ai_agent.base_url,
-        google_api_key=settings.google_ai.gemini_api_key,
+        google_api_key=settings.google.gemini_api_key,
     )
 
     subscription_summarizer_service = SubscriptionSummarizerService(
-        google_api_key=settings.google_ai.gemini_api_key,
+        google_api_key=settings.google.gemini_api_key,
     )
 
     # Event bus
@@ -227,7 +225,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     send_welcome_email = SendWelcomeEmail(
         user_repository=user_repository,
         email_sender=gmail_email_sender,
-        base_url=secrets_settings.website_url,
+        base_url=settings.website.website_url,
     )
     process_user_query_handler = ProcessUserQueryHandler(
         chat_repository=chat_repository,

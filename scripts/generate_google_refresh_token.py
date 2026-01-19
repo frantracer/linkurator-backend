@@ -29,7 +29,7 @@ def parse_arguments() -> Arguments:
 def main() -> None:
     arguments = parse_arguments()
 
-    google_secrets = ApplicationSettings.from_file().google
+    google_secrets = ApplicationSettings.from_file().google.oauth.web
     google_account_service = GoogleAccountService(client_id=google_secrets.client_id,
                                                   client_secret=google_secrets.client_secret)
     redirect_uri = "http://localhost:9000/login_auth"

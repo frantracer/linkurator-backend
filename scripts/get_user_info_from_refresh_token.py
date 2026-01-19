@@ -12,7 +12,7 @@ def main() -> None:
 
     refresh_token = args.refresh_token
 
-    google_secrets = ApplicationSettings.from_file().google
+    google_secrets = ApplicationSettings.from_file().google.oauth.web
     google_account_service = GoogleAccountService(client_id=google_secrets.client_id,
                                                   client_secret=google_secrets.client_secret)
 

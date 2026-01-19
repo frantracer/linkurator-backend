@@ -62,19 +62,11 @@ check-password:
 
 encrypt-secrets: check-password
 	rm -rf config/*.enc
-	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/client_secret.json config/client_secret.json.enc
-	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/client_secret_youtube.json config/client_secret_youtube.json.enc
 	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/app_config_production.json config/app_config_production.json.enc
-	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/domain_service_credentials.json config/domain_service_credentials.json.enc
-	.venv/bin/python3 scripts/encrypt_decrypt.py encrypt secrets/spotify_credentials.json config/spotify_credentials.json.enc
 
 decrypt-secrets: check-password
 	mkdir -p secrets
-	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/client_secret.json.enc secrets/client_secret.json
-	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/client_secret_youtube.json.enc secrets/client_secret_youtube.json
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/app_config_production.json.enc secrets/app_config_production.json
-	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/domain_service_credentials.json.enc secrets/domain_service_credentials.json
-	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/spotify_credentials.json.enc secrets/spotify_credentials.json
 
 link-config:
 	@if [ "${LINKURATOR_ENVIRONMENT}" = "PRODUCTION" ]; then \

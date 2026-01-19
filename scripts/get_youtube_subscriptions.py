@@ -16,7 +16,7 @@ async def main() -> None:
 
     client = YoutubeApiClient()
 
-    secrets = ApplicationSettings.from_file().google
+    secrets = ApplicationSettings.from_file().google.oauth.web
 
     google_account_service = GoogleAccountService(client_id=secrets.client_id, client_secret=secrets.client_secret)
 

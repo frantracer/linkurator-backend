@@ -47,11 +47,9 @@ async def main() -> None:
     message_text = input_arguments.message_text + f"\n{uuid4()}"
 
     settings = ApplicationSettings.from_file()
-    google_client_secrets = settings.google
-    secrets_settings = settings.secrets
     google_account_service = GoogleDomainAccountService(
-        email=secrets_settings.google_service_account_email,
-        service_credentials_path=google_client_secrets.email_service_credentials_path)
+        email=settings.google.service_account_email,
+        service_credentials=settings.google.email_service_credentials)
     email_sender = GmailEmailSender(account_service=google_account_service)
 
     result = await email_sender.send_email(user_email, subject, message_text)

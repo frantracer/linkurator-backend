@@ -1,25 +1,39 @@
 import json
-from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel
+
+
+class GoogleWebCredentials(BaseModel):
+    client_id: str
+    project_id: str
+    auth_uri: str
+    token_uri: str
+    auth_provider_x509_cert_url: str
+    client_secret: str
+    redirect_uris: list[str]
+    javascript_origins: list[str]
+
+
+class GoogleOAuth(BaseModel):
+    web: GoogleWebCredentials
 
 
 class GoogleSettings(BaseModel):
     gemini_api_key: str
     youtube_api_keys: list[str]
+    oauth: GoogleOAuth
+    email_service_credentials: dict[str, str]
+    service_account_email: str
 
     @classmethod
     def from_file(cls, config_file_path: str) -> "GoogleSettings":
-        if not Path(config_file_path).exists():
-            msg = f"Configuration file not found at {config_file_path}"
-            raise FileNotFoundError(msg)
+        with open(config_file_path, encoding="UTF-8") as secrets_file:
+            secrets = json.loads(secrets_file.read())["google"]
 
-        with open(config_file_path, encoding="utf-8") as f:
-            config: dict[str, Any] = json.load(f)
-
-        google = config["google"]
         return cls(
-            gemini_api_key=google["gemini_api_key"],
-            youtube_api_keys=google["youtube_api_keys"],
+            gemini_api_key=secrets["gemini_api_key"],
+            youtube_api_keys=secrets["youtube_api_keys"],
+            oauth=GoogleOAuth(**secrets["oauth"]),
+            email_service_credentials=secrets["email_service_credentials"],
+            service_account_email=secrets["service_account_email"],
         )

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import http
-import json
-from pathlib import Path
 from urllib.parse import urlencode
 
 import google.auth.transport.requests
@@ -113,14 +111,13 @@ class GoogleAccountService(AccountService):
 
 
 class GoogleDomainAccountService:
-    def __init__(self, service_credentials_path: Path, email: str) -> None:
-        self.service_credentials_path = service_credentials_path
+    def __init__(self, service_credentials: dict[str, str], email: str) -> None:
+        self.service_credentials = service_credentials
         self.email = email
 
     def generate_access_token_from_service_credentials(self) -> str | None:
-        service_account_info = json.loads(self.service_credentials_path.read_text())
         credentials = Credentials.from_service_account_info(
-            service_account_info,
+            self.service_credentials,
             scopes=["https://www.googleapis.com/auth/gmail.send"],
         ).with_subject(self.email)
 

@@ -67,7 +67,6 @@ from linkurator_core.application.users.upsert_user_filter_handler import UpsertU
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
 from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
-from linkurator_core.infrastructure.config.secrets import GoogleClientSecrets, SpotifyClientSecrets
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_app_from_handlers
 from linkurator_core.infrastructure.general_subscription_service import GeneralSubscriptionService
@@ -101,15 +100,12 @@ from linkurator_core.infrastructure.spotify.spotify_service import SpotifySubscr
 def app_handlers() -> Handlers:
     settings = ApplicationSettings.from_file()
 
-    spotify_secrets = SpotifyClientSecrets.from_file(settings.secrets.spotify_secret_path)
-    google_secrets = GoogleClientSecrets.from_file(settings.secrets.google_secret_path)
     account_service = GoogleAccountService(
-        client_id=google_secrets.client_id,
-        client_secret=google_secrets.client_secret)
-    google_secrets_youtube = GoogleClientSecrets.from_file(settings.secrets.google_youtube_secret_path)
+        client_id=settings.google.oauth.web.client_id,
+        client_secret=settings.google.oauth.web.client_secret)
     youtube_account_service = GoogleAccountService(
-        client_id=google_secrets_youtube.client_id,
-        client_secret=google_secrets_youtube.client_secret,
+        client_id=settings.google.oauth.web.client_id,
+        client_secret=settings.google.oauth.web.client_secret,
     )
 
     logging.getLogger("pymongo").setLevel(logging.INFO)
@@ -150,7 +146,7 @@ def app_handlers() -> Handlers:
         username=db_settings.user, password=db_settings.password)
     credentials_checker = YoutubeApiKeyChecker()
 
-    http_client = AsyncHttpClient(contact_email=settings.secrets.google_service_account_email)
+    http_client = AsyncHttpClient(contact_email=settings.google.service_account_email)
     rss_feed_client = RssFeedClient(http_client=http_client)
 
     youtube_service = YoutubeService(
@@ -160,7 +156,7 @@ def app_handlers() -> Handlers:
         credentials_repository=credentials_repository,
         youtube_client=YoutubeApiClient(),
         youtube_rss_client=YoutubeRssClient(),
-        api_keys=settings.google_ai.youtube_api_keys,
+        api_keys=settings.google.youtube_api_keys,
     )
 
     spotify_client = SpotifyApiClient(
@@ -169,7 +165,7 @@ def app_handlers() -> Handlers:
                 client_id=cred.client_id,
                 client_secret=cred.client_secret,
             )
-            for cred in spotify_secrets.credentials
+            for cred in settings.spotify.credentials
         ],
     )
 
@@ -198,13 +194,13 @@ def app_handlers() -> Handlers:
                                  username=rabbitmq_settings.user, password=rabbitmq_settings.password)
 
     google_domain_service = GoogleDomainAccountService(
-        service_credentials_path=google_secrets.email_service_credentials_path,
-        email=settings.secrets.google_service_account_email,
+        service_credentials=settings.google.email_service_credentials,
+        email=settings.google.service_account_email,
     )
     email_sender = GmailEmailSender(account_service=google_domain_service)
 
-    RegistrationRequest.valid_domains = settings.secrets.valid_domains
-    PasswordChangeRequest.valid_domains = settings.secrets.valid_domains
+    RegistrationRequest.valid_domains = settings.website.valid_domains
+    PasswordChangeRequest.valid_domains = settings.website.valid_domains
 
     return Handlers(
         validate_token=ValidateTokenHandler(user_repository, session_repository, account_service),
