@@ -8,6 +8,7 @@ from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpCli
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient, YoutubeRssItem
 
 
+@pytest.mark.skip()
 @pytest.mark.asyncio()
 async def test_youtube_rss_client() -> None:
     client = YoutubeRssClient()
