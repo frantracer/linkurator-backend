@@ -184,9 +184,7 @@ def app_handlers() -> Handlers:
     )
 
     general_subscription_service = GeneralSubscriptionService(
-        spotify_service=spotify_service,
-        youtube_service=youtube_service,
-        rss_service=rss_service,
+        services=[spotify_service, youtube_service, rss_service],
     )
 
     rabbitmq_settings = settings.rabbitmq

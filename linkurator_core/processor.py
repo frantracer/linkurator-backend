@@ -160,9 +160,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     )
 
     general_subscription_service = GeneralSubscriptionService(
-        spotify_service=spotify_service,
-        youtube_service=youtube_service,
-        rss_service=rss_service,
+        services=[spotify_service, youtube_service, rss_service],
     )
 
     google_domain_service = GoogleDomainAccountService(
