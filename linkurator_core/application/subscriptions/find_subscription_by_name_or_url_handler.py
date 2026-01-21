@@ -8,15 +8,15 @@ from pydantic import AnyUrl, ValidationError
 from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.utils import parse_url
+from linkurator_core.domain.subscriptions.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
-from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 
 
 class FindSubscriptionsByNameOrUrlHandler:
     def __init__(self,
                  subscription_repository: SubscriptionRepository,
-                 subscription_service: SubscriptionService,
+                 subscription_service: GeneralSubscriptionService,
                  event_bus: EventBusService,
                  ) -> None:
         self.subscription_repository = subscription_repository

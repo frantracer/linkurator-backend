@@ -13,7 +13,7 @@ from linkurator_core.domain.subscriptions.subscription_service import Subscripti
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
 
 
-class GeneralSubscriptionService(SubscriptionService):
+class GeneralSubscriptionService:
     def __init__(self, services: list[SubscriptionService]) -> None:
         self.services = services
 

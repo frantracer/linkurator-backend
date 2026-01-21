@@ -6,18 +6,15 @@ from datetime import datetime, timezone
 
 from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
+from linkurator_core.domain.subscriptions.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
-from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 
 
 class UpdateSubscriptionItemsHandler:
-    subscription_service: SubscriptionService
-    subscription_repository: SubscriptionRepository
-    item_repository: ItemRepository
     subscriptions_being_updated: dict[uuid.UUID, datetime] = {}
 
     def __init__(self,
-                 subscription_service: SubscriptionService,
+                 subscription_service: GeneralSubscriptionService,
                  subscription_repository: SubscriptionRepository,
                  item_repository: ItemRepository,
     ) -> None:

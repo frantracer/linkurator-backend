@@ -36,13 +36,13 @@ from linkurator_core.domain.common.event import (
     UserRegisteredEvent,
     UserRegisterRequestSentEvent,
 )
+from linkurator_core.domain.subscriptions.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.infrastructure.ai_agents.main_query_agent import MainQueryAgent
 from linkurator_core.infrastructure.ai_agents.subscription_summarizer import SubscriptionSummarizerService
 from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
 from linkurator_core.infrastructure.asyncio_impl.utils import run_parallel, run_sequence, wait_until
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
-from linkurator_core.infrastructure.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.infrastructure.google.account_service import GoogleDomainAccountService
 from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient

@@ -4,11 +4,11 @@ import logging
 from uuid import UUID
 
 from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
+from linkurator_core.domain.subscriptions.general_subscription_service import GeneralSubscriptionService
 
 
 class RefreshItemsHandler:
-    def __init__(self, item_repository: ItemRepository, subscription_service: SubscriptionService) -> None:
+    def __init__(self, item_repository: ItemRepository, subscription_service: GeneralSubscriptionService) -> None:
         self.item_repository = item_repository
         self.subscription_service = subscription_service
 

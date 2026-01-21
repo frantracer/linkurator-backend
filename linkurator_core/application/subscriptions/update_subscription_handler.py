@@ -4,14 +4,14 @@ from linkurator_core.domain.common.event import SubscriptionNeedsSummarizationEv
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.types import DateGenerator
 from linkurator_core.domain.common.utils import datetime_now
+from linkurator_core.domain.subscriptions.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
-from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 
 
 class UpdateSubscriptionHandler:
     def __init__(self,
                  subscription_repository: SubscriptionRepository,
-                 subscription_service: SubscriptionService,
+                 subscription_service: GeneralSubscriptionService,
                  event_bus: EventBusService,
                  date_generator: DateGenerator = datetime_now,
                  ) -> None:
