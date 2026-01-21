@@ -26,7 +26,7 @@ from linkurator_core.application.subscriptions.find_subscriptions_with_outdated_
 from linkurator_core.application.subscriptions.summarize_subscription_handler import SummarizeSubscriptionHandler
 from linkurator_core.application.subscriptions.update_subscription_handler import UpdateSubscriptionHandler
 from linkurator_core.application.subscriptions.update_subscription_items_handler import UpdateSubscriptionItemsHandler
-from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
+from linkurator_core.application.users.update_user_subscriptions_handler import UpdateYoutubeUserSubscriptionsHandler
 from linkurator_core.domain.common.event import (
     ItemsBecameOutdatedEvent,
     NewChatQueryEvent,
@@ -188,8 +188,11 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
                                  username=rabbitmq_settings.user, password=rabbitmq_settings.password)
 
     # Event handlers
-    update_user_subscriptions = UpdateUserSubscriptionsHandler(
-        general_subscription_service, user_repository, subscription_repository, event_bus)
+    update_youtube_user_subscriptions = UpdateYoutubeUserSubscriptionsHandler(
+        youtube_subscription_service=youtube_service,
+        user_repository=user_repository,
+        subscription_repository=subscription_repository,
+        event_bus_service=event_bus)
     update_subscriptions_items = UpdateSubscriptionItemsHandler(
         subscription_repository=subscription_repository,
         item_repository=item_repository,
@@ -239,7 +242,7 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     )
 
     event_handler = EventHandler(
-        update_user_subscriptions_handler=update_user_subscriptions,
+        update_youtube_user_subscriptions_handler=update_youtube_user_subscriptions,
         update_subscription_items_handler=update_subscriptions_items,
         update_subscription_handler=update_subscription,
         refresh_items_handler=refresh_items_handler,

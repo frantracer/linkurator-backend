@@ -69,7 +69,7 @@ from linkurator_core.application.users.get_user_external_credentials import GetU
 from linkurator_core.application.users.get_user_filter_handler import GetUserFilterHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
-from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
+from linkurator_core.application.users.update_user_subscriptions_handler import UpdateYoutubeUserSubscriptionsHandler
 from linkurator_core.application.users.upsert_user_filter_handler import UpsertUserFilterHandler
 from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import (
@@ -136,7 +136,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_user_external_credentials_handler: GetUserExternalCredentialsHandler
     delete_external_credential_handler: DeleteExternalCredentialHandler
     get_platform_statistics: GetPlatformStatisticsHandler
-    update_user_subscriptions_handler: UpdateUserSubscriptionsHandler
+    update_youtube_user_subscriptions_handler: UpdateYoutubeUserSubscriptionsHandler
     query_agent_handler: QueryAgentHandler
     get_user_chats_handler: GetUserChatsHandler
     get_chat_handler: GetChatHandler
@@ -239,7 +239,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             get_subscription_items_handler=handlers.get_subscription_items_handler,
             delete_subscription_items_handler=handlers.delete_subscription_items_handler,
             refresh_subscription_handler=handlers.refresh_subscription_handler,
-            update_user_subscriptions_handler=handlers.update_user_subscriptions_handler,
+            update_user_subscriptions_handler=handlers.update_youtube_user_subscriptions_handler,
             get_followed_subscriptions_items_handler=handlers.get_followed_subscriptions_items_handler,
         ),
         prefix="/subscriptions")

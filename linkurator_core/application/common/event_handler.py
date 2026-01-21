@@ -12,7 +12,7 @@ from linkurator_core.application.subscriptions.update_subscription_items_handler
     UpdateSubscriptionItemsHandler,
 )
 from linkurator_core.application.users.update_user_subscriptions_handler import (
-    UpdateUserSubscriptionsHandler,
+    UpdateYoutubeUserSubscriptionsHandler,
 )
 from linkurator_core.domain.common.event import (
     Event,
@@ -28,7 +28,7 @@ from linkurator_core.domain.common.event import (
 
 @dataclass
 class EventHandler:
-    update_user_subscriptions_handler: UpdateUserSubscriptionsHandler
+    update_youtube_user_subscriptions_handler: UpdateYoutubeUserSubscriptionsHandler
     update_subscription_items_handler: UpdateSubscriptionItemsHandler
     update_subscription_handler: UpdateSubscriptionHandler
     refresh_items_handler: RefreshItemsHandler

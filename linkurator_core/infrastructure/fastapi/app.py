@@ -62,7 +62,7 @@ from linkurator_core.application.users.get_user_external_credentials import GetU
 from linkurator_core.application.users.get_user_filter_handler import GetUserFilterHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
-from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
+from linkurator_core.application.users.update_user_subscriptions_handler import UpdateYoutubeUserSubscriptionsHandler
 from linkurator_core.application.users.upsert_user_filter_handler import UpsertUserFilterHandler
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
@@ -319,8 +319,8 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             subscription_repository=subscription_repository,
             item_repository=item_repository),
-        update_user_subscriptions_handler=UpdateUserSubscriptionsHandler(
-            subscription_service=youtube_service,
+        update_youtube_user_subscriptions_handler=UpdateYoutubeUserSubscriptionsHandler(
+            youtube_subscription_service=youtube_service,
             user_repository=user_repository,
             subscription_repository=subscription_repository,
             event_bus_service=event_bus),

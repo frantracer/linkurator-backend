@@ -25,7 +25,7 @@ from linkurator_core.application.subscriptions.get_user_subscriptions_handler im
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.application.subscriptions.unfollow_subscription_handler import UnfollowSubscriptionHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
-from linkurator_core.application.users.update_user_subscriptions_handler import UpdateUserSubscriptionsHandler
+from linkurator_core.application.users.update_user_subscriptions_handler import UpdateYoutubeUserSubscriptionsHandler
 from linkurator_core.domain.common.exceptions import (
     SubscriptionAlreadyUpdatedError,
     SubscriptionNotFoundError,
@@ -60,7 +60,7 @@ def get_router(  # pylint: disable=too-many-statements
         get_subscription_items_handler: GetSubscriptionItemsHandler,
         delete_subscription_items_handler: DeleteSubscriptionItemsHandler,
         refresh_subscription_handler: RefreshSubscriptionHandler,
-        update_user_subscriptions_handler: UpdateUserSubscriptionsHandler,
+        update_user_subscriptions_handler: UpdateYoutubeUserSubscriptionsHandler,
         get_followed_subscriptions_items_handler: GetFollowedSubscriptionsItemsHandler,
 ) -> APIRouter:
     router = APIRouter()

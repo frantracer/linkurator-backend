@@ -15,7 +15,7 @@ from linkurator_core.domain.common.event import (
 
 def dummy_event_handler() -> EventHandler:
     return EventHandler(
-        update_user_subscriptions_handler=AsyncMock(),
+        update_youtube_user_subscriptions_handler=AsyncMock(),
         update_subscription_items_handler=AsyncMock(),
         update_subscription_handler=AsyncMock(),
         refresh_items_handler=AsyncMock(),

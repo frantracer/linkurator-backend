@@ -10,13 +10,13 @@ from linkurator_core.domain.subscriptions.subscription_service import Subscripti
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
-class UpdateUserSubscriptionsHandler:
+class UpdateYoutubeUserSubscriptionsHandler:
     def __init__(self,
-                 subscription_service: SubscriptionService,
+                 youtube_subscription_service: SubscriptionService,
                  user_repository: UserRepository,
                  subscription_repository: SubscriptionRepository,
                  event_bus_service: EventBusService) -> None:
-        self.subscription_service = subscription_service
+        self.subscription_service = youtube_subscription_service
         self.subscription_repository = subscription_repository
         self.user_repository = user_repository
         self.event_bus_service = event_bus_service
