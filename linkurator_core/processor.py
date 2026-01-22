@@ -159,8 +159,9 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         rss_data_repository=rss_data_repository,
     )
 
+    subscription_providers = [spotify_service, youtube_service, rss_service]
     general_subscription_service = GeneralSubscriptionService(
-        services=[spotify_service, youtube_service, rss_service],
+        services=subscription_providers,
     )
 
     google_domain_service = GoogleDomainAccountService(
@@ -215,7 +216,9 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         event_bus=event_bus)
     find_deprecated_items = FindDeprecatedItemsHandler(
         item_repository=item_repository,
-        event_bus=event_bus)
+        event_bus=event_bus,
+        subscription_services=subscription_providers,
+    )
     find_zero_duration_items = FindZeroDurationItems(
         item_repository=item_repository,
         event_bus=event_bus)
