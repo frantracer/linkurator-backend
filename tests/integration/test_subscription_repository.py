@@ -105,6 +105,41 @@ async def test_find_subscriptions_scanned_before_a_date(subscription_repo: Subsc
 
 
 @pytest.mark.asyncio()
+async def test_find_subscriptions_scanned_before_a_date_filtered_by_provider(
+    subscription_repo: SubscriptionRepository,
+) -> None:
+    sub_youtube = mock_sub(
+        scanned_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        provider="youtube",
+    )
+    sub_spotify = mock_sub(
+        scanned_at=datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        provider="spotify",
+    )
+
+    await subscription_repo.add(sub_youtube)
+    await subscription_repo.add(sub_spotify)
+
+    youtube_subscriptions = await subscription_repo.find_latest_scan_before(
+        datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc), provider="youtube")
+    spotify_subscriptions = await subscription_repo.find_latest_scan_before(
+        datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc), provider="spotify")
+    all_subscriptions = await subscription_repo.find_latest_scan_before(
+        datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc))
+
+    youtube_uuids = {s.uuid for s in youtube_subscriptions}
+    spotify_uuids = {s.uuid for s in spotify_subscriptions}
+    all_uuids = {s.uuid for s in all_subscriptions}
+
+    assert sub_youtube.uuid in youtube_uuids
+    assert sub_spotify.uuid not in youtube_uuids
+    assert sub_spotify.uuid in spotify_uuids
+    assert sub_youtube.uuid not in spotify_uuids
+    assert sub_youtube.uuid in all_uuids
+    assert sub_spotify.uuid in all_uuids
+
+
+@pytest.mark.asyncio()
 async def test_find_subspcriptions_updated_before_a_date(subscription_repo: SubscriptionRepository) -> None:
     sub1 = mock_sub()
     sub1.updated_at = datetime(2022, 1, 2, 0, 0, 0, tzinfo=timezone.utc)

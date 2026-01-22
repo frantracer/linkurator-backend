@@ -21,6 +21,7 @@ from linkurator_core.infrastructure.rss.rss_feed_client import RssFeedClient, Rs
 RSS_PROVIDER_NAME = "rss"
 RSS_PROVIDER_ALIAS = "RSS"
 RSS_PROVIDER_VERSION = DEFAULT_ITEM_VERSION
+RSS_REFRESH_PERIOD_MINUTES = 5
 
 
 def _map_rss_feed_item_to_item(rss_item: RssFeedItem, subscription_id: uuid.UUID) -> Item:
@@ -81,6 +82,9 @@ class RssSubscriptionService(SubscriptionService):
 
     def provider_version(self) -> int:
         return RSS_PROVIDER_VERSION
+
+    def refresh_period_minutes(self) -> int:
+        return RSS_REFRESH_PERIOD_MINUTES
 
     async def get_subscriptions(
         self,

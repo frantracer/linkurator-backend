@@ -50,12 +50,13 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
         return self._find_by_url(url)
 
     async def find_latest_scan_before(
-        self, datetime_limit: datetime,
+        self, datetime_limit: datetime, provider: str | None = None,
     ) -> list[Subscription]:
         subs = [
             subscription
             for subscription in self.subscriptions.values()
             if subscription.scanned_at < datetime_limit
+            and (provider is None or subscription.provider == provider)
         ]
         return sorted(subs, key=lambda x: x.created_at, reverse=True)
 

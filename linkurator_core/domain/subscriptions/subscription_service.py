@@ -22,6 +22,9 @@ class SubscriptionService(abc.ABC):
         return DEFAULT_ITEM_VERSION
 
     @abc.abstractmethod
+    def refresh_period_minutes(self) -> int: ...
+
+    @abc.abstractmethod
     async def get_subscriptions(
             self,
             user_id: uuid.UUID,

@@ -26,6 +26,7 @@ SHOW_ID_KEY = "show_id"
 SPOTIFY_PROVIDER_NAME = "spotify"
 SPOTIFY_PROVIDER_ALIAS = "Spotify"
 SPOTIFY_PROVIDER_VERSION = DEFAULT_ITEM_VERSION
+SPOTIFY_REFRESH_PERIOD_MINUTES = 60 * 6  # 6 hours
 
 
 class SpotifySubscriptionService(SubscriptionService):
@@ -46,6 +47,9 @@ class SpotifySubscriptionService(SubscriptionService):
 
     def provider_version(self) -> int:
         return SPOTIFY_PROVIDER_VERSION
+
+    def refresh_period_minutes(self) -> int:
+        return SPOTIFY_REFRESH_PERIOD_MINUTES
 
     async def get_subscriptions(
             self,

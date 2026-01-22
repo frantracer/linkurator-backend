@@ -32,6 +32,7 @@ from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssC
 YOUTUBE_PROVIDER_NAME = "youtube"
 YOUTUBE_PROVIDER_ALIAS = "YouTube"
 YOUTUBE_PROVIDER_VERSION = 1
+YOUTUBE_REFRESH_PERIOD_MINUTES = 5
 
 
 class YoutubeService(SubscriptionService):
@@ -63,6 +64,9 @@ class YoutubeService(SubscriptionService):
 
     def provider_version(self) -> int:
         return YOUTUBE_PROVIDER_VERSION
+
+    def refresh_period_minutes(self) -> int:
+        return YOUTUBE_REFRESH_PERIOD_MINUTES
 
     async def get_subscriptions(
             self,

@@ -155,11 +155,14 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
         return MongoDBSubscription(**found_subscription).to_domain_subscription()
 
     async def find_latest_scan_before(
-        self, datetime_limit: datetime,
+        self, datetime_limit: datetime, provider: ItemProvider | None = None,
     ) -> list[Subscription]:
         collection = await self._subscription_collection()
+        query: dict[str, Any] = {"scanned_at": {"$lt": datetime_limit}}
+        if provider is not None:
+            query["provider"] = provider
         subscriptions: list[dict[str, Any]] = await (
-            collection.find({"scanned_at": {"$lt": datetime_limit}})
+            collection.find(query)
             .sort("scanned_at", DESCENDING)
             .to_list(length=None)
         )

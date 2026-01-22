@@ -46,7 +46,9 @@ class SubscriptionRepository(ABC):
 
     @abstractmethod
     async def find_latest_scan_before(
-            self, datetime_limit: datetime,
+            self,
+            datetime_limit: datetime,
+            provider: ItemProvider | None = None,
     ) -> list[Subscription]: ...
 
     @abstractmethod

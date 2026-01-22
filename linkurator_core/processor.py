@@ -210,7 +210,8 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         subscription_repository=subscription_repository,
         event_bus=event_bus,
         user_repository=user_repository,
-        external_credentials_repository=credentials_repository)
+        subscription_services=subscription_providers,
+    )
     find_outdated_subscriptions = FindOutdatedSubscriptionsHandler(
         subscription_repository=subscription_repository,
         event_bus=event_bus)
