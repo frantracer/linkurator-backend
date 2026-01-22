@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 import uuid
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from random import randint
 
+import isodate  # type: ignore
 from pydantic import AnyUrl
 
 from linkurator_core.domain.common import utils
@@ -13,14 +14,24 @@ from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
 from linkurator_core.domain.common.utils import datetime_now, parse_url
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
 from linkurator_core.domain.users.user_repository import UserRepository
-from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient, YoutubeApiError, YoutubeChannel
+from linkurator_core.infrastructure.google.youtube_api_client import (
+    LiveBroadcastContent,
+    YoutubeApiClient,
+    YoutubeApiError,
+    YoutubeChannel,
+    YoutubeVideo,
+)
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
+
+YOUTUBE_PROVIDER_NAME = "youtube"
+YOUTUBE_PROVIDER_ALIAS = "YouTube"
+YOUTUBE_PROVIDER_VERSION = 1
 
 
 class YoutubeService(SubscriptionService):
@@ -43,6 +54,15 @@ class YoutubeService(SubscriptionService):
         if len(api_keys) == 0:
             msg = "No API keys provided"
             raise ValueError(msg)
+
+    def provider_name(self) -> ItemProvider:
+        return YOUTUBE_PROVIDER_NAME
+
+    def provider_alias(self) -> str:
+        return YOUTUBE_PROVIDER_ALIAS
+
+    def provider_version(self) -> int:
+        return YOUTUBE_PROVIDER_VERSION
 
     async def get_subscriptions(
             self,
@@ -72,7 +92,7 @@ class YoutubeService(SubscriptionService):
         if user is not None:
             channels = await self.youtube_client.get_youtube_subscriptions(access_token=access_token,
                                                                            api_key=api_key)
-            youtube_channels = [c.to_subscription(sub_id=uuid.uuid4()) for c in channels]
+            youtube_channels = [map_youtube_channel_to_subscription(youtube_channel=c, sub_id=uuid.uuid4()) for c in channels]
 
         return youtube_channels
 
@@ -82,7 +102,7 @@ class YoutubeService(SubscriptionService):
             credential: ExternalServiceCredential | None = None,
     ) -> Subscription | None:
         subscription = await self.subscription_repository.get(sub_id)
-        if subscription is None or subscription.provider != SubscriptionProvider.YOUTUBE:
+        if subscription is None or subscription.provider != self.provider_name():
             return None
 
         channel_id = subscription.external_data["channel_id"]
@@ -108,7 +128,7 @@ class YoutubeService(SubscriptionService):
     ) -> list[Item]:
 
         subscription = await self.subscription_repository.get(sub_id)
-        if subscription is None or subscription.provider != SubscriptionProvider.YOUTUBE:
+        if subscription is None or subscription.provider != self.provider_name():
             return []
 
         rss_items = await self.youtube_rss_client.get_youtube_items(
@@ -130,7 +150,8 @@ class YoutubeService(SubscriptionService):
             playlist_id=subscription.external_data["playlist_id"],
             from_date=from_date)
 
-        return [v.to_item(item_id=uuid.uuid4(), sub_id=sub_id) for v in videos]
+        return [map_youtube_video_to_item(youtube_video=v, item_id=uuid.uuid4(), sub_id=sub_id)
+                for v in videos]
 
     async def get_items(
             self,
@@ -145,7 +166,7 @@ class YoutubeService(SubscriptionService):
             page_number=0,
             limit=len(item_ids))
 
-        items = [item for item in items if item.provider == ItemProvider.YOUTUBE]
+        items = [item for item in items if item.provider == self.provider_name()]
 
         video_id_to_item: dict[str, Item] = {link_to_video_id(str(item.url)): item for item in items}
 
@@ -153,9 +174,11 @@ class YoutubeService(SubscriptionService):
             api_key=self._get_api_key() if credential is None else credential.credential_value,
             video_ids=[link_to_video_id(str(item.url)) for item in items])
 
-        return {v.to_item(item_id=video_id_to_item[v.video_id].uuid,
-                                   sub_id=video_id_to_item[v.video_id].subscription_uuid)
-                         for v in updated_videos}
+        return {map_youtube_video_to_item(
+            youtube_video=v,
+            item_id=video_id_to_item[v.video_id].uuid,
+            sub_id=video_id_to_item[v.video_id].subscription_uuid)
+            for v in updated_videos}
 
     async def get_subscription_from_url(
             self,
@@ -188,7 +211,7 @@ class YoutubeService(SubscriptionService):
                 return Subscription.new(
                     uuid=uuid.uuid4(),
                     name=youtube_channel.title,
-                    provider=SubscriptionProvider.YOUTUBE,
+                    provider=self.provider_name(),
                     url=parse_url(youtube_channel.url),
                     thumbnail=utils.parse_url(youtube_channel.thumbnail_url),
                     external_data={
@@ -218,7 +241,7 @@ class YoutubeService(SubscriptionService):
             return [Subscription.new(
                 uuid=uuid.uuid4(),
                 name=channel.title,
-                provider=SubscriptionProvider.YOUTUBE,
+                provider=self.provider_name(),
                 url=parse_url(channel.url),
                 thumbnail=utils.parse_url(channel.thumbnail_url),
                 external_data={
@@ -259,3 +282,46 @@ def update_sub_info(sub: Subscription, youtube_channel: YoutubeChannel) -> Subsc
     updated_sub.updated_at = datetime_now()
     updated_sub.description = youtube_channel.description
     return updated_sub
+
+
+def map_youtube_channel_to_subscription(
+        youtube_channel: YoutubeChannel,
+        sub_id: uuid.UUID,
+) -> Subscription:
+    return Subscription.new(
+        uuid=sub_id,
+        name=youtube_channel.title,
+        provider=YOUTUBE_PROVIDER_NAME,
+        external_data={
+            "channel_id": youtube_channel.channel_id,
+            "playlist_id": youtube_channel.playlist_id,
+        },
+        url=utils.parse_url(youtube_channel.url),
+        thumbnail=utils.parse_url(youtube_channel.thumbnail_url),
+        description=youtube_channel.description,
+    )
+
+
+def map_youtube_video_to_item(
+    youtube_video: YoutubeVideo,
+    item_id: uuid.UUID,
+    sub_id: uuid.UUID,
+    current_date: datetime = datetime.now(tz=timezone.utc),
+) -> Item:
+    deleted_at: datetime | None = None
+    if youtube_video.live_broadcast_content == LiveBroadcastContent.UPCOMING and \
+            youtube_video.published_at + timedelta(days=365) < current_date:
+        deleted_at = current_date
+    return Item.new(
+        uuid=item_id,
+        subscription_uuid=sub_id,
+        name=youtube_video.title,
+        description=youtube_video.description,
+        provider=YOUTUBE_PROVIDER_NAME,
+        url=utils.parse_url(youtube_video.url),
+        thumbnail=utils.parse_url(youtube_video.thumbnail_url),
+        published_at=youtube_video.published_at,
+        duration=isodate.parse_duration(youtube_video.duration).total_seconds(),
+        version=YOUTUBE_PROVIDER_VERSION,
+        deleted_at=deleted_at,
+    )

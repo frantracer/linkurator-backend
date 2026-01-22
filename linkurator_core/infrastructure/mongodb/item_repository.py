@@ -37,10 +37,10 @@ class MongoDBItem(BaseModel):
     created_at: datetime
     updated_at: datetime
     published_at: datetime
+    provider: ItemProvider
     deleted_at: datetime | None = None
     duration: Seconds | None = None
     version: int = 0
-    provider: str = ItemProvider.YOUTUBE.value
 
     @staticmethod
     def from_domain_item(item: Item) -> MongoDBItem:
@@ -57,7 +57,7 @@ class MongoDBItem(BaseModel):
             updated_at=item.updated_at,
             deleted_at=item.deleted_at,
             published_at=item.published_at,
-            provider=item.provider.value,
+            provider=item.provider,
         )
 
     def to_domain_item(self) -> Item:
@@ -74,7 +74,7 @@ class MongoDBItem(BaseModel):
             updated_at=self.updated_at,
             deleted_at=self.deleted_at,
             published_at=self.published_at,
-            provider=ItemProvider(self.provider),
+            provider=self.provider,
         )
 
 
@@ -124,7 +124,7 @@ def _generate_filter_query(criteria: ItemFilterCriteria) -> dict[str, Any]:
     if criteria.last_version is not None:
         filter_query["version"] = {"$lt": criteria.last_version}
     if criteria.provider is not None:
-        filter_query["provider"] = criteria.provider.value
+        filter_query["provider"] = criteria.provider
     if criteria.text is not None and len(criteria.text) > 0:
         keywords = extract_keywords_from_text(criteria.text)
         filter_query["$text"] = {"$search": normalize_text_search(" ".join(keywords))}
@@ -495,7 +495,7 @@ class MongoDBItemRepository(ItemRepository):
         collection = self._item_collection()
         query: dict[str, Any] = {"deleted_at": None}
         if provider is not None:
-            query["provider"] = provider.value
+            query["provider"] = provider
 
         # Use aggregation pipeline with index hint for better performance
         pipeline: list[dict[str, Any]] = [

@@ -8,7 +8,7 @@ from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.domain.users.user import User, Username
@@ -46,7 +46,7 @@ def mock_sub(uuid: UUID | None = None,
              name: str = "Test",
              description: str | None = None,
              url: str | None = None,
-             provider: SubscriptionProvider = SubscriptionProvider.YOUTUBE,
+             provider: ItemProvider = "youtube",
              created_at: datetime | None = None,
              scanned_at: datetime | None = None,
              external_data: dict[str, str] | None = None,
@@ -111,7 +111,7 @@ def mock_item(
         url: str | None = None,
         version: int | None = None,
         duration: int | None = None,
-        provider: ItemProvider = ItemProvider.YOUTUBE,
+        provider: ItemProvider = "youtube",
 ) -> Item:
     random_uuid = item_uuid if item_uuid is not None else uuid4()
     random_name = f"some name {random_uuid}" if name is None else name

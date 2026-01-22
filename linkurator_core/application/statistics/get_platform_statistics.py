@@ -1,9 +1,7 @@
 import asyncio
 from dataclasses import dataclass
 
-from linkurator_core.domain.items.item import ItemProvider
 from linkurator_core.domain.items.item_repository import ItemRepository
-from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider
 from linkurator_core.domain.subscriptions.subscription_repository import (
     SubscriptionRepository,
 )
@@ -49,20 +47,21 @@ class GetPlatformStatisticsHandler:
         self.item_repository = item_repository
 
     async def handle(self) -> PlatformStatistics:
+        # TODO: Count per provider must be dynamic based on available providers
         results = await asyncio.gather(
             self.user_repository.count_registered_users(),
             self.user_repository.count_active_users(),
             self.subscription_repository.count_subscriptions(
-                provider=SubscriptionProvider.YOUTUBE,
+                provider="youtube",
             ),
             self.subscription_repository.count_subscriptions(
-                provider=SubscriptionProvider.SPOTIFY,
+                provider="spotify",
             ),
             self.item_repository.count_items(
-                provider=ItemProvider.YOUTUBE,
+                provider="youtube",
             ),
             self.item_repository.count_items(
-                provider=ItemProvider.SPOTIFY,
+                provider="spotify",
             ),
         )
 

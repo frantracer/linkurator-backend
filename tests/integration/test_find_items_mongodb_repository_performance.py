@@ -10,7 +10,7 @@ import pytest
 
 from linkurator_core.domain.common.mock_factory import mock_item
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
-from linkurator_core.domain.items.item import Item, ItemProvider
+from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import (
     AnyItemInteraction,
     ItemFilterCriteria,
@@ -150,7 +150,7 @@ async def _generate_items(count: int) -> list[Item]:
             published_at=base_date,
             created_at=base_date,
             updated_at=base_date,
-            provider=ItemProvider.YOUTUBE,
+            provider="youtube",
         )
         items.append(item)
 

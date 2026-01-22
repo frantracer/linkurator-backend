@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from pydantic import AnyUrl
 
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.infrastructure.ai_agents.subscription_summarizer import SubscriptionSummarizerService
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.logger import configure_logging
@@ -24,7 +24,7 @@ async def main() -> None:
         Subscription.new(
             uuid=uuid4(),
             name="TechCrunch",
-            provider=SubscriptionProvider.YOUTUBE,
+            provider="youtube",
             url=AnyUrl("https://youtube.com/techcrunch"),
             thumbnail=AnyUrl("https://example.com/thumb.jpg"),
             description="""
@@ -36,7 +36,7 @@ startups, venture capital, gadgets, apps, social media, and mobile.
         Subscription.new(
             uuid=uuid4(),
             name="The Joe Rogan Experience",
-            provider=SubscriptionProvider.SPOTIFY,
+            provider="spotify",
             url=AnyUrl("https://spotify.com/jre"),
             thumbnail=AnyUrl("https://example.com/thumb2.jpg"),
             description="""
@@ -47,7 +47,7 @@ fields including comedians, actors, musicians, MMA fighters, scientists, and pol
         Subscription.new(
             uuid=uuid4(),
             name="Empty Description Channel",
-            provider=SubscriptionProvider.YOUTUBE,
+            provider="youtube",
             url=AnyUrl("https://youtube.com/empty"),
             thumbnail=AnyUrl("https://example.com/thumb3.jpg"),
             description="""

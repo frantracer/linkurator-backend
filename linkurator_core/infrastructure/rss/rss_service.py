@@ -9,14 +9,18 @@ from pydantic import AnyUrl
 
 from linkurator_core.domain.common.exceptions import InvalidRssFeedError
 from linkurator_core.domain.common.utils import parse_url
-from linkurator_core.domain.items.item import Item, ItemProvider
+from linkurator_core.domain.items.item import DEFAULT_ITEM_VERSION, Item, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
 from linkurator_core.infrastructure.rss.rss_data_repository import RawDataRecord, RssDataRepository
 from linkurator_core.infrastructure.rss.rss_feed_client import RssFeedClient, RssFeedInfo, RssFeedItem
+
+RSS_PROVIDER_NAME = "rss"
+RSS_PROVIDER_ALIAS = "RSS"
+RSS_PROVIDER_VERSION = DEFAULT_ITEM_VERSION
 
 
 def _map_rss_feed_item_to_item(rss_item: RssFeedItem, subscription_id: uuid.UUID) -> Item:
@@ -29,7 +33,8 @@ def _map_rss_feed_item_to_item(rss_item: RssFeedItem, subscription_id: uuid.UUID
         url=parse_url(rss_item.link),
         thumbnail=parse_url(rss_item.thumbnail),
         published_at=rss_item.published,
-        provider=ItemProvider.RSS,
+        provider=RSS_PROVIDER_NAME,
+        version=RSS_PROVIDER_VERSION,
         duration=None,  # RSS feeds typically don't have duration
     )
 
@@ -43,7 +48,7 @@ def _map_rss_feed_info_to_subscription(
     return Subscription.new(
         uuid=subscription_id or uuid.uuid4(),
         name=feed_info.title,
-        provider=SubscriptionProvider.RSS,
+        provider=RSS_PROVIDER_NAME,
         url=parse_url(feed_url),
         thumbnail=parse_url(feed_info.thumbnail),
         description=feed_info.description,
@@ -68,6 +73,15 @@ class RssSubscriptionService(SubscriptionService):
         self.rss_feed_client = rss_feed_client
         self.rss_data_repository = rss_data_repository
 
+    def provider_name(self) -> ItemProvider:
+        return RSS_PROVIDER_NAME
+
+    def provider_alias(self) -> str:
+        return RSS_PROVIDER_ALIAS
+
+    def provider_version(self) -> int:
+        return RSS_PROVIDER_VERSION
+
     async def get_subscriptions(
         self,
         user_id: uuid.UUID,  # noqa: ARG002
@@ -84,7 +98,7 @@ class RssSubscriptionService(SubscriptionService):
     ) -> Subscription | None:
         """Get and update subscription information from RSS feed."""
         subscription = await self.subscription_repository.get(sub_id)
-        if subscription is None or subscription.provider != SubscriptionProvider.RSS:
+        if subscription is None or subscription.provider != self.provider_name():
             return None
 
         feed_url = subscription.external_data.get("feed_url")
@@ -101,7 +115,7 @@ class RssSubscriptionService(SubscriptionService):
     ) -> list[Item]:
         """Get items from RSS feed published after from_date."""
         subscription = await self.subscription_repository.get(sub_id)
-        if subscription is None or subscription.provider != SubscriptionProvider.RSS:
+        if subscription is None or subscription.provider != self.provider_name():
             return []
 
         feed_url = subscription.external_data.get("feed_url")
@@ -157,14 +171,14 @@ class RssSubscriptionService(SubscriptionService):
         )
 
         # Filter for RSS items only
-        rss_items = [item for item in items if item.provider == ItemProvider.RSS]
+        rss_items = [item for item in items if item.provider == self.provider_name()]
 
         updated_items: set[Item] = set()
 
         for item in rss_items:
             # Get subscription to find feed_url
             subscription = await self.subscription_repository.get(item.subscription_uuid)
-            if subscription is None or subscription.provider != SubscriptionProvider.RSS:
+            if subscription is None or subscription.provider != self.provider_name():
                 continue
 
             feed_url = subscription.external_data.get("feed_url")
@@ -201,7 +215,8 @@ class RssSubscriptionService(SubscriptionService):
                         url=parse_url(rss_feed_item.link),
                         thumbnail=parse_url(rss_feed_item.thumbnail),
                         published_at=rss_feed_item.published,
-                        provider=ItemProvider.RSS,
+                        provider=self.provider_name(),
+                        version=self.provider_version(),
                         duration=None,
                     )
                     updated_items.add(updated_item)

@@ -7,9 +7,9 @@ from uuid import UUID
 
 from pydantic import AnyUrl
 
+from linkurator_core.domain.items.item import ItemProvider
 from linkurator_core.domain.subscriptions.subscription import (
     Subscription,
-    SubscriptionProvider,
 )
 
 
@@ -56,4 +56,4 @@ class SubscriptionRepository(ABC):
     async def find(self, criteria: SubscriptionFilterCriteria) -> list[Subscription]: ...
 
     @abstractmethod
-    async def count_subscriptions(self, provider: SubscriptionProvider | None = None) -> int: ...
+    async def count_subscriptions(self, provider: ItemProvider | None = None) -> int: ...

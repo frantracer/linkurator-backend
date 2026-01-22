@@ -4,8 +4,6 @@ import pytest
 
 from linkurator_core.application.statistics.get_platform_statistics import GetPlatformStatisticsHandler
 from linkurator_core.domain.common.mock_factory import mock_item, mock_sub, mock_user
-from linkurator_core.domain.items.item import ItemProvider
-from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
@@ -24,19 +22,19 @@ async def test_get_platform_statistics_handler() -> None:
     await user_repository.add(user2)
 
     subscription_repository = InMemorySubscriptionRepository()
-    subscription1 = mock_sub(provider=SubscriptionProvider.YOUTUBE)
-    subscription2 = mock_sub(provider=SubscriptionProvider.SPOTIFY)
-    subscription3 = mock_sub(provider=SubscriptionProvider.YOUTUBE)
+    subscription1 = mock_sub(provider="youtube")
+    subscription2 = mock_sub(provider="spotify")
+    subscription3 = mock_sub(provider="youtube")
     await subscription_repository.add(subscription1)
     await subscription_repository.add(subscription2)
     await subscription_repository.add(subscription3)
 
     item_repository = InMemoryItemRepository()
-    item1 = mock_item(provider=ItemProvider.YOUTUBE)
-    item2 = mock_item(provider=ItemProvider.SPOTIFY)
-    item3 = mock_item(provider=ItemProvider.YOUTUBE)
-    item4 = mock_item(provider=ItemProvider.SPOTIFY)
-    item5 = mock_item(provider=ItemProvider.YOUTUBE)
+    item1 = mock_item(provider="youtube")
+    item2 = mock_item(provider="spotify")
+    item3 = mock_item(provider="youtube")
+    item4 = mock_item(provider="spotify")
+    item5 = mock_item(provider="youtube")
     await item_repository.upsert_items([item1, item2, item3, item4, item5])
 
     handler = GetPlatformStatisticsHandler(user_repository, subscription_repository, item_repository)

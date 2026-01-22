@@ -8,7 +8,7 @@ import pytest
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.mock_factory import mock_item, mock_user
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
-from linkurator_core.domain.items.item import Item, ItemProvider
+from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import (
     AnyItemInteraction,
     InteractionFilterCriteria,
@@ -49,7 +49,7 @@ async def test_get_item(item_repo: ItemRepository) -> None:
                 published_at=datetime.now(tz=timezone.utc),
                 version=2,
                 duration=10,
-                provider=ItemProvider.YOUTUBE)
+                provider="youtube")
     await item_repo.upsert_items([item])
     the_item = await item_repo.get_item(item.uuid)
 
@@ -102,7 +102,7 @@ async def test_create_and_update_items(item_repo: ItemRepository) -> None:
         published_at=item1.published_at,
         version=2,
         duration=10,
-        provider=ItemProvider.YOUTUBE,
+        provider="youtube",
     )
     item2_updated = Item(
         uuid=item2.uuid,
@@ -116,7 +116,7 @@ async def test_create_and_update_items(item_repo: ItemRepository) -> None:
         published_at=item2.published_at,
         version=2,
         duration=10,
-        provider=ItemProvider.YOUTUBE,
+        provider="youtube",
     )
 
     await item_repo.upsert_items([item1_updated, item2_updated])
@@ -477,7 +477,7 @@ async def test_find_deprecated_items(item_repo: ItemRepository) -> None:
     found_items = await item_repo.find_items(
         criteria=ItemFilterCriteria(
             last_version=2,
-            provider=ItemProvider.YOUTUBE,
+            provider="youtube",
         ),
         limit=4,
         page_number=0)
@@ -487,7 +487,7 @@ async def test_find_deprecated_items(item_repo: ItemRepository) -> None:
     found_items = await item_repo.find_items(
         criteria=ItemFilterCriteria(
             last_version=3,
-            provider=ItemProvider.YOUTUBE,
+            provider="youtube",
         ),
         limit=1,
         page_number=0)

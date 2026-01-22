@@ -6,12 +6,21 @@ from datetime import datetime
 
 from pydantic import AnyUrl
 
-from linkurator_core.domain.items.item import Item
+from linkurator_core.domain.items.item import DEFAULT_ITEM_VERSION, Item, ItemProvider
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
 
 
 class SubscriptionService(abc.ABC):
+    @abc.abstractmethod
+    def provider_name(self) -> ItemProvider: ...
+
+    def provider_alias(self) -> str:
+        return self.provider_name()
+
+    def provider_version(self) -> int:
+        return DEFAULT_ITEM_VERSION
+
     @abc.abstractmethod
     async def get_subscriptions(
             self,

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.external_service_credential import ExternalServiceType
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
@@ -45,7 +45,8 @@ class FindSubscriptionsWithOutdatedItemsHandler:
         if len(subscribed_users) == 0:
             return REFRESH_PERIOD_WITH_NO_SUBSCRIBERS_IN_MINUTES
 
-        if subscription.provider == SubscriptionProvider.SPOTIFY:
+        # TODO: Refresh periods must be moved to subscription provider implementations
+        if subscription.provider == "spotify":
             return REFRESH_PERIOD_FOR_SPOTIFY_IN_MINUTES
 
         user_ids = [user.uuid for user in subscribed_users]

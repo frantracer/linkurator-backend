@@ -7,8 +7,6 @@ import pytest
 from linkurator_core.domain.common.exceptions import InvalidRssFeedError
 from linkurator_core.domain.common.mock_factory import mock_sub
 from linkurator_core.domain.common.utils import parse_url
-from linkurator_core.domain.items.item import ItemProvider
-from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.rss_data_repository import InMemoryRssDataRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
@@ -38,7 +36,7 @@ async def test_get_subscriptions_returns_empty_list() -> None:
 async def test_get_subscription_updates_feed_info() -> None:
     # Create existing subscription
     sub = mock_sub()
-    sub.provider = SubscriptionProvider.RSS
+    sub.provider = "rss"
     sub.external_data = {
         "feed_url": "https://example.com/feed.xml",
         "language": "en",
@@ -81,7 +79,7 @@ async def test_get_subscription_updates_feed_info() -> None:
 async def test_get_subscription_returns_none_for_non_rss() -> None:
     # Create YouTube subscription
     sub = mock_sub()
-    sub.provider = SubscriptionProvider.YOUTUBE
+    sub.provider = "youtube"
 
     sub_repo = InMemorySubscriptionRepository()
     await sub_repo.add(sub)
@@ -105,7 +103,7 @@ async def test_get_subscription_returns_none_for_non_rss() -> None:
 @pytest.mark.asyncio()
 async def test_get_subscription_returns_none_on_error() -> None:
     sub = mock_sub()
-    sub.provider = SubscriptionProvider.RSS
+    sub.provider = "rss"
     sub.external_data = {"feed_url": "https://example.com/feed.xml"}
 
     sub_repo = InMemorySubscriptionRepository()
@@ -131,7 +129,7 @@ async def test_get_subscription_returns_none_on_error() -> None:
 @pytest.mark.asyncio()
 async def test_get_subscription_items_filters_by_date() -> None:
     sub = mock_sub()
-    sub.provider = SubscriptionProvider.RSS
+    sub.provider = "rss"
     sub.external_data = {"feed_url": "https://example.com/feed.xml"}
 
     sub_repo = InMemorySubscriptionRepository()
@@ -177,14 +175,14 @@ async def test_get_subscription_items_filters_by_date() -> None:
     assert len(items) == 1
     assert items[0].name == "New Item"
     assert items[0].subscription_uuid == sub.uuid
-    assert items[0].provider == ItemProvider.RSS
+    assert items[0].provider == "rss"
     assert str(items[0].url) == "https://example.com/new"
 
 
 @pytest.mark.asyncio()
 async def test_get_subscription_items_returns_empty_for_non_rss() -> None:
     sub = mock_sub()
-    sub.provider = SubscriptionProvider.YOUTUBE
+    sub.provider = "youtube"
 
     sub_repo = InMemorySubscriptionRepository()
     await sub_repo.add(sub)
@@ -255,7 +253,7 @@ async def test_get_subscription_from_url_creates_new_subscription() -> None:
 
     assert sub is not None
     assert sub.name == "New Feed"
-    assert sub.provider == SubscriptionProvider.RSS
+    assert sub.provider == "rss"
     assert sub.external_data["feed_url"] == "https://example.com/feed.xml"
     assert sub.external_data["language"] == "en"
 
@@ -263,7 +261,7 @@ async def test_get_subscription_from_url_creates_new_subscription() -> None:
 @pytest.mark.asyncio()
 async def test_get_subscription_from_url_updates_existing_subscription() -> None:
     existing_sub = mock_sub()
-    existing_sub.provider = SubscriptionProvider.RSS
+    existing_sub.provider = "rss"
     existing_sub.url = parse_url("https://example.com/feed.xml")
 
     sub_repo = InMemorySubscriptionRepository()

@@ -1,25 +1,19 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from enum import Enum
 from typing import Callable
 from uuid import UUID
 
 from pydantic import AnyUrl, BaseModel
 
 from linkurator_core.domain.common.utils import datetime_now
-
-
-class SubscriptionProvider(str, Enum):
-    YOUTUBE = "youtube"
-    SPOTIFY = "spotify"
-    RSS = "rss"
+from linkurator_core.domain.items.item import ItemProvider
 
 
 class Subscription(BaseModel):
     uuid: UUID
     name: str
-    provider: SubscriptionProvider
+    provider: ItemProvider
     external_data: dict[str, str]
     url: AnyUrl
     thumbnail: AnyUrl
@@ -34,7 +28,7 @@ class Subscription(BaseModel):
     def new(cls,
             uuid: UUID,
             name: str,
-            provider: SubscriptionProvider,
+            provider: ItemProvider,
             url: AnyUrl,
             thumbnail: AnyUrl,
             description: str,

@@ -1,21 +1,15 @@
 from __future__ import annotations
 
 import logging
-import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 from urllib.parse import urlencode
 
 import aiohttp
 import backoff
-import isodate  # type: ignore
 from unidecode import unidecode
-
-from linkurator_core.domain.common import utils
-from linkurator_core.domain.items.item import YOUTUBE_ITEM_VERSION, Item
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
 
 MAX_VIDEOS_PER_QUERY = 50
 
@@ -56,20 +50,6 @@ class YoutubeChannel:
             country=channel["snippet"].get("country", ""),
         )
 
-    def to_subscription(self, sub_id: uuid.UUID) -> Subscription:
-        return Subscription.new(
-            uuid=sub_id,
-            name=self.title,
-            provider=SubscriptionProvider.YOUTUBE,
-            external_data={
-                "channel_id": self.channel_id,
-                "playlist_id": self.playlist_id,
-            },
-            url=utils.parse_url(self.url),
-            thumbnail=utils.parse_url(self.thumbnail_url),
-            description=self.description,
-        )
-
 
 @dataclass
 class YoutubeVideo:
@@ -101,25 +81,6 @@ class YoutubeVideo:
             country=video["snippet"].get("country", ""),
             duration=video["contentDetails"].get("duration", "PT0S"),
             live_broadcast_content=LiveBroadcastContent(video["snippet"]["liveBroadcastContent"]),
-        )
-
-    def to_item(self, item_id: uuid.UUID, sub_id: uuid.UUID,
-                current_date: datetime = datetime.now(tz=timezone.utc)) -> Item:
-        deleted_at: datetime | None = None
-        if self.live_broadcast_content == LiveBroadcastContent.UPCOMING and \
-                self.published_at + timedelta(days=365) < current_date:
-            deleted_at = current_date
-        return Item.new(
-            uuid=item_id,
-            subscription_uuid=sub_id,
-            name=self.title,
-            description=self.description,
-            url=utils.parse_url(self.url),
-            thumbnail=utils.parse_url(self.thumbnail_url),
-            published_at=self.published_at,
-            duration=isodate.parse_duration(self.duration).total_seconds(),
-            version=YOUTUBE_ITEM_VERSION,
-            deleted_at=deleted_at,
         )
 
 

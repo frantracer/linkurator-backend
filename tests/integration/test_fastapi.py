@@ -169,6 +169,7 @@ def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
                      description="",
                      uuid=uuid.UUID("ae1b82ee-f870-4a1f-a1c8-898c10ce9eb8"),
                      subscription_uuid=sub.uuid,
+                     provider="youtube",
                      url=utils.parse_url("https://ae1b82ee.com"),
                      thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
                      published_at=datetime.fromtimestamp(0, tz=timezone.utc))
@@ -364,6 +365,7 @@ def test_get_topic_items_returns_200(handlers: Handlers) -> None:
         name="item1",
         description="",
         subscription_uuid=sub.uuid,
+        provider="youtube",
         url=utils.parse_url("https://ae1b82ee.com"),
         thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
@@ -527,6 +529,7 @@ def test_get_subscriptions_items_returns_200(handlers: Handlers) -> None:
         name="item1",
         description="",
         subscription_uuid=sub.uuid,
+        provider="youtube",
         url=utils.parse_url("https://ae1b82ee.com"),
         thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
@@ -632,6 +635,7 @@ def test_get_followed_subscriptions_items_returns_200(handlers: Handlers) -> Non
         name="item1",
         description="description1",
         subscription_uuid=sub1.uuid,
+        provider="youtube",
         url=utils.parse_url("https://item1.com"),
         thumbnail=utils.parse_url("https://item1.com/thumbnail.png"),
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
@@ -640,6 +644,7 @@ def test_get_followed_subscriptions_items_returns_200(handlers: Handlers) -> Non
         name="item2",
         description="description2",
         subscription_uuid=sub2.uuid,
+        provider="youtube",
         url=utils.parse_url("https://item2.com"),
         thumbnail=utils.parse_url("https://item2.com/thumbnail.png"),
         published_at=datetime.fromtimestamp(1, tz=timezone.utc))

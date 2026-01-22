@@ -39,9 +39,9 @@ class SubscriptionSummarizerService(SummarizeAgentService):
 
         prompt = (
             f"Subscription Name: {subscription.name}\n"
-            f"Provider: {subscription.provider.value}\n"
+            f"Provider: {subscription.provider}\n"
             f"Description: {subscription.description}\n\n"
-            f"Create a concise summary of this {subscription.provider.value} "
+            f"Create a concise summary of this {subscription.provider} "
             f"subscription's content and focus."
         )
 

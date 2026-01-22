@@ -146,6 +146,7 @@ async def test_create_item_interaction_handler_with_existing_interaction_does_no
     dummy_item = Item.new(
         uuid=UUID("9d0b1abf-4fb8-469a-80a3-6df4ae84cd96"),
         subscription_uuid=UUID("a74efb1b-830d-49ff-85c9-15e68b055725"),
+        provider="youtube",
         thumbnail=utils.parse_url("https://example.com/thumbnail.jpg"),
         url=utils.parse_url("https://example.com"),
         name="Item 1",

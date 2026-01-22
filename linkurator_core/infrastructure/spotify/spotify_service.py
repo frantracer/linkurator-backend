@@ -7,9 +7,9 @@ from uuid import UUID, uuid4
 
 from pydantic import AnyUrl
 
-from linkurator_core.domain.items.item import Item, ItemProvider
+from linkurator_core.domain.items.item import DEFAULT_ITEM_VERSION, Item, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
@@ -23,6 +23,9 @@ from linkurator_core.infrastructure.spotify.spotify_api_client import (
 )
 
 SHOW_ID_KEY = "show_id"
+SPOTIFY_PROVIDER_NAME = "spotify"
+SPOTIFY_PROVIDER_ALIAS = "Spotify"
+SPOTIFY_PROVIDER_VERSION = DEFAULT_ITEM_VERSION
 
 
 class SpotifySubscriptionService(SubscriptionService):
@@ -34,6 +37,15 @@ class SpotifySubscriptionService(SubscriptionService):
         self.item_repository = item_repository
         self.subscription_repository = subscription_repository
         self.spotify_client = spotify_client
+
+    def provider_name(self) -> ItemProvider:
+        return SPOTIFY_PROVIDER_NAME
+
+    def provider_alias(self) -> str:
+        return SPOTIFY_PROVIDER_ALIAS
+
+    def provider_version(self) -> int:
+        return SPOTIFY_PROVIDER_VERSION
 
     async def get_subscriptions(
             self,
@@ -52,7 +64,7 @@ class SpotifySubscriptionService(SubscriptionService):
         if subscription is None:
             return None
 
-        if subscription.provider != SubscriptionProvider.SPOTIFY:
+        if subscription.provider != self.provider_name():
             return None
 
         show_id = subscription.external_data.get(SHOW_ID_KEY)
@@ -71,7 +83,7 @@ class SpotifySubscriptionService(SubscriptionService):
             credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> set[Item]:
         items = await self.item_repository.find_items(
-            criteria=ItemFilterCriteria(item_ids=item_ids, provider=ItemProvider.SPOTIFY),
+            criteria=ItemFilterCriteria(item_ids=item_ids, provider=self.provider_name()),
             page_number=0,
             limit=len(item_ids))
 
@@ -104,7 +116,7 @@ class SpotifySubscriptionService(SubscriptionService):
         if subscription is None:
             return []
 
-        if subscription.provider != SubscriptionProvider.SPOTIFY:
+        if subscription.provider != self.provider_name():
             return []
 
         show_id = str(subscription.external_data.get(SHOW_ID_KEY))
@@ -174,7 +186,7 @@ def map_spotify_show_to_subscription(spotify_show: Show, sub: Subscription | Non
         return Subscription.new(
             uuid=uuid4(),
             name=spotify_show.name,
-            provider=SubscriptionProvider.SPOTIFY,
+            provider=SPOTIFY_PROVIDER_NAME,
             url=AnyUrl(f"https://open.spotify.com/show/{spotify_show.id}"),
             thumbnail=thumbnail.url,
             external_data={
@@ -203,7 +215,8 @@ def map_episode_to_item(episode: Episode, sub_id: UUID, item_id: UUID | None = N
         description=episode.description,
         url=AnyUrl(f"https://open.spotify.com/episode/{episode.id}"),
         thumbnail=thumbnail.url,
-        provider=ItemProvider.SPOTIFY,
+        provider=SPOTIFY_PROVIDER_NAME,
+        version=SPOTIFY_PROVIDER_VERSION,
         published_at=calculate_date(episode.release_date, episode.release_date_precision),
         duration=calculate_duration(episode.duration_ms),
     )

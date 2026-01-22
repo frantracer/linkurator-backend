@@ -21,7 +21,7 @@ from linkurator_core.domain.items.item_repository import (
     ItemFilterCriteria,
     ItemRepository,
 )
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
@@ -79,7 +79,7 @@ class SubscriptionForAI(BaseModel):
         default=None,
         description="Description of the subscription, if available",
     )
-    provider: SubscriptionProvider = Field(
+    provider: ItemProvider = Field(
         description="Provider of the subscription (e.g., 'youtube', 'spotify')",
     )
 
@@ -93,7 +93,7 @@ class SubscriptionForAI(BaseModel):
         )
 
     def as_context(self) -> str:
-        return (f"Name: {self.name} | UUID: {self.uuid} | Provider: {self.provider.value} | "
+        return (f"Name: {self.name} | UUID: {self.uuid} | Provider: {self.provider} | "
                 f"Description: {self.description or 'No description'}")
 
 

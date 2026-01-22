@@ -13,9 +13,9 @@ from pydantic.main import BaseModel
 from pymongo import DESCENDING
 
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.items.item import ItemProvider
 from linkurator_core.domain.subscriptions.subscription import (
     Subscription,
-    SubscriptionProvider,
 )
 from linkurator_core.domain.subscriptions.subscription_repository import (
     SubscriptionFilterCriteria,
@@ -46,7 +46,7 @@ class MongoDBSubscription(BaseModel):
         return MongoDBSubscription(
             uuid=subscription.uuid,
             name=subscription.name,
-            provider=subscription.provider.value,
+            provider=subscription.provider,
             external_data=subscription.external_data,
             url=str(subscription.url),
             thumbnail=str(subscription.thumbnail),
@@ -62,7 +62,7 @@ class MongoDBSubscription(BaseModel):
         return Subscription(
             uuid=self.uuid,
             name=self.name,
-            provider=SubscriptionProvider(self.provider),
+            provider=self.provider,
             external_data=self.external_data,
             url=utils.parse_url(self.url),
             thumbnail=utils.parse_url(self.thumbnail),
@@ -212,8 +212,8 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
         )
 
     async def count_subscriptions(
-        self, provider: SubscriptionProvider | None = None,
+        self, provider: ItemProvider | None = None,
     ) -> int:
         collection = await self._subscription_collection()
-        query = {} if provider is None else {"provider": provider.value}
+        query = {} if provider is None else {"provider": provider}
         return await collection.count_documents(query)

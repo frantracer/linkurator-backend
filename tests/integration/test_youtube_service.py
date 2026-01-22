@@ -9,9 +9,8 @@ import pytest
 from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
 from linkurator_core.domain.common.mock_factory import mock_credential, mock_sub, mock_user
 from linkurator_core.domain.common.utils import parse_url
-from linkurator_core.domain.items.item import YOUTUBE_ITEM_VERSION, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.external_service_credential import ExternalServiceType
 from linkurator_core.domain.users.external_service_credential_repository import ExternalCredentialRepository
@@ -23,7 +22,11 @@ from linkurator_core.infrastructure.google.youtube_api_client import (
     YoutubeVideo,
 )
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient, YoutubeRssItem
-from linkurator_core.infrastructure.google.youtube_service import YoutubeService
+from linkurator_core.infrastructure.google.youtube_service import (
+    YoutubeService,
+    map_youtube_channel_to_subscription,
+    map_youtube_video_to_item,
+)
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
@@ -354,7 +357,7 @@ async def test_youtube_service_returns_subscription_items() -> None:
         updated_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         last_published_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         name="channel_title",
-        provider=SubscriptionProvider.YOUTUBE,
+        provider="youtube",
         url=parse_url("https://channel_url.com/channel_id"),
         thumbnail=parse_url("https://thumbnail.com/image"),
         external_data={
@@ -658,8 +661,14 @@ async def test_get_youtube_videos_returns_all_available_videos() -> None:
     youtube_client_mock.get_youtube_videos.return_value = [video1, video2]
 
     sub_uuid = UUID("f39fc4fe-be96-4771-a631-c40a3860c881")
-    item1 = video1.to_item(item_id=UUID("df1f7fb3-fcf7-4d1b-9bcd-cd341359fe67"), sub_id=sub_uuid)
-    item2 = video2.to_item(item_id=UUID("750db5f8-525c-4434-82a8-6cb7bef05481"), sub_id=sub_uuid)
+    item1 = map_youtube_video_to_item(
+        youtube_video=video1,
+        item_id=UUID("df1f7fb3-fcf7-4d1b-9bcd-cd341359fe67"),
+        sub_id=sub_uuid)
+    item2 = map_youtube_video_to_item(
+        youtube_video=video2,
+        item_id=UUID("750db5f8-525c-4434-82a8-6cb7bef05481"),
+        sub_id=sub_uuid)
     random_item_uuid = uuid4()
 
     item_repo_mock = InMemoryItemRepository()
@@ -766,8 +775,10 @@ def test_youtube_video_parsing() -> None:
     """
 
     video = YoutubeVideo.from_dict(json.loads(video_json))
-    item = video.to_item(item_id=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
-                         sub_id=UUID("f1edd7fe-a588-485b-b85c-3c087b9f174f"))
+    item = map_youtube_video_to_item(
+        youtube_video=video,
+        item_id=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
+        sub_id=UUID("f1edd7fe-a588-485b-b85c-3c087b9f174f"))
 
     assert item.uuid == UUID("321cbb52-1398-406e-b278-0a81e85d3274")
     assert item.subscription_uuid == UUID("f1edd7fe-a588-485b-b85c-3c087b9f174f")
@@ -776,9 +787,9 @@ def test_youtube_video_parsing() -> None:
     assert item.thumbnail == parse_url("https://i.ytimg.com/vi/Ks-_Mh1QhMc/mqdefault.jpg")
     assert item.url == parse_url("https://www.youtube.com/watch?v=Ks-_Mh1QhMc")
     assert item.duration == 1263
-    assert item.version == YOUTUBE_ITEM_VERSION
+    assert item.version == 1
     assert item.published_at == datetime(2012, 10, 1, 15, 27, 35, tzinfo=timezone.utc)
-    assert item.provider == ItemProvider.YOUTUBE
+    assert item.provider == "youtube"
     assert item.deleted_at is None
 
 
@@ -850,16 +861,20 @@ def test_youtube_video_with_upcoming_live_for_a_year_parsing() -> None:
     """
 
     video = YoutubeVideo.from_dict(json.loads(video_json))
-    item = video.to_item(item_id=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
-                         sub_id=UUID("f1edd7fe-a588-485b-b85c-3c087b9f174f"),
-                         current_date=datetime(2022, 11, 1, tzinfo=timezone.utc))
+    item = map_youtube_video_to_item(
+        youtube_video=video,
+        item_id=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
+        sub_id=UUID("f1edd7fe-a588-485b-b85c-3c087b9f174f"),
+        current_date=datetime(2022, 11, 1, tzinfo=timezone.utc))
 
     assert item.uuid == UUID("321cbb52-1398-406e-b278-0a81e85d3274")
     assert item.deleted_at is None
 
-    item = video.to_item(item_id=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
-                         sub_id=UUID("f1edd7fe-a588-485b-b85c-3c087b9f174f"),
-                         current_date=datetime(2023, 11, 1, tzinfo=timezone.utc))
+    item = map_youtube_video_to_item(
+        youtube_video=video,
+        item_id=UUID("321cbb52-1398-406e-b278-0a81e85d3274"),
+        sub_id=UUID("f1edd7fe-a588-485b-b85c-3c087b9f174f"),
+        current_date=datetime(2023, 11, 1, tzinfo=timezone.utc))
 
     assert item.uuid == UUID("321cbb52-1398-406e-b278-0a81e85d3274")
     assert item.deleted_at == datetime(2023, 11, 1, tzinfo=timezone.utc)
@@ -915,11 +930,13 @@ def test_youtube_channel_parsing() -> None:
     """
 
     channel = YoutubeChannel.from_dict(json.loads(channel_json))
-    sub = channel.to_subscription(sub_id=UUID("1b2e723e-3d6c-4398-96dd-0da41a64007b"))
+    sub = map_youtube_channel_to_subscription(
+        youtube_channel=channel,
+        sub_id=UUID("1b2e723e-3d6c-4398-96dd-0da41a64007b"))
 
     assert sub.uuid == UUID("1b2e723e-3d6c-4398-96dd-0da41a64007b")
     assert sub.name == "Google for Developers"
-    assert sub.provider == SubscriptionProvider.YOUTUBE
+    assert sub.provider == "youtube"
     assert sub.url == parse_url("https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw")
     assert sub.thumbnail == parse_url("https://yt3.ggpht.com/vY3uYs71A_JwVcigyd2tVRHwuj05_cYktQSuzRCxta-"
                                       "9VFxHFtKjGrwG9WFi8ijXITBL3CwPQQ=s240-c-k-c0x00ffffff-no-rj")

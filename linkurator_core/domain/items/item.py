@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from enum import Enum
 from math import floor
 from typing import Any
 from uuid import UUID
@@ -12,13 +11,8 @@ from pydantic import AnyUrl
 from linkurator_core.domain.common.units import Seconds
 
 DEFAULT_ITEM_VERSION = 0
-YOUTUBE_ITEM_VERSION = 1
 
-
-class ItemProvider(str, Enum):
-    YOUTUBE = "youtube"
-    SPOTIFY = "spotify"
-    RSS = "rss"
+type ItemProvider = str
 
 
 @dataclass
@@ -46,9 +40,9 @@ class Item:
             url: AnyUrl,
             thumbnail: AnyUrl,
             published_at: datetime,
+            provider: ItemProvider,
             duration: Seconds | None = None,
             version: int = DEFAULT_ITEM_VERSION,
-            provider: ItemProvider = ItemProvider.YOUTUBE,
             deleted_at: datetime | None = None,
             ) -> Item:
         now = datetime.now(tz=timezone.utc)

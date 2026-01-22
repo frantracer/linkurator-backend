@@ -4,7 +4,8 @@ from uuid import UUID
 
 from pydantic import AnyUrl, BaseModel
 
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.items.item import ItemProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.users.user import User
 from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
 
@@ -16,7 +17,7 @@ class SubscriptionSchema(BaseModel):
     name: str
     url: AnyUrl
     thumbnail: AnyUrl
-    provider: SubscriptionProvider
+    provider: ItemProvider
     created_at: Iso8601Datetime
     scanned_at: Iso8601Datetime
     followed: bool

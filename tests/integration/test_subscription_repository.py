@@ -9,7 +9,7 @@ import pytest_asyncio
 
 from linkurator_core.domain.common import utils
 from linkurator_core.domain.common.mock_factory import mock_sub
-from linkurator_core.domain.subscriptions.subscription import Subscription, SubscriptionProvider
+from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import (
     SubscriptionFilterCriteria,
     SubscriptionRepository,
@@ -158,7 +158,7 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
         uuid=uuid.UUID("1515c810-e22a-4b13-bf34-329f8ebe2491"),
         url=utils.parse_url("https://1515c810-e22a-4b13-bf34-329f8ebe2491.com"),
         thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
-        provider=SubscriptionProvider.YOUTUBE,
+        provider="youtube",
         external_data={},
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
         updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
@@ -172,7 +172,7 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
     sub.name = "new name"
     sub.url = utils.parse_url("https://new.com")
     sub.thumbnail = utils.parse_url("https://new.com/thumbnail.png")
-    sub.provider = SubscriptionProvider.YOUTUBE
+    sub.provider = "youtube"
     sub.external_data = {"new": "data"}
     sub.created_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     sub.updated_at = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
@@ -187,7 +187,7 @@ async def test_update_subscription(subscription_repo: SubscriptionRepository) ->
     assert updated_subscription.name == "new name"
     assert updated_subscription.url == utils.parse_url("https://new.com")
     assert updated_subscription.thumbnail == utils.parse_url("https://new.com/thumbnail.png")
-    assert updated_subscription.provider == SubscriptionProvider.YOUTUBE
+    assert updated_subscription.provider == "youtube"
     assert updated_subscription.external_data == {"new": "data"}
     assert updated_subscription.created_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     assert updated_subscription.updated_at == datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
@@ -243,9 +243,9 @@ async def test_find_subscriptions_by_name(subscription_repo: SubscriptionReposit
 
 @pytest.mark.asyncio()
 async def test_count_subscriptions(subscription_repo: SubscriptionRepository) -> None:
-    sub1 = mock_sub(name="Leyendas y videojuegos")
-    sub2 = mock_sub(name="Fútbol y más")
-    sub3 = mock_sub(name="leyendas del fútbol", provider=SubscriptionProvider.SPOTIFY)
+    sub1 = mock_sub(name="Leyendas y videojuegos", provider="youtube")
+    sub2 = mock_sub(name="Fútbol y más", provider="youtube")
+    sub3 = mock_sub(name="leyendas del fútbol", provider="spotify")
 
     await subscription_repo.delete_all()
     await subscription_repo.add(sub1)
@@ -253,5 +253,5 @@ async def test_count_subscriptions(subscription_repo: SubscriptionRepository) ->
     await subscription_repo.add(sub3)
 
     assert await subscription_repo.count_subscriptions() == 3
-    assert await subscription_repo.count_subscriptions(SubscriptionProvider.YOUTUBE) == 2
-    assert await subscription_repo.count_subscriptions(SubscriptionProvider.SPOTIFY) == 1
+    assert await subscription_repo.count_subscriptions("youtube") == 2
+    assert await subscription_repo.count_subscriptions("spotify") == 1

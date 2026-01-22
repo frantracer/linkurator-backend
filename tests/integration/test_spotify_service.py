@@ -5,8 +5,6 @@ import pytest
 from pydantic import AnyUrl
 
 from linkurator_core.domain.common.mock_factory import mock_item, mock_sub
-from linkurator_core.domain.items.item import ItemProvider
-from linkurator_core.domain.subscriptions.subscription import SubscriptionProvider
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
@@ -92,7 +90,7 @@ async def test_get_subscription_from_name() -> None:
     subscription = subscriptions[0]
     assert subscription.uuid is not None
     assert subscription.name == spotify_show.name
-    assert subscription.provider == SubscriptionProvider.SPOTIFY
+    assert subscription.provider == "spotify"
     assert subscription.url == AnyUrl(f"https://open.spotify.com/show/{spotify_show.id}")
     assert subscription.thumbnail == AnyUrl("https://show.com/image/medium.jpg")
     assert subscription.external_data == {
@@ -121,7 +119,7 @@ async def test_get_subscription_from_url() -> None:
     assert subscription is not None
     assert subscription.uuid is not None
     assert subscription.name == "Entiende Tu Mente"
-    assert subscription.provider == SubscriptionProvider.SPOTIFY
+    assert subscription.provider == "spotify"
     assert subscription.url == AnyUrl(f"https://open.spotify.com/show/{spotify_show.id}")
     assert subscription.thumbnail == AnyUrl("https://show.com/image/medium.jpg")
     assert subscription.external_data == {
@@ -142,7 +140,7 @@ async def test_get_existing_subscription_from_id() -> None:
     spotify_api_client.get_shows.return_value = [spotify_show]
 
     sub_repo = InMemorySubscriptionRepository()
-    sub = mock_sub(provider=SubscriptionProvider.SPOTIFY,
+    sub = mock_sub(provider="spotify",
                    url=f"https://open.spotify.com/show/{spotify_show.id}")
     sub.external_data = {
         "show_id": spotify_show.id,
@@ -158,7 +156,7 @@ async def test_get_existing_subscription_from_id() -> None:
     assert subscription is not None
     assert subscription.uuid == sub.uuid
     assert subscription.name == spotify_show.name
-    assert subscription.provider == SubscriptionProvider.SPOTIFY
+    assert subscription.provider == "spotify"
     assert subscription.url == sub.url
     assert subscription.thumbnail == AnyUrl("https://show.com/image/medium.jpg")
     assert subscription.external_data == {
@@ -182,7 +180,7 @@ async def test_get_items() -> None:
 
     item_repo = InMemoryItemRepository()
     item = mock_item()
-    item.provider = ItemProvider.SPOTIFY
+    item.provider = "spotify"
     item.url = AnyUrl(f"https://open.spotify.com/episode/{spotify_episode.id}")
     await item_repo.upsert_items([item])
 
