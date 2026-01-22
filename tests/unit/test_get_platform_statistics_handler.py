@@ -1,12 +1,20 @@
 from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock
 
 import pytest
 
 from linkurator_core.application.statistics.get_platform_statistics import GetPlatformStatisticsHandler
 from linkurator_core.domain.common.mock_factory import mock_item, mock_sub, mock_user
+from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
+
+
+def mock_subscription_service(provider_name: str) -> SubscriptionService:
+    service = MagicMock(spec=SubscriptionService)
+    service.provider_name.return_value = provider_name
+    return service
 
 
 @pytest.mark.asyncio()
@@ -37,7 +45,14 @@ async def test_get_platform_statistics_handler() -> None:
     item5 = mock_item(provider="youtube")
     await item_repository.upsert_items([item1, item2, item3, item4, item5])
 
-    handler = GetPlatformStatisticsHandler(user_repository, subscription_repository, item_repository)
+    subscription_services = [
+        mock_subscription_service("youtube"),
+        mock_subscription_service("spotify"),
+    ]
+
+    handler = GetPlatformStatisticsHandler(
+        user_repository, subscription_repository, item_repository, subscription_services,
+    )
 
     # When
     statistics = await handler.handle()
@@ -46,8 +61,8 @@ async def test_get_platform_statistics_handler() -> None:
     assert statistics.users.registered == 2
     assert statistics.users.active == 1
     assert statistics.subscriptions.total == 3
-    assert statistics.subscriptions.youtube == 2
-    assert statistics.subscriptions.spotify == 1
+    assert statistics.subscriptions.per_provider["youtube"] == 2
+    assert statistics.subscriptions.per_provider["spotify"] == 1
     assert statistics.items.total == 5
-    assert statistics.items.youtube == 3
-    assert statistics.items.spotify == 2
+    assert statistics.items.per_provider["youtube"] == 3
+    assert statistics.items.per_provider["spotify"] == 2

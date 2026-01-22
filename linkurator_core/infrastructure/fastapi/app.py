@@ -183,9 +183,9 @@ def app_handlers() -> Handlers:
         rss_data_repository=rss_data_repository,
     )
 
-    general_subscription_service = GeneralSubscriptionService(
-        services=[spotify_service, youtube_service, rss_service],
-    )
+    subscription_services = [youtube_service, spotify_service, rss_service]
+
+    general_subscription_service = GeneralSubscriptionService(services=subscription_services)
 
     rabbitmq_settings = settings.rabbitmq
     event_bus = RabbitMQEventBus(host=str(rabbitmq_settings.ip_address), port=rabbitmq_settings.port,
@@ -318,7 +318,8 @@ def app_handlers() -> Handlers:
         get_platform_statistics=GetPlatformStatisticsHandler(
             user_repository=user_repository,
             subscription_repository=subscription_repository,
-            item_repository=item_repository),
+            item_repository=item_repository,
+            subscription_services=subscription_services),
         update_youtube_user_subscriptions_handler=UpdateYoutubeUserSubscriptionsHandler(
             youtube_subscription_service=youtube_service,
             user_repository=user_repository,

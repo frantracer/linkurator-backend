@@ -5,6 +5,7 @@ from linkurator_core.domain.items.item_repository import ItemRepository
 from linkurator_core.domain.subscriptions.subscription_repository import (
     SubscriptionRepository,
 )
+from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
@@ -17,15 +18,13 @@ class UserPlatformStatistics:
 @dataclass
 class SubscriptionsPlatformStatistics:
     total: int
-    youtube: int
-    spotify: int
+    per_provider: dict[str, int]
 
 
 @dataclass
 class ItemsPlatformStatistics:
     total: int
-    youtube: int
-    spotify: int
+    per_provider: dict[str, int]
 
 
 @dataclass
@@ -41,36 +40,40 @@ class GetPlatformStatisticsHandler:
         user_repository: UserRepository,
         subscription_repository: SubscriptionRepository,
         item_repository: ItemRepository,
+        subscription_services: list[SubscriptionService],
     ) -> None:
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
+        self.subscription_services = subscription_services
 
     async def handle(self) -> PlatformStatistics:
-        # TODO: Count per provider must be dynamic based on available providers
-        results = await asyncio.gather(
+        provider_names = [service.provider_name() for service in self.subscription_services]
+
+        user_results = await asyncio.gather(
             self.user_repository.count_registered_users(),
             self.user_repository.count_active_users(),
-            self.subscription_repository.count_subscriptions(
-                provider="youtube",
-            ),
-            self.subscription_repository.count_subscriptions(
-                provider="spotify",
-            ),
-            self.item_repository.count_items(
-                provider="youtube",
-            ),
-            self.item_repository.count_items(
-                provider="spotify",
-            ),
         )
 
+        subscription_counts = await asyncio.gather(
+            *[self.subscription_repository.count_subscriptions(provider=provider) for provider in provider_names],
+        )
+
+        item_counts = await asyncio.gather(
+            *[self.item_repository.count_items(provider=provider) for provider in provider_names],
+        )
+
+        subscriptions_per_provider = dict(zip(provider_names, subscription_counts))
+        items_per_provider = dict(zip(provider_names, item_counts))
+
         return PlatformStatistics(
-            users=UserPlatformStatistics(registered=results[0], active=results[1]),
+            users=UserPlatformStatistics(registered=user_results[0], active=user_results[1]),
             subscriptions=SubscriptionsPlatformStatistics(
-                total=results[2] + results[3], youtube=results[2], spotify=results[3],
+                total=sum(subscription_counts),
+                per_provider=subscriptions_per_provider,
             ),
             items=ItemsPlatformStatistics(
-                total=results[4] + results[5], youtube=results[4], spotify=results[5],
+                total=sum(item_counts),
+                per_provider=items_per_provider,
             ),
         )
