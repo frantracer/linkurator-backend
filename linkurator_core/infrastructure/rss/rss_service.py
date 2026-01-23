@@ -14,7 +14,6 @@ from linkurator_core.domain.items.item_repository import ItemFilterCriteria, Ite
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
-from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
 from linkurator_core.infrastructure.rss.rss_data_repository import RawDataRecord, RssDataRepository
 from linkurator_core.infrastructure.rss.rss_feed_client import RssFeedClient, RssFeedInfo, RssFeedItem
 
@@ -93,7 +92,6 @@ class RssSubscriptionService(SubscriptionService):
         self,
         user_id: uuid.UUID,  # noqa: ARG002
         access_token: str,  # noqa: ARG002
-        credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> list[Subscription]:
         """RSS feeds don't have user accounts, return empty list."""
         return []
@@ -101,7 +99,6 @@ class RssSubscriptionService(SubscriptionService):
     async def get_subscription(
         self,
         sub_id: uuid.UUID,
-        credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> Subscription | None:
         """Get and update subscription information from RSS feed."""
         subscription = await self.subscription_repository.get(sub_id)
@@ -118,7 +115,6 @@ class RssSubscriptionService(SubscriptionService):
         self,
         sub_id: uuid.UUID,
         from_date: datetime,
-        credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> list[Item]:
         """Get items from RSS feed published after from_date."""
         subscription = await self.subscription_repository.get(sub_id)
@@ -162,7 +158,6 @@ class RssSubscriptionService(SubscriptionService):
     async def get_items(
         self,
         item_ids: set[uuid.UUID],
-        credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> set[Item]:
         """
         Get specific items by ID from cached raw RSS data.
@@ -240,7 +235,6 @@ class RssSubscriptionService(SubscriptionService):
     async def get_subscription_from_url(
         self,
         url: AnyUrl,
-        credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> Subscription | None:
         """
         Get or create subscription from URL.
@@ -270,7 +264,6 @@ class RssSubscriptionService(SubscriptionService):
     async def get_subscriptions_from_name(
         self,
         name: str,  # noqa: ARG002
-        credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> list[Subscription]:
         """
         Search for RSS feeds by name.

@@ -10,7 +10,6 @@ from linkurator_core.domain.items.interaction import Interaction, InteractionTyp
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.topics.topic import Topic
-from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.domain.users.user import User, Username
 from linkurator_core.domain.users.user_filter import UserFilter
 
@@ -83,20 +82,6 @@ def mock_topic(
         name=f"{uuid}" if name is None else name,
         user_id=user_uuid,
         subscription_ids=[] if subscription_uuids is None else subscription_uuids,
-    )
-
-
-def mock_credential(
-        user_id: UUID | None = None,
-        credential_type: ExternalServiceType = ExternalServiceType.YOUTUBE_API_KEY,
-) -> ExternalServiceCredential:
-    user_id = user_id or uuid4()
-    return ExternalServiceCredential(
-        user_id=user_id,
-        credential_type=credential_type,
-        credential_value="test-api-key",
-        created_at=datetime(2020, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
-        updated_at=datetime(2022, 1, 1, 4, 4, 4, tzinfo=timezone.utc),
     )
 
 

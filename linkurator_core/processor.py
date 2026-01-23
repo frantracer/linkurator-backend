@@ -50,7 +50,6 @@ from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssC
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.logger import configure_logging
 from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
-from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.registration_request_repository import MongoDBRegistrationRequestRepository
 from linkurator_core.infrastructure.mongodb.rss_data_repository import MongoDBRssDataRepository
@@ -104,10 +103,6 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
-    credentials_repository = MongodDBExternalCredentialRepository(
-        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
-        username=db_settings.user, password=db_settings.password,
-    )
     registration_request_repository = MongoDBRegistrationRequestRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
@@ -128,7 +123,6 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         user_repository=user_repository,
         subscription_repository=subscription_repository,
         item_repository=item_repository,
-        credentials_repository=credentials_repository,
         api_keys=settings.google.youtube_api_keys,
         youtube_client=youtube_client,
         youtube_rss_client=youtube_rss_client,

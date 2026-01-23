@@ -12,7 +12,6 @@ from linkurator_core.domain.items.item_repository import ItemFilterCriteria, Ite
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
-from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential
 from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.spotify.spotify_api_client import (
     Episode,
@@ -58,14 +57,12 @@ class SpotifySubscriptionService(SubscriptionService):
             self,
             user_id: UUID,  # noqa: ARG002
             access_token: str,  # noqa: ARG002
-            credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> list[Subscription]:
         return []
 
     async def get_subscription(
             self,
             sub_id: UUID,
-            credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> Subscription | None:
         subscription = await self.subscription_repository.get(sub_id)
         if subscription is None:
@@ -87,7 +84,6 @@ class SpotifySubscriptionService(SubscriptionService):
     async def get_items(
             self,
             item_ids: set[UUID],
-            credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> set[Item]:
         items = await self.item_repository.find_items(
             criteria=ItemFilterCriteria(item_ids=item_ids, provider=self.provider_name()),
@@ -117,7 +113,6 @@ class SpotifySubscriptionService(SubscriptionService):
             self,
             sub_id: UUID,
             from_date: datetime,
-            credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> list[Item]:
         subscription = await self.subscription_repository.get(sub_id)
         if subscription is None:
@@ -149,7 +144,6 @@ class SpotifySubscriptionService(SubscriptionService):
     async def get_subscription_from_url(
             self,
             url: AnyUrl,
-            credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> Subscription | None:
         if url.host != "open.spotify.com":
             return None
@@ -170,7 +164,6 @@ class SpotifySubscriptionService(SubscriptionService):
     async def get_subscriptions_from_name(
             self,
             name: str,
-            credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> list[Subscription]:
         spotify_show = await self.spotify_client.find_show(name)
         if spotify_show is None:

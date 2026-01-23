@@ -25,7 +25,7 @@ async def test_get_subscriptions_combines_results_from_all_services() -> None:
     general_service = GeneralSubscriptionService(services=[service1, service2])
 
     user_id = uuid4()
-    result = await general_service.get_subscriptions(user_id=user_id, access_token="token", credential=None)
+    result = await general_service.get_subscriptions(user_id=user_id, access_token="token")
 
     assert len(result) == 3
     assert sub1 in result
@@ -37,7 +37,7 @@ async def test_get_subscriptions_combines_results_from_all_services() -> None:
 async def test_get_subscriptions_with_empty_services_list() -> None:
     general_service = GeneralSubscriptionService(services=[])
 
-    result = await general_service.get_subscriptions(user_id=uuid4(), access_token="token", credential=None)
+    result = await general_service.get_subscriptions(user_id=uuid4(), access_token="token")
 
     assert result == []
 
@@ -57,7 +57,7 @@ async def test_get_subscription_returns_first_non_none_result() -> None:
     general_service = GeneralSubscriptionService(services=[service1, service2, service3])
 
     sub_id = uuid4()
-    result = await general_service.get_subscription(sub_id=sub_id, credential=None)
+    result = await general_service.get_subscription(sub_id=sub_id)
 
     assert result == sub
 
@@ -72,7 +72,7 @@ async def test_get_subscription_returns_none_when_all_services_return_none() -> 
 
     general_service = GeneralSubscriptionService(services=[service1, service2])
 
-    result = await general_service.get_subscription(sub_id=uuid4(), credential=None)
+    result = await general_service.get_subscription(sub_id=uuid4())
 
     assert result is None
 
@@ -92,7 +92,7 @@ async def test_get_items_unions_sets_from_all_services() -> None:
     general_service = GeneralSubscriptionService(services=[service1, service2])
 
     item_ids = {item1.uuid, item2.uuid, item3.uuid}
-    result = await general_service.get_items(item_ids=item_ids, credential=None)
+    result = await general_service.get_items(item_ids=item_ids)
 
     assert len(result) == 3
     assert item1 in result
@@ -104,7 +104,7 @@ async def test_get_items_unions_sets_from_all_services() -> None:
 async def test_get_items_with_empty_services_list() -> None:
     general_service = GeneralSubscriptionService(services=[])
 
-    result = await general_service.get_items(item_ids={uuid4()}, credential=None)
+    result = await general_service.get_items(item_ids={uuid4()})
 
     assert result == set()
 
@@ -125,7 +125,7 @@ async def test_get_subscription_items_combines_lists_from_all_services() -> None
 
     sub_id = uuid4()
     from_date = datetime.now(tz=timezone.utc)
-    result = await general_service.get_subscription_items(sub_id=sub_id, from_date=from_date, credential=None)
+    result = await general_service.get_subscription_items(sub_id=sub_id, from_date=from_date)
 
     assert len(result) == 3
     assert item1 in result
@@ -146,7 +146,7 @@ async def test_get_subscription_from_url_returns_first_non_none_result() -> None
     general_service = GeneralSubscriptionService(services=[service1, service2])
 
     url = AnyUrl("https://example.com/channel")
-    result = await general_service.get_subscription_from_url(url=url, credential=None)
+    result = await general_service.get_subscription_from_url(url=url)
 
     assert result == sub
 
@@ -162,7 +162,7 @@ async def test_get_subscription_from_url_returns_none_when_all_return_none() -> 
     general_service = GeneralSubscriptionService(services=[service1, service2])
 
     url = AnyUrl("https://example.com/channel")
-    result = await general_service.get_subscription_from_url(url=url, credential=None)
+    result = await general_service.get_subscription_from_url(url=url)
 
     assert result is None
 
@@ -181,7 +181,7 @@ async def test_get_subscriptions_from_name_combines_lists_from_all_services() ->
 
     general_service = GeneralSubscriptionService(services=[service1, service2])
 
-    result = await general_service.get_subscriptions_from_name(name="Match", credential=None)
+    result = await general_service.get_subscriptions_from_name(name="Match")
 
     assert len(result) == 3
     assert sub1 in result
@@ -193,6 +193,6 @@ async def test_get_subscriptions_from_name_combines_lists_from_all_services() ->
 async def test_get_subscriptions_from_name_with_empty_services_list() -> None:
     general_service = GeneralSubscriptionService(services=[])
 
-    result = await general_service.get_subscriptions_from_name(name="test", credential=None)
+    result = await general_service.get_subscriptions_from_name(name="test")
 
     assert result == []

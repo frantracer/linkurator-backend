@@ -51,15 +51,12 @@ from linkurator_core.application.topics.unassign_subscription_from_user_topic_ha
 from linkurator_core.application.topics.unfavorite_topic_handler import UnfavoriteTopicHandler
 from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
-from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
-from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
 from linkurator_core.application.users.delete_user_filter_handler import DeleteUserFilterHandler
 from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
 from linkurator_core.application.users.edit_user_profile import EditUserProfile
 from linkurator_core.application.users.find_user_handler import FindCuratorHandler
 from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
-from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_filter_handler import GetUserFilterHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
@@ -74,12 +71,10 @@ from linkurator_core.infrastructure.fastapi.create_app import Handlers, create_a
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService, GoogleDomainAccountService
 from linkurator_core.infrastructure.google.gmail_email_sender import GmailEmailSender
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
-from linkurator_core.infrastructure.google.youtube_api_key_checker import YoutubeApiKeyChecker
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.logger import configure_logging
 from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
-from linkurator_core.infrastructure.mongodb.external_credentials_repository import MongodDBExternalCredentialRepository
 from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
 from linkurator_core.infrastructure.mongodb.password_change_request_repository import (
     MongoDBPasswordChangeRequestRepository,
@@ -127,9 +122,6 @@ def app_handlers() -> Handlers:
     topic_repository = MongoDBTopicRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
-    credentials_repository = MongodDBExternalCredentialRepository(
-        ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
-        username=db_settings.user, password=db_settings.password)
     registration_request_repository = MongoDBRegistrationRequestRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
@@ -145,7 +137,6 @@ def app_handlers() -> Handlers:
     rss_data_repository = MongoDBRssDataRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
-    credentials_checker = YoutubeApiKeyChecker()
 
     http_client = AsyncHttpClient(contact_email=settings.google.service_account_email)
     rss_feed_client = RssFeedClient(http_client=http_client)
@@ -154,7 +145,6 @@ def app_handlers() -> Handlers:
         subscription_repository=subscription_repository,
         user_repository=user_repository,
         item_repository=item_repository,
-        credentials_repository=credentials_repository,
         youtube_client=YoutubeApiClient(),
         youtube_rss_client=YoutubeRssClient(),
         api_keys=settings.google.youtube_api_keys,
@@ -309,13 +299,6 @@ def app_handlers() -> Handlers:
             item_repository=item_repository,
             subscription_repository=subscription_repository,
             user_repository=user_repository),
-        add_external_credentials_handler=AddExternalCredentialsHandler(
-            credentials_repository=credentials_repository,
-            credential_checker=credentials_checker),
-        get_user_external_credentials_handler=GetUserExternalCredentialsHandler(
-            credentials_repository=credentials_repository),
-        delete_external_credential_handler=DeleteExternalCredentialHandler(
-            credentials_repository=credentials_repository),
         get_platform_statistics=GetPlatformStatisticsHandler(
             user_repository=user_repository,
             subscription_repository=subscription_repository,

@@ -58,15 +58,12 @@ from linkurator_core.application.topics.unassign_subscription_from_user_topic_ha
 from linkurator_core.application.topics.unfavorite_topic_handler import UnfavoriteTopicHandler
 from linkurator_core.application.topics.unfollow_topic_handler import UnfollowTopicHandler
 from linkurator_core.application.topics.update_topic_handler import UpdateTopicHandler
-from linkurator_core.application.users.add_external_credentials import AddExternalCredentialsHandler
-from linkurator_core.application.users.delete_external_credential import DeleteExternalCredentialHandler
 from linkurator_core.application.users.delete_user_filter_handler import DeleteUserFilterHandler
 from linkurator_core.application.users.delete_user_handler import DeleteUserHandler
 from linkurator_core.application.users.edit_user_profile import EditUserProfile
 from linkurator_core.application.users.find_user_handler import FindCuratorHandler
 from linkurator_core.application.users.follow_curator_handler import FollowCuratorHandler
 from linkurator_core.application.users.get_curators_handler import GetCuratorsHandler
-from linkurator_core.application.users.get_user_external_credentials import GetUserExternalCredentialsHandler
 from linkurator_core.application.users.get_user_filter_handler import GetUserFilterHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
@@ -76,7 +73,6 @@ from linkurator_core.domain.users.session import Session
 from linkurator_core.infrastructure.fastapi.routers import (
     authentication,
     chats,
-    credentials,
     curators,
     items,
     profile,
@@ -134,9 +130,6 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     create_item_interaction_handler: CreateItemInteractionHandler
     delete_item_interaction_handler: DeleteItemInteractionHandler
     get_followed_subscriptions_items_handler: GetFollowedSubscriptionsItemsHandler
-    add_external_credentials_handler: AddExternalCredentialsHandler
-    get_user_external_credentials_handler: GetUserExternalCredentialsHandler
-    delete_external_credential_handler: DeleteExternalCredentialHandler
     get_platform_statistics: GetPlatformStatisticsHandler
     get_providers_handler: GetProvidersHandler
     update_youtube_user_subscriptions_handler: UpdateYoutubeUserSubscriptionsHandler
@@ -254,15 +247,6 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             create_item_interaction_handler=handlers.create_item_interaction_handler,
             delete_item_interaction_handler=handlers.delete_item_interaction_handler),
         prefix="/items")
-    app.include_router(
-        tags=["Credentials"],
-        router=credentials.get_router(
-            get_session=get_current_session,
-            get_user_external_credentials_handler=handlers.get_user_external_credentials_handler,
-            add_external_credential_handler=handlers.add_external_credentials_handler,
-            delete_external_credential_handler=handlers.delete_external_credential_handler),
-        prefix="/credentials",
-    )
     app.include_router(
         tags=["Providers"],
         router=providers.get_router(
