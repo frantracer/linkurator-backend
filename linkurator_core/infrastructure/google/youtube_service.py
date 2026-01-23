@@ -62,6 +62,9 @@ class YoutubeService(SubscriptionService):
     def provider_alias(self) -> str:
         return YOUTUBE_PROVIDER_ALIAS
 
+    def provider_thumbnail(self) -> str:
+        return "https://www.youtube.com/favicon.ico"
+
     def provider_version(self) -> int:
         return YOUTUBE_PROVIDER_VERSION
 

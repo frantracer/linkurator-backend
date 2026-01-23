@@ -29,6 +29,7 @@ from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_
     FindSubscriptionsByNameOrUrlHandler,
 )
 from linkurator_core.application.subscriptions.follow_subscription_handler import FollowSubscriptionHandler
+from linkurator_core.application.subscriptions.get_providers_handler import GetProvidersHandler
 from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
@@ -319,6 +320,8 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             subscription_repository=subscription_repository,
             item_repository=item_repository,
+            subscription_services=subscription_services),
+        get_providers_handler=GetProvidersHandler(
             subscription_services=subscription_services),
         update_youtube_user_subscriptions_handler=UpdateYoutubeUserSubscriptionsHandler(
             youtube_subscription_service=youtube_service,

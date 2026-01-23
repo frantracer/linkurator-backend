@@ -36,6 +36,7 @@ from linkurator_core.application.subscriptions.find_subscription_by_name_or_url_
     FindSubscriptionsByNameOrUrlHandler,
 )
 from linkurator_core.application.subscriptions.follow_subscription_handler import FollowSubscriptionHandler
+from linkurator_core.application.subscriptions.get_providers_handler import GetProvidersHandler
 from linkurator_core.application.subscriptions.get_subscription_handler import GetSubscriptionHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
@@ -79,6 +80,7 @@ from linkurator_core.infrastructure.fastapi.routers import (
     curators,
     items,
     profile,
+    providers,
     subscriptions,
     topics,
     user_filter,
@@ -136,6 +138,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_user_external_credentials_handler: GetUserExternalCredentialsHandler
     delete_external_credential_handler: DeleteExternalCredentialHandler
     get_platform_statistics: GetPlatformStatisticsHandler
+    get_providers_handler: GetProvidersHandler
     update_youtube_user_subscriptions_handler: UpdateYoutubeUserSubscriptionsHandler
     query_agent_handler: QueryAgentHandler
     get_user_chats_handler: GetUserChatsHandler
@@ -259,6 +262,13 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             add_external_credential_handler=handlers.add_external_credentials_handler,
             delete_external_credential_handler=handlers.delete_external_credential_handler),
         prefix="/credentials",
+    )
+    app.include_router(
+        tags=["Providers"],
+        router=providers.get_router(
+            get_providers_handler=handlers.get_providers_handler,
+        ),
+        prefix="/providers",
     )
     app.include_router(
         tags=["Chats"],

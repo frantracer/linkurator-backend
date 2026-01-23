@@ -21,6 +21,9 @@ class SubscriptionService(abc.ABC):
     def provider_version(self) -> int:
         return DEFAULT_ITEM_VERSION
 
+    def provider_thumbnail(self) -> str:
+        return ""
+
     @abc.abstractmethod
     def refresh_period_minutes(self) -> int: ...
 

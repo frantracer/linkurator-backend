@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -94,6 +94,7 @@ def dummy_handlers() -> Handlers:
         favorite_topic_handler=AsyncMock(),
         unfavorite_topic_handler=AsyncMock(),
         get_platform_statistics=AsyncMock(),
+        get_providers_handler=MagicMock(),
         update_youtube_user_subscriptions_handler=AsyncMock(),
         query_agent_handler=AsyncMock(),
         get_user_chats_handler=AsyncMock(),

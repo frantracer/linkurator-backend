@@ -80,6 +80,9 @@ class RssSubscriptionService(SubscriptionService):
     def provider_alias(self) -> str:
         return RSS_PROVIDER_ALIAS
 
+    def provider_thumbnail(self) -> str:
+        return "https://upload.wikimedia.org/wikipedia/en/4/43/Feed-icon.svg"
+
     def provider_version(self) -> int:
         return RSS_PROVIDER_VERSION
 

@@ -45,6 +45,9 @@ class SpotifySubscriptionService(SubscriptionService):
     def provider_alias(self) -> str:
         return SPOTIFY_PROVIDER_ALIAS
 
+    def provider_thumbnail(self) -> str:
+        return "https://duckduckgo.com/assets/icons/favicons/spotify.2x.png"
+
     def provider_version(self) -> int:
         return SPOTIFY_PROVIDER_VERSION
 
