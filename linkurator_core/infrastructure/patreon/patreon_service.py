@@ -1,20 +1,17 @@
 from __future__ import annotations
 
-import logging
 import uuid
 from copy import deepcopy
 from datetime import datetime
 
 from pydantic import AnyUrl
 
-from linkurator_core.domain.common.exceptions import InvalidCredentialTypeError
 from linkurator_core.domain.common.utils import parse_url
 from linkurator_core.domain.items.item import DEFAULT_ITEM_VERSION, Item, ItemProvider
 from linkurator_core.domain.items.item_repository import ItemFilterCriteria, ItemRepository
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
-from linkurator_core.domain.users.external_service_credential import ExternalServiceCredential, ExternalServiceType
 from linkurator_core.infrastructure.patreon.patreon_api_client import PatreonApiClient, PatreonCampaign, PatreonPost
 
 PATREON_PROVIDER_NAME = "patreon"
@@ -133,31 +130,17 @@ class PatreonSubscriptionService(SubscriptionService):
     def refresh_period_minutes(self) -> int:
         return PATREON_REFRESH_PERIOD_MINUTES
 
-    def _get_access_token(self, credential: ExternalServiceCredential | None) -> str | None:
-        """Extract access token from credential."""
-        if credential is None:
-            return None
-        if credential.credential_type != ExternalServiceType.PATREON_CREATOR_ACCESS_TOKEN:
-            msg = "Invalid credential type for Patreon"
-            raise InvalidCredentialTypeError(msg)
-        return credential.credential_value
-
     async def get_subscriptions(
         self,
         user_id: uuid.UUID,  # noqa: ARG002
         access_token: str,
-        credential: ExternalServiceCredential | None = None,
     ) -> list[Subscription]:
         """
         Get Patreon subscriptions (campaigns) for the authenticated user.
 
         Returns the user's own campaign if they are a creator.
         """
-        token = self._get_access_token(credential) or access_token
-        if not token:
-            return []
-
-        campaign = await self.patreon_client.get_current_user_campaign(token)
+        campaign = await self.patreon_client.get_current_user_campaign(access_token)
         if campaign is None:
             return []
 
@@ -166,7 +149,6 @@ class PatreonSubscriptionService(SubscriptionService):
     async def get_subscription(
         self,
         sub_id: uuid.UUID,
-        credential: ExternalServiceCredential | None = None,
     ) -> Subscription | None:
         """Get and update subscription information from Patreon API."""
         subscription = await self.subscription_repository.get(sub_id)
@@ -177,12 +159,7 @@ class PatreonSubscriptionService(SubscriptionService):
         if campaign_id is None:
             return None
 
-        access_token = self._get_access_token(credential)
-        if access_token is None:
-            logging.warning("No access token provided for Patreon subscription %s", sub_id)
-            return subscription
-
-        campaign = await self.patreon_client.get_campaign(campaign_id, access_token)
+        campaign = await self.patreon_client.get_campaign(campaign_id)
         if campaign is None:
             return None
 
@@ -192,7 +169,6 @@ class PatreonSubscriptionService(SubscriptionService):
         self,
         sub_id: uuid.UUID,
         from_date: datetime,
-        credential: ExternalServiceCredential | None = None,
     ) -> list[Item]:
         """
         Get posts from Patreon campaign published after from_date.
@@ -207,16 +183,11 @@ class PatreonSubscriptionService(SubscriptionService):
         if not campaign_id:
             return []
 
-        access_token = self._get_access_token(credential)
-        if access_token is None:
-            logging.warning("No access token provided for fetching Patreon posts for subscription %s", sub_id)
-            return []
-
         items: list[Item] = []
         cursor: str | None = None
 
         while True:
-            posts, next_cursor = await self.patreon_client.get_campaign_posts(campaign_id, access_token, cursor)
+            posts, next_cursor = await self.patreon_client.get_campaign_posts(campaign_id, cursor)
 
             for post in posts:
                 if post.published_at > from_date:
@@ -235,18 +206,12 @@ class PatreonSubscriptionService(SubscriptionService):
     async def get_items(
         self,
         item_ids: set[uuid.UUID],
-        credential: ExternalServiceCredential | None = None,
     ) -> set[Item]:
         """
         Get specific items by ID from Patreon.
 
         Fetches individual posts from the API.
         """
-        access_token = self._get_access_token(credential)
-        if access_token is None:
-            logging.warning("No access token provided for fetching Patreon items")
-            return set()
-
         # Fetch items from repository to get their post IDs
         items = await self.item_repository.find_items(
             criteria=ItemFilterCriteria(item_ids=item_ids, provider=self.provider_name()),
@@ -262,7 +227,7 @@ class PatreonSubscriptionService(SubscriptionService):
             if not post_id:
                 continue
 
-            post = await self.patreon_client.get_post(post_id, access_token)
+            post = await self.patreon_client.get_post(post_id)
             if post:
                 thumbnail = parse_url(post.image_url) if post.image_url else parse_url(DEFAULT_PATREON_ICON)
                 updated_item = Item.new(
@@ -284,7 +249,6 @@ class PatreonSubscriptionService(SubscriptionService):
     async def get_subscription_from_url(
         self,
         url: AnyUrl,
-        credential: ExternalServiceCredential | None = None,
     ) -> Subscription | None:
         """
         Get or create subscription from Patreon URL.
@@ -296,43 +260,26 @@ class PatreonSubscriptionService(SubscriptionService):
         if identifier is None:
             return None
 
-        access_token = self._get_access_token(credential)
-
         # Check if subscription already exists by URL pattern
         # Try both vanity URL and campaign URL formats
         existing_sub = await self.subscription_repository.find_by_url(url)
 
-        if access_token:
-            # Try to get campaign details from API
-            # First try as campaign ID
-            campaign = await self.patreon_client.get_campaign(identifier, access_token)
+        campaign = await self.patreon_client.get_campaign(identifier)
 
-            if campaign:
-                if existing_sub:
-                    return _map_patreon_campaign_to_subscription(campaign, existing_sub)
-                return _map_patreon_campaign_to_subscription(campaign)
+        if campaign:
+            if existing_sub:
+                return _map_patreon_campaign_to_subscription(campaign, existing_sub)
+            return _map_patreon_campaign_to_subscription(campaign)
 
         # If no API access or campaign not found, create a placeholder subscription
         if existing_sub:
             return existing_sub
 
-        # Create a basic subscription without API details
-        return Subscription.new(
-            uuid=uuid.uuid4(),
-            name=identifier,  # Use the identifier as name until we can fetch details
-            provider=PATREON_PROVIDER_NAME,
-            url=parse_url(f"https://www.patreon.com/{identifier}"),
-            thumbnail=parse_url(DEFAULT_PATREON_ICON),
-            description="",
-            external_data={
-                "vanity": identifier,
-            },
-        )
+        return None
 
     async def get_subscriptions_from_name(
         self,
         name: str,  # noqa: ARG002
-        credential: ExternalServiceCredential | None = None,  # noqa: ARG002
     ) -> list[Subscription]:
         """
         Search for Patreon creators by name.

@@ -41,9 +41,10 @@ class PatreonApiClient:
 
     BASE_URL = "https://www.patreon.com"
 
-    def __init__(self, client_id: str, client_secret: str) -> None:
+    def __init__(self, client_id: str, client_secret: str, refresh_token: str) -> None:
         self.client_id = client_id
         self.client_secret = client_secret
+        self.refresh_token = refresh_token
 
     async def refresh_access_token(self, refresh_token: str) -> tuple[str, str] | None:
         """
@@ -67,12 +68,17 @@ class PatreonApiClient:
                 logging.error("Failed to refresh Patreon token: %s -> %s", response.status, await response.text())
                 return None
 
-    async def get_campaign(self, campaign_id: str, access_token: str) -> PatreonCampaign | None:
+    async def get_campaign(self, campaign_id: str) -> PatreonCampaign | None:
         """Get a campaign by ID."""
         url = f"{self.BASE_URL}/api/oauth2/v2/campaigns/{campaign_id}"
         params = {
             "fields[campaign]": "created_at,creation_name,image_url,is_monthly,patron_count,summary,url,vanity",
         }
+
+        access_token = self.refresh_access_token(self.refresh_token)
+        if access_token is None:
+            logging.error("Cannot refresh access token to get Patreon campaign")
+            return None
 
         async with aiohttp.ClientSession() as session:
             headers = {"Authorization": f"Bearer {access_token}"}
@@ -107,7 +113,6 @@ class PatreonApiClient:
     async def get_campaign_posts(
         self,
         campaign_id: str,
-        access_token: str,
         cursor: str | None = None,
     ) -> tuple[list[PatreonPost], str | None]:
         """
@@ -122,6 +127,11 @@ class PatreonApiClient:
         }
         if cursor:
             params["page[cursor]"] = cursor
+
+        access_token = self.refresh_access_token(self.refresh_token)
+        if access_token is None:
+            logging.error("Cannot refresh access token to get Patreon campaign")
+            return [], None
 
         async with aiohttp.ClientSession() as session:
             headers = {"Authorization": f"Bearer {access_token}"}
@@ -142,12 +152,17 @@ class PatreonApiClient:
                 logging.error("Failed to get Patreon posts: %s -> %s", response.status, await response.text())
                 return [], None
 
-    async def get_post(self, post_id: str, access_token: str) -> PatreonPost | None:
+    async def get_post(self, post_id: str) -> PatreonPost | None:
         """Get a single post by ID."""
         url = f"{self.BASE_URL}/api/oauth2/v2/posts/{post_id}"
         params = {
             "fields[post]": "title,content,is_paid,is_public,published_at,url,image",
         }
+
+        access_token = self.refresh_access_token(self.refresh_token)
+        if access_token is None:
+            logging.error("Cannot refresh access token to get Patreon campaign")
+            return None
 
         async with aiohttp.ClientSession() as session:
             headers = {"Authorization": f"Bearer {access_token}"}

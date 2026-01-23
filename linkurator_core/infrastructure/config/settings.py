@@ -64,6 +64,7 @@ class SpotifySettings(BaseModel):
 class PatreonSettings(BaseModel):
     client_id: str
     client_secret: str
+    refresh_token: str
 
 
 class MongoDBSettings(BaseModel):

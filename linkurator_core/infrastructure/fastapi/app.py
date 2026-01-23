@@ -184,6 +184,7 @@ def app_handlers() -> Handlers:
         patreon_client = PatreonApiClient(
             client_id=settings.patreon.client_id,
             client_secret=settings.patreon.client_secret,
+            refresh_token=settings.patreon.refresh_token,
         )
         patreon_service = PatreonSubscriptionService(
             subscription_repository=subscription_repository,
