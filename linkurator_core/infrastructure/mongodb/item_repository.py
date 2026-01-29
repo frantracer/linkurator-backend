@@ -25,6 +25,7 @@ from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotI
 
 ITEM_COLLECTION_NAME = "items"
 INTERACTION_COLLECTION_NAME = "interactions"
+RIGHT_JOIN_OPTIMIZATION_THRESHOLD = 1_000
 
 
 class MongoDBItem(BaseModel):
@@ -201,7 +202,9 @@ class MongoDBItemRepository(ItemRepository):
         if total == 0 or page_number * limit >= total:
             return []
 
-        if total > 1_000 and criteria.interactions_from_user is not None and not criteria.interactions.without_interactions:
+        if (total > RIGHT_JOIN_OPTIMIZATION_THRESHOLD and
+            criteria.interactions_from_user is not None and
+            not criteria.interactions.without_interactions):
             return await self._find_items_right_join_interactions(criteria, page_number, limit)
         return await self._find_items_left_join_interactions(criteria, page_number, limit)
 
@@ -321,9 +324,16 @@ class MongoDBItemRepository(ItemRepository):
         item_filter_conditions = _generate_filter_query(criteria)
         if item_filter_conditions:
             # Prefix all conditions with "item." to match the structure after lookup
-            prefixed_conditions = {}
+            prefixed_conditions: dict[str, Any] = {}
             for key, value in item_filter_conditions.items():
-                prefixed_conditions[f"item.{key}"] = value
+                if key == "$or":
+                    # Handle $or operator specially - prefix the fields inside each condition
+                    prefixed_conditions["$or"] = [
+                        {f"item.{k}": v for k, v in condition.items()}
+                        for condition in value
+                    ]
+                else:
+                    prefixed_conditions[f"item.{key}"] = value
 
             pipeline.append({
                 "$match": prefixed_conditions,

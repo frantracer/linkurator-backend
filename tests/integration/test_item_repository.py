@@ -16,7 +16,10 @@ from linkurator_core.domain.items.item_repository import (
     ItemRepository,
 )
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
-from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
+from linkurator_core.infrastructure.mongodb.item_repository import (
+    RIGHT_JOIN_OPTIMIZATION_THRESHOLD,
+    MongoDBItemRepository,
+)
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 
@@ -1040,6 +1043,54 @@ async def test_find_interactions(item_repo: ItemRepository) -> None:
     assert len(found_interactions) == 2
     assert interaction1 in found_interactions
     assert interaction2 in found_interactions
+
+
+@pytest.mark.asyncio()
+async def test_find_items_with_interactions_and_duration_filter_right_join(item_repo: ItemRepository) -> None:
+    """
+    Test that finds items with interactions and duration filter using the right join optimization.
+    This test reproduces a bug where $or conditions for duration filtering were incorrectly prefixed
+    with "item." (creating "item.$or" instead of "$or" with prefixed fields inside).
+    The right join optimization is triggered when there are more than 1000 items matching the filter.
+    """
+    await item_repo.delete_all_items()
+    await item_repo.delete_all_interactions()
+
+    # Create enough items that ALL match the duration filter to trigger the right join optimization
+    # All items have duration=600 which is <= max_duration=900
+    items = [
+        mock_item(
+            item_uuid=UUID(f"00000000-0000-0000-0000-{i:012d}"),
+            duration=600,  # All items have duration that matches the filter
+            published_at=datetime(2020, 1, 1, 0, 0, i % 60, tzinfo=timezone.utc),
+        )
+        for i in range(RIGHT_JOIN_OPTIMIZATION_THRESHOLD + 1)
+    ]
+    await item_repo.upsert_items(items)
+
+    # Add an interaction for the first item
+    user_id = UUID("52819cca-4de6-4b8b-b313-5cbd5b169161")
+    await item_repo.add_interaction(Interaction(
+        uuid=UUID("76551ba4-1757-4cd6-9f98-5ef14b7c1209"),
+        item_uuid=items[0].uuid,
+        user_uuid=user_id,
+        type=InteractionType.VIEWED,
+        created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+    ))
+
+    # This query triggers the right join (total > 1000) and use the $or clause for duration filtering
+    found_items = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            interactions=AnyItemInteraction(viewed=True),
+            interactions_from_user=user_id,
+            max_duration=900,
+        ),
+        limit=10,
+        page_number=0,
+    )
+
+    assert len(found_items) == 1
+    assert found_items[0].uuid == items[0].uuid
 
 
 @pytest.mark.asyncio()
