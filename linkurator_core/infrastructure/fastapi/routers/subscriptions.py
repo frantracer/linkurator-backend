@@ -136,9 +136,9 @@ def get_router(  # pylint: disable=too-many-statements
         return Page[ItemSchema].create(
             elements=[
                 ItemSchema.from_domain_item(
-                    item=item_with_sub.item_with_interactions.item,
+                    item=item_with_sub.item,
                     subscription=item_with_sub.subscription,
-                    interactions=item_with_sub.item_with_interactions.interactions,
+                    interactions=item_with_sub.interactions,
                 )
                 for item_with_sub in response.items
             ],

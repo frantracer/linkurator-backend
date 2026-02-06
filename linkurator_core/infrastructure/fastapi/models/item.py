@@ -8,7 +8,7 @@ from pydantic import AnyUrl, BaseModel
 from linkurator_core.domain.common.units import Seconds
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item
-from linkurator_core.domain.items.item_with_interactions import ItemWithInteractionsAndCurator
+from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.users.user import User
 from linkurator_core.infrastructure.fastapi.models.schema import Iso8601Datetime
@@ -118,10 +118,10 @@ class ItemWithCuratorSchema(BaseModel):
     curator: CuratorInfoSchema | None
 
     @classmethod
-    def from_domain(cls, item_with_curator: ItemWithInteractionsAndCurator) -> ItemWithCuratorSchema:
+    def from_domain(cls, item_with_curator: ItemWithInteractions) -> ItemWithCuratorSchema:
         item = item_with_curator.item
         subscription = item_with_curator.subscription
-        interactions = item_with_curator.user_interactions
+        interactions = item_with_curator.interactions
 
         recommended = any(reaction.type == InteractionType.RECOMMENDED for reaction in interactions)
         discouraged = any(reaction.type == InteractionType.DISCOURAGED for reaction in interactions)

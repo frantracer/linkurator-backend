@@ -268,7 +268,7 @@ def get_router(
                 ItemSchema.from_domain_item(
                     item=item.item,
                     subscription=item.subscription,
-                    interactions=item.user_interactions,
+                    interactions=item.interactions,
                 )
                 for item in response
             ],

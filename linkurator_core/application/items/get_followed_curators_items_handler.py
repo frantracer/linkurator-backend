@@ -7,7 +7,7 @@ from uuid import UUID
 from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item_repository import InteractionFilterCriteria, ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.items.item_with_interactions import ItemWithInteractionsAndCurator
+from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
@@ -33,7 +33,7 @@ class GetFollowedCuratorsItemsHandler:
             text_filter: str | None = None,
             min_duration: int | None = None,
             max_duration: int | None = None,
-    ) -> list[ItemWithInteractionsAndCurator]:
+    ) -> list[ItemWithInteractions]:
         user = await self.user_repository.get(user_id)
         if user is None:
             raise UserNotFoundError(user_id)
@@ -94,10 +94,10 @@ class GetFollowedCuratorsItemsHandler:
             curators_items_interactions_index[interaction.item_uuid].append(interaction)
 
         return [
-            ItemWithInteractionsAndCurator(
+            ItemWithInteractions(
                 item=curators_items_index[interaction.item_uuid],
                 subscription=subscriptions_index[curators_items_index[interaction.item_uuid].subscription_uuid],
-                user_interactions=user_items_interactions.get(interaction.item_uuid, []),
+                interactions=user_items_interactions.get(interaction.item_uuid, []),
                 curator_interactions=curators_items_interactions_index.get(interaction.item_uuid, []),
                 curator=curators_index.get(interaction.user_uuid),
             )

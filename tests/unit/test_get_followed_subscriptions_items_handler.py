@@ -5,7 +5,6 @@ import pytest
 from linkurator_core.application.items.get_followed_subscriptions_items_handler import (
     GetFollowedSubscriptionsItemsHandler,
     GetFollowedSubscriptionsItemsResponse,
-    ItemWithSubscriptionAndInteractions,
 )
 from linkurator_core.domain.common.mock_factory import mock_interaction, mock_item, mock_sub, mock_user
 from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
@@ -58,18 +57,20 @@ async def test_get_followed_subscriptions_items_returns_items_with_interactions(
     assert len(result.items) == 2
 
     # Find items by UUID since order might not be deterministic
-    result_by_item_id = {item.item_with_interactions.item.uuid: item for item in result.items}
+    result_by_item_id = {item.item.uuid: item for item in result.items}
 
     assert item1.uuid in result_by_item_id
     assert item2.uuid in result_by_item_id
 
-    assert result_by_item_id[item1.uuid] == ItemWithSubscriptionAndInteractions(
-        item_with_interactions=ItemWithInteractions(item=item1, interactions=[interaction1]),
+    assert result_by_item_id[item1.uuid] == ItemWithInteractions(
+        item=item1,
         subscription=sub1,
+        interactions=[interaction1],
     )
-    assert result_by_item_id[item2.uuid] == ItemWithSubscriptionAndInteractions(
-        item_with_interactions=ItemWithInteractions(item=item2, interactions=[interaction2]),
+    assert result_by_item_id[item2.uuid] == ItemWithInteractions(
+        item=item2,
         subscription=sub2,
+        interactions=[interaction2],
     )
 
 
@@ -157,5 +158,5 @@ async def test_get_followed_subscriptions_items_filters_by_followed_subscription
     )
 
     assert len(result.items) == 1
-    assert result.items[0].item_with_interactions.item == followed_item
+    assert result.items[0].item == followed_item
     assert result.items[0].subscription == followed_sub

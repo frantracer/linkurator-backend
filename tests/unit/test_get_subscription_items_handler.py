@@ -41,7 +41,7 @@ async def test_get_subscriptions_items_returns_items_with_interactions() -> None
     )
 
     assert result == GetSubscriptionItemsResponse(
-        items=[ItemWithInteractions(item=item, interactions=[interaction])],
+        items=[ItemWithInteractions(item=item, subscription=sub, interactions=[interaction])],
         subscription=sub,
     )
 
@@ -67,6 +67,6 @@ async def test_test_get_subscriptions_items_with_no_user_returns_no_interactions
     )
 
     assert result == GetSubscriptionItemsResponse(
-        items=[ItemWithInteractions(item=item, interactions=[])],
+        items=[ItemWithInteractions(item=item, subscription=sub, interactions=[])],
         subscription=sub,
     )

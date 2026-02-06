@@ -10,16 +10,12 @@ from linkurator_core.application.auth.validate_session_token import ValidateToke
 from linkurator_core.application.items.get_followed_subscriptions_items_handler import (
     GetFollowedSubscriptionsItemsHandler,
     GetFollowedSubscriptionsItemsResponse,
-    ItemWithSubscriptionAndInteractions,
 )
 from linkurator_core.application.items.get_subscription_items_handler import (
     GetSubscriptionItemsHandler,
     GetSubscriptionItemsResponse,
 )
-from linkurator_core.application.items.get_topic_items_handler import (
-    GetTopicItemsHandler,
-    ItemWithInteractionsAndSubscription,
-)
+from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler, GetTopicResponse
 from linkurator_core.application.topics.get_user_topics_handler import CuratorTopic, GetUserTopicsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
@@ -174,7 +170,7 @@ def test_item_pagination_returns_one_page(handlers: Handlers) -> None:
                      published_at=datetime.fromtimestamp(0, tz=timezone.utc))
     dummy_get_subscription_items_handler = AsyncMock(spec=GetSubscriptionItemsHandler)
     dummy_get_subscription_items_handler.handle.return_value = GetSubscriptionItemsResponse(
-        items=[ItemWithInteractions(item=item1, interactions=[])], subscription=sub,
+        items=[ItemWithInteractions(item=item1, subscription=sub, interactions=[])], subscription=sub,
     )
     handlers.get_subscription_items_handler = dummy_get_subscription_items_handler
 
@@ -369,7 +365,7 @@ def test_get_topic_items_returns_200(handlers: Handlers) -> None:
         thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
     dummy_handler.handle.return_value = [
-        ItemWithInteractionsAndSubscription(item=item1, interactions=[], subscription=sub),
+        ItemWithInteractions(item=item1, subscription=sub, interactions=[]),
     ]
     handlers.get_topic_items_handler = dummy_handler
 
@@ -533,7 +529,7 @@ def test_get_subscriptions_items_returns_200(handlers: Handlers) -> None:
         thumbnail=utils.parse_url("https://test.com/thumbnail.png"),
         published_at=datetime.fromtimestamp(0, tz=timezone.utc))
     dummy_handler.handle.return_value = GetSubscriptionItemsResponse(
-        items=[ItemWithInteractions(item=item1, interactions=[])], subscription=sub)
+        items=[ItemWithInteractions(item=item1, subscription=sub, interactions=[])], subscription=sub)
     handlers.get_subscription_items_handler = dummy_handler
 
     client = TestClient(create_app_from_handlers(handlers), cookies={"token": "token"})
@@ -650,13 +646,15 @@ def test_get_followed_subscriptions_items_returns_200(handlers: Handlers) -> Non
 
     dummy_handler.handle.return_value = GetFollowedSubscriptionsItemsResponse(
         items=[
-            ItemWithSubscriptionAndInteractions(
-                item_with_interactions=ItemWithInteractions(item=item1, interactions=[]),
+            ItemWithInteractions(
+                item=item1,
                 subscription=sub1,
+                interactions=[],
             ),
-            ItemWithSubscriptionAndInteractions(
-                item_with_interactions=ItemWithInteractions(item=item2, interactions=[]),
+            ItemWithInteractions(
+                item=item2,
                 subscription=sub2,
+                interactions=[],
             ),
         ],
     )

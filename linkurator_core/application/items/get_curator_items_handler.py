@@ -1,23 +1,13 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
-from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import InteractionFilterCriteria, ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
-
-
-@dataclass
-class ItemWithInteractions:
-    item: Item
-    subscription: Subscription
-    user_interactions: list[Interaction]
-    curator_interactions: list[Interaction]
 
 
 class GetCuratorItemsHandler:
@@ -77,17 +67,19 @@ class GetCuratorItemsHandler:
         subscriptions_index = {sub.uuid: sub for sub in subscriptions}
 
         curator_items_index = {item.uuid: item for item in curator_items}
-        curator_items_interactions_index = {
-            interaction.item_uuid: [interaction]
-            for interaction in curator_items_interactions
-        }
+        curator_items_interactions_index: dict[UUID, list[Interaction]] = {}
+        for interaction in curator_items_interactions:
+            if interaction.item_uuid not in curator_items_interactions_index:
+                curator_items_interactions_index[interaction.item_uuid] = []
+            curator_items_interactions_index[interaction.item_uuid].append(interaction)
 
         return [
             ItemWithInteractions(
                 item=curator_items_index[interaction.item_uuid],
                 subscription=subscriptions_index[curator_items_index[interaction.item_uuid].subscription_uuid],
-                user_interactions=user_items_interactions.get(interaction.item_uuid, []),
+                interactions=user_items_interactions.get(interaction.item_uuid, []),
                 curator_interactions=curator_items_interactions_index.get(interaction.item_uuid, []),
             )
             for interaction in curator_items_interactions
+            if interaction.item_uuid in curator_items_index
         ]

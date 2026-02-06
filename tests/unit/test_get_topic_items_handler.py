@@ -3,12 +3,10 @@ from uuid import UUID
 
 import pytest
 
-from linkurator_core.application.items.get_topic_items_handler import (
-    GetTopicItemsHandler,
-    ItemWithInteractionsAndSubscription,
-)
+from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.domain.common.mock_factory import mock_interaction, mock_item, mock_sub, mock_topic, mock_user
+from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.in_memory.topic_repository import InMemoryTopicRepository
@@ -45,10 +43,10 @@ async def test_get_topic_items_handler() -> None:
     )
 
     assert len(items) == 1
-    assert items[0] == ItemWithInteractionsAndSubscription(
+    assert items[0] == ItemWithInteractions(
         item=item1,
-        interactions=[interaction],
         subscription=sub,
+        interactions=[interaction],
     )
 
 

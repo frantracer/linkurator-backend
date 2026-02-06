@@ -1,24 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from uuid import UUID
 
 from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.domain.items.interaction import Interaction
-from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import AnyItemInteraction, ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.topics.topic_repository import TopicRepository
-
-
-@dataclass
-class ItemWithInteractionsAndSubscription:
-    item: Item
-    interactions: list[Interaction]
-    subscription: Subscription
 
 
 class GetTopicItemsHandler:
@@ -46,7 +37,7 @@ class GetTopicItemsHandler:
             include_viewed_items: bool = True,
             include_hidden_items: bool = True,
             excluded_subscriptions: set[UUID] | None = None,
-    ) -> list[ItemWithInteractionsAndSubscription]:
+    ) -> list[ItemWithInteractions]:
         topic = await self.topic_repository.get(topic_id)
         if topic is None:
             raise TopicNotFoundError(topic_id)
@@ -90,9 +81,9 @@ class GetTopicItemsHandler:
                 user_id=user_id, item_ids=[item.uuid for item in items])
 
         return [
-            ItemWithInteractionsAndSubscription(
+            ItemWithInteractions(
                 item=item,
-                interactions=interactions_by_item.get(item.uuid, []),
                 subscription=subscriptions_indexed_by_id[item.subscription_uuid],
+                interactions=interactions_by_item.get(item.uuid, []),
             ) for item in items
         ]

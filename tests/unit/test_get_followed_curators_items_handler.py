@@ -117,8 +117,8 @@ async def test_get_followed_curators_items_returns_user_interactions() -> None:
 
     assert len(response) == 1
     assert response[0].item.uuid == item.uuid
-    assert len(response[0].user_interactions) == 1
-    assert response[0].user_interactions[0].type == InteractionType.VIEWED
+    assert len(response[0].interactions) == 1
+    assert response[0].interactions[0].type == InteractionType.VIEWED
     assert len(response[0].curator_interactions) == 1
     assert response[0].curator_interactions[0].type == InteractionType.RECOMMENDED
 

@@ -44,7 +44,7 @@ async def test_get_curator_items_handlers_returns_items_and_interactions_for_cur
     assert len(response) == 1
     assert response[0].item.uuid == item.uuid
     assert response[0].subscription == sub
-    assert response[0].user_interactions[0].type == InteractionType.DISCOURAGED
+    assert response[0].interactions[0].type == InteractionType.DISCOURAGED
     assert response[0].curator_interactions[0].type == InteractionType.RECOMMENDED
 
 
@@ -79,4 +79,4 @@ async def test_get_curator_items_handlers_returns_items_for_curator_with_no_inte
     assert len(response) == 1
     assert response[0].item.uuid == item.uuid
     assert response[0].subscription == sub
-    assert len(response[0].user_interactions) == 0
+    assert len(response[0].interactions) == 0

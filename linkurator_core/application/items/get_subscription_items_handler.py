@@ -79,7 +79,11 @@ class GetSubscriptionItemsHandler:
         return GetSubscriptionItemsResponse(
             subscription=subscription,
             items=[
-                ItemWithInteractions(item=item, interactions=interactions_by_item.get(item.uuid, []))
+                ItemWithInteractions(
+                    item=item,
+                    subscription=subscription,
+                    interactions=interactions_by_item.get(item.uuid, []),
+                )
                 for item in items
             ],
         )
