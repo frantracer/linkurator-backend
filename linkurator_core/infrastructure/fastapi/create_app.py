@@ -22,6 +22,7 @@ from linkurator_core.application.items.create_item_interaction_handler import Cr
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.items.get_curator_items_handler import GetCuratorItemsHandler
+from linkurator_core.application.items.get_followed_curators_items_handler import GetFollowedCuratorsItemsHandler
 from linkurator_core.application.items.get_followed_subscriptions_items_handler import (
     GetFollowedSubscriptionsItemsHandler,
 )
@@ -115,6 +116,7 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_user_topics_handler: GetUserTopicsHandler
     get_curator_topics_handler: GetCuratorTopicsHandler
     get_curator_items_handler: GetCuratorItemsHandler
+    get_followed_curators_items_handler: GetFollowedCuratorsItemsHandler
     get_topic_handler: GetTopicHandler
     find_topics_by_name_handler: FindTopicsByNameHandler
     assign_subscription_to_topic_handler: AssignSubscriptionToTopicHandler
@@ -198,6 +200,7 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             get_curator_topics_handler=handlers.get_curator_topics_handler,
             get_curator_subscriptions_handler=handlers.get_user_subscriptions,
             get_curator_items_handler=handlers.get_curator_items_handler,
+            get_followed_curators_items_handler=handlers.get_followed_curators_items_handler,
         ),
         prefix="/curators",
     )

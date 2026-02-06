@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Request, status
 from pydantic import NonNegativeInt, PositiveInt
 
 from linkurator_core.application.items.get_curator_items_handler import GetCuratorItemsHandler
+from linkurator_core.application.items.get_followed_curators_items_handler import GetFollowedCuratorsItemsHandler
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
 from linkurator_core.application.topics.get_curator_topics_as_user_handler import GetCuratorTopicsHandler
 from linkurator_core.application.users.find_user_handler import FindCuratorHandler
@@ -22,7 +23,7 @@ from linkurator_core.domain.users.user import Username
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.curator import CuratorSchema
 from linkurator_core.infrastructure.fastapi.models.default_responses import EmptyResponse
-from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
+from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, ItemWithCuratorSchema
 from linkurator_core.infrastructure.fastapi.models.page import FullPage, Page
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 from linkurator_core.infrastructure.fastapi.models.topic import TopicSchema
@@ -38,6 +39,7 @@ def get_router(
         get_curator_topics_handler: GetCuratorTopicsHandler,
         get_curator_subscriptions_handler: GetUserSubscriptionsHandler,
         get_curator_items_handler: GetCuratorItemsHandler,
+        get_followed_curators_items_handler: GetFollowedCuratorsItemsHandler,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -75,6 +77,53 @@ def get_router(
             )
             for curator in curators
         ]
+
+    @router.get("/items",
+                responses={
+                    status.HTTP_401_UNAUTHORIZED: {"model": None},
+                    status.HTTP_404_NOT_FOUND: {"model": None},
+                })
+    async def get_followed_curators_items(
+            request: Request,
+            page_number: NonNegativeInt = 0,
+            page_size: PositiveInt = 50,
+            created_before_ts: float | None = None,
+            search: str | None = None,
+            min_duration: int | None = None,
+            max_duration: int | None = None,
+            session: Session | None = Depends(get_session),
+    ) -> Page[ItemWithCuratorSchema]:
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        if created_before_ts is None:
+            created_before_ts = datetime.now(tz=timezone.utc).timestamp()
+
+        try:
+            response = await get_followed_curators_items_handler.handle(
+                user_id=session.user_id,
+                created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
+                page_size=page_size,
+                page_number=page_number,
+                text_filter=search,
+                min_duration=min_duration,
+                max_duration=max_duration,
+            )
+        except UserNotFoundError as exc:
+            raise default_responses.not_found(str(exc))
+
+        current_url = request.url.include_query_params(
+            page_number=page_number,
+            page_size=page_size,
+            created_before_ts=created_before_ts,
+        )
+
+        return Page[ItemWithCuratorSchema].create(
+            elements=[ItemWithCuratorSchema.from_domain(item) for item in response],
+            page_number=page_number,
+            page_size=page_size,
+            current_url=current_url,
+        )
 
     @router.post("/{curator_id}/follow",
                  responses={

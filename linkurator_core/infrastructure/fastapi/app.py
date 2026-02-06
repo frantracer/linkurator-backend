@@ -18,6 +18,7 @@ from linkurator_core.application.items.create_item_interaction_handler import Cr
 from linkurator_core.application.items.delete_item_interaction_handler import DeleteItemInteractionHandler
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.application.items.get_curator_items_handler import GetCuratorItemsHandler
+from linkurator_core.application.items.get_followed_curators_items_handler import GetFollowedCuratorsItemsHandler
 from linkurator_core.application.items.get_followed_subscriptions_items_handler import (
     GetFollowedSubscriptionsItemsHandler,
 )
@@ -256,6 +257,11 @@ def app_handlers() -> Handlers:
         get_curator_items_handler=GetCuratorItemsHandler(
             item_repository=item_repository,
             subscription_repository=subscription_repository,
+        ),
+        get_followed_curators_items_handler=GetFollowedCuratorsItemsHandler(
+            item_repository=item_repository,
+            subscription_repository=subscription_repository,
+            user_repository=user_repository,
         ),
         create_topic_handler=CreateTopicHandler(topic_repository=topic_repository),
         get_topic_items_handler=GetTopicItemsHandler(
