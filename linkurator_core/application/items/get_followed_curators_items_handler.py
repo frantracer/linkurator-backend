@@ -5,9 +5,9 @@ from datetime import datetime
 from uuid import UUID
 
 from linkurator_core.domain.common.exceptions import UserNotFoundError
-from linkurator_core.domain.items.interaction import Interaction, InteractionType
+from linkurator_core.domain.items.interaction import InteractionType
 from linkurator_core.domain.items.item_repository import InteractionFilterCriteria, ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.items.item_with_interactions import ItemWithInteractionsAndCurator
+from linkurator_core.domain.items.item_with_interactions import CuratorInteractions, ItemWithInteractions
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.user import User
 from linkurator_core.domain.users.user_repository import UserRepository
@@ -33,7 +33,7 @@ class GetFollowedCuratorsItemsHandler:
             text_filter: str | None = None,
             min_duration: int | None = None,
             max_duration: int | None = None,
-    ) -> list[ItemWithInteractionsAndCurator]:
+    ) -> list[ItemWithInteractions]:
         user = await self.user_repository.get(user_id)
         if user is None:
             raise UserNotFoundError(user_id)
@@ -85,22 +85,24 @@ class GetFollowedCuratorsItemsHandler:
         subscriptions = await self.subscription_repository.get_list(list(subscriptions_ids))
 
         subscriptions_index = {sub.uuid: sub for sub in subscriptions}
-        curators_items_index = {item.uuid: item for item in curators_items}
+        items_index = {item.uuid: item for item in curators_items}
         curators_index = {curator.uuid: curator for curator in curators}
-        curators_items_interactions_index: dict[UUID, list[Interaction]] = {}
+
+        curator_interactions_by_item: dict[UUID, list[CuratorInteractions]] = {}
         for interaction in curators_items_interactions:
-            if interaction.item_uuid not in curators_items_interactions_index:
-                curators_items_interactions_index[interaction.item_uuid] = []
-            curators_items_interactions_index[interaction.item_uuid].append(interaction)
+            if interaction.item_uuid not in curator_interactions_by_item:
+                curator_interactions_by_item[interaction.item_uuid] = []
+            curator_interactions_by_item[interaction.item_uuid].append(
+                CuratorInteractions(curator=curators_index[interaction.user_uuid], interactions=[interaction]),
+            )
 
         return [
-            ItemWithInteractionsAndCurator(
-                item=curators_items_index[interaction.item_uuid],
-                subscription=subscriptions_index[curators_items_index[interaction.item_uuid].subscription_uuid],
-                user_interactions=user_items_interactions.get(interaction.item_uuid, []),
-                curator_interactions=curators_items_interactions_index.get(interaction.item_uuid, []),
-                curator=curators_index.get(interaction.user_uuid),
+            ItemWithInteractions(
+                item=items_index[interaction.item_uuid],
+                subscription=subscriptions_index[items_index[interaction.item_uuid].subscription_uuid],
+                interactions=user_items_interactions.get(interaction.item_uuid, []),
+                curator_interactions=curator_interactions_by_item.get(interaction.item_uuid, []),
             )
             for interaction in curators_items_interactions
-            if interaction.item_uuid in curators_items_index
+            if interaction.item_uuid in items_index
         ]

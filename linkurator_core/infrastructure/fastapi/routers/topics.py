@@ -124,8 +124,10 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
                 elements=[
                     ItemSchema.from_domain_item(
                         item=item.item,
-                        interactions=item.interactions,
-                        subscription=item.subscription)
+                        subscription=item.subscription,
+                        user_interactions=item.interactions,
+                        curator_interactions=item.curator_interactions,
+                    )
                     for item in items
                 ],
                 page_number=page_number,

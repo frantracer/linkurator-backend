@@ -77,7 +77,7 @@ def get_router(
             return ItemSchema.from_domain_item(
                 item=response.item,
                 subscription=response.subscription,
-                interactions=response.interactions)
+                user_interactions=response.interactions)
         except ItemNotFoundError as error:
             msg = "Item not found"
             raise default_responses.not_found(msg) from error

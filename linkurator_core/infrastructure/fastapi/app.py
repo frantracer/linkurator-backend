@@ -248,6 +248,7 @@ def app_handlers() -> Handlers:
             subscription_repository, user_repository, topic_repository),
         get_subscription=GetSubscriptionHandler(subscription_repository),
         get_subscription_items_handler=GetSubscriptionItemsHandler(
+            user_repository=user_repository,
             item_repository=item_repository,
             subscription_repository=subscription_repository,
         ),
@@ -286,6 +287,7 @@ def app_handlers() -> Handlers:
         get_curator_items_handler=GetCuratorItemsHandler(
             item_repository=item_repository,
             subscription_repository=subscription_repository,
+            user_repository=user_repository,
         ),
         get_followed_curators_items_handler=GetFollowedCuratorsItemsHandler(
             item_repository=item_repository,
@@ -296,7 +298,8 @@ def app_handlers() -> Handlers:
         get_topic_items_handler=GetTopicItemsHandler(
             topic_repository=topic_repository,
             subscription_repository=subscription_repository,
-            item_repository=item_repository),
+            item_repository=item_repository,
+            user_repository=user_repository),
         assign_subscription_to_topic_handler=AssignSubscriptionToTopicHandler(
             subscription_repository=subscription_repository,
             topic_repository=topic_repository,

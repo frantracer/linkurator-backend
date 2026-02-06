@@ -1,29 +1,26 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
-from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import InteractionFilterCriteria, ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.items.item_with_interactions import CuratorInteractions, ItemWithInteractions
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
-
-
-@dataclass
-class ItemWithInteractions:
-    item: Item
-    subscription: Subscription
-    user_interactions: list[Interaction]
-    curator_interactions: list[Interaction]
+from linkurator_core.domain.users.user_repository import UserRepository
 
 
 class GetCuratorItemsHandler:
-    def __init__(self, item_repository: ItemRepository, subscription_repository: SubscriptionRepository) -> None:
+    def __init__(
+        self,
+        item_repository: ItemRepository,
+        subscription_repository: SubscriptionRepository,
+        user_repository: UserRepository,
+    ) -> None:
         self.item_repository = item_repository
         self.subscription_repository = subscription_repository
+        self.user_repository = user_repository
 
     async def handle(
             self,
@@ -68,26 +65,45 @@ class GetCuratorItemsHandler:
                 limit=len(items_ids),
             ),
             get_user_interactions_if_user_id_provided(),
+            self.user_repository.get(user_id) if user_id is not None else asyncio.sleep(0, result=None),
         )
         curator_items = results[0]
         user_items_interactions = results[1]
+        user = results[2]
 
         subscriptions_ids = {item.subscription_uuid for item in curator_items}
         subscriptions = await self.subscription_repository.get_list(list(subscriptions_ids))
         subscriptions_index = {sub.uuid: sub for sub in subscriptions}
 
         curator_items_index = {item.uuid: item for item in curator_items}
-        curator_items_interactions_index = {
-            interaction.item_uuid: [interaction]
-            for interaction in curator_items_interactions
-        }
+
+        curator_index = {}
+        if user is not None:
+            for followed_curator_id in user.curators:
+                followed_curator = await self.user_repository.get(followed_curator_id)
+                if followed_curator is not None:
+                    curator_index[followed_curator_id] = followed_curator
+
+        curator_interactions_by_item: dict[UUID, list[CuratorInteractions]] = {}
+        for curator in curator_index.values():
+            interactions_by_item = await self.item_repository.get_user_interactions_by_item_id(
+                user_id=curator.uuid,
+                item_ids=list(items_ids),
+            )
+            for item_id, interactions in interactions_by_item.items():
+                if item_id not in curator_interactions_by_item:
+                    curator_interactions_by_item[item_id] = []
+                curator_interactions_by_item[item_id].append(
+                    CuratorInteractions(curator=curator, interactions=interactions),
+                )
 
         return [
             ItemWithInteractions(
                 item=curator_items_index[interaction.item_uuid],
                 subscription=subscriptions_index[curator_items_index[interaction.item_uuid].subscription_uuid],
-                user_interactions=user_items_interactions.get(interaction.item_uuid, []),
-                curator_interactions=curator_items_interactions_index.get(interaction.item_uuid, []),
+                interactions=user_items_interactions.get(interaction.item_uuid, []),
+                curator_interactions=curator_interactions_by_item.get(interaction.item_uuid, []),
             )
             for interaction in curator_items_interactions
+            if interaction.item_uuid in curator_items_index
         ]

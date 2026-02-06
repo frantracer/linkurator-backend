@@ -1,34 +1,28 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from uuid import UUID
 
 from linkurator_core.domain.common.exceptions import TopicNotFoundError
 from linkurator_core.domain.items.interaction import Interaction
-from linkurator_core.domain.items.item import Item
 from linkurator_core.domain.items.item_repository import AnyItemInteraction, ItemFilterCriteria, ItemRepository
-from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.domain.items.item_with_interactions import CuratorInteractions, ItemWithInteractions
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.topics.topic_repository import TopicRepository
-
-
-@dataclass
-class ItemWithInteractionsAndSubscription:
-    item: Item
-    interactions: list[Interaction]
-    subscription: Subscription
+from linkurator_core.domain.users.user_repository import UserRepository
 
 
 class GetTopicItemsHandler:
     def __init__(self,
                  topic_repository: TopicRepository,
                  subscription_repository: SubscriptionRepository,
-                 item_repository: ItemRepository) -> None:
+                 item_repository: ItemRepository,
+                 user_repository: UserRepository) -> None:
         self.item_repository = item_repository
         self.subscription_repository = subscription_repository
         self.topic_repository = topic_repository
+        self.user_repository = user_repository
 
     async def handle(
             self,
@@ -46,7 +40,7 @@ class GetTopicItemsHandler:
             include_viewed_items: bool = True,
             include_hidden_items: bool = True,
             excluded_subscriptions: set[UUID] | None = None,
-    ) -> list[ItemWithInteractionsAndSubscription]:
+    ) -> list[ItemWithInteractions]:
         topic = await self.topic_repository.get(topic_id)
         if topic is None:
             raise TopicNotFoundError(topic_id)
@@ -77,10 +71,12 @@ class GetTopicItemsHandler:
                 page_number=page_number,
                 limit=page_size,
             ),
+            self.user_repository.get(user_id) if user_id is not None else asyncio.sleep(0, result=None),
         )
 
         subscriptions = results[0]
         items = results[1]
+        user = results[2]
 
         subscriptions_indexed_by_id = {sub.uuid: sub for sub in subscriptions}
 
@@ -89,10 +85,31 @@ class GetTopicItemsHandler:
             interactions_by_item = await self.item_repository.get_user_interactions_by_item_id(
                 user_id=user_id, item_ids=[item.uuid for item in items])
 
+        curator_index = {}
+        if user is not None:
+            for curator_id in user.curators:
+                curator = await self.user_repository.get(curator_id)
+                if curator is not None:
+                    curator_index[curator_id] = curator
+
+        curator_interactions_by_item: dict[UUID, list[CuratorInteractions]] = {}
+        for curator in curator_index.values():
+            interactions_by_curator_item = await self.item_repository.get_user_interactions_by_item_id(
+                user_id=curator.uuid,
+                item_ids=[item.uuid for item in items],
+            )
+            for item_id, interactions in interactions_by_curator_item.items():
+                if item_id not in curator_interactions_by_item:
+                    curator_interactions_by_item[item_id] = []
+                curator_interactions_by_item[item_id].append(
+                    CuratorInteractions(curator=curator, interactions=interactions),
+                )
+
         return [
-            ItemWithInteractionsAndSubscription(
+            ItemWithInteractions(
                 item=item,
-                interactions=interactions_by_item.get(item.uuid, []),
                 subscription=subscriptions_indexed_by_id[item.subscription_uuid],
+                interactions=interactions_by_item.get(item.uuid, []),
+                curator_interactions=curator_interactions_by_item.get(item.uuid, []),
             ) for item in items
         ]

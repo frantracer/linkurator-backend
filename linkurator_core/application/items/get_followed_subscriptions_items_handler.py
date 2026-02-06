@@ -8,20 +8,13 @@ from uuid import UUID
 from linkurator_core.domain.items.interaction import Interaction
 from linkurator_core.domain.items.item_repository import AnyItemInteraction, ItemFilterCriteria, ItemRepository
 from linkurator_core.domain.items.item_with_interactions import ItemWithInteractions
-from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 
 
 @dataclass
-class ItemWithSubscriptionAndInteractions:
-    item_with_interactions: ItemWithInteractions
-    subscription: Subscription
-
-
-@dataclass
 class GetFollowedSubscriptionsItemsResponse:
-    items: list[ItemWithSubscriptionAndInteractions]
+    items: list[ItemWithInteractions]
 
 
 class GetFollowedSubscriptionsItemsHandler:
@@ -95,12 +88,10 @@ class GetFollowedSubscriptionsItemsHandler:
 
         return GetFollowedSubscriptionsItemsResponse(
             items=[
-                ItemWithSubscriptionAndInteractions(
-                    item_with_interactions=ItemWithInteractions(
-                        item=item,
-                        interactions=interactions_by_item.get(item.uuid, []),
-                    ),
+                ItemWithInteractions(
+                    item=item,
                     subscription=subscriptions_by_id[item.subscription_uuid],
+                    interactions=interactions_by_item.get(item.uuid, []),
                 )
                 for item in items
                 if item.subscription_uuid in subscriptions_by_id

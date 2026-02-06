@@ -23,34 +23,36 @@ from linkurator_core.domain.users.user import Username
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.curator import CuratorSchema
 from linkurator_core.infrastructure.fastapi.models.default_responses import EmptyResponse
-from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, ItemWithCuratorSchema
+from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 from linkurator_core.infrastructure.fastapi.models.page import FullPage, Page
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 from linkurator_core.infrastructure.fastapi.models.topic import TopicSchema
 
 
 def get_router(
-        get_session: Callable[[Request], Coroutine[Any, Any, Session | None]],
-        get_user_profile_handler: GetUserProfileHandler,
-        find_user_handler: FindCuratorHandler,
-        get_curators_handler: GetCuratorsHandler,
-        follow_curator_handler: FollowCuratorHandler,
-        unfollow_curator_handler: UnfollowCuratorHandler,
-        get_curator_topics_handler: GetCuratorTopicsHandler,
-        get_curator_subscriptions_handler: GetUserSubscriptionsHandler,
-        get_curator_items_handler: GetCuratorItemsHandler,
-        get_followed_curators_items_handler: GetFollowedCuratorsItemsHandler,
+    get_session: Callable[[Request], Coroutine[Any, Any, Session | None]],
+    get_user_profile_handler: GetUserProfileHandler,
+    find_user_handler: FindCuratorHandler,
+    get_curators_handler: GetCuratorsHandler,
+    follow_curator_handler: FollowCuratorHandler,
+    unfollow_curator_handler: UnfollowCuratorHandler,
+    get_curator_topics_handler: GetCuratorTopicsHandler,
+    get_curator_subscriptions_handler: GetUserSubscriptionsHandler,
+    get_curator_items_handler: GetCuratorItemsHandler,
+    get_followed_curators_items_handler: GetFollowedCuratorsItemsHandler,
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.get("/",
-                responses={
-                    status.HTTP_401_UNAUTHORIZED: {"model": None},
-                })
+    @router.get(
+        "/",
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {"model": None},
+        },
+    )
     async def get_curators(
-            mine: bool = True,
-            username: str | None = None,
-            session: Session | None = Depends(get_session),
+        mine: bool = True,
+        username: str | None = None,
+        session: Session | None = Depends(get_session),
     ) -> list[CuratorSchema]:
         user_curators: set[UUID] = set()
         current_user_id = None
@@ -78,21 +80,23 @@ def get_router(
             for curator in curators
         ]
 
-    @router.get("/items",
-                responses={
-                    status.HTTP_401_UNAUTHORIZED: {"model": None},
-                    status.HTTP_404_NOT_FOUND: {"model": None},
-                })
+    @router.get(
+        "/items",
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {"model": None},
+            status.HTTP_404_NOT_FOUND: {"model": None},
+        },
+    )
     async def get_followed_curators_items(
-            request: Request,
-            page_number: NonNegativeInt = 0,
-            page_size: PositiveInt = 50,
-            created_before_ts: float | None = None,
-            search: str | None = None,
-            min_duration: int | None = None,
-            max_duration: int | None = None,
-            session: Session | None = Depends(get_session),
-    ) -> Page[ItemWithCuratorSchema]:
+        request: Request,
+        page_number: NonNegativeInt = 0,
+        page_size: PositiveInt = 50,
+        created_before_ts: float | None = None,
+        search: str | None = None,
+        min_duration: int | None = None,
+        max_duration: int | None = None,
+        session: Session | None = Depends(get_session),
+    ) -> Page[ItemSchema]:
         if session is None:
             raise default_responses.not_authenticated()
 
@@ -118,22 +122,27 @@ def get_router(
             created_before_ts=created_before_ts,
         )
 
-        return Page[ItemWithCuratorSchema].create(
-            elements=[ItemWithCuratorSchema.from_domain(item) for item in response],
+        return Page[ItemSchema].create(
+            elements=[
+                ItemSchema.from_domain_item(item.item, item.subscription, item.interactions, item.curator_interactions)
+                for item in response
+            ],
             page_number=page_number,
             page_size=page_size,
             current_url=current_url,
         )
 
-    @router.post("/{curator_id}/follow",
-                 responses={
-                     status.HTTP_401_UNAUTHORIZED: {"model": None},
-                     status.HTTP_404_NOT_FOUND: {"model": None},
-                 },
-                 status_code=status.HTTP_201_CREATED)
+    @router.post(
+        "/{curator_id}/follow",
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {"model": None},
+            status.HTTP_404_NOT_FOUND: {"model": None},
+        },
+        status_code=status.HTTP_201_CREATED,
+    )
     async def follow_curator(
-            curator_id: UUID,
-            session: Session | None = Depends(get_session),
+        curator_id: UUID,
+        session: Session | None = Depends(get_session),
     ) -> None:
         if session is None:
             raise default_responses.not_authenticated()
@@ -143,15 +152,17 @@ def get_router(
         except UserNotFoundError as exc:
             raise default_responses.not_found(str(exc))
 
-    @router.delete("/{curator_id}/follow",
-                   responses={
-                       status.HTTP_401_UNAUTHORIZED: {"model": None},
-                       status.HTTP_404_NOT_FOUND: {"model": None},
-                   },
-                   status_code=status.HTTP_204_NO_CONTENT)
+    @router.delete(
+        "/{curator_id}/follow",
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {"model": None},
+            status.HTTP_404_NOT_FOUND: {"model": None},
+        },
+        status_code=status.HTTP_204_NO_CONTENT,
+    )
     async def unfollow_curator(
-            curator_id: UUID,
-            session: Session | None = Depends(get_session),
+        curator_id: UUID,
+        session: Session | None = Depends(get_session),
     ) -> EmptyResponse:
         if session is None:
             raise default_responses.not_authenticated()
@@ -163,19 +174,21 @@ def get_router(
 
         return EmptyResponse()
 
-    @router.get("/username/{username}",
-                responses={
-                    status.HTTP_401_UNAUTHORIZED: {"model": None},
-                    status.HTTP_404_NOT_FOUND: {"model": None},
-                })
+    @router.get(
+        "/username/{username}",
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {"model": None},
+            status.HTTP_404_NOT_FOUND: {"model": None},
+        },
+    )
     async def find_user_by_username(
-            username: str,
-            session: Session | None = Depends(get_session),
+        username: str,
+        session: Session | None = Depends(get_session),
     ) -> CuratorSchema:
         try:
             response = await find_user_handler.handle(
-                username=Username.transform(username),
-                current_user_id=session.user_id if session is not None else None)
+                username=Username.transform(username), current_user_id=session.user_id if session is not None else None,
+            )
             if response.user is None:
                 msg = "User not found"
                 raise default_responses.not_found(msg)
@@ -183,14 +196,16 @@ def get_router(
         except ValueError as exc:
             raise default_responses.bad_request(message=str(exc))
 
-    @router.get("/{curator_id}/topics",
-                responses={
-                    status.HTTP_401_UNAUTHORIZED: {"model": None},
-                    status.HTTP_404_NOT_FOUND: {"model": None},
-                })
+    @router.get(
+        "/{curator_id}/topics",
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {"model": None},
+            status.HTTP_404_NOT_FOUND: {"model": None},
+        },
+    )
     async def find_user_topics(
-            curator_id: UUID,
-            session: Session | None = Depends(get_session),
+        curator_id: UUID,
+        session: Session | None = Depends(get_session),
     ) -> list[TopicSchema]:
         if session is None:
             raise default_responses.not_authenticated()
@@ -201,17 +216,20 @@ def get_router(
         )
         response = results[0]
         user = results[1]
-        return [TopicSchema.from_domain_topic(topic=topic, curator=response.curator, user=user)
-                for topic in response.topics]
+        return [
+            TopicSchema.from_domain_topic(topic=topic, curator=response.curator, user=user) for topic in response.topics
+        ]
 
-    @router.get("/{curator_id}/subscriptions",
-                responses={
-                    status.HTTP_401_UNAUTHORIZED: {"model": None},
-                    status.HTTP_404_NOT_FOUND: {"model": None},
-                })
+    @router.get(
+        "/{curator_id}/subscriptions",
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {"model": None},
+            status.HTTP_404_NOT_FOUND: {"model": None},
+        },
+    )
     async def find_curator_subscriptions(
-            curator_id: UUID,
-            session: Session | None = Depends(get_session),
+        curator_id: UUID,
+        session: Session | None = Depends(get_session),
     ) -> FullPage[SubscriptionSchema]:
         if session is None:
             raise default_responses.not_authenticated()
@@ -223,25 +241,25 @@ def get_router(
         curator_subs = results[0]
         user = results[1]
 
-        return FullPage.create(
-            [SubscriptionSchema.from_domain_subscription(sub, user)
-             for sub in curator_subs])
+        return FullPage.create([SubscriptionSchema.from_domain_subscription(sub, user) for sub in curator_subs])
 
-    @router.get("/{curator_id}/items",
-                responses={
-                    status.HTTP_401_UNAUTHORIZED: {"model": None},
-                    status.HTTP_404_NOT_FOUND: {"model": None},
-                })
+    @router.get(
+        "/{curator_id}/items",
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {"model": None},
+            status.HTTP_404_NOT_FOUND: {"model": None},
+        },
+    )
     async def find_curator_items(
-            request: Request,
-            curator_id: UUID,
-            page_number: NonNegativeInt = 0,
-            page_size: PositiveInt = 50,
-            created_before_ts: float | None = None,
-            search: str | None = None,
-            min_duration: int | None = None,
-            max_duration: int | None = None,
-            session: Session | None = Depends(get_session),
+        request: Request,
+        curator_id: UUID,
+        page_number: NonNegativeInt = 0,
+        page_size: PositiveInt = 50,
+        created_before_ts: float | None = None,
+        search: str | None = None,
+        min_duration: int | None = None,
+        max_duration: int | None = None,
+        session: Session | None = Depends(get_session),
     ) -> Page[ItemSchema]:
         if created_before_ts is None:
             created_before_ts = datetime.now(tz=timezone.utc).timestamp()
@@ -268,12 +286,14 @@ def get_router(
                 ItemSchema.from_domain_item(
                     item=item.item,
                     subscription=item.subscription,
-                    interactions=item.user_interactions,
+                    user_interactions=item.interactions,
+                    curator_interactions=item.curator_interactions,
                 )
                 for item in response
             ],
             page_number=page_number,
             page_size=page_size,
-            current_url=current_url)
+            current_url=current_url,
+        )
 
     return router
