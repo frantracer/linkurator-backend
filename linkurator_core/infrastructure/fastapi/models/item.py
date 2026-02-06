@@ -31,17 +31,31 @@ class CuratorInfoSchema(BaseModel):
         )
 
 
+class InteractionDetailSchema(BaseModel):
+    """Interaction with type and timestamp."""
+
+    type: InteractionType
+    created_at: Iso8601Datetime
+
+    @classmethod
+    def from_domain(cls, interaction: Interaction) -> InteractionDetailSchema:
+        return cls(
+            type=interaction.type,
+            created_at=interaction.created_at,
+        )
+
+
 class CuratorInteractionsSchema(BaseModel):
     """Curator with their interactions for an item."""
 
     curator: CuratorInfoSchema
-    interactions: list[InteractionType]
+    interactions: list[InteractionDetailSchema]
 
     @classmethod
     def from_domain(cls, curator: User, interactions: list[Interaction]) -> CuratorInteractionsSchema:
         return cls(
             curator=CuratorInfoSchema.from_domain_user(curator),
-            interactions=[i.type for i in interactions],
+            interactions=[InteractionDetailSchema.from_domain(i) for i in interactions],
         )
 
 
