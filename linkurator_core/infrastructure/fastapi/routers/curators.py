@@ -23,7 +23,7 @@ from linkurator_core.domain.users.user import Username
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.curator import CuratorSchema
 from linkurator_core.infrastructure.fastapi.models.default_responses import EmptyResponse
-from linkurator_core.infrastructure.fastapi.models.item import ItemSchema, ItemWithCuratorSchema
+from linkurator_core.infrastructure.fastapi.models.item import ItemSchema
 from linkurator_core.infrastructure.fastapi.models.page import FullPage, Page
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 from linkurator_core.infrastructure.fastapi.models.topic import TopicSchema
@@ -92,7 +92,7 @@ def get_router(
             min_duration: int | None = None,
             max_duration: int | None = None,
             session: Session | None = Depends(get_session),
-    ) -> Page[ItemWithCuratorSchema]:
+    ) -> Page[ItemSchema]:
         if session is None:
             raise default_responses.not_authenticated()
 
@@ -118,8 +118,8 @@ def get_router(
             created_before_ts=created_before_ts,
         )
 
-        return Page[ItemWithCuratorSchema].create(
-            elements=[ItemWithCuratorSchema.from_domain(item) for item in response],
+        return Page[ItemSchema].create(
+            elements=[ItemSchema.from_domain(item) for item in response],
             page_number=page_number,
             page_size=page_size,
             current_url=current_url,
