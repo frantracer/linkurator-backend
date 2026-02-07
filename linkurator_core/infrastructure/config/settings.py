@@ -61,6 +61,12 @@ class SpotifySettings(BaseModel):
         return self
 
 
+class PatreonSettings(BaseModel):
+    client_id: str
+    client_secret: str
+    refresh_token: str
+
+
 class MongoDBSettings(BaseModel):
     ip_address: IPv4Address
     port: int
@@ -107,6 +113,7 @@ class ApplicationSettings(BaseModel):
     ai_agent: AIAgentSettings
     google: GoogleSettings
     spotify: SpotifySettings
+    patreon: PatreonSettings | None
     mongodb: MongoDBSettings
     rabbitmq: RabbitMQSettings
     logging: LogSettings
@@ -121,11 +128,15 @@ class ApplicationSettings(BaseModel):
         with open(file_path, encoding="utf-8") as f:
             config: dict[str, Any] = json.load(f)
 
+        patreon_config = config.get("patreon")
+        patreon_settings = PatreonSettings(**patreon_config) if patreon_config else None
+
         return cls(
             api=ApiSettings(**config["api"]),
             ai_agent=AIAgentSettings(**config["ai_agent"]),
             google=GoogleSettings(**config["google"]),
             spotify=SpotifySettings(**config["spotify"]),
+            patreon=patreon_settings,
             mongodb=MongoDBSettings(**config["mongodb"]),
             rabbitmq=RabbitMQSettings(**config["rabbitmq"]),
             logging=LogSettings(**config["logging"]),
