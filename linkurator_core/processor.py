@@ -37,6 +37,7 @@ from linkurator_core.domain.common.event import (
     UserRegisterRequestSentEvent,
 )
 from linkurator_core.domain.subscriptions.general_subscription_service import GeneralSubscriptionService
+from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.infrastructure.ai_agents.main_query_agent import MainQueryAgent
 from linkurator_core.infrastructure.ai_agents.subscription_summarizer import SubscriptionSummarizerService
 from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
@@ -56,6 +57,8 @@ from linkurator_core.infrastructure.mongodb.rss_data_repository import MongoDBRs
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
+from linkurator_core.infrastructure.patreon.patreon_api_client import PatreonApiClient
+from linkurator_core.infrastructure.patreon.patreon_service import PatreonSubscriptionService
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 from linkurator_core.infrastructure.rss.rss_feed_client import RssFeedClient
 from linkurator_core.infrastructure.rss.rss_service import RssSubscriptionService
@@ -153,7 +156,23 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         rss_data_repository=rss_data_repository,
     )
 
-    subscription_providers = [spotify_service, youtube_service, rss_service]
+    subscription_providers: list[SubscriptionService] = [spotify_service, youtube_service, rss_service]
+
+    patreon_service: PatreonSubscriptionService | None = None
+    if settings.patreon is not None:
+        patreon_client = PatreonApiClient(
+            client_id=settings.patreon.client_id,
+            client_secret=settings.patreon.client_secret,
+        )
+        patreon_service = PatreonSubscriptionService(
+            subscription_repository=subscription_repository,
+            item_repository=item_repository,
+            patreon_client=patreon_client,
+        )
+
+    if patreon_service is not None:
+        subscription_providers.append(patreon_service)
+
     general_subscription_service = GeneralSubscriptionService(
         services=subscription_providers,
     )

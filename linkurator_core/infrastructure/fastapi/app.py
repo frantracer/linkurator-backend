@@ -60,9 +60,13 @@ from linkurator_core.application.users.get_curators_handler import GetCuratorsHa
 from linkurator_core.application.users.get_user_filter_handler import GetUserFilterHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
+from linkurator_core.application.users.update_patreon_user_subscriptions_handler import (
+    UpdatePatreonUserSubscriptionsHandler,
+)
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateYoutubeUserSubscriptionsHandler
 from linkurator_core.application.users.upsert_user_filter_handler import UpsertUserFilterHandler
 from linkurator_core.domain.subscriptions.general_subscription_service import GeneralSubscriptionService
+from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.domain.users.password_change_request import PasswordChangeRequest
 from linkurator_core.domain.users.registration_request import RegistrationRequest
 from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
@@ -86,6 +90,8 @@ from linkurator_core.infrastructure.mongodb.subscription_repository import Mongo
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
 from linkurator_core.infrastructure.mongodb.user_filter_repository import MongoDBUserFilterRepository
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
+from linkurator_core.infrastructure.patreon.patreon_api_client import PatreonApiClient
+from linkurator_core.infrastructure.patreon.patreon_service import PatreonSubscriptionService
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 from linkurator_core.infrastructure.rss.rss_feed_client import RssFeedClient
 from linkurator_core.infrastructure.rss.rss_service import RssSubscriptionService
@@ -174,7 +180,22 @@ def app_handlers() -> Handlers:
         rss_data_repository=rss_data_repository,
     )
 
-    subscription_services = [youtube_service, spotify_service, rss_service]
+    subscription_services: list[SubscriptionService] = [youtube_service, spotify_service, rss_service]
+
+    # Add Patreon service if configured
+    patreon_client: PatreonApiClient | None = None
+    patreon_service: PatreonSubscriptionService | None = None
+    if settings.patreon:
+        patreon_client = PatreonApiClient(
+            client_id=settings.patreon.client_id,
+            client_secret=settings.patreon.client_secret,
+        )
+        patreon_service = PatreonSubscriptionService(
+            subscription_repository=subscription_repository,
+            item_repository=item_repository,
+            patreon_client=patreon_client,
+        )
+        subscription_services.append(patreon_service)
 
     general_subscription_service = GeneralSubscriptionService(services=subscription_services)
 
@@ -311,6 +332,12 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             subscription_repository=subscription_repository,
             event_bus_service=event_bus),
+        patreon_client=patreon_client,
+        update_patreon_user_subscriptions_handler=UpdatePatreonUserSubscriptionsHandler(
+            patreon_subscription_service=patreon_service,
+            user_repository=user_repository,
+            subscription_repository=subscription_repository,
+            event_bus_service=event_bus) if patreon_service is not None else None,
         query_agent_handler=QueryAgentHandler(
             chat_repository=chat_repository,
             event_bus=event_bus,

@@ -67,6 +67,9 @@ from linkurator_core.application.users.get_curators_handler import GetCuratorsHa
 from linkurator_core.application.users.get_user_filter_handler import GetUserFilterHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
+from linkurator_core.application.users.update_patreon_user_subscriptions_handler import (
+    UpdatePatreonUserSubscriptionsHandler,
+)
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateYoutubeUserSubscriptionsHandler
 from linkurator_core.application.users.upsert_user_filter_handler import UpsertUserFilterHandler
 from linkurator_core.domain.users.session import Session
@@ -83,6 +86,7 @@ from linkurator_core.infrastructure.fastapi.routers import (
 )
 from linkurator_core.infrastructure.fastapi.routers.authentication import check_basic_auth
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+from linkurator_core.infrastructure.patreon.patreon_api_client import PatreonApiClient
 
 
 @dataclass
@@ -133,6 +137,8 @@ class Handlers:  # pylint: disable=too-many-instance-attributes
     get_platform_statistics: GetPlatformStatisticsHandler
     get_providers_handler: GetProvidersHandler
     update_youtube_user_subscriptions_handler: UpdateYoutubeUserSubscriptionsHandler
+    patreon_client: PatreonApiClient | None
+    update_patreon_user_subscriptions_handler: UpdatePatreonUserSubscriptionsHandler | None
     query_agent_handler: QueryAgentHandler
     get_user_chats_handler: GetUserChatsHandler
     get_chat_handler: GetChatHandler
@@ -237,6 +243,8 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
             refresh_subscription_handler=handlers.refresh_subscription_handler,
             update_user_subscriptions_handler=handlers.update_youtube_user_subscriptions_handler,
             get_followed_subscriptions_items_handler=handlers.get_followed_subscriptions_items_handler,
+            patreon_client=handlers.patreon_client,
+            update_patreon_user_subscriptions_handler=handlers.update_patreon_user_subscriptions_handler,
         ),
         prefix="/subscriptions")
     app.include_router(

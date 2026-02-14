@@ -1,0 +1,59 @@
+{
+  "data" : {
+    "id" : "150496409",
+    "type" : "post",
+    "attributes" : {
+      "post_type" : "video_embed",
+      "title" : " \"Consolita\" Evidencia el MAL Funcionamiento de la Industria. Una vez más.",
+      "video_preview" : null,
+      "thumbnail" : {
+        "original" : "https://www.patreon.com/media-u/v3/612226081",
+        "default" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_blurred" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_small" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_large" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_blurred_small" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail_large" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail_small" : "https://www.patreon.com/media-u/v3/612226081",
+        "url" : "https://www.patreon.com/media-u/v3/612226081",
+        "width" : 1280,
+        "height" : 720
+      },
+      "published_at" : "2026-02-11T15:13:03.000+00:00",
+      "url" : "https://www.patreon.com/posts/consolita-el-mal-150496409",
+      "post_metadata" : {
+        "platform" : { }
+      }
+    },
+    "relationships" : {
+      "media" : {
+        "data" : [ {
+          "id" : "612226081",
+          "type" : "media"
+        } ]
+      }
+    }
+  },
+  "included" : [ {
+    "id" : "612226081",
+    "type" : "media",
+    "attributes" : {
+      "image_urls" : {
+        "url" : "https://www.patreon.com/media-u/v3/612226081",
+        "original" : "https://www.patreon.com/media-u/v3/612226081",
+        "default" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_blurred" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_small" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_large" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_blurred_small" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail_large" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail_small" : "https://www.patreon.com/media-u/v3/612226081"
+      }
+    }
+  } ],
+  "links" : {
+    "self" : "https://www.patreon.com/api/posts/150496409"
+  }
+}

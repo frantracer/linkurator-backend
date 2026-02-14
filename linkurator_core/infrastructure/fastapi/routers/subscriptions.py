@@ -25,6 +25,9 @@ from linkurator_core.application.subscriptions.get_user_subscriptions_handler im
 from linkurator_core.application.subscriptions.refresh_subscription_handler import RefreshSubscriptionHandler
 from linkurator_core.application.subscriptions.unfollow_subscription_handler import UnfollowSubscriptionHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
+from linkurator_core.application.users.update_patreon_user_subscriptions_handler import (
+    UpdatePatreonUserSubscriptionsHandler,
+)
 from linkurator_core.application.users.update_user_subscriptions_handler import UpdateYoutubeUserSubscriptionsHandler
 from linkurator_core.domain.common.exceptions import (
     SubscriptionAlreadyUpdatedError,
@@ -38,8 +41,10 @@ from linkurator_core.infrastructure.fastapi.models.item import VALID_INTERACTION
 from linkurator_core.infrastructure.fastapi.models.page import FullPage, Page
 from linkurator_core.infrastructure.fastapi.models.subscription import SubscriptionSchema
 from linkurator_core.infrastructure.google.account_service import GoogleAccountService
+from linkurator_core.infrastructure.patreon.patreon_api_client import PatreonApiClient
 
 REDIRECT_URI_COOKIE_NAME = "redirect_uri_youtube_sync"
+REDIRECT_URI_PATREON_COOKIE_NAME = "redirect_uri_patreon_sync"
 
 
 async def get_user_profile(session: Session | None, handler: GetUserProfileHandler) -> User | None:
@@ -62,6 +67,8 @@ def get_router(  # pylint: disable=too-many-statements
         refresh_subscription_handler: RefreshSubscriptionHandler,
         update_user_subscriptions_handler: UpdateYoutubeUserSubscriptionsHandler,
         get_followed_subscriptions_items_handler: GetFollowedSubscriptionsItemsHandler,
+        patreon_client: PatreonApiClient | None = None,
+        update_patreon_user_subscriptions_handler: UpdatePatreonUserSubscriptionsHandler | None = None,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -473,6 +480,55 @@ def get_router(  # pylint: disable=too-many-statements
 
         response = RedirectResponse(url=redirect_uri or "/subscriptions")
         response.delete_cookie(REDIRECT_URI_COOKIE_NAME)
+        return response
+
+    @router.get("/sync/patreon",
+                status_code=status.HTTP_204_NO_CONTENT)
+    async def sync_patreon_subscriptions(
+        request: Request,
+        redirect_uri: str | None = None,
+        session: Session | None = Depends(get_session),
+    ) -> RedirectResponse:
+        """Sync the patreon subscriptions."""
+        if session is None:
+            return RedirectResponse(url=redirect_uri or "/login")
+
+        if patreon_client is None:
+            return RedirectResponse(url=redirect_uri or "/subscriptions")
+
+        oauth_url = patreon_client.authorization_url(
+            redirect_uri=urljoin(str(request.base_url), "/subscriptions/sync/patreon_auth"),
+        )
+
+        response = RedirectResponse(url=oauth_url)
+        response.set_cookie(REDIRECT_URI_PATREON_COOKIE_NAME, redirect_uri or "/")
+        return response
+
+    @router.get("/sync/patreon_auth",
+                status_code=status.HTTP_204_NO_CONTENT)
+    async def sync_patreon_auth(
+        request: Request,
+        code: str | None = None,
+        error: str | None = None,
+        session: Session | None = Depends(get_session),
+    ) -> RedirectResponse:
+        """Sync the patreon subscriptions."""
+        redirect_uri = request.cookies.get(REDIRECT_URI_PATREON_COOKIE_NAME, "")
+
+        if session is None:
+            return RedirectResponse(url=redirect_uri or "/login")
+
+        if (patreon_client is not None and update_patreon_user_subscriptions_handler is not None
+                and error is None and code is not None):
+            access_token = await patreon_client.exchange_code_for_tokens(
+                code=code,
+                redirect_uri=urljoin(str(request.base_url), "/subscriptions/sync/patreon_auth"))
+            if access_token is not None:
+                await update_patreon_user_subscriptions_handler.handle(
+                    user_id=session.user_id, access_token=access_token)
+
+        response = RedirectResponse(url=redirect_uri or "/subscriptions")
+        response.delete_cookie(REDIRECT_URI_PATREON_COOKIE_NAME)
         return response
 
     return router

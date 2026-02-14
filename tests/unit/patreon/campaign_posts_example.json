@@ -1,0 +1,233 @@
+{
+  "data" : [ {
+    "id" : "150496409",
+    "type" : "post",
+    "attributes" : {
+      "post_type" : "video_embed",
+      "title" : " \"Consolita\" Evidencia el MAL Funcionamiento de la Industria. Una vez más.",
+      "video_preview" : null,
+      "thumbnail" : {
+        "original" : "https://www.patreon.com/media-u/v3/612226081",
+        "default" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_blurred" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_small" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_large" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_blurred_small" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail_large" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail_small" : "https://www.patreon.com/media-u/v3/612226081",
+        "url" : "https://www.patreon.com/media-u/v3/612226081",
+        "width" : 1280,
+        "height" : 720
+      },
+      "published_at" : "2026-02-11T15:13:03.000+00:00",
+      "url" : "https://www.patreon.com/posts/consolita-el-mal-150496409",
+      "post_metadata" : {
+        "platform" : { }
+      }
+    },
+    "relationships" : {
+      "media" : {
+        "data" : [ {
+          "id" : "612226081",
+          "type" : "media"
+        } ]
+      }
+    }
+  }, {
+    "id" : "149956206",
+    "type" : "post",
+    "attributes" : {
+      "post_type" : "video_external_file",
+      "title" : "Oye mira 4 cosas - Festival de SinSentidos entre Ubi, Geoff, Kotick, IA's y demás. ",
+      "video_preview" : {
+        "duration" : 30.0,
+        "full_content_duration" : 3739.1354,
+        "url" : "https://stream.mux.com/mWSUBK8dcGJYmphTUbaAxYFvxvDy1lJk5mGP5zZWyNg.m3u8?token=eyJhbGciOiJSUzI1NiIsImtpZCI6Ik5CY3o3Sk5RcUNmdDdWcmo5MWhra2lEY3Vyc2xtRGNmSU1oSFUzallZMDI0IiwidHlwIjoiSldUIn0.eyJzdWIiOiJtV1NVQks4ZGNHSlltcGhUVWJhQXhZRnZ4dkR5MWxKazVtR1A1elpXeU5nIiwiZXhwIjoxNzcxMTc4NDAwLCJhdWQiOiJ2In0.mX9sSRD8Wo0bF_tf37_OP8N5L-CgSSdXwMtS9sDVgHb9aH70WYPeAZ-XKv7_6um4kUVWPWYU6PiWVf18Vo7L7SAH18bU0IxmKXXDwzLCCQGYTKzB3XdwQYZFdw9iFQOD2DyYuEQcK-W9DL0ex_uGHUImH7lnvnyjSRryuoU-SacCSxIv1gQmE-mKmAsN9qrsEU6izX83OBz8vDP8nwyHNqrU5ntS6band27FH_Ks7WTZgniC-AZ2YyJuHUFD6egZ93s-3DoENXA6VQSokFRcWl4J4105en72Si0a5XDhPOt6LOpcaULplJRjLm12Vaoz9_6ZTztNgyqzgw8uFkD3zw",
+        "viewer_playback_data" : {
+          "playback_id" : "mWSUBK8dcGJYmphTUbaAxYFvxvDy1lJk5mGP5zZWyNg",
+          "playback_token" : "eyJhbGciOiJSUzI1NiIsImtpZCI6Ik5CY3o3Sk5RcUNmdDdWcmo5MWhra2lEY3Vyc2xtRGNmSU1oSFUzallZMDI0IiwidHlwIjoiSldUIn0.eyJzdWIiOiJtV1NVQks4ZGNHSlltcGhUVWJhQXhZRnZ4dkR5MWxKazVtR1A1elpXeU5nIiwiZXhwIjoxNzcxMTc4NDAwLCJhdWQiOiJ2In0.mX9sSRD8Wo0bF_tf37_OP8N5L-CgSSdXwMtS9sDVgHb9aH70WYPeAZ-XKv7_6um4kUVWPWYU6PiWVf18Vo7L7SAH18bU0IxmKXXDwzLCCQGYTKzB3XdwQYZFdw9iFQOD2DyYuEQcK-W9DL0ex_uGHUImH7lnvnyjSRryuoU-SacCSxIv1gQmE-mKmAsN9qrsEU6izX83OBz8vDP8nwyHNqrU5ntS6band27FH_Ks7WTZgniC-AZ2YyJuHUFD6egZ93s-3DoENXA6VQSokFRcWl4J4105en72Si0a5XDhPOt6LOpcaULplJRjLm12Vaoz9_6ZTztNgyqzgw8uFkD3zw",
+          "url" : "https://stream.mux.com/mWSUBK8dcGJYmphTUbaAxYFvxvDy1lJk5mGP5zZWyNg.m3u8?token=eyJhbGciOiJSUzI1NiIsImtpZCI6Ik5CY3o3Sk5RcUNmdDdWcmo5MWhra2lEY3Vyc2xtRGNmSU1oSFUzallZMDI0IiwidHlwIjoiSldUIn0.eyJzdWIiOiJtV1NVQks4ZGNHSlltcGhUVWJhQXhZRnZ4dkR5MWxKazVtR1A1elpXeU5nIiwiZXhwIjoxNzcxMTc4NDAwLCJhdWQiOiJ2In0.mX9sSRD8Wo0bF_tf37_OP8N5L-CgSSdXwMtS9sDVgHb9aH70WYPeAZ-XKv7_6um4kUVWPWYU6PiWVf18Vo7L7SAH18bU0IxmKXXDwzLCCQGYTKzB3XdwQYZFdw9iFQOD2DyYuEQcK-W9DL0ex_uGHUImH7lnvnyjSRryuoU-SacCSxIv1gQmE-mKmAsN9qrsEU6izX83OBz8vDP8nwyHNqrU5ntS6band27FH_Ks7WTZgniC-AZ2YyJuHUFD6egZ93s-3DoENXA6VQSokFRcWl4J4105en72Si0a5XDhPOt6LOpcaULplJRjLm12Vaoz9_6ZTztNgyqzgw8uFkD3zw",
+          "playback_token_expiry" : "2026-02-15T18:00:00.000+00:00"
+        },
+        "expires_at" : "2026-02-15T18:00:00.000+00:00",
+        "width" : 1920,
+        "height" : 1080,
+        "progress" : {
+          "is_watched" : false,
+          "watch_state" : "is_not_watched"
+        },
+        "default_thumbnail" : {
+          "url" : "https://image.mux.com/mWSUBK8dcGJYmphTUbaAxYFvxvDy1lJk5mGP5zZWyNg/thumbnail.jpg?token=eyJhbGciOiJSUzI1NiIsImtpZCI6Ik5CY3o3Sk5RcUNmdDdWcmo5MWhra2lEY3Vyc2xtRGNmSU1oSFUzallZMDI0IiwidHlwIjoiSldUIn0.eyJzdWIiOiJtV1NVQks4ZGNHSlltcGhUVWJhQXhZRnZ4dkR5MWxKazVtR1A1elpXeU5nIiwiZXhwIjoxNzczNzA1NjAwLCJhdWQiOiJ0IiwidGltZSI6MH0.TCIy3vP61bQdTWF-kijaMrUYoU-YV4pcQ68sEFxXyxZZ7uk7RQuRC0X3lVV2Fos1m6fOkvanW3yNWD794l3djv9U_Nlw51tagtvfK5STOC7leJRamWFGU0qTNVD6sHNZyjwxkn79P3uzxsZV8ZZs7MD8nu-9rm1xHORjrfdw19HtzQfpw3hYhqy89yZIjZEAqbBg2lQ2X1EfX4nNzyyZKkjvL8BPo4YNgbNCm7HAwHVjQzv1CxbyU8zk0jmZXPXk2Cw0w10AFoNUTNlBWmemOH6CK0_-FdSbpQF8jtlzcSOFG_aUZIF25EPCRXkGe1xyvQ3A5FQuCGsm1vCsyYUvJA"
+        },
+        "storyboard" : {
+          "vtt_url" : "https://image.mux.com/mWSUBK8dcGJYmphTUbaAxYFvxvDy1lJk5mGP5zZWyNg/storyboard.vtt?token=eyJhbGciOiJSUzI1NiIsImtpZCI6Ik5CY3o3Sk5RcUNmdDdWcmo5MWhra2lEY3Vyc2xtRGNmSU1oSFUzallZMDI0IiwidHlwIjoiSldUIn0.eyJzdWIiOiJtV1NVQks4ZGNHSlltcGhUVWJhQXhZRnZ4dkR5MWxKazVtR1A1elpXeU5nIiwiZXhwIjoxNzczNzA1NjAwLCJhdWQiOiJzIn0.nmjku6e57NwDXOzSHW1VCSQo639Ad7n1mkMwAvoZwNhkOYl0AaYe-5oQmBFK5v8ZeMPlk40iyMEQzgL9njoCXuCABN6oP3-qb-EfwVTCjg9FV2Vvouxa1QLSg_iZ_5QlB_uizD-9fCNPtr1uBt2brFJWels2loNzqwuZVSyYExaR81S3S87CMq-S-5YHAXFni3QJz07UTha8DZuSgUTAHMOe5jDSe8JjQnvOuTdbvvoKxfnjGVXUpBsjI5FDF5ywuL-g0jA2uWOKFoVuJ5L2tKu1vunfu7KwiefluNCt9sfHTFLcfnAbbzD-SbBVU8kFPlCAaiIaylcl5AoS9M3HBQ",
+          "json_url" : "https://image.mux.com/mWSUBK8dcGJYmphTUbaAxYFvxvDy1lJk5mGP5zZWyNg/storyboard.json?token=eyJhbGciOiJSUzI1NiIsImtpZCI6Ik5CY3o3Sk5RcUNmdDdWcmo5MWhra2lEY3Vyc2xtRGNmSU1oSFUzallZMDI0IiwidHlwIjoiSldUIn0.eyJzdWIiOiJtV1NVQks4ZGNHSlltcGhUVWJhQXhZRnZ4dkR5MWxKazVtR1A1elpXeU5nIiwiZXhwIjoxNzczNzA1NjAwLCJhdWQiOiJzIn0.nmjku6e57NwDXOzSHW1VCSQo639Ad7n1mkMwAvoZwNhkOYl0AaYe-5oQmBFK5v8ZeMPlk40iyMEQzgL9njoCXuCABN6oP3-qb-EfwVTCjg9FV2Vvouxa1QLSg_iZ_5QlB_uizD-9fCNPtr1uBt2brFJWels2loNzqwuZVSyYExaR81S3S87CMq-S-5YHAXFni3QJz07UTha8DZuSgUTAHMOe5jDSe8JjQnvOuTdbvvoKxfnjGVXUpBsjI5FDF5ywuL-g0jA2uWOKFoVuJ5L2tKu1vunfu7KwiefluNCt9sfHTFLcfnAbbzD-SbBVU8kFPlCAaiIaylcl5AoS9M3HBQ"
+        },
+        "transcript_url" : "https://stream.mux.com/mWSUBK8dcGJYmphTUbaAxYFvxvDy1lJk5mGP5zZWyNg/text/UJBgbj6XQvWA9pBhe8VK3CFc2d01GRjl7006wnon01FcbVvoynLCyRIMA.vtt?token=eyJhbGciOiJSUzI1NiIsImtpZCI6Ik5CY3o3Sk5RcUNmdDdWcmo5MWhra2lEY3Vyc2xtRGNmSU1oSFUzallZMDI0IiwidHlwIjoiSldUIn0.eyJzdWIiOiJtV1NVQks4ZGNHSlltcGhUVWJhQXhZRnZ4dkR5MWxKazVtR1A1elpXeU5nIiwiZXhwIjoxNzczNzA1NjAwLCJhdWQiOiJ2In0.QZCoVI7jaejrKphJKFGvhIfc8z-SRAl5WrIyttb9RKJsGVixtefKEqEpW87_3VMLCFFUbLNZDbgC7JvlNP9NIaAJYcJx6hQf9DAGp7hMaCR9FepidyKJ25WaAFz9S1-a9Q4nmT8CtSFXjmV0vxIXW1tMROjY4MRkLejgJNGDGa1QaN5N3FLQaHYtHPdpnVXxyTpLlXtv3qJVq-5m3IbFuQolvOfuivRVTjikE5Vwn9STlPby3HX4udhIzK-N4sFxRzZ-ftA8r4fstg1g6QAMEqUeiZm_6RifgBF-ifR5jdgoQtfns3hCrQ3JgmXwXaV2pfpLzDQJgL1AlR9JgFj_mQ",
+        "video_issues" : { },
+        "state" : "ready",
+        "media_id" : 608654948,
+        "closed_captions_enabled" : true,
+        "full_duration" : 3739.1354
+      },
+      "thumbnail" : {
+        "original" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJwIjoxfQ%3D%3D/1.jpg?token-hash=zVDK8M1XsE7bPrt0a4oxBWAUeRuGFc1mfGzzhU1-f7Y%3D&token-time=1772323200",
+        "default" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJ3Ijo2MjB9/1.jpg?token-hash=TjlZi8klgpa_yL9tHG4invpijdL4O63446iZpjABKlo%3D&token-time=1772323200",
+        "default_blurred" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJ3Ijo2MjB9/1.jpg?token-hash=TjlZi8klgpa_yL9tHG4invpijdL4O63446iZpjABKlo%3D&token-time=1772323200",
+        "default_small" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJ3IjozNjB9/1.jpg?token-hash=vbItKVJvWiiFCuxN3yaYvMFoZR3QYLiEwHrgSSW6emg%3D&token-time=1772323200",
+        "default_large" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJ3IjoxMDgwfQ%3D%3D/1.jpg?token-hash=9EXzzZMaEJSWzV_XBtX9fNXmbd43hVgoc8gkzuaFa7g%3D&token-time=1772323200",
+        "default_blurred_small" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJ3IjozNjB9/1.jpg?token-hash=vbItKVJvWiiFCuxN3yaYvMFoZR3QYLiEwHrgSSW6emg%3D&token-time=1772323200",
+        "thumbnail" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJoIjozNjAsInciOjM2MH0%3D/1.jpg?token-hash=JIJkT_BAkhZk8R1sTnKRZKu0jq6jbFfPjZ3xbTzfGys%3D&token-time=1772323200",
+        "thumbnail_large" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJoIjoxMDgwLCJ3IjoxMDgwfQ%3D%3D/1.jpg?token-hash=n_NxA9MPq27pM6AAyMZEHM8quMYBj-iUjg1MjTHg-Kw%3D&token-time=1772323200",
+        "thumbnail_small" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJoIjoxMDAsInciOjEwMH0%3D/1.jpg?token-hash=kdzvOEUvsYi24DLxRq5dEoVanmxtCUiohjbeQNpXs8g%3D&token-time=1772323200",
+        "url" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJ3Ijo2MjB9/1.jpg?token-hash=TjlZi8klgpa_yL9tHG4invpijdL4O63446iZpjABKlo%3D&token-time=1772323200",
+        "width" : 1280,
+        "height" : 720
+      },
+      "published_at" : "2026-02-05T07:39:54.000+00:00",
+      "url" : "https://www.patreon.com/posts/oye-mira-4-cosas-149956206",
+      "post_metadata" : {
+        "platform" : { },
+        "image_order" : [ "608822750" ]
+      }
+    },
+    "relationships" : {
+      "media" : {
+        "data" : [ {
+          "id" : "608625766",
+          "type" : "media"
+        }, {
+          "id" : "608654953",
+          "type" : "media"
+        }, {
+          "id" : "608822750",
+          "type" : "media"
+        }, {
+          "id" : "608654948",
+          "type" : "media"
+        }, {
+          "id" : "608655977",
+          "type" : "media"
+        } ]
+      }
+    }
+  }, {
+    "id" : "149771848",
+    "type" : "post",
+    "attributes" : {
+      "post_type" : "video_embed",
+      "title" : "Las Elecciones sin Consecuencias NO SON ELECCIONES",
+      "video_preview" : null,
+      "thumbnail" : {
+        "original" : "https://www.patreon.com/media-u/v3/607750733",
+        "default" : "https://www.patreon.com/media-u/v3/607750733",
+        "default_blurred" : "https://www.patreon.com/media-u/v3/607750733",
+        "default_small" : "https://www.patreon.com/media-u/v3/607750733",
+        "default_large" : "https://www.patreon.com/media-u/v3/607750733",
+        "default_blurred_small" : "https://www.patreon.com/media-u/v3/607750733",
+        "thumbnail" : "https://www.patreon.com/media-u/v3/607750733",
+        "thumbnail_large" : "https://www.patreon.com/media-u/v3/607750733",
+        "thumbnail_small" : "https://www.patreon.com/media-u/v3/607750733",
+        "url" : "https://www.patreon.com/media-u/v3/607750733",
+        "width" : 1280,
+        "height" : 720
+      },
+      "published_at" : "2026-02-02T18:15:07.000+00:00",
+      "url" : "https://www.patreon.com/posts/las-elecciones-149771848",
+      "post_metadata" : {
+        "platform" : { },
+        "image_order" : [ ]
+      }
+    },
+    "relationships" : {
+      "media" : {
+        "data" : [ {
+          "id" : "607750733",
+          "type" : "media"
+        } ]
+      }
+    }
+  } ],
+  "included" : [ {
+    "id" : "612226081",
+    "type" : "media",
+    "attributes" : {
+      "image_urls" : {
+        "url" : "https://www.patreon.com/media-u/v3/612226081",
+        "original" : "https://www.patreon.com/media-u/v3/612226081",
+        "default" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_blurred" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_small" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_large" : "https://www.patreon.com/media-u/v3/612226081",
+        "default_blurred_small" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail_large" : "https://www.patreon.com/media-u/v3/612226081",
+        "thumbnail_small" : "https://www.patreon.com/media-u/v3/612226081"
+      }
+    }
+  }, {
+    "id" : "608625766",
+    "type" : "media",
+    "attributes" : {
+      "image_urls" : null
+    }
+  }, {
+    "id" : "608654953",
+    "type" : "media",
+    "attributes" : {
+      "image_urls" : null
+    }
+  }, {
+    "id" : "608822750",
+    "type" : "media",
+    "attributes" : {
+      "image_urls" : {
+        "url" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/e30%3D/1.jpg?token-hash=bzKYa08Cv_Sj4VJ4rGQSpk2XAcFwSDde_J9Y3YN0Coc%3D&token-time=1772323200",
+        "thumbnail" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/e30%3D/1.jpg?token-hash=bzKYa08Cv_Sj4VJ4rGQSpk2XAcFwSDde_J9Y3YN0Coc%3D&token-time=1772323200",
+        "default_small" : "https://c10.patreonusercontent.com/4/patreon-media/p/post/149956206/d2f6fd2b6bc04c3b9565341fa277d7e6/eyJ3IjozNjB9/1.jpg?token-hash=vbItKVJvWiiFCuxN3yaYvMFoZR3QYLiEwHrgSSW6emg%3D&token-time=1772323200"
+      }
+    }
+  }, {
+    "id" : "608654948",
+    "type" : "media",
+    "attributes" : {
+      "image_urls" : null
+    }
+  }, {
+    "id" : "608655977",
+    "type" : "media",
+    "attributes" : {
+      "image_urls" : {
+        "url" : "https://c10.patreonusercontent.com/4/patreon-media/p/media/608654953/162513cfd3f84b4eb1e7cc5abe29adbb/e30%3D/1.png?token-hash=b3GZPGipJVe9a_sNBhK5XHrjrwXn_sl77QASDgQYfcs%3D&token-time=1772323200",
+        "thumbnail" : "https://c10.patreonusercontent.com/4/patreon-media/p/media/608654953/162513cfd3f84b4eb1e7cc5abe29adbb/e30%3D/1.png?token-hash=b3GZPGipJVe9a_sNBhK5XHrjrwXn_sl77QASDgQYfcs%3D&token-time=1772323200",
+        "default_small" : "https://c10.patreonusercontent.com/4/patreon-media/p/media/608654953/162513cfd3f84b4eb1e7cc5abe29adbb/eyJ3IjozNjB9/1.png?token-hash=DdtJFdlP71zsbNsF61UgIz_hP1VxYBb51BS5py8T4Oo%3D&token-time=1772323200"
+      }
+    }
+  }, {
+    "id" : "607750733",
+    "type" : "media",
+    "attributes" : {
+      "image_urls" : {
+        "url" : "https://www.patreon.com/media-u/v3/607750733",
+        "original" : "https://www.patreon.com/media-u/v3/607750733",
+        "default" : "https://www.patreon.com/media-u/v3/607750733",
+        "default_blurred" : "https://www.patreon.com/media-u/v3/607750733",
+        "default_small" : "https://www.patreon.com/media-u/v3/607750733",
+        "default_large" : "https://www.patreon.com/media-u/v3/607750733",
+        "default_blurred_small" : "https://www.patreon.com/media-u/v3/607750733",
+        "thumbnail" : "https://www.patreon.com/media-u/v3/607750733",
+        "thumbnail_large" : "https://www.patreon.com/media-u/v3/607750733",
+        "thumbnail_small" : "https://www.patreon.com/media-u/v3/607750733"
+      }
+    }
+  } ],
+  "links" : {
+    "next" : "https://www.patreon.com/api/campaigns/209197/posts?include=media&fields%5Bpost%5D=thumbnail%2Cpost_type%2Cpublished_at%2Ctitle%2Cvideo_preview%2Curl%2Cpost_metadata&fields%5Bmedia%5D=id%2Cimage_urls&page%5Bcount%5D=3&filter%5Bis_by_creator%5D=true&filter%5Bcontains_exclusive_posts%5D=true&json-api-use-default-includes=false&sort=-published_at&page%5Bcursor%5D=2026-02-02T18%3A15%3A07",
+    "first" : "https://www.patreon.com/api/campaigns/209197/posts?include=media&fields%5Bpost%5D=thumbnail%2Cpost_type%2Cpublished_at%2Ctitle%2Cvideo_preview%2Curl%2Cpost_metadata&fields%5Bmedia%5D=id%2Cimage_urls&page%5Bcount%5D=3&filter%5Bis_by_creator%5D=true&filter%5Bcontains_exclusive_posts%5D=true&json-api-use-default-includes=false&sort=-published_at"
+  },
+  "meta" : {
+    "posts_count" : 3,
+    "request_join_key" : "2fa1b4d7-3483-4202-8566-41319ce86324"
+  }
+}

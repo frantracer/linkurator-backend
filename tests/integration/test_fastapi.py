@@ -93,6 +93,8 @@ def dummy_handlers() -> Handlers:
         get_platform_statistics=AsyncMock(),
         get_providers_handler=MagicMock(),
         update_youtube_user_subscriptions_handler=AsyncMock(),
+        patreon_client=AsyncMock(),
+        update_patreon_user_subscriptions_handler=AsyncMock(),
         query_agent_handler=AsyncMock(),
         get_user_chats_handler=AsyncMock(),
         get_chat_handler=AsyncMock(),
