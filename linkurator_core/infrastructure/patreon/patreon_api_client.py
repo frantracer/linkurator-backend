@@ -51,13 +51,6 @@ class PatreonPost(BaseModel):
     duration_seconds: int | None = None
 
 
-NOT_LOGGED_HEADERS = {
-    "accept": "*/*",
-    "accept-language": "en-US,en;q=0.7",
-    "content-type": "application/vnd.api+json",
-    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
-}
-
 BASE_URL = "https://www.patreon.com"
 
 
@@ -131,7 +124,7 @@ class PatreonApiClient:
             "fields[campaign]": "creation_name,summary,url,vanity,avatar_photo_image_urls",
         }
 
-        response = await self.http_client.get_json(url, headers=NOT_LOGGED_HEADERS, params=params)
+        response = await self.http_client.get_json(url, params=params)
         if response.status == 200:
             return map_json_to_campaign(response.json.get("data", {}))
         if response.status == 404:
@@ -160,7 +153,7 @@ class PatreonApiClient:
         posts_ids: set[str] = set()
 
         while True:
-            response = await self.http_client.get_json(cursor, headers=NOT_LOGGED_HEADERS)
+            response = await self.http_client.get_json(cursor)
             if response.status != 200:
                 logging.error("Failed to get Patreon posts: %s -> %s", response.status, response.json)
                 break
@@ -193,7 +186,7 @@ class PatreonApiClient:
             "fields[media]": "id,image_urls",
         }
 
-        response = await self.http_client.get_json(url, headers=NOT_LOGGED_HEADERS, params=params)
+        response = await self.http_client.get_json(url, params=params)
         if response.status == 200:
             data = response.json.get("data", {})
             included = response.json.get("included", [])
