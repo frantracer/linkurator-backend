@@ -4,6 +4,7 @@ import logging
 from datetime import timedelta
 
 from linkurator_core.domain.common.utils import datetime_now
+from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.logger import configure_logging
 from linkurator_core.infrastructure.patreon.patreon_api_client import PatreonApiClient
@@ -23,9 +24,18 @@ async def main() -> None:
         logging.error("Patreon settings not configured")
         return
 
+    http_client = AsyncHttpClient(contact_email=settings.google.service_account_email)
+    http_client_proxy = http_client
+    if settings.vpn.enabled:
+        http_client_proxy = AsyncHttpClient(
+            proxy_url=f"http://localhost:{settings.vpn.http_proxy_port}",
+        )
+
     client = PatreonApiClient(
         client_id=settings.patreon.client_id,
         client_secret=settings.patreon.client_secret,
+        http_client=http_client,
+        http_client_proxy=http_client_proxy,
     )
 
     access_token: str = args.access_token

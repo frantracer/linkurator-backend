@@ -7,6 +7,7 @@ DOCKER_CONTAINER_API := linkurator-api
 DOCKER_CONTAINER_PROCESSOR := linkurator-processor
 DOCKER_CONTAINER_LINTING := linkurator-api-check-linting
 DOCKER_CONTAINER_TEST := linkurator-test
+DOCKER_CONTAINER_GENERATE_ENV := linkurator-docker-generate-env
 
 ####################
 # Run
@@ -49,6 +50,9 @@ run-api: link-config
 
 run-processor: link-config
 	PYTHONPATH='.' .venv/bin/python3 ./linkurator_core/processor.py
+
+generate-env: link-config
+	PYTHONPATH='.' .venv/bin/python3 ./scripts/generate_env.py
 
 ####################
 # Setup configuration
@@ -136,7 +140,18 @@ docker-lint:
 	docker rm -f $(DOCKER_CONTAINER_LINTING)
 	docker run --name $(DOCKER_CONTAINER_LINTING) --pull never --network host $(DOCKER_IMAGE) make lint
 
-docker-run-external-services:
+docker-generate-env:
+	docker rm -f $(DOCKER_CONTAINER_GENERATE_ENV)
+	docker run --name $(DOCKER_CONTAINER_GENERATE_ENV) \
+		-e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
+		-e 'LINKURATOR_ENVIRONMENT=$(LINKURATOR_ENVIRONMENT)' \
+		--pull never \
+		$(DOCKER_IMAGE) \
+		make generate-env
+	docker cp $(DOCKER_CONTAINER_GENERATE_ENV):/app/.env $(CURDIR)/.env
+	docker rm -f $(DOCKER_CONTAINER_GENERATE_ENV)
+
+docker-run-external-services: docker-generate-env
 	docker compose up -d
 
 docker-stop:
@@ -187,7 +202,7 @@ deploy: check-ssh-connection
 	ssh root@$(SSH_IP_ADDRESS) "docker image prune -a -f"
 	@echo "Latest image is deployed"
 
-deploy-infra: deploy-mongodb deploy-rabbitmq
+deploy-infra: deploy-mongodb deploy-rabbitmq deploy-vpn
 
 deploy-mongodb: check-ssh-connection
 	@if [ -z "${MONGODB_USER}" ]; then echo "MONGODB_USER environment variable is not set"; exit 1; fi
@@ -200,6 +215,24 @@ deploy-rabbitmq: check-ssh-connection
 	@if [ -z "${RABBITMQ_PASS}" ]; then echo "RABBITMQ_PASS environment variable is not set"; exit 1; fi
 
 	ssh root@$(SSH_IP_ADDRESS) "docker run -d -p 5672:5672 -p 15672:15672 -h linkurator-rabbitmq --name linkurator-rabbitmq --restart always -e 'RABBITMQ_DEFAULT_USER=$(RABBITMQ_USER)' -e 'RABBITMQ_DEFAULT_PASS=$(RABBITMQ_PASS)' rabbitmq:3.13.0-management"
+
+deploy-vpn: check-ssh-connection docker-generate-env
+	@set -a && . .env && set +a && \
+	ssh root@$(SSH_IP_ADDRESS) "docker rm -f linkurator-vpn || true" && \
+	ssh root@$(SSH_IP_ADDRESS) "docker run -d \
+		--name linkurator-vpn \
+		--restart always \
+		--cap-add NET_ADMIN \
+		--device /dev/net/tun:/dev/net/tun \
+		-p $$VPN_HTTP_PROXY_PORT:8888/tcp \
+		-e 'VPN_SERVICE_PROVIDER=protonvpn' \
+		-e 'VPN_TYPE=openvpn' \
+		-e 'OPENVPN_USER=$$OPENVPN_USER' \
+		-e 'OPENVPN_PASSWORD=$$OPENVPN_PASSWORD' \
+		-e 'SERVER_COUNTRIES=$$VPN_SERVER_COUNTRY' \
+		-e 'FREE_ONLY=on' \
+		-e 'HTTPPROXY=on' \
+		qmcgaw/gluetun"
 
 tunnel-rabbitmq: check-ssh-connection
 	ssh -L 15000:localhost:15672 -N root@$(SSH_IP_ADDRESS)

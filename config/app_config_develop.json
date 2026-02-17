@@ -69,6 +69,13 @@
   "ai_agent": {
     "base_url": "http://localhost:9000"
   },
+  "vpn": {
+    "enabled": false,
+    "openvpn_user": "",
+    "openvpn_password": "",
+    "server_country": "Netherlands",
+    "http_proxy_port": 8888
+  },
   "website": {
     "host": "http://localhost:9000/docs",
     "valid_domains": [

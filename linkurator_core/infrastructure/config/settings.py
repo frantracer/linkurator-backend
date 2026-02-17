@@ -103,6 +103,14 @@ class WebsiteSettings(BaseModel):
     valid_domains: list[str]
 
 
+class VpnSettings(BaseModel):
+    enabled: bool
+    openvpn_user: str
+    openvpn_password: str
+    server_country: str
+    http_proxy_port: int
+
+
 class ApplicationSettings(BaseModel):
     """
     Settings for the application.
@@ -117,6 +125,7 @@ class ApplicationSettings(BaseModel):
     rabbitmq: RabbitMQSettings
     logging: LogSettings
     website: WebsiteSettings
+    vpn: VpnSettings
 
     @classmethod
     def from_file(cls, file_path: str = DEFAULT_CONFIG_FILENAME) -> "ApplicationSettings":
@@ -140,4 +149,5 @@ class ApplicationSettings(BaseModel):
             rabbitmq=RabbitMQSettings(**config["rabbitmq"]),
             logging=LogSettings(**config["logging"]),
             website=WebsiteSettings(**config["website"]),
+            vpn=VpnSettings(**config["vpn"]),
         )

@@ -145,6 +145,12 @@ def app_handlers() -> Handlers:
         username=db_settings.user, password=db_settings.password)
 
     http_client = AsyncHttpClient(contact_email=settings.google.service_account_email)
+    proxy_http_client = http_client
+    if settings.vpn.enabled:
+        proxy_http_client = AsyncHttpClient(
+            proxy_url=f"http://localhost:{settings.vpn.http_proxy_port}",
+        )
+
     rss_feed_client = RssFeedClient(http_client=http_client)
 
     youtube_service = YoutubeService(
@@ -189,6 +195,8 @@ def app_handlers() -> Handlers:
         patreon_client = PatreonApiClient(
             client_id=settings.patreon.client_id,
             client_secret=settings.patreon.client_secret,
+            http_client=http_client,
+            http_client_proxy=proxy_http_client,
         )
         patreon_service = PatreonSubscriptionService(
             subscription_repository=subscription_repository,

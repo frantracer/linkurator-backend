@@ -147,6 +147,11 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     )
 
     http_client = AsyncHttpClient(contact_email=settings.google.service_account_email)
+    http_client_proxy = http_client
+    if settings.vpn.enabled:
+        http_client_proxy = AsyncHttpClient(
+            proxy_url=f"http://localhost:{settings.vpn.http_proxy_port}",
+        )
     rss_client = RssFeedClient(http_client=http_client)
 
     rss_service = RssSubscriptionService(
@@ -163,6 +168,8 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         patreon_client = PatreonApiClient(
             client_id=settings.patreon.client_id,
             client_secret=settings.patreon.client_secret,
+            http_client=http_client,
+            http_client_proxy=http_client_proxy,
         )
         patreon_service = PatreonSubscriptionService(
             subscription_repository=subscription_repository,

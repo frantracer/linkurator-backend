@@ -14,6 +14,9 @@ jobs:
         run: make docker-lint
       - name: Run tests
         run: make docker-test
+        env:
+          LINKURATOR_ENVIRONMENT: DEVELOPMENT
+          LINKURATOR_VAULT_PASSWORD: ${{secrets.LINKURATOR_VAULT_PASSWORD}}
       # Only deploy main branch
       - name: Deploy image to production
         if: github.ref_name == 'main'

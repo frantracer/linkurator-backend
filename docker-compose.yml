@@ -16,3 +16,21 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=develop
       - RABBITMQ_DEFAULT_PASS=develop
+
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - "${VPN_HTTP_PROXY_PORT}:8888/tcp"  # HTTP proxy
+    environment:
+      - VPN_SERVICE_PROVIDER=protonvpn
+      - VPN_TYPE=openvpn
+      - OPENVPN_USER=${OPENVPN_USER}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - SERVER_COUNTRIES=${VPN_SERVER_COUNTRY}
+      - FREE_ONLY=on
+      - HTTPPROXY=on

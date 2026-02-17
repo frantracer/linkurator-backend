@@ -58,10 +58,12 @@ class PatreonApiClient:
     """Client for Patreon API"""
 
     def __init__(self, client_id: str, client_secret: str,
-                 http_client: AsyncHttpClient = AsyncHttpClient()) -> None:
+                 http_client: AsyncHttpClient = AsyncHttpClient(),
+                 http_client_proxy: AsyncHttpClient | None = None) -> None:
         self.client_id = client_id
         self.client_secret = client_secret
         self.http_client = http_client
+        self.http_client_proxy = http_client_proxy or http_client
 
     def authorization_url(self, redirect_uri: str) -> str:
         """Build the Patreon OAuth2 authorization URL."""
@@ -124,7 +126,7 @@ class PatreonApiClient:
             "fields[campaign]": "creation_name,summary,url,vanity,avatar_photo_image_urls",
         }
 
-        response = await self.http_client.get_json(url, params=params)
+        response = await self.http_client_proxy.get_json(url, params=params)
         if response.status == 200:
             return map_json_to_campaign(response.json.get("data", {}))
         if response.status == 404:
@@ -153,7 +155,7 @@ class PatreonApiClient:
         posts_ids: set[str] = set()
 
         while True:
-            response = await self.http_client.get_json(cursor)
+            response = await self.http_client_proxy.get_json(cursor)
             if response.status != 200:
                 logging.error("Failed to get Patreon posts: %s -> %s", response.status, response.json)
                 break
@@ -186,7 +188,7 @@ class PatreonApiClient:
             "fields[media]": "id,image_urls",
         }
 
-        response = await self.http_client.get_json(url, params=params)
+        response = await self.http_client_proxy.get_json(url, params=params)
         if response.status == 200:
             data = response.json.get("data", {})
             included = response.json.get("included", [])
