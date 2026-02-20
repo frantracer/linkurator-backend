@@ -1,8 +1,8 @@
+import logging
 import uuid
 
 from linkurator_core.domain.common.event import SubscriptionNeedsSummarizationEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
-from linkurator_core.domain.common.exceptions import InvalidCredentialError
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
@@ -29,7 +29,8 @@ class UpdatePatreonUserSubscriptionsHandler:
 
         try:
             subscriptions = await self.subscription_service.get_subscriptions(
-                user_id=user_id, access_token=access_token,
+                user_id=user_id,
+                access_token=access_token,
             )
             for subscription in subscriptions:
                 registered = await self._get_or_create_subscription(subscription)
@@ -37,8 +38,8 @@ class UpdatePatreonUserSubscriptionsHandler:
 
             await self.user_repository.update(user)
 
-        except InvalidCredentialError:
-            pass
+        except Exception as e:
+            logging.exception("Failed to update Patreon subscriptions for user %s: %s", user_id, e)
 
     async def _get_or_create_subscription(self, subscription: Subscription) -> Subscription:
         registered_subscription = await self.subscription_repository.find_by_url(subscription.url)
