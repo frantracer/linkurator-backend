@@ -134,6 +134,23 @@ class PatreonApiClient:
         logging.error("Failed to get Patreon campaign: %s -> %s", response.status, response.json)
         return None
 
+    async def get_campaign_id_from_vanity(self, vanity: str) -> str | None:
+        """Get campaign ID from vanity name."""
+        url = f"{BASE_URL}/api/campaigns"
+        params = {
+            "filter[vanity]": vanity,
+            "fields[campaign]": "id",
+        }
+
+        response = await self.http_client_proxy.get_json(url, params=params)
+        if response.status == 200:
+            data = response.json.get("data", [])
+            if len(data) > 0:
+                return data[0].get("id", None)
+            return None
+        logging.error("Failed to get Patreon campaign ID from vanity: %s -> %s", response.status, response.json)
+        return None
+
     async def get_campaign_posts(self, campaign_id: str, from_date: datetime) -> list[PatreonPost]:
         url = f"{BASE_URL}/api/campaigns/{campaign_id}/posts"
         page_size = 100

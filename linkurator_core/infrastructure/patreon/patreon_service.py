@@ -21,7 +21,7 @@ PATREON_REFRESH_PERIOD_MINUTES = 60  # 1 hour
 
 VANITY_KEY = "vanity"
 CAMPAIGN_ID_KEY = "campaign_id"
-DEFAULT_PATREON_ICON = "https://c5.patreon.com/external/favicon/favicon-32x32.png"
+DEFAULT_PATREON_ICON = "https://c5.patreon.com/external/favicon/rebrand/favicon.svg"
 
 
 class PatreonSubscriptionService(SubscriptionService):
@@ -156,20 +156,21 @@ class PatreonSubscriptionService(SubscriptionService):
         Note: Without an access token, we can only create a basic subscription
         that will need to be updated later with campaign details.
         """
-        identifier = extract_campaign_id_from_url(url)
-        if identifier is None:
+        vanity = extract_vanity_from_url(url)
+        if vanity is None:
+            return None
+
+        campaign_id = await self.patreon_client.get_campaign_id_from_vanity(vanity)
+        if campaign_id is None:
             return None
 
         # Check if subscription already exists by URL pattern
-        # Try both vanity URL and campaign URL formats
         existing_sub = await self.subscription_repository.find_by_url(url)
 
-        campaign = await self.patreon_client.get_campaign(identifier)
+        campaign = await self.patreon_client.get_campaign(campaign_id)
 
         if campaign:
-            if existing_sub:
-                return map_patreon_campaign_to_subscription(campaign, existing_sub)
-            return map_patreon_campaign_to_subscription(campaign)
+            return map_patreon_campaign_to_subscription(campaign, existing_sub)
 
         # If no API access or campaign not found, create a placeholder subscription
         if existing_sub:
@@ -242,7 +243,7 @@ def map_patreon_campaign_to_subscription(
     )
 
 
-def extract_campaign_id_from_url(url: AnyUrl) -> str | None:
+def extract_vanity_from_url(url: AnyUrl) -> str | None:
     """
     Extract campaign ID or vanity from Patreon URL.
 
@@ -263,10 +264,10 @@ def extract_campaign_id_from_url(url: AnyUrl) -> str | None:
     # Handle URLs like:
     # - patreon.com/username -> returns vanity (username)
     # - patreon.com/c/username -> returns vanity (username)
-    # - patreon.com/m/campaign_id -> returns campaign_id
+    # - patreon.com/cw/username -> returns vanity (username)
     if len(path_segments) == 1:
         return path_segments[0]
-    if len(path_segments) >= 2 and path_segments[0] in ("c", "m"):
+    if len(path_segments) >= 2 and path_segments[0] in ("c", "cw"):
         return path_segments[1]
 
     return None

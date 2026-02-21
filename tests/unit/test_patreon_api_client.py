@@ -278,3 +278,50 @@ class TestGetPostErrors:
         assert result is not None
         assert result.id == "150496409"
         assert "Consolita" in result.title
+
+
+# =============================================================================
+# Tests for PatreonApiClient.get_campaign_id_from_vanity
+# =============================================================================
+
+class TestGetCampaignIdFromVanity:
+    @pytest.mark.asyncio()
+    async def test_returns_campaign_id_on_success(self) -> None:
+        http_client = AsyncMock(spec=AsyncHttpClient)
+        body = _load_json("single_campaign_id_example.json")
+        http_client.get_json.return_value = JsonHttpResponse(json=body, status=200)
+
+        client = _make_client(http_client)
+        result = await client.get_campaign_id_from_vanity("dayo")
+
+        assert result == "146262"
+
+    @pytest.mark.asyncio()
+    async def test_returns_none_when_data_is_empty(self) -> None:
+        http_client = AsyncMock(spec=AsyncHttpClient)
+        http_client.get_json.return_value = JsonHttpResponse(json={"data": []}, status=200)
+
+        client = _make_client(http_client)
+        result = await client.get_campaign_id_from_vanity("nonexistent")
+
+        assert result is None
+
+    @pytest.mark.asyncio()
+    async def test_returns_none_on_http_error(self) -> None:
+        http_client = AsyncMock(spec=AsyncHttpClient)
+        http_client.get_json.return_value = JsonHttpResponse(json={"error": "forbidden"}, status=403)
+
+        client = _make_client(http_client)
+        result = await client.get_campaign_id_from_vanity("dayo")
+
+        assert result is None
+
+    @pytest.mark.asyncio()
+    async def test_returns_none_on_server_error(self) -> None:
+        http_client = AsyncMock(spec=AsyncHttpClient)
+        http_client.get_json.return_value = JsonHttpResponse(json={"error": "internal"}, status=500)
+
+        client = _make_client(http_client)
+        result = await client.get_campaign_id_from_vanity("dayo")
+
+        assert result is None

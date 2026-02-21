@@ -1,0 +1,266 @@
+{
+  "data" : [ {
+    "id" : "146262",
+    "type" : "campaign",
+    "attributes" : { },
+    "relationships" : {
+      "creator" : {
+        "data" : {
+          "id" : "65676",
+          "type" : "user"
+        },
+        "links" : {
+          "related" : "https://www.patreon.com/api/user/65676"
+        }
+      },
+      "goals" : {
+        "data" : null
+      },
+      "rewards" : {
+        "data" : [ {
+          "id" : "-1",
+          "type" : "reward"
+        }, {
+          "id" : "10304972",
+          "type" : "reward"
+        }, {
+          "id" : "6133814",
+          "type" : "reward"
+        }, {
+          "id" : "493414",
+          "type" : "reward"
+        }, {
+          "id" : "6133772",
+          "type" : "reward"
+        } ]
+      }
+    }
+  } ],
+  "included" : [ {
+    "id" : "65676",
+    "type" : "user",
+    "attributes" : {
+      "first_name" : "Dayo",
+      "last_name" : "",
+      "full_name" : "Dayo ",
+      "gender" : 0,
+      "vanity" : "dayo",
+      "about" : "",
+      "image_url" : "https://c10.patreonusercontent.com/4/patreon-media/p/user/65676/bcce0f8405724372a02f5d7bffa3110a/eyJ3IjoyMDB9/1.jpg?token-hash=9hfeMbzX8pwPzswRwPngzof0do9XQj6CS4lTF3Dmqi0%3D",
+      "thumb_url" : "https://c10.patreonusercontent.com/4/patreon-media/p/user/65676/bcce0f8405724372a02f5d7bffa3110a/eyJ3IjoyMDB9/1.jpg?token-hash=9hfeMbzX8pwPzswRwPngzof0do9XQj6CS4lTF3Dmqi0%3D",
+      "youtube" : "https://www.youtube.com/user/DayoScript",
+      "twitter" : "Dayoscript",
+      "facebook" : "https://www.facebook.com/pages/Post-Script/208296289315095",
+      "twitch" : null,
+      "created" : "2014-01-02T12:37:58.000+00:00",
+      "url" : "https://www.patreon.com/dayo",
+      "social_connections" : {
+        "discord" : null,
+        "facebook" : null,
+        "google" : null,
+        "instagram" : null,
+        "reddit" : null,
+        "spotify" : null,
+        "spotify_open_access" : null,
+        "tiktok" : null,
+        "twitch" : {
+          "url" : "https://twitch.tv/dayoscript",
+          "user_id" : "88483743"
+        },
+        "twitter" : {
+          "url" : "https://twitter.com/DayoScript",
+          "user_id" : "1146734520"
+        },
+        "twitter2" : null,
+        "vimeo" : null,
+        "youtube" : null
+      },
+      "current_user_block_status" : "none"
+    },
+    "relationships" : {
+      "campaign" : {
+        "data" : {
+          "id" : "146262",
+          "type" : "campaign"
+        },
+        "links" : {
+          "related" : "https://www.patreon.com/api/campaigns/146262"
+        }
+      }
+    }
+  }, {
+    "id" : "-1",
+    "type" : "reward",
+    "attributes" : {
+      "amount" : 0,
+      "amount_cents" : 0,
+      "description" : "Everyone",
+      "user_limit" : null,
+      "remaining" : 0,
+      "requires_shipping" : false,
+      "created_at" : null,
+      "url" : null,
+      "patron_currency" : "NOK"
+    }
+  }, {
+    "id" : "10304972",
+    "type" : "reward",
+    "attributes" : {
+      "amount" : 0,
+      "amount_cents" : 0,
+      "user_limit" : null,
+      "remaining" : null,
+      "description" : "",
+      "requires_shipping" : false,
+      "created_at" : "2023-10-11T18:49:19.838+00:00",
+      "url" : "https://www.patreon.com/checkout/dayo?rid=10304972",
+      "declined_patron_count" : 7,
+      "patron_count" : 5910,
+      "post_count" : 0,
+      "discord_role_ids" : null,
+      "title" : "Free",
+      "image_url" : null,
+      "edited_at" : "2023-10-11T18:49:19.838+00:00",
+      "published" : true,
+      "published_at" : "2023-10-11T18:49:19.838+00:00",
+      "unpublished_at" : null,
+      "currency" : "EUR",
+      "patron_amount_cents" : 1000,
+      "patron_currency" : "NOK",
+      "is_free_tier" : true
+    },
+    "relationships" : {
+      "campaign" : {
+        "data" : {
+          "id" : "146262",
+          "type" : "campaign"
+        },
+        "links" : {
+          "related" : "https://www.patreon.com/api/campaigns/146262"
+        }
+      }
+    }
+  }, {
+    "id" : "6133814",
+    "type" : "reward",
+    "attributes" : {
+      "amount" : 200,
+      "amount_cents" : 200,
+      "user_limit" : null,
+      "remaining" : null,
+      "description" : "El pase a la exclusividad:<br><ul><li><strong>Acceso exclusivo</strong> a los documentos del vídeo (infraestructura, guion, entrevistas si las hay...)</li><li><strong>Acceso a los artículos</strong>, ya sean análisis o editorial, que suba aquí.</li><li><strong>Acceso anticipado </strong>al vídeo.</li><li><strong>Voz y voto</strong> en las consultas generales del canal.</li></ul>",
+      "requires_shipping" : false,
+      "created_at" : "2020-10-21T17:18:34.319+00:00",
+      "url" : "https://www.patreon.com/checkout/dayo?rid=6133814",
+      "declined_patron_count" : 292,
+      "patron_count" : 726,
+      "post_count" : 2,
+      "discord_role_ids" : null,
+      "title" : "Inversor de riesgo",
+      "image_url" : null,
+      "edited_at" : "2020-10-21T17:28:00.385+00:00",
+      "published" : true,
+      "published_at" : "2020-10-21T17:18:34.319+00:00",
+      "unpublished_at" : null,
+      "currency" : "EUR",
+      "patron_amount_cents" : 3000,
+      "patron_currency" : "NOK",
+      "is_free_tier" : false
+    },
+    "relationships" : {
+      "campaign" : {
+        "data" : {
+          "id" : "146262",
+          "type" : "campaign"
+        },
+        "links" : {
+          "related" : "https://www.patreon.com/api/campaigns/146262"
+        }
+      }
+    }
+  }, {
+    "id" : "493414",
+    "type" : "reward",
+    "attributes" : {
+      "amount" : 500,
+      "amount_cents" : 500,
+      "user_limit" : null,
+      "remaining" : null,
+      "description" : "Quienes mueven el canal desde las sombras.<br><ul><li><strong>Participarás en la votación mensual </strong>para escoger vídeo.</li><li><strong>Tu nombre aparecerá en los agradecimientos </strong>al final del vídeo.</li><li><strong>Acceso al server de Discord</strong>.</li><li>Todo lo anterior.</li></ul>",
+      "requires_shipping" : false,
+      "created_at" : "2016-11-10T18:01:22.000+00:00",
+      "url" : "https://www.patreon.com/checkout/dayo?rid=493414",
+      "declined_patron_count" : 145,
+      "patron_count" : 171,
+      "post_count" : 279,
+      "discord_role_ids" : [ "414468441580503041" ],
+      "title" : "El Concilio",
+      "image_url" : null,
+      "edited_at" : "2020-10-21T17:28:00.339+00:00",
+      "published" : true,
+      "published_at" : "2020-10-21T17:21:43.031+00:00",
+      "unpublished_at" : null,
+      "currency" : "EUR",
+      "patron_amount_cents" : 6500,
+      "patron_currency" : "NOK",
+      "is_free_tier" : false
+    },
+    "relationships" : {
+      "campaign" : {
+        "data" : {
+          "id" : "146262",
+          "type" : "campaign"
+        },
+        "links" : {
+          "related" : "https://www.patreon.com/api/campaigns/146262"
+        }
+      }
+    }
+  }, {
+    "id" : "6133772",
+    "type" : "reward",
+    "attributes" : {
+      "amount" : 800,
+      "amount_cents" : 800,
+      "user_limit" : null,
+      "remaining" : null,
+      "description" : "El mayor lujo.<br><ul><li><strong>Diré tu nombre</strong> en los agradecimientos finales.</li><li>Todo lo anterior.</li></ul>",
+      "requires_shipping" : false,
+      "created_at" : "2020-10-21T17:11:27.861+00:00",
+      "url" : "https://www.patreon.com/checkout/dayo?rid=6133772",
+      "declined_patron_count" : 42,
+      "patron_count" : 70,
+      "post_count" : 130,
+      "discord_role_ids" : [ "414468441580503041" ],
+      "title" : "Principal benefactor",
+      "image_url" : null,
+      "edited_at" : "2020-10-21T17:28:00.362+00:00",
+      "published" : true,
+      "published_at" : "2020-10-21T17:23:57.923+00:00",
+      "unpublished_at" : null,
+      "currency" : "EUR",
+      "patron_amount_cents" : 10500,
+      "patron_currency" : "NOK",
+      "is_free_tier" : false
+    },
+    "relationships" : {
+      "campaign" : {
+        "data" : {
+          "id" : "146262",
+          "type" : "campaign"
+        },
+        "links" : {
+          "related" : "https://www.patreon.com/api/campaigns/146262"
+        }
+      }
+    }
+  } ],
+  "meta" : {
+    "pagination" : {
+      "total" : 1,
+      "cursors" : {
+        "next" : null
+      }
+    }
+  }
+}

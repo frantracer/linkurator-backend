@@ -21,8 +21,8 @@ from linkurator_core.infrastructure.patreon.patreon_service import (
     DEFAULT_PATREON_ICON,
     VANITY_KEY,
     PatreonSubscriptionService,
-    extract_campaign_id_from_url,
     extract_post_id_from_url,
+    extract_vanity_from_url,
     map_patreon_campaign_to_subscription,
     map_patreon_post_to_item,
 )
@@ -172,22 +172,25 @@ class TestMapPatreonCampaignToSubscription:
 
 class TestExtractCampaignIdFromUrl:
     def test_extracts_vanity_from_simple_url(self) -> None:
-        assert extract_campaign_id_from_url(parse_url("https://www.patreon.com/creator")) == "creator"
+        assert extract_vanity_from_url(parse_url("https://www.patreon.com/creator")) == "creator"
 
     def test_extracts_vanity_from_c_url(self) -> None:
-        assert extract_campaign_id_from_url(parse_url("https://www.patreon.com/c/mycreator")) == "mycreator"
-
-    def test_extracts_id_from_m_url(self) -> None:
-        assert extract_campaign_id_from_url(parse_url("https://www.patreon.com/m/12345")) == "12345"
+        assert extract_vanity_from_url(parse_url("https://www.patreon.com/c/mycreator")) == "mycreator"
 
     def test_returns_none_for_non_patreon_url(self) -> None:
-        assert extract_campaign_id_from_url(parse_url("https://www.youtube.com/channel/123")) is None
+        assert extract_vanity_from_url(parse_url("https://www.youtube.com/channel/123")) is None
 
     def test_returns_none_for_empty_path(self) -> None:
-        assert extract_campaign_id_from_url(parse_url("https://www.patreon.com/")) is None
+        assert extract_vanity_from_url(parse_url("https://www.patreon.com/")) is None
 
     def test_works_without_www(self) -> None:
-        assert extract_campaign_id_from_url(parse_url("https://patreon.com/creator")) == "creator"
+        assert extract_vanity_from_url(parse_url("https://patreon.com/creator")) == "creator"
+
+    def test_ignores_query_params(self) -> None:
+        assert extract_vanity_from_url(parse_url("https://www.patreon.com/creator?l=es")) == "creator"
+
+    def test_extracts_vanity_from_cw_url(self) -> None:
+        assert extract_vanity_from_url(parse_url("https://www.patreon.com/cw/naroh")) == "naroh"
 
 
 # =============================================================================
@@ -447,8 +450,9 @@ class TestGetItems:
 class TestGetSubscriptionFromUrl:
     @pytest.mark.asyncio()
     async def test_returns_new_subscription_from_campaign(self) -> None:
-        campaign = _make_campaign(vanity="creator")
+        campaign = _make_campaign(campaign_id="123", vanity="creator")
         client = AsyncMock(spec=PatreonApiClient)
+        client.get_campaign_id_from_vanity.return_value = "123"
         client.get_campaign.return_value = campaign
 
         service = _make_service(patreon_client=client)
@@ -463,8 +467,9 @@ class TestGetSubscriptionFromUrl:
         existing = mock_sub(provider="patreon", url="https://www.patreon.com/creator")
         await sub_repo.add(existing)
 
-        campaign = _make_campaign(vanity="creator_new")
+        campaign = _make_campaign(campaign_id="123", vanity="creator_new")
         client = AsyncMock(spec=PatreonApiClient)
+        client.get_campaign_id_from_vanity.return_value = "123"
         client.get_campaign.return_value = campaign
 
         service = _make_service(patreon_client=client, subscription_repository=sub_repo)
@@ -481,6 +486,7 @@ class TestGetSubscriptionFromUrl:
         await sub_repo.add(existing)
 
         client = AsyncMock(spec=PatreonApiClient)
+        client.get_campaign_id_from_vanity.return_value = "123"
         client.get_campaign.return_value = None
 
         service = _make_service(patreon_client=client, subscription_repository=sub_repo)
@@ -496,13 +502,52 @@ class TestGetSubscriptionFromUrl:
         assert result is None
 
     @pytest.mark.asyncio()
+    async def test_returns_none_when_campaign_id_not_found(self) -> None:
+        client = AsyncMock(spec=PatreonApiClient)
+        client.get_campaign_id_from_vanity.return_value = None
+
+        service = _make_service(patreon_client=client)
+        result = await service.get_subscription_from_url(parse_url("https://www.patreon.com/unknown"))
+
+        assert result is None
+        client.get_campaign.assert_not_called()
+
+    @pytest.mark.asyncio()
     async def test_returns_none_when_no_campaign_and_no_existing(self) -> None:
         client = AsyncMock(spec=PatreonApiClient)
+        client.get_campaign_id_from_vanity.return_value = "123"
         client.get_campaign.return_value = None
 
         service = _make_service(patreon_client=client)
         result = await service.get_subscription_from_url(parse_url("https://www.patreon.com/unknown"))
         assert result is None
+
+    @pytest.mark.asyncio()
+    async def test_uses_campaign_id_returned_by_vanity_lookup(self) -> None:
+        campaign = _make_campaign(campaign_id="456", vanity="creator")
+        client = AsyncMock(spec=PatreonApiClient)
+        client.get_campaign_id_from_vanity.return_value = "456"
+        client.get_campaign.return_value = campaign
+
+        service = _make_service(patreon_client=client)
+        await service.get_subscription_from_url(parse_url("https://www.patreon.com/creator"))
+
+        client.get_campaign_id_from_vanity.assert_called_once_with("creator")
+        client.get_campaign.assert_called_once_with("456")
+
+    @pytest.mark.asyncio()
+    async def test_works_with_c_path_url(self) -> None:
+        campaign = _make_campaign(campaign_id="789", vanity="mycreator")
+        client = AsyncMock(spec=PatreonApiClient)
+        client.get_campaign_id_from_vanity.return_value = "789"
+        client.get_campaign.return_value = campaign
+
+        service = _make_service(patreon_client=client)
+        result = await service.get_subscription_from_url(parse_url("https://www.patreon.com/c/mycreator"))
+
+        assert result is not None
+        assert result.name == "mycreator"
+        client.get_campaign_id_from_vanity.assert_called_once_with("mycreator")
 
 
 class TestGetSubscriptionsFromName:

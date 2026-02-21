@@ -7,13 +7,14 @@ from linkurator_core.domain.common.utils import datetime_now
 from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.logger import configure_logging
-from linkurator_core.infrastructure.patreon.patreon_api_client import PatreonApiClient
+from linkurator_core.infrastructure.patreon.patreon_api_client import PatreonApiClient, PatreonMembership
 
 
 async def main() -> None:
     """Retrieve all Patreon campaigns for the configured user."""
     parser = argparse.ArgumentParser(description="Get Patreon campaigns for the configured user")
-    parser.add_argument("--access-token", required=True, help="Patreon access token")
+    parser.add_argument("--access-token", help="Patreon access token")
+    parser.add_argument("--vanity", help="Patreon vanity name to look up")
     parser.add_argument("--days", type=int, default=365, help="Number of days to look back for posts")
     args = parser.parse_args()
 
@@ -22,6 +23,13 @@ async def main() -> None:
 
     if settings.patreon is None:
         logging.error("Patreon settings not configured")
+        return
+
+    access_token: str | None = args.access_token
+    vanity: str | None = args.vanity
+
+    if access_token is None and vanity is None:
+        logging.error("Either --access-token or --vanity must be provided")
         return
 
     http_client = AsyncHttpClient(contact_email=settings.google.service_account_email)
@@ -38,13 +46,25 @@ async def main() -> None:
         http_client_proxy=http_client_proxy,
     )
 
-    access_token: str = args.access_token
+    memberships: list[PatreonMembership] = []
 
-    # Get campaigns for the user
-    memberships = await client.get_current_user_memberships(access_token)
+    # Get user memberships using access token
+    if access_token is not None:
+        user_memberships = await client.get_current_user_memberships(access_token)
+        memberships.extend(user_memberships)
+
+    # Get campaign ID from vanity name
+    if vanity is not None:
+        campaign_id = await client.get_campaign_id_from_vanity(vanity)
+
+        if campaign_id is None:
+            logging.error("Failed to fetch campaign ID for vanity")
+            return
+
+        memberships.extend([PatreonMembership(campaign_id=campaign_id)])
 
     if len(memberships) == 0:
-        logging.info("No campaigns found for this user")
+        logging.info("No campaigns found")
         return
 
     logging.info("Found %d memberships(s):", len(memberships))
@@ -89,6 +109,7 @@ async def main() -> None:
             logging.info("    Published At: %s", str(first_post.published_at))
             logging.info("    Thumbnail URL: %s", str(first_post.image_url))
             logging.info("    Duration: %s seconds", str(first_post.duration_seconds))
+            logging.info("")
 
 
 if __name__ == "__main__":
