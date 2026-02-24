@@ -82,7 +82,7 @@ link-config:
 		exit 1; \
 	fi
 
-link-dev-config: decrypt-secrets
+link-dev-config:
 	if [ ! -f .config.json ] ; then \
 		rm -f .config.json; \
 		cp config/app_config_develop.json .config.json; \
@@ -142,12 +142,18 @@ docker-lint:
 
 docker-generate-env:
 	docker rm -f $(DOCKER_CONTAINER_GENERATE_ENV)
-	docker run --name $(DOCKER_CONTAINER_GENERATE_ENV) \
+	docker create --name $(DOCKER_CONTAINER_GENERATE_ENV) \
 		-e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
 		-e 'LINKURATOR_ENVIRONMENT=$(LINKURATOR_ENVIRONMENT)' \
 		--pull never \
 		$(DOCKER_IMAGE) \
 		make generate-env
+
+	if [ -f .config.json ]; then \
+		docker cp .config.json $(DOCKER_CONTAINER_GENERATE_ENV):/app/.config.json || true; \
+	fi
+
+	docker start -a $(DOCKER_CONTAINER_GENERATE_ENV)
 	docker cp $(DOCKER_CONTAINER_GENERATE_ENV):/app/.env $(CURDIR)/.env
 	docker rm -f $(DOCKER_CONTAINER_GENERATE_ENV)
 
