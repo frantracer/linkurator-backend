@@ -277,6 +277,34 @@ async def test_find_subscriptions_by_name(subscription_repo: SubscriptionReposit
 
 
 @pytest.mark.asyncio()
+async def test_find_subscriptions_by_name_filtered_by_provider(subscription_repo: SubscriptionRepository) -> None:
+    sub1 = mock_sub(name="Leyendas y videojuegos", provider="youtube")
+    sub2 = mock_sub(name="Fútbol y más", provider="youtube")
+    sub3 = mock_sub(name="leyendas del fútbol", provider="spotify")
+
+    await subscription_repo.delete_all()
+    await subscription_repo.add(sub1)
+    await subscription_repo.add(sub2)
+    await subscription_repo.add(sub3)
+
+    found_subscriptions = await subscription_repo.find_by_name("leyendas", provider="youtube")
+    assert len(found_subscriptions) == 1
+    assert found_subscriptions[0].uuid == sub1.uuid
+
+    found_subscriptions = await subscription_repo.find_by_name("leyendas", provider="spotify")
+    assert len(found_subscriptions) == 1
+    assert found_subscriptions[0].uuid == sub3.uuid
+
+    found_subscriptions = await subscription_repo.find_by_name("fútbol", provider="youtube")
+    assert len(found_subscriptions) == 1
+    assert found_subscriptions[0].uuid == sub2.uuid
+
+    found_subscriptions = await subscription_repo.find_by_name("fútbol", provider="spotify")
+    assert len(found_subscriptions) == 1
+    assert found_subscriptions[0].uuid == sub3.uuid
+
+
+@pytest.mark.asyncio()
 async def test_count_subscriptions(subscription_repo: SubscriptionRepository) -> None:
     sub1 = mock_sub(name="Leyendas y videojuegos", provider="youtube")
     sub2 = mock_sub(name="Fútbol y más", provider="youtube")

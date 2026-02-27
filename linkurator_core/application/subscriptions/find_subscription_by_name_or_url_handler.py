@@ -8,6 +8,7 @@ from pydantic import AnyUrl, ValidationError
 from linkurator_core.domain.common.event import SubscriptionItemsBecameOutdatedEvent
 from linkurator_core.domain.common.event_bus_service import EventBusService
 from linkurator_core.domain.common.utils import parse_url
+from linkurator_core.domain.items.item import ItemProvider
 from linkurator_core.domain.subscriptions.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.domain.subscriptions.subscription import Subscription
 from linkurator_core.domain.subscriptions.subscription_repository import SubscriptionRepository
@@ -23,12 +24,12 @@ class FindSubscriptionsByNameOrUrlHandler:
         self.subscription_service = subscription_service
         self.event_bus = event_bus
 
-    async def handle(self, name_or_url: str) -> list[Subscription]:
+    async def handle(self, name_or_url: str, provider: ItemProvider | None = None) -> list[Subscription]:
         url = _try_parse_url(name_or_url)
         if url is None:
             results = await asyncio.gather(
-                self.subscription_repository.find_by_name(name=name_or_url),
-                self.subscription_service.get_subscriptions_from_name(name=name_or_url),
+                self.subscription_repository.find_by_name(name=name_or_url, provider=provider),
+                self.subscription_service.get_subscriptions_from_name(name=name_or_url, provider=provider),
             )
             existing_subs = results[0]
             service_subs = results[1]
@@ -41,7 +42,7 @@ class FindSubscriptionsByNameOrUrlHandler:
 
             return existing_subs
 
-        sub = await self.subscription_service.get_subscription_from_url(url)
+        sub = await self.subscription_service.get_subscription_from_url(url, provider=provider)
         if sub is not None:
             return [await self.get_or_create_subscription(sub)]
 

@@ -171,11 +171,15 @@ class MongoDBSubscriptionRepository(SubscriptionRepository):
             for subscription in subscriptions
         ]
 
-    async def find_by_name(self, name: str) -> list[Subscription]:
+    async def find_by_name(self, name: str, provider: str | None = None) -> list[Subscription]:
         collection = await self._subscription_collection()
 
+        query: dict[str, Any] = {"$text": {"$search": normalize_text_search(name)}}
+        if provider is not None:
+            query["provider"] = provider
+
         subscriptions: list[dict[str, Any]] = await (
-            collection.find({"$text": {"$search": normalize_text_search(name)}})
+            collection.find(query)
             .sort("created_at", DESCENDING)
             .to_list(length=None)
         )

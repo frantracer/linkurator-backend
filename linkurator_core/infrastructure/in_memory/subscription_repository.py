@@ -60,7 +60,7 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
         ]
         return sorted(subs, key=lambda x: x.created_at, reverse=True)
 
-    async def find_by_name(self, name: str) -> list[Subscription]:
+    async def find_by_name(self, name: str, provider: str | None = None) -> list[Subscription]:
         search_terms = unidecode(name.lower()).split(" ")
 
         def search_terms_in_name(terms: list[str], name: str) -> bool:
@@ -70,6 +70,7 @@ class InMemorySubscriptionRepository(SubscriptionRepository):
             subscription
             for subscription in self.subscriptions.values()
             if search_terms_in_name(search_terms, unidecode(subscription.name.lower()))
+            and (provider is None or subscription.provider == provider)
         ]
         return sorted(subs, key=lambda x: x.created_at, reverse=True)
 

@@ -58,17 +58,21 @@ class GeneralSubscriptionService:
     async def get_subscription_from_url(
             self,
             url: AnyUrl,
+            provider: str | None = None,
     ) -> Subscription | None:
+        services = [s for s in self.services if provider is None or s.provider_name() == provider]
         results = await asyncio.gather(
-            *[service.get_subscription_from_url(url) for service in self.services],
+            *[service.get_subscription_from_url(url) for service in services],
         )
         return next((r for r in results if r is not None), None)
 
     async def get_subscriptions_from_name(
             self,
             name: str,
+            provider: str | None = None,
     ) -> list[Subscription]:
+        services = [s for s in self.services if provider is None or s.provider_name() == provider]
         results = await asyncio.gather(
-            *[service.get_subscriptions_from_name(name) for service in self.services],
+            *[service.get_subscriptions_from_name(name) for service in services],
         )
         return [sub for result in results for sub in result]

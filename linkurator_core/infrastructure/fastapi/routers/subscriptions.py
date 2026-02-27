@@ -179,15 +179,17 @@ def get_router(  # pylint: disable=too-many-statements
                 )
     async def get_subscriptions_by_name_or_url(
             name_or_url: str,
+            provider: str | None = Query(default=None),
             session: Session | None = Depends(get_session),
     ) -> FullPage[SubscriptionSchema]:
         """
         Get the subscription information by name or URL
         :param name_or_url: Name of the subscription or URL of the subscription
+        :param provider: Optional provider to filter results (e.g. 'youtube', 'spotify')
         :return: The list of subscriptions that contains the given name.
         """
         results = await asyncio.gather(
-            find_subscriptions_by_name_or_url.handle(name_or_url),
+            find_subscriptions_by_name_or_url.handle(name_or_url, provider=provider),
             get_user_profile(session, get_user_profile_handler),
         )
         subs = results[0]
