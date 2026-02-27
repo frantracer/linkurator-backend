@@ -9,6 +9,7 @@ from fastapi import Depends, Query, Request, Response, status
 from fastapi.routing import APIRouter
 from pydantic.types import NonNegativeInt, PositiveInt
 
+from linkurator_core.application.items.get_favorite_topics_items_handler import GetFavoriteTopicsItemsHandler
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
 from linkurator_core.application.topics.assign_subscription_to_user_topic_handler import (
     AssignSubscriptionToTopicHandler,
@@ -45,6 +46,7 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
         get_user_topics_handler: GetUserTopicsHandler,
         get_topic_handler: GetTopicHandler,
         get_topic_items_handler: GetTopicItemsHandler,
+        get_favorite_topics_items_handler: GetFavoriteTopicsItemsHandler,
         find_topics_by_name_handler: FindTopicsByNameHandler,
         assign_subscription_to_user_topic_handler: AssignSubscriptionToTopicHandler,
         unassign_subscription_from_user_topic_handler: UnassignSubscriptionFromUserTopicHandler,
@@ -57,6 +59,82 @@ def get_router(  # pylint: disable-msg=too-many-locals disable-msg=too-many-stat
 ) -> APIRouter:
     """Get the router for the topics."""
     router = APIRouter()
+
+    @router.get("/favorites/items",
+                responses={
+                    status.HTTP_401_UNAUTHORIZED: {"model": None},
+                })
+    async def items_from_favorite_topics(
+            request: Request,
+            page_number: NonNegativeInt = 0,
+            page_size: PositiveInt = 50,
+            created_before_ts: float | None = None,
+            search: str | None = None,
+            min_duration: int | None = None,
+            max_duration: int | None = None,
+            include_interactions: Annotated[str | None, Query(
+                description=f"Comma separated values. Valid values: {VALID_INTERACTIONS}")] = None,
+            excluded_subscriptions: Annotated[str | None, Query(
+                description="Comma separated subscriptions UUIDs")] = None,
+            session: Session | None = Depends(get_session),
+    ) -> Page[ItemSchema]:
+        """Get items from the user's favorite topics."""
+        if session is None:
+            raise default_responses.not_authenticated()
+
+        if created_before_ts is None:
+            created_before_ts = datetime.now(timezone.utc).timestamp()
+
+        try:
+            interactions = None
+            if include_interactions is not None:
+                interactions = [InteractionFilterSchema(interaction) for interaction in include_interactions.split(",")]
+        except ValueError as error:
+            msg = "Invalid interaction filter"
+            raise default_responses.bad_request(msg) from error
+
+        def _include_interaction(interaction: InteractionFilterSchema) -> bool:
+            return interactions is None or interaction in interactions
+
+        excluded_subscriptions_uuids: set[UUID] | None = None
+        if excluded_subscriptions is not None:
+            excluded_subscriptions_uuids = {UUID(sub_id) for sub_id in excluded_subscriptions.split(",")}
+
+        items = await get_favorite_topics_items_handler.handle(
+            user_id=session.user_id,
+            created_before=datetime.fromtimestamp(created_before_ts, tz=timezone.utc),
+            page_number=page_number,
+            page_size=page_size,
+            text_filter=search,
+            min_duration=min_duration,
+            max_duration=max_duration,
+            include_items_without_interactions=_include_interaction(InteractionFilterSchema.WITHOUT_INTERACTIONS),
+            include_recommended_items=_include_interaction(InteractionFilterSchema.RECOMMENDED),
+            include_discouraged_items=_include_interaction(InteractionFilterSchema.DISCOURAGED),
+            include_viewed_items=_include_interaction(InteractionFilterSchema.VIEWED),
+            include_hidden_items=_include_interaction(InteractionFilterSchema.HIDDEN),
+            excluded_subscriptions=excluded_subscriptions_uuids,
+        )
+
+        current_url = request.url.include_query_params(
+            page_number=page_number,
+            page_size=page_size,
+            created_before_ts=created_before_ts,
+        )
+
+        return Page[ItemSchema].create(
+            elements=[
+                ItemSchema.from_domain_item(
+                    item=item.item,
+                    subscription=item.subscription,
+                    user_interactions=item.interactions,
+                    curator_interactions=item.curator_interactions,
+                )
+                for item in items
+            ],
+            page_number=page_number,
+            page_size=page_size,
+            current_url=current_url)
 
     @router.get("/{topic_id}/items",
                 responses={

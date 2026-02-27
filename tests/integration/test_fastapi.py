@@ -69,6 +69,7 @@ def dummy_handlers() -> Handlers:
         unfollow_curator_handler=AsyncMock(),
         get_topic_handler=AsyncMock(),
         get_topic_items_handler=AsyncMock(),
+        get_favorite_topics_items_handler=AsyncMock(),
         get_user_topics_handler=AsyncMock(),
         find_topics_by_name_handler=AsyncMock(),
         get_curator_topics_handler=AsyncMock(),

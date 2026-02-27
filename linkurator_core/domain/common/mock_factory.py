@@ -21,6 +21,7 @@ def mock_user(
         is_admin: bool = False,
         curators: set[UUID] | None = None,
         topics: set[UUID] | None = None,
+        favorite_topics: set[UUID] | None = None,
         email: str | None = None,
         username: Username | None = None,
 ) -> User:
@@ -38,6 +39,7 @@ def mock_user(
         is_admin=is_admin,
         curators=set() if curators is None else curators,
         followed_topics=set() if topics is None else topics,
+        favorite_topics=set() if favorite_topics is None else favorite_topics,
     )
 
 
