@@ -283,8 +283,8 @@ def map_json_to_post(data: dict[str, Any], included: list[dict[str, Any]]) -> Pa
 
     return PatreonPost(
         id=post_id,
-        title=attributes.get("title", "Untitled"),
-        url=attributes.get("url", f"https://www.patreon.com/posts/{post_id}"),
+        title=attributes.get("title") or "Untitled",
+        url=attributes.get("url") or f"https://www.patreon.com/posts/{post_id}",
         published_at=published_at,
         image_url=image_url,
         duration_seconds=duration_seconds,
