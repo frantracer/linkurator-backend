@@ -164,19 +164,13 @@ class PatreonSubscriptionService(SubscriptionService):
         if campaign_id is None:
             return None
 
-        # Check if subscription already exists by URL pattern
-        existing_sub = await self.subscription_repository.find_by_url(url)
-
         campaign = await self.patreon_client.get_campaign(campaign_id)
+        if campaign is None:
+            return None
 
-        if campaign:
-            return map_patreon_campaign_to_subscription(campaign, existing_sub)
+        existing_sub = await self.subscription_repository.find_by_url(parse_url(campaign.url))
 
-        # If no API access or campaign not found, create a placeholder subscription
-        if existing_sub:
-            return existing_sub
-
-        return None
+        return map_patreon_campaign_to_subscription(campaign, existing_sub)
 
     async def get_subscriptions_from_name(
         self,

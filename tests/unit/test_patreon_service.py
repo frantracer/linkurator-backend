@@ -487,7 +487,14 @@ class TestGetSubscriptionFromUrl:
 
         client = AsyncMock(spec=PatreonApiClient)
         client.get_campaign_id_from_vanity.return_value = "123"
-        client.get_campaign.return_value = None
+        client.get_campaign.return_value = PatreonCampaign(
+            id="123",
+            vanity="creator",
+            creation_name="Creation",
+            summary="Summary",
+            url="https://www.patreon.com/creator",
+            avatar_photo_image_urls=PatreonAvatarPhotoImageUrls(default=AnyUrl("https://example.com/avatar.png")),
+        )
 
         service = _make_service(patreon_client=client, subscription_repository=sub_repo)
         result = await service.get_subscription_from_url(parse_url("https://www.patreon.com/creator"))
