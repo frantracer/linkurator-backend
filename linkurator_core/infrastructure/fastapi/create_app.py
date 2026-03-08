@@ -158,6 +158,10 @@ def create_app_from_handlers(handlers: Handlers) -> FastAPI:
     async def get_current_session(request: Request) -> Session | None:
         token = request.cookies.get("token")
         if token is None:
+            auth_header = request.headers.get("Authorization")
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header[7:]
+        if token is None:
             return None
         return await handlers.validate_token.handle(access_token=token)
 
