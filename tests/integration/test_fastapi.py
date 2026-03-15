@@ -16,6 +16,10 @@ from linkurator_core.application.items.get_subscription_items_handler import (
     GetSubscriptionItemsResponse,
 )
 from linkurator_core.application.items.get_topic_items_handler import GetTopicItemsHandler
+from linkurator_core.application.topics.get_curator_topics_as_user_handler import (
+    GetCuratorTopicsHandler,
+    GetCuratorTopicsResponse,
+)
 from linkurator_core.application.topics.get_topic_handler import GetTopicHandler, GetTopicResponse
 from linkurator_core.application.topics.get_user_topics_handler import CuratorTopic, GetUserTopicsHandler
 from linkurator_core.application.users.get_user_profile_handler import GetUserProfileHandler
@@ -706,3 +710,22 @@ def test_get_followed_subscriptions_items_parses_query_parameters(handlers: Hand
         include_viewed_items=True,
         include_hidden_items=True,
     )
+
+
+def test_get_curator_topics_without_authentication_returns_200(handlers: Handlers) -> None:
+    curator = mock_user()
+    topic = mock_topic(user_uuid=curator.uuid)
+
+    dummy_handler = AsyncMock(spec=GetCuratorTopicsHandler)
+    dummy_handler.handle.return_value = GetCuratorTopicsResponse(topics=[topic], curator=curator)
+    handlers.get_curator_topics_handler = dummy_handler
+
+    client = TestClient(create_app_from_handlers(handlers))
+
+    response = client.get(f"/curators/{curator.uuid}/topics")
+    assert response.status_code == 200
+    topics = response.json()
+    assert len(topics) == 1
+    assert topics[0]["uuid"] == str(topic.uuid)
+    assert topics[0]["followed"] is False
+    assert topics[0]["is_owner"] is False

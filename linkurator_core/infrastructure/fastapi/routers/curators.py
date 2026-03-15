@@ -199,7 +199,6 @@ def get_router(
     @router.get(
         "/{curator_id}/topics",
         responses={
-            status.HTTP_401_UNAUTHORIZED: {"model": None},
             status.HTTP_404_NOT_FOUND: {"model": None},
         },
     )
@@ -207,15 +206,16 @@ def get_router(
         curator_id: UUID,
         session: Session | None = Depends(get_session),
     ) -> list[TopicSchema]:
-        if session is None:
-            raise default_responses.not_authenticated()
-
-        results = await asyncio.gather(
-            get_curator_topics_handler.handle(curator_id),
-            get_user_profile_handler.handle(session.user_id),
-        )
-        response = results[0]
-        user = results[1]
+        if session is not None:
+            results = await asyncio.gather(
+                get_curator_topics_handler.handle(curator_id),
+                get_user_profile_handler.handle(session.user_id),
+            )
+            response = results[0]
+            user = results[1]
+        else:
+            response = await get_curator_topics_handler.handle(curator_id)
+            user = None
         return [
             TopicSchema.from_domain_topic(topic=topic, curator=response.curator, user=user) for topic in response.topics
         ]
