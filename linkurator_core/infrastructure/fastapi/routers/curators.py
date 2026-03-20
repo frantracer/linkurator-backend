@@ -19,7 +19,7 @@ from linkurator_core.application.users.get_user_profile_handler import GetUserPr
 from linkurator_core.application.users.unfollow_curator_handler import UnfollowCuratorHandler
 from linkurator_core.domain.common.exceptions import UserNotFoundError
 from linkurator_core.domain.users.session import Session
-from linkurator_core.domain.users.user import Username
+from linkurator_core.domain.users.user import User, Username
 from linkurator_core.infrastructure.fastapi.models import default_responses
 from linkurator_core.infrastructure.fastapi.models.curator import CuratorSchema
 from linkurator_core.infrastructure.fastapi.models.default_responses import EmptyResponse
@@ -199,7 +199,6 @@ def get_router(
     @router.get(
         "/{curator_id}/topics",
         responses={
-            status.HTTP_401_UNAUTHORIZED: {"model": None},
             status.HTTP_404_NOT_FOUND: {"model": None},
         },
     )
@@ -207,15 +206,18 @@ def get_router(
         curator_id: UUID,
         session: Session | None = Depends(get_session),
     ) -> list[TopicSchema]:
-        if session is None:
-            raise default_responses.not_authenticated()
+        async def get_user_profile() -> User | None:
+            if session is None:
+                return None
+            return await get_user_profile_handler.handle(session.user_id)
 
         results = await asyncio.gather(
             get_curator_topics_handler.handle(curator_id),
-            get_user_profile_handler.handle(session.user_id),
+            get_user_profile(),
         )
         response = results[0]
         user = results[1]
+
         return [
             TopicSchema.from_domain_topic(topic=topic, curator=response.curator, user=user) for topic in response.topics
         ]
