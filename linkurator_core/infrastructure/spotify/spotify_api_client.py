@@ -50,6 +50,10 @@ class SpotifyApiHttpError(Exception):
     pass
 
 
+class SpotifyApiNotFoundError(SpotifyApiHttpError):
+    pass
+
+
 class SpotifyCredentials:
     """Container for a single Spotify credential pair."""
 
@@ -185,6 +189,10 @@ class SpotifyApiClient:
                                 for episode_json in episodes_json
                                 if episode_json is not None]
                     return GetEpisodesResponse(items=episodes, total=total_items)
+
+                if response.status == 404:
+                    msg = f"Show not found: {show_id}"
+                    raise SpotifyApiNotFoundError(msg)
 
                 msg = f"Failed to retrieve episodes: {response.status} -> {await response.text()}"
                 raise SpotifyApiHttpError(msg)

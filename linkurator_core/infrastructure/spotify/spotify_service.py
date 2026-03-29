@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import math
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -19,6 +20,7 @@ from linkurator_core.infrastructure.spotify.spotify_api_client import (
     Show,
     ShowImage,
     SpotifyApiClient,
+    SpotifyApiNotFoundError,
 )
 
 SHOW_ID_KEY = "show_id"
@@ -128,16 +130,20 @@ class SpotifySubscriptionService(SubscriptionService):
         items: list[Item] = []
         limit = 50
         offset = 0
-        while True:
-            response = await self.spotify_client.get_show_episodes(show_id, offset, limit)
-            new_items = [map_episode_to_item(episode, sub_id) for episode in response.items]
-            filtered_new_items = [item for item in new_items if item.published_at >= from_date]
-            items += filtered_new_items
+        try:
+            while True:
+                response = await self.spotify_client.get_show_episodes(show_id, offset, limit)
+                new_items = [map_episode_to_item(episode, sub_id) for episode in response.items]
+                filtered_new_items = [item for item in new_items if item.published_at >= from_date]
+                items += filtered_new_items
 
-            if len(filtered_new_items) == 0 or len(new_items) != len(filtered_new_items):
-                break
+                if len(filtered_new_items) == 0 or len(new_items) != len(filtered_new_items):
+                    break
 
-            offset += limit
+                offset += limit
+        except SpotifyApiNotFoundError:
+            logging.warning("Spotify show '%s' for subscription '%s' not found, returning empty items", show_id, sub_id)
+            return []
 
         return [item for item in items if item.published_at >= from_date]
 
