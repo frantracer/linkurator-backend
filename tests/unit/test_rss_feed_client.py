@@ -6,7 +6,7 @@ import pytest
 
 from linkurator_core.domain.common.exceptions import InvalidRssFeedError
 from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient, HttpResponse
-from linkurator_core.infrastructure.rss.rss_feed_client import OpenGraphImageParser, RssFeedClient
+from linkurator_core.infrastructure.rss.rss_feed_client import FaviconLinkParser, OpenGraphImageParser, RssFeedClient
 
 
 @pytest.fixture()
@@ -329,3 +329,66 @@ async def test_get_feed_items_keeps_default_thumbnail_when_opengraph_fails(vanda
     # Both items should keep default thumbnail
     assert items[0].thumbnail == "https://upload.wikimedia.org/wikipedia/en/4/43/Feed-icon.svg"
     assert items[1].thumbnail == "https://upload.wikimedia.org/wikipedia/en/4/43/Feed-icon.svg"
+
+
+def test_favicon_link_parser_extracts_icon_href() -> None:
+    """Test that FaviconLinkParser extracts <link rel="icon"> href from HTML."""
+    html = '<html><head><link rel="icon" href="/static/favicon.png"></head></html>'
+
+    parser = FaviconLinkParser()
+    parser.feed(html)
+    assert parser.icon_href == "/static/favicon.png"
+
+
+def test_favicon_link_parser_extracts_shortcut_icon() -> None:
+    """Test that FaviconLinkParser extracts <link rel="shortcut icon"> href."""
+    html = '<html><head><link rel="shortcut icon" href="/favicon.ico"></head></html>'
+
+    parser = FaviconLinkParser()
+    parser.feed(html)
+    assert parser.icon_href == "/favicon.ico"
+
+
+def test_favicon_link_parser_returns_none_when_no_icon() -> None:
+    """Test that FaviconLinkParser returns None when no icon link exists."""
+    html = '<html><head><link rel="stylesheet" href="/style.css"></head></html>'
+
+    parser = FaviconLinkParser()
+    parser.feed(html)
+    assert parser.icon_href is None
+
+
+@pytest.mark.asyncio()
+async def test_get_feed_info_uses_favicon_link_when_favicon_ico_missing(simple_rss_xml: str) -> None:
+    """Test that get_feed_info falls back to <link rel="icon"> when favicon.ico is missing."""
+    page_html = '<html><head><link rel="icon" href="/static/icon.png"></head></html>'
+
+    http_client_mock = AsyncMock(spec=AsyncHttpClient)
+    http_client_mock.get.side_effect = [
+        HttpResponse(status=200, text=simple_rss_xml),  # Feed fetch
+        HttpResponse(status=200, text=page_html),  # Page fetch for <link rel="icon">
+    ]
+    http_client_mock.check.return_value = 404  # favicon.ico not found
+
+    client = RssFeedClient(http_client=http_client_mock)
+    feed_info = await client.get_feed_info("https://example.com/feed.xml")
+
+    assert feed_info.thumbnail == "https://example.com/static/icon.png"
+
+
+@pytest.mark.asyncio()
+async def test_get_feed_info_keeps_default_when_no_favicon_found(simple_rss_xml: str) -> None:
+    """Test that get_feed_info keeps default icon when both favicon.ico and page link are missing."""
+    page_html = "<html><head></head></html>"
+
+    http_client_mock = AsyncMock(spec=AsyncHttpClient)
+    http_client_mock.get.side_effect = [
+        HttpResponse(status=200, text=simple_rss_xml),  # Feed fetch
+        HttpResponse(status=200, text=page_html),  # Page fetch, no <link rel="icon">
+    ]
+    http_client_mock.check.return_value = 404  # favicon.ico not found
+
+    client = RssFeedClient(http_client=http_client_mock)
+    feed_info = await client.get_feed_info("https://example.com/feed.xml")
+
+    assert feed_info.thumbnail == "https://upload.wikimedia.org/wikipedia/en/4/43/Feed-icon.svg"

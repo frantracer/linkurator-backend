@@ -36,6 +36,23 @@ class RssFeedInfo:
     language: str
 
 
+class FaviconLinkParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.icon_href: str | None = None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() != "link":
+            return
+
+        attrs_dict = {k.lower(): v for k, v in attrs}
+        rel = attrs_dict.get("rel", "")
+        if rel and "icon" in rel.lower():
+            href = attrs_dict.get("href")
+            if href and href.strip():
+                self.icon_href = href.strip()
+
+
 class OpenGraphImageParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
@@ -74,6 +91,11 @@ class RssFeedClient:
             favicon_url = urljoin(feed_info.link, "/favicon.ico")
             if await self.http_client.check(favicon_url) == 200:
                 feed_info.thumbnail = favicon_url
+            else:
+                # Fallback: read <link rel="icon"> from the page's <head>
+                icon_url = await self._get_favicon_from_page(feed_info.link)
+                if icon_url:
+                    feed_info.thumbnail = icon_url
 
         return feed_info
 
@@ -88,6 +110,32 @@ class RssFeedClient:
         except Exception as e:
             logging.exception("Failed to fetch OpenGraph image from %s: %s", url, e)
             return None
+
+    async def _get_favicon_from_page(self, url: str) -> str | None:
+        """Try to extract <link rel="icon"> href from the HTML page at the given URL."""
+        try:
+            response = await self.http_client.get(url)
+            if response.status != 200:
+                return None
+
+            icon_href = self._parse_favicon_link(response.text)
+            if icon_href:
+                return urljoin(url, icon_href)
+            return None
+        except Exception as e:
+            logging.exception("Failed to fetch favicon link from %s: %s", url, e)
+            return None
+
+    def _parse_favicon_link(self, html: str) -> str | None:
+        """Parse <link rel="icon"> href from HTML content."""
+        parser = FaviconLinkParser()
+        try:
+            parser.feed(html)
+        except Exception as e:
+            logging.debug("Failed to parse HTML for favicon link: %s", e)
+            return None
+
+        return parser.icon_href
 
     def _parse_opengraph_image(self, html: str) -> str | None:
         """Parse og:image from HTML content using proper HTML parsing."""
