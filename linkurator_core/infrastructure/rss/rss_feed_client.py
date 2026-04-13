@@ -91,14 +91,15 @@ class RssFeedClient:
             parsed = urlparse(feed_info.link)
             if parsed.scheme and parsed.netloc:
                 base_url = f"{parsed.scheme}://{parsed.netloc}"
-                favicon_url = f"{base_url}/favicon.ico"
-                if await self.http_client.check(favicon_url) == 200:
-                    feed_info.thumbnail = favicon_url
+                # Prefer <link rel="icon"> from the page's <head> (like browsers do)
+                icon_url = await self._get_favicon_from_page(base_url)
+                if icon_url:
+                    feed_info.thumbnail = icon_url
                 else:
-                    # Fallback: read <link rel="icon"> from the page's <head>
-                    icon_url = await self._get_favicon_from_page(base_url)
-                    if icon_url:
-                        feed_info.thumbnail = icon_url
+                    # Fallback: try /favicon.ico at the domain root
+                    favicon_url = f"{base_url}/favicon.ico"
+                    if await self.http_client.check(favicon_url) == 200:
+                        feed_info.thumbnail = favicon_url
 
         return feed_info
 

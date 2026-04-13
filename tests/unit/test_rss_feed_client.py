@@ -359,8 +359,8 @@ def test_favicon_link_parser_returns_none_when_no_icon() -> None:
 
 
 @pytest.mark.asyncio()
-async def test_get_feed_info_uses_favicon_link_when_favicon_ico_missing(simple_rss_xml: str) -> None:
-    """Test that get_feed_info falls back to <link rel="icon"> when favicon.ico is missing."""
+async def test_get_feed_info_prefers_favicon_link_over_favicon_ico(simple_rss_xml: str) -> None:
+    """Test that get_feed_info prefers <link rel="icon"> over /favicon.ico."""
     page_html = '<html><head><link rel="icon" href="/static/icon.png"></head></html>'
 
     http_client_mock = AsyncMock(spec=AsyncHttpClient)
@@ -368,17 +368,35 @@ async def test_get_feed_info_uses_favicon_link_when_favicon_ico_missing(simple_r
         HttpResponse(status=200, text=simple_rss_xml),  # Feed fetch
         HttpResponse(status=200, text=page_html),  # Page fetch for <link rel="icon">
     ]
-    http_client_mock.check.return_value = 404  # favicon.ico not found
 
     client = RssFeedClient(http_client=http_client_mock)
     feed_info = await client.get_feed_info("https://example.com/feed.xml")
 
     assert feed_info.thumbnail == "https://example.com/static/icon.png"
+    http_client_mock.check.assert_not_called()
+
+
+@pytest.mark.asyncio()
+async def test_get_feed_info_falls_back_to_favicon_ico(simple_rss_xml: str) -> None:
+    """Test that get_feed_info falls back to /favicon.ico when page has no <link rel="icon">."""
+    page_html = "<html><head></head></html>"
+
+    http_client_mock = AsyncMock(spec=AsyncHttpClient)
+    http_client_mock.get.side_effect = [
+        HttpResponse(status=200, text=simple_rss_xml),  # Feed fetch
+        HttpResponse(status=200, text=page_html),  # Page fetch, no <link rel="icon">
+    ]
+    http_client_mock.check.return_value = 200  # favicon.ico found
+
+    client = RssFeedClient(http_client=http_client_mock)
+    feed_info = await client.get_feed_info("https://example.com/feed.xml")
+
+    assert feed_info.thumbnail == "https://example.com/favicon.ico"
 
 
 @pytest.mark.asyncio()
 async def test_get_feed_info_keeps_default_when_no_favicon_found(simple_rss_xml: str) -> None:
-    """Test that get_feed_info keeps default icon when both favicon.ico and page link are missing."""
+    """Test that get_feed_info keeps default icon when both page link and favicon.ico are missing."""
     page_html = "<html><head></head></html>"
 
     http_client_mock = AsyncMock(spec=AsyncHttpClient)
