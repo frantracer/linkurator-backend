@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from linkurator_core.domain.common.exceptions import InvalidRssFeedError
 from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
@@ -87,15 +87,18 @@ class RssFeedClient:
         feed_info = self.parse_feed_info(response.text)
 
         if feed_info.thumbnail == DEFAULT_FEED_ICON:
-            # Try to use the feed URL's domain favicon as a better thumbnail
-            favicon_url = urljoin(feed_info.link, "/favicon.ico")
-            if await self.http_client.check(favicon_url) == 200:
-                feed_info.thumbnail = favicon_url
-            else:
-                # Fallback: read <link rel="icon"> from the page's <head>
-                icon_url = await self._get_favicon_from_page(feed_info.link)
-                if icon_url:
-                    feed_info.thumbnail = icon_url
+            # Use the base domain (without path) for favicon lookups
+            parsed = urlparse(feed_info.link)
+            if parsed.scheme and parsed.netloc:
+                base_url = f"{parsed.scheme}://{parsed.netloc}"
+                favicon_url = f"{base_url}/favicon.ico"
+                if await self.http_client.check(favicon_url) == 200:
+                    feed_info.thumbnail = favicon_url
+                else:
+                    # Fallback: read <link rel="icon"> from the page's <head>
+                    icon_url = await self._get_favicon_from_page(base_url)
+                    if icon_url:
+                        feed_info.thumbnail = icon_url
 
         return feed_info
 

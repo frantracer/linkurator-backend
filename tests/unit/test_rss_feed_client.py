@@ -392,3 +392,36 @@ async def test_get_feed_info_keeps_default_when_no_favicon_found(simple_rss_xml:
     feed_info = await client.get_feed_info("https://example.com/feed.xml")
 
     assert feed_info.thumbnail == "https://upload.wikimedia.org/wikipedia/en/4/43/Feed-icon.svg"
+
+
+@pytest.mark.asyncio()
+async def test_get_feed_info_keeps_default_when_link_is_invalid(simple_rss_xml: str) -> None:
+    """Test that get_feed_info keeps default icon when feed link is not a valid URL."""
+    invalid_link_xml = simple_rss_xml.replace("https://example.com</link>", "not-a-valid-url</link>", 1)
+
+    http_client_mock = AsyncMock(spec=AsyncHttpClient)
+    http_client_mock.get.return_value = HttpResponse(status=200, text=invalid_link_xml)
+
+    client = RssFeedClient(http_client=http_client_mock)
+    feed_info = await client.get_feed_info("https://example.com/feed.xml")
+
+    assert feed_info.thumbnail == "https://upload.wikimedia.org/wikipedia/en/4/43/Feed-icon.svg"
+    http_client_mock.check.assert_not_called()
+
+
+@pytest.mark.asyncio()
+async def test_get_feed_info_uses_base_domain_for_favicon(simple_rss_xml: str) -> None:
+    """Test that get_feed_info strips the path from the link when looking up favicons."""
+    xml_with_path = simple_rss_xml.replace(
+        "https://example.com</link>", "https://example.com/feeds/mashup</link>", 1,
+    )
+
+    http_client_mock = AsyncMock(spec=AsyncHttpClient)
+    http_client_mock.get.return_value = HttpResponse(status=200, text=xml_with_path)
+    http_client_mock.check.return_value = 200  # favicon.ico found
+
+    client = RssFeedClient(http_client=http_client_mock)
+    feed_info = await client.get_feed_info("https://example.com/feed.xml")
+
+    assert feed_info.thumbnail == "https://example.com/favicon.ico"
+    http_client_mock.check.assert_called_once_with("https://example.com/favicon.ico")
