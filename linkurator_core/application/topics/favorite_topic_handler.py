@@ -20,6 +20,9 @@ class FavoriteTopicHandler:
         if user is None:
             return
 
+        if topic.user_id != user_id:
+            user.follow_topic(topic_id)
+
         user.favorite_topic(topic_id)
 
         await self.user_repository.update(user)

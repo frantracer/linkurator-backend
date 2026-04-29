@@ -324,7 +324,8 @@ def app_handlers() -> Handlers:
             user_repository=user_repository,
             topic_repository=topic_repository),
         unfollow_topic_handler=UnfollowTopicHandler(
-            user_repository=user_repository),
+            user_repository=user_repository,
+            topic_repository=topic_repository),
         favorite_topic_handler=FavoriteTopicHandler(
             user_repository=user_repository,
             topic_repository=topic_repository),
