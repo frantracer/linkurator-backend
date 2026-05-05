@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 import sys
 
+import logfire
+
+from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient, YoutubeChannel
 
 
@@ -20,6 +24,9 @@ async def main() -> None:
     if channel_name is None and channel_id is None:
         sys.exit(1)
 
+    settings = ApplicationSettings.from_file()
+    logfire.configure(token=settings.logging.logfire.token, scrubbing=False)
+
     client = YoutubeApiClient()
 
     channel: YoutubeChannel | None = None
@@ -30,9 +37,13 @@ async def main() -> None:
         channel = await client.get_youtube_channel(api_key=api_key, channel_id=channel_id)
 
     if channel is None:
-        pass
+        logging.error("Channel not found")
     else:
-        pass
+        logging.info(f"Title: {channel.channel_title}")
+        logging.info(f"Description: {channel.description}")
+        logging.info(f"ID: {channel.channel_id}")
+        logging.info(f"Playlist ID: {channel.playlist_id}")
+        logging.info(f"Thumbnail: {channel.thumbnail_url}")
 
 
 if __name__ == "__main__":

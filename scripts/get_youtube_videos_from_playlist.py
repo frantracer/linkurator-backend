@@ -1,6 +1,9 @@
 import argparse
 import asyncio
+import logging
 from datetime import datetime, timezone
+
+import logfire
 
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiClient
@@ -16,6 +19,7 @@ async def main() -> None:
     from_date = parsed_args.from_date
 
     settings = ApplicationSettings.from_file()
+    logfire.configure(token=settings.logging.logfire.token, scrubbing=False)
 
     client = YoutubeApiClient()
     videos = await client.get_youtube_videos_from_playlist(
@@ -23,8 +27,16 @@ async def main() -> None:
         playlist_id=playlist_id,
         from_date=from_date)
 
-    for _video in videos:
-        pass
+    if len(videos) == 0:
+        logging.info("No videos found in the playlist")
+    else:
+        for _video in videos:
+            logging.info(f"Title: {_video.title}")
+            logging.info(f"Description: {_video.description}")
+            logging.info(f"ID: {_video.video_id}")
+            logging.info(f"Published at: {_video.published_at}")
+            logging.info(f"URL: {_video.url}")
+            logging.info("-----\n")
 
 
 if __name__ == "__main__":
