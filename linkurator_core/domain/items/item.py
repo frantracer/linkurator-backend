@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from math import floor
-from typing import Any
+from typing import Any, Callable
 from uuid import UUID
 
 from pydantic import AnyUrl
 
 from linkurator_core.domain.common.units import Seconds
+from linkurator_core.domain.common.utils import datetime_now
 
 DEFAULT_ITEM_VERSION = 0
 
@@ -32,20 +33,24 @@ class Item:
     deleted_at: datetime | None = None
 
     @classmethod
-    def new(cls,
-            uuid: UUID,
-            subscription_uuid: UUID,
-            name: str,
-            description: str,
-            url: AnyUrl,
-            thumbnail: AnyUrl,
-            published_at: datetime,
-            provider: ItemProvider,
-            duration: Seconds | None = None,
-            version: int = DEFAULT_ITEM_VERSION,
-            deleted_at: datetime | None = None,
-            ) -> Item:
-        now = datetime.now(tz=timezone.utc)
+    def new(
+        cls,
+        uuid: UUID,
+        subscription_uuid: UUID,
+        name: str,
+        description: str,
+        url: AnyUrl,
+        thumbnail: AnyUrl,
+        published_at: datetime,
+        provider: ItemProvider,
+        duration: Seconds | None = None,
+        version: int = DEFAULT_ITEM_VERSION,
+        deleted_at: datetime | None = None,
+        now_function: Callable[[], datetime] = datetime_now,
+    ) -> Item:
+        now = now_function()
+        published_at = min(published_at, now)
+
         return cls(
             uuid=uuid,
             subscription_uuid=subscription_uuid,
@@ -59,7 +64,8 @@ class Item:
             published_at=published_at,
             version=version,
             provider=provider,
-            deleted_at=deleted_at)
+            deleted_at=deleted_at,
+        )
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Item):
