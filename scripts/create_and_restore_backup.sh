@@ -1,11 +1,5 @@
-docker exec -it linkurator-backend_mongodb_1 mongodump --username develop --password develop --archive=/backup/db_dump.archive
+export FILE_NAME="linkurator_db_dump_$(date +%Y%m%d%H%M%S).archive"
 
-docker cp linkurator-backend_mongodb_1:/db_dump.archive .
+docker exec linkurator-db mongodump --username develop --password develop --archive > $FILE_NAME
 
-docker-compose down
-
-make docker-run-external-services
-
-docker cp ./db_dump.archive linkurator-backend_mongodb_1:/db_dump.archive
-
-docker exec -i linkurator-backend_mongodb_1 mongorestore --username develop --password develop --archive=/db_dump.archive
+docker exec -i linkurator-db mongorestore --username develop --password develop --archive < $FILE_NAME
