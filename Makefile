@@ -7,24 +7,28 @@ DOCKER_CONTAINER_API := linkurator-api
 DOCKER_CONTAINER_PROCESSOR := linkurator-processor
 DOCKER_CONTAINER_LINTING := linkurator-api-check-linting
 DOCKER_CONTAINER_TEST := linkurator-test
-DOCKER_CONTAINER_GENERATE_ENV := linkurator-docker-generate-env
+
+COMPOSE_FILE := docker-compose.yml
+REMOTE_DEPLOY_DIR := /opt/linkurator
+SSH_USER := root
+SSH_TARGET := $(SSH_USER)@$(SSH_IP_ADDRESS)
+
+-include .env
+export
 
 ####################
 # Run
 ####################
-ARCH := $(shell dpkg --print-architecture)
-RELEASE := $(shell lsb_release -cs)
 install-requirements:
-	sudo mkdir -p /etc/apt/keyrings
-	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-	echo "deb [arch=$(ARCH) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(RELEASE) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+	ARCH=$$(dpkg --print-architecture); \
+	RELEASE=$$(lsb_release -cs); \
+	sudo mkdir -p /etc/apt/keyrings && \
+	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+	echo "deb [arch=$$ARCH signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $$RELEASE stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && \
 	sudo apt-get update
 
 	sudo apt-get remove docker docker-engine docker.io containerd runc
 	sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-
-	sudo add-apt-repository --yes --update ppa:ansible/ansible
-	sudo apt install -y ansible
 
 	sudo usermod -aG docker ${USER}
 
@@ -41,18 +45,36 @@ install:
 	@echo "Run 'source .venv/bin/activate' to activate the virtual environment."
 	@echo "Run 'deactivate' to disable the virtual environment."
 
-run-api: link-config
-	@if [ "${LINKURATOR_ENVIRONMENT}" = "DEVELOPMENT" ]; then \
-    	.venv/bin/python3 -m linkurator_core --reload --workers 1 --debug --without-gunicorn; \
-	else \
-		.venv/bin/python3 -m linkurator_core; \
-	fi
+run-api-dev:
+	.venv/bin/python3 -m linkurator_core --reload --workers 1 --debug --without-gunicorn;
 
-run-processor: link-config
+run-api:
+	.venv/bin/python3 -m linkurator_core;
+
+run-processor:
 	PYTHONPATH='.' .venv/bin/python3 ./linkurator_core/processor.py
 
-generate-env: link-config
+generate-env-production: decrypt-secrets
+	cp secrets/app_config_production.json .config.json
 	PYTHONPATH='.' .venv/bin/python3 ./scripts/generate_env.py
+
+generate-env-development:
+	@if [ ! -f .config.json ]; then cp config/app_config_develop.json .config.json; fi
+	PYTHONPATH='.' .venv/bin/python3 ./scripts/generate_env.py
+
+generate-env:
+	@if [ -z "${LINKURATOR_ENVIRONMENT}" ]; then \
+		echo "LINKURATOR_ENVIRONMENT environment variable is not set. Please set it to either 'PRODUCTION' or 'DEVELOPMENT'."; \
+		exit 1; \
+	fi
+	@if [ "${LINKURATOR_ENVIRONMENT}" = "PRODUCTION" ]; then \
+		$(MAKE) generate-env-production; \
+	elif [ "${LINKURATOR_ENVIRONMENT}" = "DEVELOPMENT" ]; then \
+		$(MAKE) generate-env-development; \
+	else \
+		echo "Invalid LINKURATOR_ENVIRONMENT value. Please set it to either 'PRODUCTION' or 'DEVELOPMENT'."; \
+		exit 1; \
+	fi
 
 ####################
 # Setup configuration
@@ -71,26 +93,6 @@ encrypt-secrets: check-password
 decrypt-secrets: check-password
 	mkdir -p secrets
 	.venv/bin/python3 scripts/encrypt_decrypt.py decrypt config/app_config_production.json.enc secrets/app_config_production.json
-
-link-config:
-	@if [ "${LINKURATOR_ENVIRONMENT}" = "PRODUCTION" ]; then \
-		make link-prod-config; \
-	elif [ "${LINKURATOR_ENVIRONMENT}" = "DEVELOPMENT" ]; then \
-		make link-dev-config; \
-	else \
-		echo "LINKURATOR_ENVIRONMENT environment variable must be set to PRODUCTION or DEVELOPMENT"; \
-		exit 1; \
-	fi
-
-link-dev-config:
-	if [ ! -f .config.json ] ; then \
-		rm -f .config.json; \
-		cp config/app_config_develop.json .config.json; \
-	fi
-
-link-prod-config: decrypt-secrets
-	rm -f .config.json
-	cp secrets/app_config_production.json .config.json
 
 ####################
 # Test
@@ -116,21 +118,13 @@ test:
 ####################
 docker-build:
 	docker rmi -f $(DOCKER_IMAGE)
-	docker build -t $(DOCKER_IMAGE) .
+	docker build -q -t $(DOCKER_IMAGE) .
 
 docker-run-api:
-	@docker rm -f $(DOCKER_CONTAINER_API)
-	@docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
-		-e 'LINKURATOR_ENVIRONMENT=$(LINKURATOR_ENVIRONMENT)'\
-		--pull never \
-		--name $(DOCKER_CONTAINER_API) --network host -it $(DOCKER_IMAGE) make run-api
+	docker compose --profile app --profile infra up -d --force-recreate api
 
 docker-run-processor:
-	@docker rm -f $(DOCKER_CONTAINER_PROCESSOR)
-	@docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
-		-e 'LINKURATOR_ENVIRONMENT=$(LINKURATOR_ENVIRONMENT)'\
-		--pull never \
-		--name $(DOCKER_CONTAINER_PROCESSOR) --network host -it $(DOCKER_IMAGE) make run-processor
+	docker compose --profile app --profile infra up -d --force-recreate processor
 
 docker-test: docker-run-external-services
 	docker rm -f $(DOCKER_CONTAINER_TEST)
@@ -140,28 +134,17 @@ docker-lint:
 	docker rm -f $(DOCKER_CONTAINER_LINTING)
 	docker run --name $(DOCKER_CONTAINER_LINTING) --pull never --network host $(DOCKER_IMAGE) make lint
 
-docker-generate-env:
-	docker rm -f $(DOCKER_CONTAINER_GENERATE_ENV)
-	docker create --name $(DOCKER_CONTAINER_GENERATE_ENV) \
-		-e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
-		-e 'LINKURATOR_ENVIRONMENT=$(LINKURATOR_ENVIRONMENT)' \
-		--pull never \
-		$(DOCKER_IMAGE) \
-		make generate-env
+docker-generate-env: docker-build
+	docker compose --profile init run --rm generate-env
 
-	if [ -f .config.json ]; then \
-		docker cp .config.json $(DOCKER_CONTAINER_GENERATE_ENV):/app/.config.json || true; \
-	fi
+docker-up: docker-generate-env
+	docker compose --profile app --profile infra up -d
 
-	docker start -a $(DOCKER_CONTAINER_GENERATE_ENV)
-	docker cp $(DOCKER_CONTAINER_GENERATE_ENV):/app/.env $(CURDIR)/.env
-	docker rm -f $(DOCKER_CONTAINER_GENERATE_ENV)
-
-docker-run-external-services: docker-generate-env
-	docker compose up -d
+docker-run-external-services:
+	docker compose --profile infra up -d --quiet-pull
 
 docker-stop:
-	docker stop $(DOCKER_CONTAINER_API) $(DOCKER_CONTAINER_PROCESSOR)
+	docker compose --profile app --profile infra stop
 
 check-docker-token:
 	@if [ -z "${LINKURATOR_DOCKER_TOKEN}" ]; then \
@@ -178,67 +161,59 @@ docker-push: check-docker-token
 ####################
 check-ssh-connection:
 	@if [ -z "${SSH_IP_ADDRESS}" ]; then echo "SSH_IP_ADDRESS environment variable is not set"; exit 1; fi
-	@ssh root@$(SSH_IP_ADDRESS) "echo Connection OK"
+	@ssh $(SSH_TARGET) "echo Connection OK"
 
 provision: check-ssh-connection
 	@echo "Provisioning"
-	@ssh root@$(SSH_IP_ADDRESS) "apt update && apt install -y docker.io nginx certbot python3-certbot-nginx"
-	@scp config/docker_daemon.json root@$(SSH_IP_ADDRESS):/etc/docker/daemon.json
-	@ssh root@$(SSH_IP_ADDRESS) "systemctl restart docker"
-	@ssh root@$(SSH_IP_ADDRESS) "rm -rf /etc/nginx/sites-enabled/default"
-	@scp config/linkurator-api.conf root@$(SSH_IP_ADDRESS):/etc/nginx/sites-enabled/linkurator-api.conf
-	@ssh root@$(SSH_IP_ADDRESS) "certbot --nginx -d $(DOMAIN) -n --redirect"
-	@ssh root@$(SSH_IP_ADDRESS) "systemctl restart nginx"
-	@ssh root@$(SSH_IP_ADDRESS) "apt autoremove -y"
+	@ssh $(SSH_TARGET) "apt update && apt install -y docker.io nginx certbot python3-certbot-nginx"
+	@scp config/docker_daemon.json $(SSH_TARGET):/etc/docker/daemon.json
+	@ssh $(SSH_TARGET) "systemctl restart docker"
+	@ssh $(SSH_TARGET) "rm -rf /etc/nginx/sites-enabled/default"
+	@scp config/linkurator-api.conf $(SSH_TARGET):/etc/nginx/sites-enabled/linkurator-api.conf
+	@ssh $(SSH_TARGET) "certbot --nginx -d $(DOMAIN) -n --redirect"
+	@ssh $(SSH_TARGET) "systemctl restart nginx"
+	@ssh $(SSH_TARGET) "apt autoremove -y"
 
 ####################
 # Deploy
 ####################
-deploy: check-ssh-connection
-	ssh root@$(SSH_IP_ADDRESS) "docker pull $(DOCKER_IMAGE)"
-	ssh root@$(SSH_IP_ADDRESS) "docker rm -f $(DOCKER_CONTAINER_API) $(DOCKER_CONTAINER_PROCESSOR)"
-	@ssh root@$(SSH_IP_ADDRESS) "docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
-		-e 'LINKURATOR_ENVIRONMENT=PRODUCTION' --name $(DOCKER_CONTAINER_API) --network host --restart always \
-		-d $(DOCKER_IMAGE) \
-		make run-api"
-	@ssh root@$(SSH_IP_ADDRESS) "docker run -e 'LINKURATOR_VAULT_PASSWORD=$(LINKURATOR_VAULT_PASSWORD)' \
-		-e 'LINKURATOR_ENVIRONMENT=PRODUCTION' --name $(DOCKER_CONTAINER_PROCESSOR) --network host --restart always \
-		-d $(DOCKER_IMAGE) \
-		make run-processor"
-	ssh root@$(SSH_IP_ADDRESS) "docker image prune -a -f"
+check-env-file:
+	@if [ ! -f .env ]; then \
+		echo ".env file not found. Run 'make docker-generate-env' first."; \
+		exit 1; \
+	fi
+
+# Ship the compose file and .env to the remote, then run `docker compose ...`.
+# Each rule passes the profiles it touches explicitly. All services in the
+# compose file belong to a profile; nothing starts by accident.
+remote-compose = ssh $(SSH_TARGET) "cd $(REMOTE_DEPLOY_DIR) && docker compose -f $(COMPOSE_FILE) $(1)"
+
+push-deploy-files: check-ssh-connection decrypt-secrets
+	@ssh $(SSH_TARGET) "mkdir -p $(REMOTE_DEPLOY_DIR)"
+	scp $(COMPOSE_FILE) $(SSH_TARGET):$(REMOTE_DEPLOY_DIR)/$(COMPOSE_FILE)
+	scp secrets/app_config_production.json $(SSH_TARGET):$(REMOTE_DEPLOY_DIR)/.config.json
+	$(call remote-compose,--profile app pull)
+	$(call remote-compose,--profile init run --rm generate-env)
+
+deploy: push-deploy-files
+	$(call remote-compose,--profile app up -d --force-recreate api processor)
+	ssh $(SSH_TARGET) "docker image prune -a -f"
 	@echo "Latest image is deployed"
 
-deploy-infra: deploy-mongodb deploy-rabbitmq deploy-vpn
+deploy-infra: push-deploy-files
+	$(call remote-compose,--profile infra up -d)
 
-deploy-mongodb: check-ssh-connection
-	@if [ -z "${MONGODB_USER}" ]; then echo "MONGODB_USER environment variable is not set"; exit 1; fi
-	@if [ -z "${MONGODB_PASS}" ]; then echo "MONGODB_PASS environment variable is not set"; exit 1; fi
+deploy-db: push-deploy-files
+	$(call remote-compose,--profile infra up -d db)
 
-	ssh root@$(SSH_IP_ADDRESS) "docker run -d -p 27017:27017 --name linkurator-db --restart always -e 'MONGO_INITDB_ROOT_USERNAME=$(MONGODB_USER)' -e 'MONGO_INITDB_ROOT_PASSWORD=$(MONGODB_PASS)' mongo:5.0.5"
+deploy-queue: push-deploy-files
+	$(call remote-compose,--profile infra up -d queue)
 
-deploy-rabbitmq: check-ssh-connection
-	@if [ -z "${RABBITMQ_USER}" ]; then echo "RABBITMQ_USER environment variable is not set"; exit 1; fi
-	@if [ -z "${RABBITMQ_PASS}" ]; then echo "RABBITMQ_PASS environment variable is not set"; exit 1; fi
+deploy-vpn: push-deploy-files
+	$(call remote-compose, --profile infra up -d vpn)
 
-	ssh root@$(SSH_IP_ADDRESS) "docker run -d -p 5672:5672 -p 15672:15672 -h linkurator-rabbitmq --name linkurator-rabbitmq --restart always -e 'RABBITMQ_DEFAULT_USER=$(RABBITMQ_USER)' -e 'RABBITMQ_DEFAULT_PASS=$(RABBITMQ_PASS)' rabbitmq:3.13.0-management"
-
-deploy-vpn: check-ssh-connection docker-generate-env
-	@set -a && . .env && set +a && \
-	ssh root@$(SSH_IP_ADDRESS) "docker rm -f linkurator-vpn || true" && \
-	ssh root@$(SSH_IP_ADDRESS) "docker run -d \
-		--name linkurator-vpn \
-		--restart always \
-		--cap-add NET_ADMIN \
-		--device /dev/net/tun:/dev/net/tun \
-		-p $$VPN_HTTP_PROXY_PORT:8888/tcp \
-		-e 'VPN_SERVICE_PROVIDER=protonvpn' \
-		-e 'VPN_TYPE=openvpn' \
-		-e 'OPENVPN_USER=$$OPENVPN_USER' \
-		-e 'OPENVPN_PASSWORD=$$OPENVPN_PASSWORD' \
-		-e 'SERVER_COUNTRIES=$$VPN_SERVER_COUNTRY' \
-		-e 'FREE_ONLY=on' \
-		-e 'HTTPPROXY=on' \
-		qmcgaw/gluetun"
+deploy-down: check-ssh-connection
+	$(call remote-compose,--profile app --profile infra down)
 
 tunnel-rabbitmq: check-ssh-connection
-	ssh -L 15000:localhost:15672 -N root@$(SSH_IP_ADDRESS)
+	ssh -L 15000:localhost:15672 -N $(SSH_TARGET)

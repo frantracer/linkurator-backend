@@ -12,10 +12,10 @@ jobs:
         run: make docker-build
       - name: Check linting
         run: make docker-lint
+      - name: Generate configuration
+        run: make docker-generate-env
       - name: Run tests
         run: make docker-test
-        env:
-          LINKURATOR_ENVIRONMENT: DEVELOPMENT
       # Only deploy main branch
       - name: Deploy image to production
         if: github.ref_name == 'main'
@@ -33,3 +33,4 @@ jobs:
           SSH_IP_ADDRESS: ${{secrets.PRODUCTION_IP_ADDRESS}}
           LINKURATOR_VAULT_PASSWORD: ${{secrets.LINKURATOR_VAULT_PASSWORD}}
           LINKURATOR_DOCKER_TOKEN: ${{secrets.LINKURATOR_DOCKER_TOKEN}}
+          LINKURATOR_ENVIRONMENT: PRODUCTION

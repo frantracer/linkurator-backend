@@ -1,31 +1,82 @@
-version: "3"
 services:
-  mongodb:
-    image: mongo:5.0.5
-    ports:
-      - "27017:27017"
+  generate-env:
+    image: frantracer/linkurator-api
+    container_name: linkurator-generate-env
+    profiles: ["init"]
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=develop
-      - MONGO_INITDB_ROOT_PASSWORD=develop
+      - LINKURATOR_VAULT_PASSWORD=${LINKURATOR_VAULT_PASSWORD:-}
+      - LINKURATOR_ENVIRONMENT=${LINKURATOR_ENVIRONMENT:-DEVELOPMENT}
+    volumes:
+      - ./:/output
+    command:
+      - sh
+      - -ce
+      - |
+        [ -f /output/.config.json ] && cp /output/.config.json /app/.config.json
+        make generate-env
+        cp .env /output/.env
+        chmod 666 /output/.env /output/.config.json 2>/dev/null || true
+        echo "✅ Environment variables generated and saved to .env and .config.json in the current directory! 🎉"
 
-  rabbitmq:
-    image: rabbitmq:3.13.0-management
+  api:
+    image: frantracer/linkurator-api
+    container_name: linkurator-api
+    restart: always
+    network_mode: host
+    profiles: ["app"]
+    volumes:
+      - ./.config.json:/app/.config.json:ro
+    command: ["make", "run-api"]
+
+  processor:
+    image: frantracer/linkurator-api
+    container_name: linkurator-processor
+    restart: always
+    network_mode: host
+    profiles: ["app"]
+    volumes:
+      - ./.config.json:/app/.config.json:ro
+    command: ["make", "run-processor"]
+
+  db:
+    image: mongo:5.0.5
+    container_name: linkurator-db
+    restart: always
+    profiles: ["infra"]
     ports:
-      - "5672:5672"
+      - "${MONGODB_PORT:-27017}:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
+    volumes:
+      - mongodb_data:/data/db
+
+  queue:
+    image: rabbitmq:3.13.0-management
+    container_name: linkurator-queue
+    hostname: linkurator-queue
+    restart: always
+    profiles: ["infra"]
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
       - "15672:15672"
     environment:
-      - RABBITMQ_DEFAULT_USER=develop
-      - RABBITMQ_DEFAULT_PASS=develop
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
 
-  gluetun:
+  vpn:
     image: qmcgaw/gluetun
-    container_name: gluetun
+    container_name: linkurator-vpn
+    restart: always
+    profiles: ["${VPN_PROFILE:-vpn-disabled}"]
     cap_add:
       - NET_ADMIN
     devices:
       - /dev/net/tun:/dev/net/tun
     ports:
-      - "${VPN_HTTP_PROXY_PORT}:8888/tcp"  # HTTP proxy
+      - "${VPN_HTTP_PROXY_PORT:-8888}:8888/tcp"
     environment:
       - VPN_SERVICE_PROVIDER=protonvpn
       - VPN_TYPE=openvpn
@@ -34,3 +85,7 @@ services:
       - SERVER_COUNTRIES=${VPN_SERVER_COUNTRY}
       - FREE_ONLY=on
       - HTTPPROXY=on
+
+volumes:
+  mongodb_data:
+  rabbitmq_data:
