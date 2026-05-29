@@ -215,17 +215,20 @@ check-env-file:
 		exit 1; \
 	fi
 
-# Ship the compose file and .env to the remote, then run `docker compose ...`.
-# Each rule passes the profiles it touches explicitly. All services in the
-# compose file belong to a profile; nothing starts by accident.
 remote-compose = ssh $(SSH_TARGET) "cd $(REMOTE_DEPLOY_DIR) && docker compose -f $(COMPOSE_FILE) $(1)"
 
-push-deploy-files: check-ssh-connection decrypt-secrets
+remote-generate-env = printf '%s\n' "$$LINKURATOR_VAULT_PASSWORD" "$$LINKURATOR_ENVIRONMENT" | \
+	ssh $(SSH_TARGET) "cd $(REMOTE_DEPLOY_DIR) \
+	&& IFS= read -r LINKURATOR_VAULT_PASSWORD \
+	&& IFS= read -r LINKURATOR_ENVIRONMENT \
+	&& export LINKURATOR_VAULT_PASSWORD LINKURATOR_ENVIRONMENT \
+	&& docker compose -f $(COMPOSE_FILE) --profile init run --rm -T generate-env"
+
+push-deploy-files: check-ssh-connection check-password
 	@ssh $(SSH_TARGET) "mkdir -p $(REMOTE_DEPLOY_DIR)"
 	scp $(COMPOSE_FILE) $(SSH_TARGET):$(REMOTE_DEPLOY_DIR)/$(COMPOSE_FILE)
-	scp secrets/app_config_production.json $(SSH_TARGET):$(REMOTE_DEPLOY_DIR)/.config.json
-	$(call remote-compose,--profile app pull)
-	$(call remote-compose,--profile init run --rm generate-env)
+	$(call remote-compose,--profile app pull -q)
+	@$(remote-generate-env)
 
 deploy: push-deploy-files
 	$(call remote-compose,--profile app up -d --force-recreate api processor)
