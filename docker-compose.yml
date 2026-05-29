@@ -39,7 +39,7 @@ services:
     command: ["make", "run-processor"]
 
   db:
-    image: mongo:5.0.5
+    image: mongo:6.0.28
     container_name: linkurator-db
     restart: always
     profiles: ["infra"]
