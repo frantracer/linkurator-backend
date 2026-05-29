@@ -174,6 +174,38 @@ provision: check-ssh-connection
 	@ssh $(SSH_TARGET) "systemctl restart nginx"
 	@ssh $(SSH_TARGET) "apt autoremove -y"
 
+# Generate the deploy SSH keypair, authorize it on the host and print every
+# secret the cd.yml pipeline expects so they can be pasted into GitHub:
+# Settings > Environments > Production > Add secret.
+create-deploy-credentials: check-ssh-connection
+	@mkdir -p secrets
+	@if [ ! -f secrets/deploy_key ]; then \
+		ssh-keygen -t ed25519 -C "github-cd-linkurator" -f secrets/deploy_key -N ""; \
+	else \
+		echo "secrets/deploy_key already exists, reusing it"; \
+	fi
+	@echo "Authorizing public key on $(SSH_TARGET)"
+	@ssh $(SSH_TARGET) "mkdir -p ~/.ssh && chmod 700 ~/.ssh"
+	@cat secrets/deploy_key.pub | ssh $(SSH_TARGET) "cat >> ~/.ssh/authorized_keys && sort -u -o ~/.ssh/authorized_keys ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+	@ssh-keyscan -H $(SSH_IP_ADDRESS) > secrets/known_hosts 2>/dev/null
+	@echo ""
+	@echo "==================================================================="
+	@echo "Paste these into GitHub > Settings > Environments > Production"
+	@echo "==================================================================="
+	@echo ""
+	@echo "------- SSH_PRIVATE_KEY -------"
+	@cat secrets/deploy_key
+	@echo "------- SSH_KNOWN_HOSTS -------"
+	@cat secrets/known_hosts
+	@echo "------- PRODUCTION_IP_ADDRESS -------"
+	@echo "$(SSH_IP_ADDRESS)"
+	@echo "------- LINKURATOR_VAULT_PASSWORD -------"
+	@if [ -n "$${LINKURATOR_VAULT_PASSWORD}" ]; then printf '%s\n' "$${LINKURATOR_VAULT_PASSWORD}"; else echo "(not set - export LINKURATOR_VAULT_PASSWORD and re-run)"; fi
+	@echo "------- LINKURATOR_DOCKER_TOKEN -------"
+	@if [ -n "$${LINKURATOR_DOCKER_TOKEN}" ]; then printf '%s\n' "$${LINKURATOR_DOCKER_TOKEN}"; else echo "(not set - create at hub.docker.com/settings/security, export LINKURATOR_DOCKER_TOKEN and re-run)"; fi
+	@echo ""
+	@echo "==================================================================="
+
 ####################
 # Deploy
 ####################

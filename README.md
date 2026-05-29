@@ -154,6 +154,12 @@ export SSH_IP_ADDRESS=api.linkurator.com
 make provision
 ```
 
+To allow the continuous deployment pipeline to deploy to the server run:
+```bash
+export SSH_IP_ADDRESS=api.linkurator.com
+make create-deploy-credentials
+```
+
 # 🚢 Deploy
 
 Build the docker images and push them to the registry:
