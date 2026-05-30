@@ -227,7 +227,7 @@ class MongoDBItemRepository(ItemRepository):
             if criteria.interactions.hidden:
                 or_conditions.append({"user_interactions": {"$in": [InteractionType.HIDDEN.value]}})
             if criteria.interactions.without_interactions:
-                or_conditions.append({"user_interactions": {"$size": 0}})
+                or_conditions.append({"$expr": {"$eq": [{"$size": "$user_interactions"}, 0]}})
 
             pipeline.extend([
                 {
