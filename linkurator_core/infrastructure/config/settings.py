@@ -105,8 +105,8 @@ class WebsiteSettings(BaseModel):
 
 class VpnSettings(BaseModel):
     enabled: bool
-    openvpn_user: str
-    openvpn_password: str
+    wireguard_private_key: str
+    wireguard_addresses: str
     server_country: str
     http_proxy_port: int
 

@@ -67,7 +67,7 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
 
   vpn:
-    image: qmcgaw/gluetun
+    image: qmcgaw/gluetun:pr-3345
     container_name: linkurator-vpn
     restart: always
     profiles: ["${VPN_PROFILE:-vpn-disabled}"]
@@ -78,12 +78,11 @@ services:
     ports:
       - "${VPN_HTTP_PROXY_PORT:-8888}:8888/tcp"
     environment:
-      - VPN_SERVICE_PROVIDER=protonvpn
-      - VPN_TYPE=openvpn
-      - OPENVPN_USER=${OPENVPN_USER}
-      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - VPN_SERVICE_PROVIDER=mullvad
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+      - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
       - SERVER_COUNTRIES=${VPN_SERVER_COUNTRY}
-      - FREE_ONLY=on
       - HTTPPROXY=on
 
 volumes:

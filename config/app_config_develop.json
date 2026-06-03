@@ -71,8 +71,8 @@
   },
   "vpn": {
     "enabled": false,
-    "openvpn_user": "",
-    "openvpn_password": "",
+    "wireguard_private_key": "",
+    "wireguard_addresses": "",
     "server_country": "Netherlands",
     "http_proxy_port": 8888
   },

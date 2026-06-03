@@ -24,8 +24,8 @@ def main() -> None:
         "RABBITMQ_PASS": rabbitmq.password,
         "RABBITMQ_PORT": str(rabbitmq.port),
         "VPN_PROFILE": "infra" if vpn.enabled else "vpn-disabled",
-        "OPENVPN_USER": vpn.openvpn_user,
-        "OPENVPN_PASSWORD": vpn.openvpn_password,
+        "WIREGUARD_PRIVATE_KEY": vpn.wireguard_private_key,
+        "WIREGUARD_ADDRESSES": vpn.wireguard_addresses,
         "VPN_SERVER_COUNTRY": vpn.server_country,
         "VPN_HTTP_PROXY_PORT": str(vpn.http_proxy_port),
     }
