@@ -202,10 +202,19 @@ class MongoDBItemRepository(ItemRepository):
         if total == 0 or page_number * limit >= total:
             return []
 
-        if (total > RIGHT_JOIN_OPTIMIZATION_THRESHOLD and
-            criteria.interactions_from_user is not None and
-            not criteria.interactions.without_interactions):
-            return await self._find_items_right_join_interactions(criteria, page_number, limit)
+        if criteria.interactions_from_user is not None:
+            interactions = criteria.interactions
+            only_without_interactions = (
+                interactions.without_interactions
+                and not interactions.recommended
+                and not interactions.discouraged
+                and not interactions.viewed
+                and not interactions.hidden
+            )
+            if only_without_interactions:
+                return await self._find_items_without_user_interactions(criteria, page_number, limit)
+            if total > RIGHT_JOIN_OPTIMIZATION_THRESHOLD and not interactions.without_interactions:
+                return await self._find_items_right_join_interactions(criteria, page_number, limit)
         return await self._find_items_left_join_interactions(criteria, page_number, limit)
 
     async def _find_items_left_join_interactions(
@@ -280,77 +289,46 @@ class MongoDBItemRepository(ItemRepository):
     async def _find_items_right_join_interactions(
             self, criteria: ItemFilterCriteria, page_number: int, limit: int,
     ) -> list[Item]:
-        # Build interaction match conditions
-        interaction_match_conditions: list[dict[str, Any]] = []
-
+        # Resolve the item UUIDs that have the requested interactions first. Starting from
+        # the (indexed) interactions collection is much cheaper than a per-item $lookup when
+        # only a small fraction of the items have interactions.
+        interaction_types: list[str] = []
         if criteria.interactions.recommended:
-            interaction_match_conditions.append({"type": InteractionType.RECOMMENDED.value})
+            interaction_types.append(InteractionType.RECOMMENDED.value)
         if criteria.interactions.discouraged:
-            interaction_match_conditions.append({"type": InteractionType.DISCOURAGED.value})
+            interaction_types.append(InteractionType.DISCOURAGED.value)
         if criteria.interactions.viewed:
-            interaction_match_conditions.append({"type": InteractionType.VIEWED.value})
+            interaction_types.append(InteractionType.VIEWED.value)
         if criteria.interactions.hidden:
-            interaction_match_conditions.append({"type": InteractionType.HIDDEN.value})
+            interaction_types.append(InteractionType.HIDDEN.value)
 
-        # Start pipeline from interactions collection
-        pipeline: list[dict[str, Any]] = [
-            {
-                "$match": {
-                    "user_uuid": criteria.interactions_from_user,
-                    "$or": interaction_match_conditions if interaction_match_conditions else [{}],
-                },
-            },
-            {
-                "$group": {
-                    "_id": "$item_uuid",
-                    "interaction_types": {"$push": "$type"},
-                    "latest_interaction": {"$max": "$created_at"},
-                },
-            },
-            {
-                "$lookup": {
-                    "from": ITEM_COLLECTION_NAME,
-                    "localField": "_id",
-                    "foreignField": "uuid",
-                    "as": "item",
-                },
-            },
-            {
-                "$unwind": "$item",
-            },
-        ]
-
-        # Apply item-level filters
-        item_filter_conditions = _generate_filter_query(criteria)
-        if item_filter_conditions:
-            # Prefix all conditions with "item." to match the structure after lookup
-            prefixed_conditions: dict[str, Any] = {}
-            for key, value in item_filter_conditions.items():
-                if key == "$or":
-                    # Handle $or operator specially - prefix the fields inside each condition
-                    prefixed_conditions["$or"] = [
-                        {f"item.{k}": v for k, v in condition.items()}
-                        for condition in value
-                    ]
-                else:
-                    prefixed_conditions[f"item.{key}"] = value
-
-            pipeline.append({
-                "$match": prefixed_conditions,
-            })
-
-        # Add sorting and pagination
-        pipeline.extend([
-            {"$sort": {"item.published_at": -1}},
-            {"$skip": page_number * limit},
-            {"$limit": limit},
-            {
-                "$replaceRoot": {"newRoot": "$item"},
-            },
-        ])
+        interaction_query: dict[str, Any] = {"user_uuid": criteria.interactions_from_user}
+        if interaction_types:
+            interaction_query["type"] = {"$in": interaction_types}
 
         interaction_collection = self._interaction_collection()
-        items_result = await interaction_collection.aggregate(pipeline).to_list(length=None)
+        item_uuids = await interaction_collection.distinct("item_uuid", interaction_query)
+        if not item_uuids:
+            return []
+
+        # Restrict the item query to those UUIDs, intersecting with any explicit item_ids filter.
+        item_filter = _generate_filter_query(criteria)
+        if "uuid" in item_filter:
+            allowed_ids = set(item_filter["uuid"]["$in"])
+            item_uuids = [item_uuid for item_uuid in item_uuids if item_uuid in allowed_ids]
+            if not item_uuids:
+                return []
+        item_filter["uuid"] = {"$in": item_uuids}
+
+        pipeline: list[dict[str, Any]] = [
+            {"$match": item_filter},
+            {"$sort": {"published_at": -1}},
+            {"$skip": page_number * limit},
+            {"$limit": limit},
+        ]
+
+        item_collection = self._item_collection()
+        items_result = await item_collection.aggregate(pipeline).to_list(length=None)
 
         return [MongoDBItem(**item).to_domain_item() for item in items_result]
 

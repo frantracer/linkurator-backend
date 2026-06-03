@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from ipaddress import IPv4Address
 from typing import Any
 from uuid import UUID, uuid4
@@ -650,6 +650,113 @@ async def test_find_items_with_every_interaction(
 
     assert len(found_items) == 1
     assert [item9] == found_items
+
+
+@pytest.mark.asyncio()
+async def test_find_items_when_every_item_has_an_interaction(
+        item_repo: ItemRepository,
+) -> None:
+    """
+    Reproduces the "10K items, 10K interactions" scenario at a scale that crosses
+    RIGHT_JOIN_OPTIMIZATION_THRESHOLD, so the optimized query paths are exercised.
+
+    Every item has exactly one interaction from `user_with_interactions`, with the four
+    interaction types distributed round-robin. A second user has no interactions at all.
+    """
+    await item_repo.delete_all_items()
+    await item_repo.delete_all_interactions()
+
+    total_items = RIGHT_JOIN_OPTIMIZATION_THRESHOLD + 100
+    base_date = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    interaction_types = [
+        InteractionType.VIEWED,
+        InteractionType.RECOMMENDED,
+        InteractionType.DISCOURAGED,
+        InteractionType.HIDDEN,
+    ]
+
+    user_with_interactions = uuid4()
+    user_without_interactions = uuid4()
+
+    items: list[Item] = []
+    items_by_type: dict[InteractionType, list[Item]] = {it: [] for it in interaction_types}
+    for i in range(total_items):
+        item = mock_item(
+            item_uuid=uuid4(),
+            published_at=base_date + timedelta(minutes=i),
+        )
+        items.append(item)
+        items_by_type[interaction_types[i % len(interaction_types)]].append(item)
+
+    await item_repo.upsert_items(items)
+
+    for i, item in enumerate(items):
+        await item_repo.add_interaction(Interaction(
+            uuid=uuid4(),
+            item_uuid=item.uuid,
+            user_uuid=user_with_interactions,
+            type=interaction_types[i % len(interaction_types)],
+            created_at=base_date,
+        ))
+
+    # Newest items first, matching the repository's published_at descending sort.
+    items_newest_first = list(reversed(items))
+
+    # Every item has an interaction from this user -> no item without interactions.
+    without_interactions = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            interactions=AnyItemInteraction(without_interactions=True),
+            interactions_from_user=user_with_interactions,
+        ),
+        page_number=0,
+        limit=100,
+    )
+    assert without_interactions == []
+
+    # The other user has no interactions, so every item is "without interactions" for them.
+    without_interactions_other_user = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            interactions=AnyItemInteraction(without_interactions=True),
+            interactions_from_user=user_without_interactions,
+        ),
+        page_number=0,
+        limit=10,
+    )
+    assert without_interactions_other_user == items_newest_first[:10]
+
+    # Viewed items are returned sorted by published_at descending (right-join path).
+    expected_viewed = list(reversed(items_by_type[InteractionType.VIEWED]))
+    viewed_first_page = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            interactions=AnyItemInteraction(viewed=True),
+            interactions_from_user=user_with_interactions,
+        ),
+        page_number=0,
+        limit=10,
+    )
+    assert viewed_first_page == expected_viewed[:10]
+
+    viewed_second_page = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            interactions=AnyItemInteraction(viewed=True),
+            interactions_from_user=user_with_interactions,
+        ),
+        page_number=1,
+        limit=10,
+    )
+    assert viewed_second_page == expected_viewed[10:20]
+
+    # Combining without_interactions with another interaction type uses the left-join path.
+    # For this user no item is "without interactions", so only viewed items match.
+    viewed_or_without = await item_repo.find_items(
+        criteria=ItemFilterCriteria(
+            interactions=AnyItemInteraction(viewed=True, without_interactions=True),
+            interactions_from_user=user_with_interactions,
+        ),
+        page_number=0,
+        limit=10,
+    )
+    assert viewed_or_without == expected_viewed[:10]
 
 
 @pytest.mark.asyncio()
