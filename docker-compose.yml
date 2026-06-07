@@ -15,6 +15,7 @@ services:
         [ -f /output/.config.json ] && cp /output/.config.json /app/.config.json
         make generate-env
         cp .env /output/.env
+        cp .config.json /output/.config.json
         chmod 666 /output/.env /output/.config.json 2>/dev/null || true
         echo "✅ Environment variables generated and saved to .env and .config.json in the current directory! 🎉"
 
