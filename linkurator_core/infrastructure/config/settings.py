@@ -38,11 +38,14 @@ class GoogleOAuth(BaseModel):
 
 
 class GoogleSettings(BaseModel):
-    gemini_api_key: str
     youtube_api_keys: list[str]
     oauth: GoogleOAuth
     email_service_credentials: dict[str, str]
     service_account_email: str
+
+
+class MistralAISettings(BaseModel):
+    api_key: str
 
 
 class SpotifyCredentialPair(BaseModel):
@@ -119,6 +122,7 @@ class ApplicationSettings(BaseModel):
     api: ApiSettings
     ai_agent: AIAgentSettings
     google: GoogleSettings
+    mistral_ai: MistralAISettings
     spotify: SpotifySettings
     patreon: PatreonSettings | None
     mongodb: MongoDBSettings
@@ -143,6 +147,7 @@ class ApplicationSettings(BaseModel):
             api=ApiSettings(**config["api"]),
             ai_agent=AIAgentSettings(**config["ai_agent"]),
             google=GoogleSettings(**config["google"]),
+            mistral_ai=MistralAISettings(**config["mistral_ai"]),
             spotify=SpotifySettings(**config["spotify"]),
             patreon=patreon_settings,
             mongodb=MongoDBSettings(**config["mongodb"]),

@@ -49,7 +49,7 @@ async def main() -> None:
         topic_repository=topic_repository,
         chat_repository=chat_repository,
         base_url="http://localhost:8000",
-        google_api_key=settings.google.gemini_api_key,
+        mistral_api_key=settings.mistral_ai.api_key,
     )
 
     result = await agent.query(

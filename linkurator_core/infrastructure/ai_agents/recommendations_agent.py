@@ -1,6 +1,7 @@
 import asyncio
+import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Union
 from uuid import UUID
@@ -8,8 +9,9 @@ from uuid import UUID
 import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
-from pydantic_ai.providers.google import GoogleProvider
+from pydantic_ai.models.mistral import MistralModel
+from pydantic_ai.providers.mistral import MistralProvider
+from pydantic_ai.settings import ModelSettings
 from pydantic_ai.tools import ToolDefinition
 from pydantic_ai.usage import RunUsage
 
@@ -27,9 +29,30 @@ from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.domain.users.user_repository import UserRepository
 from linkurator_core.infrastructure.ai_agents.keyword_generator_agent import KeywordGeneratorAgent
-from linkurator_core.infrastructure.ai_agents.utils import parse_ids_to_uuids
 
 ITEMS_PER_PAGE = 20
+SHORT_ID_LENGTH = 8
+
+
+def short_id(uuid: UUID) -> str:
+    return str(uuid)[:SHORT_ID_LENGTH]
+
+
+def resolve_short_ids(ids: list[str] | None, mapping: dict[str, UUID]) -> list[UUID]:
+    if not ids:
+        return []
+    resolved: list[UUID] = []
+    for raw in ids:
+        sid = raw.lower()
+        full = mapping.get(sid)
+        if full is not None:
+            resolved.append(full)
+            continue
+        try:
+            resolved.append(UUID(raw))
+        except ValueError:
+            logging.warning("Could not resolve short id %r", raw)
+    return resolved
 
 
 @dataclass
@@ -41,36 +64,51 @@ class RecommendationsDependencies:
     topic_repository: TopicRepository
     keyword_generator_agent: KeywordGeneratorAgent
     previous_chat: Chat | None
+    item_id_map: dict[str, UUID] = field(default_factory=dict)
+    subscription_id_map: dict[str, UUID] = field(default_factory=dict)
+    topic_id_map: dict[str, UUID] = field(default_factory=dict)
     find_items_by_keywords_calls: int = 0
     find_subscriptions_items_calls: int = 0
 
+    def register_item_id(self, item_uuid: UUID) -> None:
+        self.item_id_map[short_id(item_uuid)] = item_uuid
+
+    def register_subscription_id(self, sub_uuid: UUID) -> None:
+        self.subscription_id_map[short_id(sub_uuid)] = sub_uuid
+
+    def register_topic(self, topic: Topic) -> None:
+        self.topic_id_map[short_id(topic.uuid)] = topic.uuid
+        for sub_uuid in topic.subscriptions_ids:
+            self.register_subscription_id(sub_uuid)
+
 
 class TopicForAI(BaseModel):
-    uuid: UUID = Field(
-        description="Unique identifier for the topic",
+    id: str = Field(
+        description="Short identifier for the topic (8 hex chars)",
     )
     name: str = Field(
         description="Name of the topic",
     )
-    subscription_ids: list[UUID] = Field(
-        description="List of subscription UUIDs associated with this topic",
+    subscription_ids: list[str] = Field(
+        description="List of subscription short IDs (8 hex chars) associated with this topic",
     )
 
     @classmethod
     def from_topic(cls, topic: Topic) -> "TopicForAI":
         return cls(
-            uuid=topic.uuid,
+            id=short_id(topic.uuid),
             name=topic.name,
-            subscription_ids=topic.subscriptions_ids,
+            subscription_ids=[short_id(sub_uuid) for sub_uuid in topic.subscriptions_ids],
         )
 
     def as_context(self) -> str:
-        return f"Name: {self.name} | UUID: {self.uuid}"
+        subs = ", ".join(self.subscription_ids) if self.subscription_ids else "none"
+        return f"Name: {self.name} | ID: {self.id} | Subscriptions: {subs}"
 
 
 class SubscriptionForAI(BaseModel):
-    uuid: UUID = Field(
-        description="Unique identifier for the subscription",
+    id: str = Field(
+        description="Short identifier for the subscription (8 hex chars)",
     )
     name: str = Field(
         description="Name of the subscription",
@@ -86,20 +124,20 @@ class SubscriptionForAI(BaseModel):
     @classmethod
     def from_subscription(cls, subscription: Subscription) -> "SubscriptionForAI":
         return cls(
-            uuid=subscription.uuid,
+            id=short_id(subscription.uuid),
             name=subscription.name,
             description=subscription.summary,
             provider=subscription.provider,
         )
 
     def as_context(self) -> str:
-        return (f"Name: {self.name} | UUID: {self.uuid} | Provider: {self.provider} | "
+        return (f"Name: {self.name} | ID: {self.id} | Provider: {self.provider} | "
                 f"Description: {self.description or 'No description'}")
 
 
 class ItemForAI(BaseModel):
-    uuid: UUID = Field(
-        description="Unique identifier for the item",
+    id: str = Field(
+        description="Short identifier for the item (8 hex chars)",
     )
     name: str = Field(
         description="Name of the item",
@@ -120,13 +158,25 @@ class ItemForAI(BaseModel):
     @classmethod
     def from_item(cls, item: Item, sub_name: str) -> "ItemForAI":
         return cls(
-            uuid=item.uuid,
+            id=short_id(item.uuid),
             name=item.name,
             subscription_name=sub_name,
             description=item.description,
             provider=item.provider,
             published_at=item.published_at,
         )
+
+
+class AgentOutput(BaseModel):
+    response: str = Field(
+        default="",
+        description="Response for the user based on their query",
+    )
+    items_ids: list[str] = Field(
+        default_factory=list,
+        description="List of content item short IDs (8 hex chars) related to the user's query. "
+                    "Can be empty if no items match.",
+    )
 
 
 class RecommendationsOutput(BaseModel):
@@ -136,28 +186,27 @@ class RecommendationsOutput(BaseModel):
     )
     items_uuids: list[str] = Field(
         default_factory=list,
-        description="List of content items UUIDs (32 hex) related to the user's query. "
-                    "Can be empty if no items match.",
+        description="List of content items UUIDs related to the user's query.",
     )
 
 
 class RecommendationsAgent:
     def __init__(
             self,
-            google_api_key: str,
+            mistral_api_key: str,
             base_url: str,
             user_repository: UserRepository,
             subscription_repository: SubscriptionRepository,
             item_repository: ItemRepository,
             topic_repository: TopicRepository,
     ) -> None:
-        self.recommendations_agent = create_recommendations_agent(google_api_key)
+        self.recommendations_agent = create_recommendations_agent(mistral_api_key)
         self.base_url = base_url
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
         self.topic_repository = topic_repository
-        self.keyword_generator_agent = KeywordGeneratorAgent(google_api_key)
+        self.keyword_generator_agent = KeywordGeneratorAgent(mistral_api_key=mistral_api_key)
 
     async def query(
             self,
@@ -177,35 +226,63 @@ class RecommendationsAgent:
         )
         result = await self.recommendations_agent.run(query, deps=deps, usage=usage)
 
-        final_message = re.sub(
-            r"https://linkurator\.com/(items|subscriptions)/([0-9a-fA-F-]{36})",
-            lambda match: f"{self.base_url}/{match.group(1)}/{match.group(2)}/url",
-            result.output.response,
-        )
+        final_message = _expand_short_id_links(result.output.response, deps, self.base_url)
+
+        items_uuids: list[str] = []
+        for sid in result.output.items_ids:
+            full = deps.item_id_map.get(sid.lower())
+            if full is not None:
+                items_uuids.append(str(full))
 
         return RecommendationsOutput(
             response=final_message,
-            items_uuids=result.output.items_uuids,
+            items_uuids=items_uuids,
         )
 
 
-def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependencies, RecommendationsOutput]:
-    provider = GoogleProvider(api_key=api_key)
+def _expand_short_id_links(response: str, deps: RecommendationsDependencies, base_url: str) -> str:
+    short_id_re = re.compile(rf"\]\(([0-9a-fA-F]{{{SHORT_ID_LENGTH}}})\)")
+    full_url_re = re.compile(
+        rf"https://linkurator\.com/(items|subscriptions)/([0-9a-fA-F]{{{SHORT_ID_LENGTH}}})",
+    )
 
-    gemini_flash_model = GoogleModel(
+    def replace_markdown(match: re.Match[str]) -> str:
+        sid = match.group(1).lower()
+        if sid in deps.item_id_map:
+            return f"]({base_url}/items/{deps.item_id_map[sid]}/url)"
+        if sid in deps.subscription_id_map:
+            return f"]({base_url}/subscriptions/{deps.subscription_id_map[sid]}/url)"
+        return match.group(0)
+
+    def replace_full_url(match: re.Match[str]) -> str:
+        kind = match.group(1)
+        sid = match.group(2).lower()
+        mapping = deps.item_id_map if kind == "items" else deps.subscription_id_map
+        full = mapping.get(sid)
+        if full is None:
+            return match.group(0)
+        return f"{base_url}/{kind}/{full}/url"
+
+    response = short_id_re.sub(replace_markdown, response)
+    return full_url_re.sub(replace_full_url, response)
+
+
+def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependencies, AgentOutput]:
+    provider = MistralProvider(api_key=api_key)
+
+    mistral_model = MistralModel(
+        model_name="mistral-small-latest",
         provider=provider,
-        model_name="gemini-2.5-flash",
-        settings=GoogleModelSettings(
+        settings=ModelSettings(
             temperature=0.2,
-            google_thinking_config={"thinking_budget": 0},
         ),
     )
 
-    ai_agent = Agent[RecommendationsDependencies, RecommendationsOutput](
-        gemini_flash_model,
+    ai_agent = Agent[RecommendationsDependencies, AgentOutput](
+        mistral_model,
         name="RecommendationsAgent",
         deps_type=RecommendationsDependencies,
-        output_type=RecommendationsOutput,
+        output_type=AgentOutput,
         system_prompt=(
             "You are a content recommendation system that helps users find videos, podcasts or articles based on their query. "
             "Answer in the same language the user is using. "
@@ -220,8 +297,10 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
             "You do not have access to the content, only to a brief description and the title. "
             "Answer the user's query using items, subscriptions and topics that are relevant to the query. "
             "Avoid asking the user to provide more information, use the information you have. "
-            "If an item is referenced in the response, use a markdown link to the url https://linkurator.com/items/{item.uuid} "
-            "If a subscription is referenced in the response, use a markdown link to the url https://linkurator.com/subscriptions/{subscription.uuid} "
+            "Items, subscriptions and topics are identified by short IDs of 8 hex characters in the context. "
+            "When you reference an item or subscription in the response, use a markdown link with the short ID as the URL: [Title](id). "
+            "Do not invent IDs and do not write full URLs; only use IDs that appear in the context provided to you. "
+            "The items_ids field in your output must contain the same 8-hex-char short IDs (never full UUIDs). "
             "Link titles cannot be multiline in markdown. "
             "The response must contains a list with the items you are recommending. "
             "The response must have 1000 words maximum. "
@@ -263,11 +342,15 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
         subs_for_ai: list[SubscriptionForAI] = []
         if user_uuid is not None:
             subs = await handler.handle(user_id=user_uuid)
+            for sub in subs:
+                ctx.deps.register_subscription_id(sub.uuid)
             subs_for_ai = [SubscriptionForAI.from_subscription(sub) for sub in subs]
 
         topics_for_ai: list[TopicForAI] = []
         if user_uuid is not None:
             topics = await ctx.deps.topic_repository.get_by_user_id(user_uuid)
+            for topic in topics:
+                ctx.deps.register_topic(topic)
             topics_for_ai = [TopicForAI.from_topic(topic) for topic in topics]
 
         context = "User's subscriptions:\n"
@@ -315,6 +398,9 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
         )
         indexed_subs_names = {sub.uuid: sub.name for sub in subscriptions}
 
+        for item in items:
+            ctx.deps.register_item_id(item.uuid)
+
         context = "Items recommended to the user in the chat:\n"
         context += "\n".join([
             ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]).model_dump_json()
@@ -338,21 +424,22 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
         Args:
         ----
             ctx: RunContext with dependencies
-            topic_ids: List of topic UUIDs (32 hex) to filter items by
-            subscription_ids: List of subscription UUIDs (32 hex) to filter items by
+            topic_ids: List of topic short IDs (8 hex chars) from the context to filter items by
+            subscription_ids: List of subscription short IDs (8 hex chars) from the context to filter items by
 
         """
         ctx.deps.find_subscriptions_items_calls += 1
 
-        topic_uuids: list[UUID] = parse_ids_to_uuids(topic_ids)
-        subscription_uuids: list[UUID] = parse_ids_to_uuids(subscription_ids)
+        topic_uuids: list[UUID] = resolve_short_ids(topic_ids, ctx.deps.topic_id_map)
+        subscription_uuids: list[UUID] = resolve_short_ids(
+            subscription_ids, ctx.deps.subscription_id_map,
+        )
 
         topics = await ctx.deps.topic_repository.find_topics(topic_uuids)
 
-        all_subs_ids = set()
+        all_subs_ids: set[UUID] = set()
 
-        if subscription_uuids is not None:
-            all_subs_ids.update(subscription_uuids)
+        all_subs_ids.update(subscription_uuids)
 
         for topic in topics:
             all_subs_ids.update(topic.subscriptions_ids)
@@ -377,7 +464,13 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
         items = sorted(items, key=lambda item: item.created_at, reverse=True)
         items = items[:100]
 
-        return [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
+        for item in items:
+            ctx.deps.register_item_id(item.uuid)
+
+        return [
+            ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid])
+            for item in items
+        ]
 
     @ai_agent.tool()
     async def find_items_by_keywords(
@@ -434,7 +527,13 @@ def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependenc
                 unique_items[item.uuid] = item
         items = list(unique_items.values())[:100]
 
-        return [ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid]) for item in items]
+        for item in items:
+            ctx.deps.register_item_id(item.uuid)
+
+        return [
+            ItemForAI.from_item(item, indexed_subs_names[item.subscription_uuid])
+            for item in items
+        ]
 
     return ai_agent
 

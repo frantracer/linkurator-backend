@@ -4,8 +4,9 @@ from uuid import UUID, uuid4
 import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
-from pydantic_ai.providers.google import GoogleProvider
+from pydantic_ai.models.mistral import MistralModel
+from pydantic_ai.providers.mistral import MistralProvider
+from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RunUsage
 
 from linkurator_core.application.subscriptions.get_user_subscriptions_handler import GetUserSubscriptionsHandler
@@ -93,12 +94,12 @@ class TopicManagerOutput(BaseModel):
 class TopicManagerAgent:
     def __init__(
             self,
-            google_api_key: str,
+            mistral_api_key: str,
             user_repository: UserRepository,
             subscription_repository: SubscriptionRepository,
             topic_repository: TopicRepository,
     ) -> None:
-        self.agent = create_topic_manager_agent(google_api_key)
+        self.agent = create_topic_manager_agent(mistral_api_key)
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.topic_repository = topic_repository
@@ -123,19 +124,18 @@ class TopicManagerAgent:
 
 
 def create_topic_manager_agent(api_key: str) -> Agent[TopicManagerDependencies, TopicManagerOutput]:
-    provider = GoogleProvider(api_key=api_key)
+    provider = MistralProvider(api_key=api_key)
 
-    gemini_flash_model = GoogleModel(
+    mistral_model = MistralModel(
+        model_name="mistral-small-latest",
         provider=provider,
-        model_name="gemini-2.5-flash",
-        settings=GoogleModelSettings(
+        settings=ModelSettings(
             temperature=0.2,
-            google_thinking_config={"thinking_budget": 0},
         ),
     )
 
     ai_agent = Agent[TopicManagerDependencies, TopicManagerOutput](
-        gemini_flash_model,
+        mistral_model,
         name="TopicManagerAgent",
         deps_type=TopicManagerDependencies,
         output_type=TopicManagerOutput,

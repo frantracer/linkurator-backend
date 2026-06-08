@@ -37,7 +37,7 @@ class MainQueryAgent(QueryAgentService):
             topic_repository: TopicRepository,
             chat_repository: ChatRepository,
             base_url: str,
-            google_api_key: str,
+            mistral_api_key: str,
     ) -> None:
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
@@ -47,10 +47,10 @@ class MainQueryAgent(QueryAgentService):
         self.base_url = base_url
 
         self.router_agent = RouterAgent(
-            google_api_key=google_api_key,
+            mistral_api_key=mistral_api_key,
         )
         self.recommendations_agent = RecommendationsAgent(
-            google_api_key=google_api_key,
+            mistral_api_key=mistral_api_key,
             base_url=base_url,
             user_repository=user_repository,
             subscription_repository=subscription_repository,
@@ -58,7 +58,7 @@ class MainQueryAgent(QueryAgentService):
             topic_repository=topic_repository,
         )
         self.topic_manager_agent = TopicManagerAgent(
-            google_api_key=google_api_key,
+            mistral_api_key=mistral_api_key,
             user_repository=user_repository,
             subscription_repository=subscription_repository,
             topic_repository=topic_repository,

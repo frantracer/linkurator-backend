@@ -197,11 +197,11 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         item_repository=item_repository,
         subscription_repository=subscription_repository,
         base_url=settings.ai_agent.base_url,
-        google_api_key=settings.google.gemini_api_key,
+        mistral_api_key=settings.mistral_ai.api_key,
     )
 
     subscription_summarizer_service = SubscriptionSummarizerService(
-        google_api_key=settings.google.gemini_api_key,
+        mistral_api_key=settings.mistral_ai.api_key,
     )
 
     # Event bus

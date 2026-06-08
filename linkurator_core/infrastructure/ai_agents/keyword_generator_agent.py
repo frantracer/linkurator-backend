@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
-from pydantic_ai.models.google import GoogleModel, GoogleModelSettings
-from pydantic_ai.providers.google import GoogleProvider
+from pydantic_ai.models.mistral import MistralModel
+from pydantic_ai.providers.mistral import MistralProvider
+from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RunUsage
 
 
@@ -13,8 +14,8 @@ class KeywordOutput(BaseModel):
 
 
 class KeywordGeneratorAgent:
-    def __init__(self, google_api_key: str) -> None:
-        self.agent = create_keyword_generator_agent(google_api_key)
+    def __init__(self, mistral_api_key: str) -> None:
+        self.agent = create_keyword_generator_agent(mistral_api_key)
 
     async def generate_keywords(self, query: str, usage: RunUsage) -> list[str]:
         result = await self.agent.run(user_prompt=query, usage=usage)
@@ -22,19 +23,18 @@ class KeywordGeneratorAgent:
 
 
 def create_keyword_generator_agent(api_key: str) -> Agent[None, KeywordOutput]:
-    provider = GoogleProvider(api_key=api_key)
+    provider = MistralProvider(api_key=api_key)
 
-    gemini_flash_model = GoogleModel(
+    mistral_model = MistralModel(
+        model_name="mistral-small-latest",
         provider=provider,
-        model_name="gemini-2.5-flash",
-        settings=GoogleModelSettings(
+        settings=ModelSettings(
             temperature=0.3,
-            google_thinking_config={"thinking_budget": 0},
         ),
     )
 
     return Agent[None, KeywordOutput](
-        gemini_flash_model,
+        mistral_model,
         name="KeywordGeneratorAgent",
         output_type=KeywordOutput,
         system_prompt=(
@@ -50,9 +50,11 @@ def create_keyword_generator_agent(api_key: str) -> Agent[None, KeywordOutput]:
             "- Maximum 10 keywords total\n"
             "- Each keyword should be three words maximum\n"
             "- Combinations of one or two words are preferred\n"
+            "- Always include the most important nouns from the query as standalone single-word keywords\n"
             "- Focus on keywords that appears on titles\n"
             "- Avoid overly generic terms\n"
             "- Prioritize substantive nouns, proper nouns, and specific descriptive terms\n"
+            "- Preserve the language of the user's query (do not translate keywords)\n"
             "\nExamples:\n"
             "- User query: 'machine learning tutorials for beginners'\n"
             "  Keywords: ['machine learning', 'ML tutorial', 'ML beginner', 'artificial intelligence', 'AI basics', 'deep learning', 'neural networks', 'data science']\n\n"

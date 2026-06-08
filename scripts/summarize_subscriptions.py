@@ -16,8 +16,7 @@ async def main() -> None:
 
     configure_logging(settings.logging)
 
-    # Get API key from environment or use a placeholder
-    api_key = settings.google.gemini_api_key
+    api_key = settings.mistral_ai.api_key
 
     # Create test subscriptions
     test_subscriptions = [
@@ -56,7 +55,7 @@ fields including comedians, actors, musicians, MMA fighters, scientists, and pol
     ]
 
     # Initialize summarizer service
-    summarizer_service = SubscriptionSummarizerService(google_api_key=api_key)
+    summarizer_service = SubscriptionSummarizerService(mistral_api_key=api_key)
 
     logging.info("Testing subscription summarizer with mock data...\n")
 

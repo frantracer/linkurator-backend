@@ -29,7 +29,6 @@
     }
   },
   "google": {
-    "gemini_api_key": "",
     "youtube_api_keys": [],
     "oauth": {
       "web": {
@@ -57,6 +56,9 @@
       "universe_domain": ""
     },
     "service_account_email": ""
+  },
+  "mistral_ai": {
+    "api_key": ""
   },
   "spotify": {
     "credentials": [

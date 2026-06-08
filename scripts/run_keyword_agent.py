@@ -15,7 +15,7 @@ async def main() -> None:
 
     settings = ApplicationSettings.from_file()
 
-    agent = KeywordGeneratorAgent(google_api_key=settings.google.gemini_api_key)
+    agent = KeywordGeneratorAgent(mistral_api_key=settings.mistral_ai.api_key)
     usage = RunUsage()
 
     logging.info(f"Generating keywords for query: '{args.query}'")
