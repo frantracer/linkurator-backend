@@ -1,8 +1,7 @@
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
-from pydantic_ai.models.mistral import MistralModel
-from pydantic_ai.providers.mistral import MistralProvider
+from pydantic_ai.models import Model
 from pydantic_ai.settings import ModelSettings
 
 from linkurator_core.domain.agents.summarize_agent_service import SummarizeAgentResult, SummarizeAgentService
@@ -18,9 +17,9 @@ class SummaryOutput(BaseModel):
 class SubscriptionSummarizerService(SummarizeAgentService):
     """Service for generating AI summaries of subscription descriptions."""
 
-    def __init__(self, mistral_api_key: str) -> None:
-        """Initialize the summarizer with Mistral API credentials."""
-        self.agent = create_summarize_subscriptions_agent(mistral_api_key)
+    def __init__(self, model: Model) -> None:
+        """Initialize the summarizer with the agent model."""
+        self.agent = create_summarize_subscriptions_agent(model)
 
     async def summarize(self, subscription: Subscription) -> SummarizeAgentResult:
         """
@@ -58,22 +57,15 @@ class SubscriptionSummarizerService(SummarizeAgentService):
         return SummarizeAgentResult(summary=summary)
 
 
-def create_summarize_subscriptions_agent(api_key: str) -> Agent[None, SummaryOutput]:
+def create_summarize_subscriptions_agent(model: Model) -> Agent[None, SummaryOutput]:
     """Create the PydanticAI agent for summarization."""
-    provider = MistralProvider(api_key=api_key)
-
-    model = MistralModel(
-        model_name="mistral-small-latest",
-        provider=provider,
-        settings=ModelSettings(
-            temperature=0.1,
-        ),
-    )
-
     return Agent[None, SummaryOutput](
         model,
         name="SubscriptionSummarizerAgent",
         output_type=SummaryOutput,
+        model_settings=ModelSettings(
+            temperature=0.1,
+        ),
         system_prompt=(
             "You are a content summarization expert. Your task is to create concise, "
             "informative summaries of subscription descriptions. "

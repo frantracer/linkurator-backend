@@ -5,6 +5,7 @@ from uuid import uuid4
 from pydantic import AnyUrl
 
 from linkurator_core.domain.subscriptions.subscription import Subscription
+from linkurator_core.infrastructure.ai_agents.model import create_agent_model
 from linkurator_core.infrastructure.ai_agents.subscription_summarizer import SubscriptionSummarizerService
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.logger import configure_logging
@@ -16,7 +17,10 @@ async def main() -> None:
 
     configure_logging(settings.logging)
 
-    api_key = settings.mistral_ai.api_key
+    agent_model = create_agent_model(
+        openai_api_key=settings.openai.api_key,
+        mistral_api_key=settings.mistral_ai.api_key,
+    )
 
     # Create test subscriptions
     test_subscriptions = [
@@ -55,7 +59,7 @@ fields including comedians, actors, musicians, MMA fighters, scientists, and pol
     ]
 
     # Initialize summarizer service
-    summarizer_service = SubscriptionSummarizerService(mistral_api_key=api_key)
+    summarizer_service = SubscriptionSummarizerService(model=agent_model)
 
     logging.info("Testing subscription summarizer with mock data...\n")
 

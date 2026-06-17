@@ -39,6 +39,7 @@ from linkurator_core.domain.common.event import (
 from linkurator_core.domain.subscriptions.general_subscription_service import GeneralSubscriptionService
 from linkurator_core.domain.subscriptions.subscription_service import SubscriptionService
 from linkurator_core.infrastructure.ai_agents.main_query_agent import MainQueryAgent
+from linkurator_core.infrastructure.ai_agents.model import create_agent_model
 from linkurator_core.infrastructure.ai_agents.subscription_summarizer import SubscriptionSummarizerService
 from linkurator_core.infrastructure.asyncio_impl.http_client import AsyncHttpClient
 from linkurator_core.infrastructure.asyncio_impl.scheduler import TaskScheduler
@@ -190,6 +191,11 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
     )
     gmail_email_sender = GmailEmailSender(account_service=google_domain_service)
 
+    agent_model = create_agent_model(
+        openai_api_key=settings.openai.api_key,
+        mistral_api_key=settings.mistral_ai.api_key,
+    )
+
     ai_agent_service = MainQueryAgent(
         chat_repository=chat_repository,
         user_repository=user_repository,
@@ -197,11 +203,11 @@ async def run_processor() -> None:  # pylint: disable=too-many-locals
         item_repository=item_repository,
         subscription_repository=subscription_repository,
         base_url=settings.ai_agent.base_url,
-        mistral_api_key=settings.mistral_ai.api_key,
+        model=agent_model,
     )
 
     subscription_summarizer_service = SubscriptionSummarizerService(
-        mistral_api_key=settings.mistral_ai.api_key,
+        model=agent_model,
     )
 
     # Event bus

@@ -6,6 +6,7 @@ import logfire
 
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.infrastructure.ai_agents.main_query_agent import MainQueryAgent
+from linkurator_core.infrastructure.ai_agents.model import create_agent_model
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
@@ -49,7 +50,10 @@ async def main() -> None:
         topic_repository=topic_repository,
         chat_repository=chat_repository,
         base_url="http://localhost:8000",
-        mistral_api_key=settings.mistral_ai.api_key,
+        model=create_agent_model(
+            openai_api_key=settings.openai.api_key,
+            mistral_api_key=settings.mistral_ai.api_key,
+        ),
     )
 
     result = await agent.query(

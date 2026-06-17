@@ -9,8 +9,7 @@ from uuid import UUID
 import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.mistral import MistralModel
-from pydantic_ai.providers.mistral import MistralProvider
+from pydantic_ai.models import Model
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.tools import ToolDefinition
 from pydantic_ai.usage import RunUsage
@@ -169,8 +168,9 @@ class ItemForAI(BaseModel):
 
 class AgentOutput(BaseModel):
     response: str = Field(
-        default="",
-        description="Response for the user based on their query",
+        description="Human-readable response for the user based on their query, written in the user's language. "
+                    "This field is mandatory and must never be empty: it has to contain the summary and the "
+                    "markdown list of the recommended items.",
     )
     items_ids: list[str] = Field(
         default_factory=list,
@@ -193,20 +193,20 @@ class RecommendationsOutput(BaseModel):
 class RecommendationsAgent:
     def __init__(
             self,
-            mistral_api_key: str,
+            model: Model,
             base_url: str,
             user_repository: UserRepository,
             subscription_repository: SubscriptionRepository,
             item_repository: ItemRepository,
             topic_repository: TopicRepository,
     ) -> None:
-        self.recommendations_agent = create_recommendations_agent(mistral_api_key)
+        self.recommendations_agent = create_recommendations_agent(model)
         self.base_url = base_url
         self.user_repository = user_repository
         self.subscription_repository = subscription_repository
         self.item_repository = item_repository
         self.topic_repository = topic_repository
-        self.keyword_generator_agent = KeywordGeneratorAgent(mistral_api_key=mistral_api_key)
+        self.keyword_generator_agent = KeywordGeneratorAgent(model=model)
 
     async def query(
             self,
@@ -267,22 +267,15 @@ def _expand_short_id_links(response: str, deps: RecommendationsDependencies, bas
     return full_url_re.sub(replace_full_url, response)
 
 
-def create_recommendations_agent(api_key: str) -> Agent[RecommendationsDependencies, AgentOutput]:
-    provider = MistralProvider(api_key=api_key)
-
-    mistral_model = MistralModel(
-        model_name="mistral-small-latest",
-        provider=provider,
-        settings=ModelSettings(
-            temperature=0.2,
-        ),
-    )
-
+def create_recommendations_agent(model: Model) -> Agent[RecommendationsDependencies, AgentOutput]:
     ai_agent = Agent[RecommendationsDependencies, AgentOutput](
-        mistral_model,
+        model,
         name="RecommendationsAgent",
         deps_type=RecommendationsDependencies,
         output_type=AgentOutput,
+        model_settings=ModelSettings(
+            temperature=0.2,
+        ),
         system_prompt=(
             "You are a content recommendation system that helps users find videos, podcasts or articles based on their query. "
             "Answer in the same language the user is using. "

@@ -60,6 +60,9 @@
   "mistral_ai": {
     "api_key": ""
   },
+  "openai": {
+    "api_key": ""
+  },
   "spotify": {
     "credentials": [
       {

@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
-from pydantic_ai.models.mistral import MistralModel
-from pydantic_ai.providers.mistral import MistralProvider
+from pydantic_ai.models import Model
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RunUsage
 
@@ -14,29 +13,22 @@ class KeywordOutput(BaseModel):
 
 
 class KeywordGeneratorAgent:
-    def __init__(self, mistral_api_key: str) -> None:
-        self.agent = create_keyword_generator_agent(mistral_api_key)
+    def __init__(self, model: Model) -> None:
+        self.agent = create_keyword_generator_agent(model)
 
     async def generate_keywords(self, query: str, usage: RunUsage) -> list[str]:
         result = await self.agent.run(user_prompt=query, usage=usage)
         return result.output.keywords
 
 
-def create_keyword_generator_agent(api_key: str) -> Agent[None, KeywordOutput]:
-    provider = MistralProvider(api_key=api_key)
-
-    mistral_model = MistralModel(
-        model_name="mistral-small-latest",
-        provider=provider,
-        settings=ModelSettings(
-            temperature=0.3,
-        ),
-    )
-
+def create_keyword_generator_agent(model: Model) -> Agent[None, KeywordOutput]:
     return Agent[None, KeywordOutput](
-        mistral_model,
+        model,
         name="KeywordGeneratorAgent",
         output_type=KeywordOutput,
+        model_settings=ModelSettings(
+            temperature=0.3,
+        ),
         system_prompt=(
             "You are a keyword generation system that converts user queries into effective search keywords "
             "for finding videos and podcasts on YouTube and Spotify.\n\n"

@@ -4,7 +4,7 @@ from ipaddress import IPv4Address
 from pathlib import Path
 from typing import Any
 
-from pydantic import AnyUrl, BaseModel, model_validator
+from pydantic import AnyUrl, BaseModel, field_validator, model_validator
 
 DEFAULT_CONFIG_FILENAME = ".config.json"
 
@@ -45,7 +45,21 @@ class GoogleSettings(BaseModel):
 
 
 class MistralAISettings(BaseModel):
-    api_key: str
+    api_key: str | None = None
+
+    @field_validator("api_key", mode="after")
+    @classmethod
+    def empty_api_key_to_none(cls, value: str | None) -> str | None:
+        return value or None
+
+
+class OpenAISettings(BaseModel):
+    api_key: str | None = None
+
+    @field_validator("api_key", mode="after")
+    @classmethod
+    def empty_api_key_to_none(cls, value: str | None) -> str | None:
+        return value or None
 
 
 class SpotifyCredentialPair(BaseModel):
@@ -123,6 +137,7 @@ class ApplicationSettings(BaseModel):
     ai_agent: AIAgentSettings
     google: GoogleSettings
     mistral_ai: MistralAISettings
+    openai: OpenAISettings
     spotify: SpotifySettings
     patreon: PatreonSettings | None
     mongodb: MongoDBSettings
@@ -143,11 +158,14 @@ class ApplicationSettings(BaseModel):
         patreon_config = config.get("patreon")
         patreon_settings = PatreonSettings(**patreon_config) if patreon_config else None
 
+        openai_settings = OpenAISettings(**config.get("openai", {}))
+
         return cls(
             api=ApiSettings(**config["api"]),
             ai_agent=AIAgentSettings(**config["ai_agent"]),
             google=GoogleSettings(**config["google"]),
             mistral_ai=MistralAISettings(**config["mistral_ai"]),
+            openai=openai_settings,
             spotify=SpotifySettings(**config["spotify"]),
             patreon=patreon_settings,
             mongodb=MongoDBSettings(**config["mongodb"]),
