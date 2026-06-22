@@ -48,7 +48,7 @@ def _default_find_queries(user_uuid: UUID, subscription_ids: list[UUID]) -> list
                 interactions_from_user=user_uuid,
             ),
             check_items_result=False,
-            max_baseline_multiplier=15.0,
+            max_baseline_multiplier=3.0,
         ),
         FindItemsQueryCase(
             name="viewed_items",
