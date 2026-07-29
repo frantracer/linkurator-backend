@@ -52,6 +52,20 @@ services:
     volumes:
       - mongodb_data:/data/db
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: linkurator-postgres
+    restart: always
+    profiles: ["infra"]
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASS}
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   queue:
     image: rabbitmq:3.13.0-management
     container_name: linkurator-queue
@@ -88,4 +102,5 @@ services:
 
 volumes:
   mongodb_data:
+  postgres_data:
   rabbitmq_data:

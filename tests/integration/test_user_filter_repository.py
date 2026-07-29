@@ -18,12 +18,15 @@ from linkurator_core.infrastructure.mongodb.user_filter_repository import (
     MongoDBUserFilter,
     MongoDBUserFilterRepository,
 )
+from linkurator_core.infrastructure.postgres.user_filter_repository import PostgresUserFilterRepository
 
 
-@pytest.fixture(name="user_filter_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="user_filter_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
 def fixture_user_filter_repo(db_name: str, request: Any) -> UserFilterRepository:
     if request.param == "mongodb":
         return MongoDBUserFilterRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
+    if request.param == "postgresql":
+        return PostgresUserFilterRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return InMemoryUserFilterRepository()
 
 
@@ -79,7 +82,7 @@ async def test_get_user_filter_with_invalid_format_raises_an_exception(
     user_filter_repo: UserFilterRepository,
 ) -> None:
     # This test is MongoDB-specific as it tests MongoDB document format validation
-    if isinstance(user_filter_repo, InMemoryUserFilterRepository):
+    if not isinstance(user_filter_repo, MongoDBUserFilterRepository):
         pytest.skip("Test specific to MongoDB implementation")
 
     user_filter_dict = MongoDBUserFilter(

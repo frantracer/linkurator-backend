@@ -13,6 +13,7 @@ def main() -> None:
     configure_logging(settings.logging)
 
     mongodb = settings.mongodb
+    postgres = settings.postgres
     rabbitmq = settings.rabbitmq
     vpn = settings.vpn
 
@@ -20,6 +21,9 @@ def main() -> None:
         "MONGODB_USER": mongodb.user,
         "MONGODB_PASS": mongodb.password,
         "MONGODB_PORT": str(mongodb.port),
+        "POSTGRES_USER": postgres.user,
+        "POSTGRES_PASS": postgres.password,
+        "POSTGRES_PORT": str(postgres.port),
         "RABBITMQ_USER": rabbitmq.user,
         "RABBITMQ_PASS": rabbitmq.password,
         "RABBITMQ_PORT": str(rabbitmq.port),

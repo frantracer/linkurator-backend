@@ -13,12 +13,15 @@ from linkurator_core.domain.common.mock_factory import mock_chat, mock_chat_mess
 from linkurator_core.infrastructure.in_memory.chat_repository import InMemoryChatRepository
 from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
+from linkurator_core.infrastructure.postgres.chat_repository import PostgresChatRepository
 
 
-@pytest.fixture(name="chat_repo", params=["mongodb", "in_memory"])
+@pytest.fixture(name="chat_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
 def fixture_chat_repo(db_name: str, request: Any) -> ChatRepository:
     if request.param == "in_memory":
         return InMemoryChatRepository()
+    if request.param == "postgresql":
+        return PostgresChatRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return MongoDBChatRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
 
 

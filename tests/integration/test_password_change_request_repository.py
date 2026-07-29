@@ -15,12 +15,17 @@ from linkurator_core.infrastructure.mongodb.password_change_request_repository i
     MongoDBPasswordChangeRequestRepository,
 )
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
+from linkurator_core.infrastructure.postgres.password_change_request_repository import (
+    PostgresPasswordChangeRequestRepository,
+)
 
 
-@pytest.fixture(name="pass_change_request_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="pass_change_request_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
 def fixture_password_change_repository(db_name: str, request: Any) -> PasswordChangeRequestRepository:
     if request.param == "in_memory":
         return InMemoryPasswordChangeRequestRepository()
+    if request.param == "postgresql":
+        return PostgresPasswordChangeRequestRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return MongoDBPasswordChangeRequestRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
 
 

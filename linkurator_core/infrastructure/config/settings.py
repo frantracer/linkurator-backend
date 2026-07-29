@@ -91,6 +91,14 @@ class MongoDBSettings(BaseModel):
     database: str
 
 
+class PostgresSettings(BaseModel):
+    ip_address: IPv4Address
+    port: int
+    user: str
+    password: str
+    database: str
+
+
 class RabbitMQSettings(BaseModel):
     ip_address: IPv4Address
     port: int
@@ -141,6 +149,7 @@ class ApplicationSettings(BaseModel):
     spotify: SpotifySettings
     patreon: PatreonSettings | None
     mongodb: MongoDBSettings
+    postgres: PostgresSettings
     rabbitmq: RabbitMQSettings
     logging: LogSettings
     website: WebsiteSettings
@@ -169,6 +178,7 @@ class ApplicationSettings(BaseModel):
             spotify=SpotifySettings(**config["spotify"]),
             patreon=patreon_settings,
             mongodb=MongoDBSettings(**config["mongodb"]),
+            postgres=PostgresSettings(**config["postgres"]),
             rabbitmq=RabbitMQSettings(**config["rabbitmq"]),
             logging=LogSettings(**config["logging"]),
             website=WebsiteSettings(**config["website"]),

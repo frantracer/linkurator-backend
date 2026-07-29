@@ -15,12 +15,15 @@ from linkurator_core.domain.users.user_repository import EmailAlreadyInUse, User
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUser, MongoDBUserRepository
+from linkurator_core.infrastructure.postgres.user_repository import PostgresUserRepository
 
 
-@pytest.fixture(name="user_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="user_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
 def fixture_user_repo(db_name: str, request: Any) -> UserRepository:
     if request.param == "mongodb":
         return MongoDBUserRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
+    if request.param == "postgresql":
+        return PostgresUserRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return InMemoryUserRepository()
 
 
@@ -79,7 +82,7 @@ async def test_get_user_that_does_not_exist(user_repo: UserRepository) -> None:
 @pytest.mark.asyncio()
 async def test_get_user_with_invalid_format_raises_an_exception(user_repo: UserRepository) -> None:
     # This test is MongoDB-specific as it tests MongoDB document format validation
-    if isinstance(user_repo, InMemoryUserRepository):
+    if not isinstance(user_repo, MongoDBUserRepository):
         pytest.skip("Test specific to MongoDB implementation")
     user_dict = MongoDBUser(uuid=uuid.UUID("449e3bee-6f9b-4cbc-8a09-64a6fcface96"),
                             first_name="test",

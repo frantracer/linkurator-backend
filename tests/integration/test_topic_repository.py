@@ -13,12 +13,15 @@ from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.infrastructure.in_memory.topic_repository import InMemoryTopicRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
+from linkurator_core.infrastructure.postgres.topic_repository import PostgresTopicRepository
 
 
-@pytest.fixture(name="topic_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="topic_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
 def fixture_topic_repo(db_name: str, request: Any) -> TopicRepository:
     if request.param == "in_memory":
         return InMemoryTopicRepository()
+    if request.param == "postgresql":
+        return PostgresTopicRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return MongoDBTopicRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
 
 

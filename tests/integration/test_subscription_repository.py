@@ -17,12 +17,15 @@ from linkurator_core.domain.subscriptions.subscription_repository import (
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
+from linkurator_core.infrastructure.postgres.subscription_repository import PostgresSubscriptionRepository
 
 
-@pytest_asyncio.fixture(name="subscription_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest_asyncio.fixture(name="subscription_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
 async def fixture_subscription_repo(db_name: str, request: Any) -> SubscriptionRepository:
     if request.param == "in_memory":
         return InMemorySubscriptionRepository()
+    if request.param == "postgresql":
+        return PostgresSubscriptionRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return MongoDBSubscriptionRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
 
 

@@ -21,13 +21,16 @@ from linkurator_core.infrastructure.mongodb.item_repository import (
     MongoDBItemRepository,
 )
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
+from linkurator_core.infrastructure.postgres.item_repository import PostgresItemRepository
 
 
-@pytest.fixture(name="item_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="item_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
 def fixture_item_repo(db_name: str, request: Any) -> ItemRepository:
     if request.param == "mongodb":
         return MongoDBItemRepository(IPv4Address("127.0.0.1"), 27017, db_name,
                                      "develop", "develop")
+    if request.param == "postgresql":
+        return PostgresItemRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return InMemoryItemRepository()
 
 

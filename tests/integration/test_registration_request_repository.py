@@ -14,12 +14,17 @@ from linkurator_core.infrastructure.in_memory.registration_request_repository im
 )
 from linkurator_core.infrastructure.mongodb.registration_request_repository import MongoDBRegistrationRequestRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
+from linkurator_core.infrastructure.postgres.registration_request_repository import (
+    PostgresRegistrationRequestRepository,
+)
 
 
-@pytest.fixture(name="reg_request_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="reg_request_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
 def fixture_topic_repo(db_name: str, request: Any) -> RegistrationRequestRepository:
     if request.param == "in_memory":
         return InMemoryRegistrationRequestRepository()
+    if request.param == "postgresql":
+        return PostgresRegistrationRequestRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return MongoDBRegistrationRequestRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
 
 

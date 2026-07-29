@@ -7,14 +7,19 @@ import pytest
 from linkurator_core.infrastructure.in_memory.rss_data_repository import InMemoryRssDataRepository
 from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.mongodb.rss_data_repository import MongoDBRssDataRepository
+from linkurator_core.infrastructure.postgres.rss_data_repository import PostgresRssDataRepository
 from linkurator_core.infrastructure.rss.rss_data_repository import RawDataRecord, RssDataRepository
 
 
-@pytest.fixture(name="rss_data_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="rss_data_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
 def fixture_rss_data_repo(db_name: str, request: Any) -> RssDataRepository:
     if request.param == "mongodb":
         return MongoDBRssDataRepository(
             IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop",
+        )
+    if request.param == "postgresql":
+        return PostgresRssDataRepository(
+            IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop",
         )
     return InMemoryRssDataRepository()
 
