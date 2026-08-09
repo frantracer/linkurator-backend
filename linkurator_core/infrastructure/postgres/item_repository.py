@@ -11,7 +11,7 @@ from linkurator_core.domain.common import utils
 from linkurator_core.domain.items.interaction import Interaction, InteractionType
 from linkurator_core.domain.items.item import Item, ItemProvider
 from linkurator_core.domain.items.item_repository import InteractionFilterCriteria, ItemFilterCriteria, ItemRepository
-from linkurator_core.infrastructure.postgres.common import PostgresConnector
+from linkurator_core.infrastructure.postgres.common import PostgresConnector, drop_nul_bytes
 
 
 def _row_to_item(row: Any) -> Item:
@@ -183,7 +183,7 @@ class PostgresItemRepository(ItemRepository):
             """,
             [
                 (
-                    item.uuid, item.subscription_uuid, item.name, item.description,
+                    item.uuid, item.subscription_uuid, drop_nul_bytes(item.name), drop_nul_bytes(item.description),
                     str(item.url), str(item.thumbnail), item.created_at, item.updated_at,
                     item.published_at, item.provider, item.deleted_at, item.duration, item.version,
                 )

@@ -38,7 +38,7 @@ from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopic
 from linkurator_core.infrastructure.mongodb.user_filter_repository import MongoDBUserFilter
 from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUser
 from linkurator_core.infrastructure.postgres.chat_repository import PostgresChatRepository
-from linkurator_core.infrastructure.postgres.common import PostgresConnector
+from linkurator_core.infrastructure.postgres.common import PostgresConnector, drop_nul_bytes
 from linkurator_core.infrastructure.postgres.password_change_request_repository import (
     PostgresPasswordChangeRequestRepository,
 )
@@ -258,7 +258,7 @@ async def migrate_items(ctx: MigrationContext) -> int:
         async for doc in ctx.mongo_collection("items").find({}, batch_size=BATCH_SIZE):
             item = MongoDBItem(**doc).to_domain_item()
             batch.append((
-                item.uuid, item.subscription_uuid, item.name, item.description,
+                item.uuid, item.subscription_uuid, drop_nul_bytes(item.name), drop_nul_bytes(item.description),
                 str(item.url), str(item.thumbnail), item.created_at, item.updated_at,
                 item.published_at, item.provider, item.deleted_at, item.duration, item.version,
             ))

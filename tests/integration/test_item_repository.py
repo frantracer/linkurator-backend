@@ -141,6 +141,26 @@ async def test_create_and_update_items_with_no_items(item_repo: ItemRepository) 
 
 
 @pytest.mark.asyncio()
+async def test_name_and_description_with_nul_bytes(item_repo: ItemRepository) -> None:
+    """
+    PostgreSQL text columns cannot store NUL bytes, so PostgresItemRepository drops them;
+    other backends preserve the content unmodified.
+    """
+    item = mock_item(name="Title\x00with nul", description="Description\x00with nul")
+
+    await item_repo.upsert_items([item])
+    item_found = await item_repo.get_item(item.uuid)
+
+    assert item_found is not None
+    if isinstance(item_repo, PostgresItemRepository):
+        assert item_found.name == "Titlewith nul"
+        assert item_found.description == "Descriptionwith nul"
+    else:
+        assert item_found.name == "Title\x00with nul"
+        assert item_found.description == "Description\x00with nul"
+
+
+@pytest.mark.asyncio()
 async def test_get_items_by_subscription_uuid(item_repo: ItemRepository) -> None:
     subscription_uuid_1 = UUID("49e16717-3b41-4e1b-a2d8-8fccf1b6c184")
     subscription_uuid_2 = UUID("d3e22c40-c767-468b-8a61-cc61bcfd55ec")

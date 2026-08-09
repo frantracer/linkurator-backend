@@ -6,7 +6,7 @@ from uuid import UUID
 
 from linkurator_core.domain.chats.chat import Chat, ChatMessage, ChatRole
 from linkurator_core.domain.chats.chat_repository import ChatRepository
-from linkurator_core.infrastructure.postgres.common import PostgresConnector
+from linkurator_core.infrastructure.postgres.common import PostgresConnector, drop_nul_bytes
 
 
 def _row_to_message(row: Any) -> ChatMessage:
@@ -32,15 +32,6 @@ def _row_to_chat(chat_row: Any, message_rows: list[Any]) -> Chat:
     )
 
 
-def _drop_nul_bytes(value: str) -> str:
-    """
-    Postgres text columns cannot store a NUL (0x00) byte. Stray NUL bytes occasionally show
-    up in LLM-generated or user-pasted content and would otherwise crash the insert, so they
-    are dropped rather than treated as meaningful content.
-    """
-    return value.replace("\x00", "") if "\x00" in value else value
-
-
 async def _insert_messages(conn: Any, chat_id: UUID, messages: list[ChatMessage]) -> None:
     if len(messages) == 0:
         return
@@ -53,7 +44,7 @@ async def _insert_messages(conn: Any, chat_id: UUID, messages: list[ChatMessage]
         """,
         [
             (
-                chat_id, seq, message.role.value, _drop_nul_bytes(message.content), message.timestamp,
+                chat_id, seq, message.role.value, drop_nul_bytes(message.content), message.timestamp,
                 message.item_uuids, message.subscription_uuids, message.topic_uuids,
                 message.topic_were_created,
             )
@@ -75,7 +66,7 @@ class PostgresChatRepository(ChatRepository):
                 INSERT INTO chats (uuid, user_id, title, created_at, updated_at)
                 VALUES (%s, %s, %s, %s, %s)
                 """,
-                chat.uuid, chat.user_id, _drop_nul_bytes(chat.title), chat.created_at, chat.updated_at,
+                chat.uuid, chat.user_id, drop_nul_bytes(chat.title), chat.created_at, chat.updated_at,
             )
             await _insert_messages(conn, chat.uuid, chat.messages)
 
@@ -107,7 +98,7 @@ class PostgresChatRepository(ChatRepository):
         async with pool.acquire() as conn, conn.transaction():
             result = await conn.execute(
                 "UPDATE chats SET user_id = %s, title = %s, updated_at = %s WHERE uuid = %s",
-                chat.user_id, _drop_nul_bytes(chat.title), chat.updated_at, chat.uuid,
+                chat.user_id, drop_nul_bytes(chat.title), chat.updated_at, chat.uuid,
             )
             if result == "UPDATE 0":
                 return

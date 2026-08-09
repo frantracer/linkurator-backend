@@ -13,6 +13,15 @@ from psycopg_pool import AsyncConnectionPool
 PostgresRow = dict[str, Any]
 
 
+def drop_nul_bytes(value: str) -> str:
+    """
+    Postgres text columns cannot store a NUL (0x00) byte. Stray NUL bytes occasionally show
+    up in LLM-generated or user-pasted content and would otherwise crash the write, so they
+    are dropped rather than treated as meaningful content.
+    """
+    return value.replace("\x00", "") if "\x00" in value else value
+
+
 class PostgresConnection:
     """Thin wrapper around a borrowed psycopg AsyncConnection with asyncpg-style query helpers."""
 
