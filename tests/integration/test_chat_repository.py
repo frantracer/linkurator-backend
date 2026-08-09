@@ -362,6 +362,31 @@ async def test_mongodb_serialization_with_unicode_and_special_chars(chat_repo: C
 
 
 @pytest.mark.asyncio()
+async def test_content_and_title_with_nul_bytes(chat_repo: ChatRepository) -> None:
+    """
+    PostgreSQL text columns cannot store NUL bytes, so PostgresChatRepository drops them;
+    other backends preserve the content unmodified.
+    """
+    await chat_repo.delete_all()
+
+    chat = mock_chat(
+        title="Title\x00with nul",
+        messages=[mock_chat_message(role=ChatRole.USER, content="Hello\x00World")],
+    )
+
+    await chat_repo.add(chat)
+    retrieved_chat = await chat_repo.get(chat.uuid)
+
+    assert retrieved_chat is not None
+    if isinstance(chat_repo, PostgresChatRepository):
+        assert retrieved_chat.title == "Titlewith nul"
+        assert retrieved_chat.messages[0].content == "HelloWorld"
+    else:
+        assert retrieved_chat.title == "Title\x00with nul"
+        assert retrieved_chat.messages[0].content == "Hello\x00World"
+
+
+@pytest.mark.asyncio()
 async def test_get_by_user_id_sorted_by_updated_at(chat_repo: ChatRepository) -> None:
     """Test that chats are returned sorted by updated_at in descending order."""
     await chat_repo.delete_all()
