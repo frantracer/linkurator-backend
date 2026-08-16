@@ -180,9 +180,9 @@ check-certbot-account: check-ssh-connection
 		exit 1; \
 	fi
 
-provision: check-ssh-connection check-certbot-email check-certbot-account
+provision: check-ssh-connection check-certbot-email check-certbot-account setup-backup
 	@echo "Provisioning"
-	@ssh $(SSH_TARGET) "apt update && apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin nginx certbot python3-certbot-nginx"
+	@ssh $(SSH_TARGET) "apt update && apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin nginx certbot python3-certbot-nginx jq"
 	@scp config/docker_daemon.json $(SSH_TARGET):/etc/docker/daemon.json
 	@ssh $(SSH_TARGET) "systemctl restart docker"
 	@ssh $(SSH_TARGET) "rm -rf /etc/nginx/sites-enabled/default"
@@ -191,6 +191,19 @@ provision: check-ssh-connection check-certbot-email check-certbot-account
 	@ssh $(SSH_TARGET) "systemctl restart nginx"
 	@ssh $(SSH_TARGET) "apt autoremove -y"
 	@echo "Provisioning complete"
+
+setup-backup: check-ssh-connection
+	@echo "Setting up backup procedure"
+	@ssh $(SSH_TARGET) "apt update && apt install -y jq"
+	@ssh $(SSH_TARGET) "mkdir -p $(REMOTE_DEPLOY_DIR)"
+	@scp scripts/db_backup.sh $(SSH_TARGET):$(REMOTE_DEPLOY_DIR)/db_backup.sh
+	@ssh $(SSH_TARGET) "chmod +x $(REMOTE_DEPLOY_DIR)/db_backup.sh"
+	@scp config/linkurator-backup-cron $(SSH_TARGET):/etc/cron.d/linkurator-backup-cron
+	@ssh $(SSH_TARGET) "chmod 644 /etc/cron.d/linkurator-backup-cron"
+	@scp config/linkurator-backup-logrotate $(SSH_TARGET):/etc/logrotate.d/linkurator-backup-logrotate
+	@ssh $(SSH_TARGET) "chmod 644 /etc/logrotate.d/linkurator-backup-logrotate"
+	@ssh $(SSH_TARGET) "apt autoremove -y"
+	@echo "Backup procedure set up"
 
 # Generate the deploy SSH keypair, authorize it on the host and print every
 # secret the cd.yml pipeline expects so they can be pasted into GitHub:
@@ -253,10 +266,10 @@ deploy: push-deploy-files
 	ssh $(SSH_TARGET) "docker image prune -a -f"
 	@echo "Latest image is deployed"
 
-deploy-infra: push-deploy-files
+deploy-infra: push-deploy-files setup-backup
 	$(call remote-compose,--profile infra up -d)
 
-deploy-db: push-deploy-files
+deploy-db: push-deploy-files setup-backup
 	$(call remote-compose,--profile infra up -d db)
 
 deploy-queue: push-deploy-files

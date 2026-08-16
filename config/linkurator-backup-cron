@@ -1,0 +1,3 @@
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+0 2 * * * root /opt/linkurator/db_backup.sh backup /opt/linkurator/.env >> /var/log/linkurator-backup.log 2>&1

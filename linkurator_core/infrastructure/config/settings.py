@@ -136,6 +136,13 @@ class VpnSettings(BaseModel):
     http_proxy_port: int
 
 
+class CloudflareSettings(BaseModel):
+    api_token: str
+    account_id: str
+    bucket_id: str
+    backup_path: str
+
+
 class ApplicationSettings(BaseModel):
     """
     Settings for the application.
@@ -154,6 +161,7 @@ class ApplicationSettings(BaseModel):
     logging: LogSettings
     website: WebsiteSettings
     vpn: VpnSettings
+    cloudflare: CloudflareSettings
 
     @classmethod
     def from_file(cls, file_path: str = DEFAULT_CONFIG_FILENAME) -> "ApplicationSettings":
@@ -183,4 +191,5 @@ class ApplicationSettings(BaseModel):
             logging=LogSettings(**config["logging"]),
             website=WebsiteSettings(**config["website"]),
             vpn=VpnSettings(**config["vpn"]),
+            cloudflare=CloudflareSettings(**config["cloudflare"]),
         )

@@ -16,6 +16,7 @@ def main() -> None:
     postgres = settings.postgres
     rabbitmq = settings.rabbitmq
     vpn = settings.vpn
+    cloudflare = settings.cloudflare
 
     values: dict[str, str] = {
         "MONGODB_USER": mongodb.user,
@@ -32,6 +33,10 @@ def main() -> None:
         "WIREGUARD_ADDRESSES": vpn.wireguard_addresses,
         "VPN_SERVER_COUNTRY": vpn.server_country,
         "VPN_HTTP_PROXY_PORT": str(vpn.http_proxy_port),
+        "R2_ACCOUNT_ID": cloudflare.account_id,
+        "R2_API_TOKEN": cloudflare.api_token,
+        "R2_BUCKET": cloudflare.bucket_id,
+        "R2_BACKUP_PATH": cloudflare.backup_path,
     }
 
     lines = [f"{k}={v}" for k, v in values.items()]

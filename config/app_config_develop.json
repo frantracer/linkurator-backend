@@ -93,5 +93,11 @@
     "valid_domains": [
       "localhost"
     ]
+  },
+  "cloudflare": {
+    "api_token": "",
+    "account_id": "",
+    "bucket_id": "",
+    "backup_path": "/develop"
   }
 }
