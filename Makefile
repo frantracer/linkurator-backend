@@ -195,7 +195,7 @@ provision: check-ssh-connection check-certbot-email check-certbot-account setup-
 setup-backup: check-ssh-connection
 	@echo "Setting up backup procedure"
 	@ssh $(SSH_TARGET) "apt update && apt install -y unzip"
-	@ssh $(SSH_TARGET) "curl -fsSL https://awscli.amazonaws.com/v2/install.sh | bash"
+	@ssh $(SSH_TARGET) "curl -fsSL https://awscli.amazonaws.com/v2/install.sh | sudo bash -s -- --system"
 	@ssh $(SSH_TARGET) "mkdir -p $(REMOTE_DEPLOY_DIR)"
 	@scp scripts/db_backup.sh $(SSH_TARGET):$(REMOTE_DEPLOY_DIR)/db_backup.sh
 	@ssh $(SSH_TARGET) "chmod +x $(REMOTE_DEPLOY_DIR)/db_backup.sh"
