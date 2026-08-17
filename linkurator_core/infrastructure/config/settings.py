@@ -83,14 +83,6 @@ class PatreonSettings(BaseModel):
     client_secret: str
 
 
-class MongoDBSettings(BaseModel):
-    ip_address: IPv4Address
-    port: int
-    user: str
-    password: str
-    database: str
-
-
 class PostgresSettings(BaseModel):
     ip_address: IPv4Address
     port: int
@@ -156,7 +148,6 @@ class ApplicationSettings(BaseModel):
     openai: OpenAISettings
     spotify: SpotifySettings
     patreon: PatreonSettings | None
-    mongodb: MongoDBSettings
     postgres: PostgresSettings
     rabbitmq: RabbitMQSettings
     logging: LogSettings
@@ -186,7 +177,6 @@ class ApplicationSettings(BaseModel):
             openai=openai_settings,
             spotify=SpotifySettings(**config["spotify"]),
             patreon=patreon_settings,
-            mongodb=MongoDBSettings(**config["mongodb"]),
             postgres=PostgresSettings(**config["postgres"]),
             rabbitmq=RabbitMQSettings(**config["rabbitmq"]),
             logging=LogSettings(**config["logging"]),

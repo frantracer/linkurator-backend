@@ -1,37 +1,20 @@
 from ipaddress import IPv4Address
 from typing import Any
-from uuid import uuid4
 
 import pytest
 
 from linkurator_core.infrastructure.in_memory.rss_data_repository import InMemoryRssDataRepository
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
-from linkurator_core.infrastructure.mongodb.rss_data_repository import MongoDBRssDataRepository
 from linkurator_core.infrastructure.postgres.rss_data_repository import PostgresRssDataRepository
 from linkurator_core.infrastructure.rss.rss_data_repository import RawDataRecord, RssDataRepository
 
 
-@pytest.fixture(name="rss_data_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
+@pytest.fixture(name="rss_data_repo", scope="session", params=["in_memory", "postgresql"])
 def fixture_rss_data_repo(db_name: str, request: Any) -> RssDataRepository:
-    if request.param == "mongodb":
-        return MongoDBRssDataRepository(
-            IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop",
-        )
     if request.param == "postgresql":
         return PostgresRssDataRepository(
             IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop",
         )
     return InMemoryRssDataRepository()
-
-
-@pytest.mark.asyncio()
-async def test_exception_is_raised_if_rss_data_collection_is_not_created() -> None:
-    non_existent_db_name = f"test-{uuid4()}"
-    with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBRssDataRepository(
-            IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop",
-        )
-        await repo.check_connection()
 
 
 @pytest.mark.asyncio()

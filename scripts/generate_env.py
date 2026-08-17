@@ -12,16 +12,12 @@ def main() -> None:
     settings = ApplicationSettings.from_file()
     configure_logging(settings.logging)
 
-    mongodb = settings.mongodb
     postgres = settings.postgres
     rabbitmq = settings.rabbitmq
     vpn = settings.vpn
     cloudflare = settings.cloudflare
 
     values: dict[str, str] = {
-        "MONGODB_USER": mongodb.user,
-        "MONGODB_PASS": mongodb.password,
-        "MONGODB_PORT": str(mongodb.port),
         "POSTGRES_USER": postgres.user,
         "POSTGRES_PASS": postgres.password,
         "POSTGRES_PORT": str(postgres.port),

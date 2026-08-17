@@ -11,26 +11,14 @@ from linkurator_core.domain.chats.chat import Chat, ChatRole
 from linkurator_core.domain.chats.chat_repository import ChatRepository
 from linkurator_core.domain.common.mock_factory import mock_chat, mock_chat_message
 from linkurator_core.infrastructure.in_memory.chat_repository import InMemoryChatRepository
-from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 from linkurator_core.infrastructure.postgres.chat_repository import PostgresChatRepository
 
 
-@pytest.fixture(name="chat_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
+@pytest.fixture(name="chat_repo", scope="session", params=["in_memory", "postgresql"])
 def fixture_chat_repo(db_name: str, request: Any) -> ChatRepository:
     if request.param == "in_memory":
         return InMemoryChatRepository()
-    if request.param == "postgresql":
-        return PostgresChatRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
-    return MongoDBChatRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
-
-
-@pytest.mark.asyncio()
-async def test_exception_is_raised_if_chats_collection_is_not_created() -> None:
-    non_existent_db_name = f"test-{uuid.uuid4()}"
-    with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBChatRepository(IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop")
-        await repo.check_connection()
+    return PostgresChatRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
 
 
 @pytest.mark.asyncio()
@@ -313,7 +301,7 @@ async def test_concurrent_operations(chat_repo: ChatRepository) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_mongodb_serialization_with_unicode_and_special_chars(chat_repo: ChatRepository) -> None:
+async def test_serialization_with_unicode_and_special_chars(chat_repo: ChatRepository) -> None:
     """Test serialization/deserialization with unicode and special characters."""
     await chat_repo.delete_all()
 

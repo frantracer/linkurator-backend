@@ -34,8 +34,7 @@ async def test_find_items_performance(postgres_item_repo: PostgresItemRepository
     """
     Measure that listing a user's items stays fast as their interaction history grows.
 
-    Same scenarios as the MongoDB counterpart (see _item_performance_helpers.py) so the two
-    backends are held to the same data and thresholds. ANALYZE runs after seeding each
+    Scenarios are defined in _item_performance_helpers.py. ANALYZE runs after seeding each
     scenario: a freshly loaded table has no planner statistics yet, and autovacuum's
     autoanalyze won't have run within a test's lifetime (its naptime defaults to 60s), so
     without an explicit ANALYZE this test would consistently hit a cold, unrepresentative

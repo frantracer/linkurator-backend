@@ -7,9 +7,9 @@ from datetime import datetime, timezone
 from linkurator_core.application.items.delete_subscription_items_handler import DeleteSubscriptionItemsHandler
 from linkurator_core.domain.items.item_repository import ItemFilterCriteria
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
-from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
-from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
-from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
+from linkurator_core.infrastructure.postgres.item_repository import PostgresItemRepository
+from linkurator_core.infrastructure.postgres.subscription_repository import PostgresSubscriptionRepository
+from linkurator_core.infrastructure.postgres.user_repository import PostgresUserRepository
 
 logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 
@@ -19,16 +19,16 @@ async def main() -> None:
     parser.add_argument("--admin-email", type=str, required=True)
     args = parser.parse_args()
 
-    db_settings = ApplicationSettings.from_file().mongodb
-    item_repository = MongoDBItemRepository(
+    db_settings = ApplicationSettings.from_file().postgres
+    item_repository = PostgresItemRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
 
-    subscription_repository = MongoDBSubscriptionRepository(
+    subscription_repository = PostgresSubscriptionRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
 
-    user_repository = MongoDBUserRepository(
+    user_repository = PostgresUserRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password)
 

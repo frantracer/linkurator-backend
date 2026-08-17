@@ -15,27 +15,14 @@ from linkurator_core.domain.subscriptions.subscription_repository import (
     SubscriptionRepository,
 )
 from linkurator_core.infrastructure.in_memory.subscription_repository import InMemorySubscriptionRepository
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
-from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
 from linkurator_core.infrastructure.postgres.subscription_repository import PostgresSubscriptionRepository
 
 
-@pytest_asyncio.fixture(name="subscription_repo", scope="session", params=["mongodb", "in_memory", "postgresql"])
+@pytest_asyncio.fixture(name="subscription_repo", scope="session", params=["in_memory", "postgresql"])
 async def fixture_subscription_repo(db_name: str, request: Any) -> SubscriptionRepository:
     if request.param == "in_memory":
         return InMemorySubscriptionRepository()
-    if request.param == "postgresql":
-        return PostgresSubscriptionRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
-    return MongoDBSubscriptionRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
-
-
-@pytest.mark.asyncio()
-async def test_exception_is_raised_if_subscriptions_collection_is_not_created() -> None:
-    non_existent_db_name = f"test-{uuid.uuid4()}"
-    with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBSubscriptionRepository(
-            IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop")
-        await repo.check_connection()
+    return PostgresSubscriptionRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
 
 
 @pytest.mark.asyncio()

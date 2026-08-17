@@ -17,7 +17,7 @@ class TokenAlreadyExists(Exception):
 
 
 class PostgresSessionRepository(SessionRepository):
-    """Uses a synchronous driver (psycopg3), matching MongoDBSessionRepository's use of a sync pymongo client."""
+    """Uses a synchronous driver (psycopg3), since sessions are read on the hot request path."""
 
     def __init__(self, ip: IPv4Address, port: int, db_name: str, username: str, password: str) -> None:
         super().__init__()

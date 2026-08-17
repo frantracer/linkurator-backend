@@ -7,13 +7,6 @@
     "reload": true,
     "with_gunicorn": false
   },
-  "mongodb": {
-    "ip_address": "127.0.0.1",
-    "port": 27017,
-    "database": "main",
-    "user": "develop",
-    "password": "develop"
-  },
   "postgres": {
     "ip_address": "127.0.0.1",
     "port": 5432,

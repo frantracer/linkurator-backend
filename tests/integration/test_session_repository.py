@@ -2,27 +2,20 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from ipaddress import IPv4Address
 from math import floor
-from typing import Any
 
 import pytest
 
 from linkurator_core.domain.users.session import Session
 from linkurator_core.domain.users.session_repository import SessionRepository
-from linkurator_core.infrastructure.mongodb.session_repository import (
-    MongoDBSessionRepository,
-)
-from linkurator_core.infrastructure.mongodb.session_repository import TokenAlreadyExists as MongoTokenAlreadyExists
 from linkurator_core.infrastructure.postgres.session_repository import (
     PostgresSessionRepository,
+    TokenAlreadyExists,
 )
-from linkurator_core.infrastructure.postgres.session_repository import TokenAlreadyExists as PostgresTokenAlreadyExists
 
 
-@pytest.fixture(name="session_repo", scope="session", params=["mongodb", "postgresql"])
-def fixture_session_repo(db_name: str, request: Any) -> SessionRepository:
-    if request.param == "postgresql":
-        return PostgresSessionRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
-    return MongoDBSessionRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
+@pytest.fixture(name="session_repo", scope="session")
+def fixture_session_repo(db_name: str) -> SessionRepository:
+    return PostgresSessionRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
 
 
 def test_get_session_by_token(session_repo: SessionRepository) -> None:
@@ -78,5 +71,5 @@ def test_two_sessions_with_the_same_token_returns_an_error(session_repo: Session
     assert the_session is not None
     assert the_session.token == session.token
 
-    with pytest.raises((MongoTokenAlreadyExists, PostgresTokenAlreadyExists)):
+    with pytest.raises(TokenAlreadyExists):
         session_repo.add(session)

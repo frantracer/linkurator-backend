@@ -271,7 +271,7 @@ deploy-infra: push-deploy-files setup-backup
 	$(call remote-compose,--profile infra up -d)
 
 deploy-db: push-deploy-files setup-backup
-	$(call remote-compose,--profile infra up -d db)
+	$(call remote-compose,--profile infra up -d postgres)
 
 deploy-queue: push-deploy-files
 	$(call remote-compose,--profile infra up -d queue)

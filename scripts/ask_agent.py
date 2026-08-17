@@ -9,33 +9,33 @@ from linkurator_core.infrastructure.ai_agents.main_query_agent import MainQueryA
 from linkurator_core.infrastructure.ai_agents.model import create_agent_model
 from linkurator_core.infrastructure.config.settings import ApplicationSettings
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
-from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
-from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
-from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
-from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
+from linkurator_core.infrastructure.postgres.chat_repository import PostgresChatRepository
+from linkurator_core.infrastructure.postgres.item_repository import PostgresItemRepository
+from linkurator_core.infrastructure.postgres.subscription_repository import PostgresSubscriptionRepository
+from linkurator_core.infrastructure.postgres.topic_repository import PostgresTopicRepository
 
 
 async def main() -> None:
     settings = ApplicationSettings.from_file()
-    db_settings = settings.mongodb
+    db_settings = settings.postgres
 
     logfire.configure(token=settings.logging.logfire.token, scrubbing=False)
 
     # Repositories
     user_repository = InMemoryUserRepository()
-    subscription_repository = MongoDBSubscriptionRepository(
+    subscription_repository = PostgresSubscriptionRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
-    item_repository = MongoDBItemRepository(
+    item_repository = PostgresItemRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
-    topic_repository = MongoDBTopicRepository(
+    topic_repository = PostgresTopicRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
-    chat_repository = MongoDBChatRepository(
+    chat_repository = PostgresChatRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )

@@ -1,7 +1,5 @@
 """
-Backend-agnostic scenario definitions and data generators shared by the Mongo and Postgres
-find_items performance tests, so both backends are measured against identical data and
-thresholds.
+Scenario definitions and data generators shared by the find_items performance tests.
 """
 import asyncio
 import logging

@@ -87,8 +87,8 @@ class PostgresUserRepository(UserRepository):
             if error.diag.constraint_name == "users_email_key":
                 msg = f"Email '{user.email}' is already in use"
                 raise EmailAlreadyInUse(msg) from error
-            # A username collision is silently swallowed here to match MongoDBUserRepository's
-            # existing behaviour, which only translates the email_unique index violation.
+            # A username collision is silently swallowed here: only the email uniqueness
+            # violation is translated into a domain exception.
 
     async def get(self, user_id: UUID) -> User | None:
         pool = await self._connector.pool()
