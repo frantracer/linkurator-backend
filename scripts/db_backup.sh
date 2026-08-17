@@ -27,7 +27,7 @@ set -a
 source "$ENV_FILE"
 set +a
 
-REQUIRED_VARS=(POSTGRES_USER POSTGRES_PASS R2_ACCOUNT_ID R2_API_TOKEN R2_BUCKET R2_BACKUP_PATH)
+REQUIRED_VARS=(POSTGRES_USER POSTGRES_PASS R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET R2_BACKUP_PATH)
 for VAR in "${REQUIRED_VARS[@]}"; do
   if [ -z "${!VAR:-}" ]; then
     echo "Missing required variable in $ENV_FILE: $VAR" >&2
@@ -35,8 +35,11 @@ for VAR in "${REQUIRED_VARS[@]}"; do
   fi
 done
 
-R2_API_BASE="https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET}/objects"
-R2_AUTH_HEADER="Authorization: Bearer ${R2_API_TOKEN}"
+# aws-cli reads these directly; exporting once here avoids repeating them on every call.
+export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
+export AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
+
+R2_ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
 MAX_BACKUPS=5
 
 # Normalize backup_path (e.g. "/develop") into a "develop/" key prefix so
@@ -56,25 +59,25 @@ if [ "$ACTION" = "backup" ]; then
     pg_dump --username "$POSTGRES_USER" --format custom --dbname main > "$FILE_NAME"
 
   log "Uploading backup to s3://${R2_BUCKET}/${KEY}"
-  curl -sS -f -X PUT -H "$R2_AUTH_HEADER" -H "Content-Type: application/octet-stream" \
-    --data-binary "@${FILE_NAME}" "${R2_API_BASE}/${KEY}" > /dev/null
+  aws s3 cp "$FILE_NAME" "s3://${R2_BUCKET}/${KEY}" --endpoint-url "$R2_ENDPOINT"
 
   rm "$FILE_NAME"
 
   log "Backup uploaded: $KEY"
 
   log "Checking for old backups to prune (keeping last $MAX_BACKUPS)"
-  EXISTING_KEYS=$(curl -sS -f -H "$R2_AUTH_HEADER" "${R2_API_BASE}?prefix=${R2_PREFIX}" \
-    | jq -r '.result[].key' | sort)
+  EXISTING_FILES=$(aws s3 ls "s3://${R2_BUCKET}/${R2_PREFIX}" --endpoint-url "$R2_ENDPOINT" \
+    | awk '{print $4}' | sort)
 
-  OLD_KEYS=$(echo "$EXISTING_KEYS" | head -n -"$MAX_BACKUPS")
+  OLD_FILES=$(echo "$EXISTING_FILES" | head -n -"$MAX_BACKUPS")
 
-  if [ -z "$OLD_KEYS" ]; then
+  if [ -z "$OLD_FILES" ]; then
     log "No old backups to prune"
   fi
 
-  for OLD_KEY in $OLD_KEYS; do
-    curl -sS -f -X DELETE -H "$R2_AUTH_HEADER" "${R2_API_BASE}/${OLD_KEY}" > /dev/null
+  for OLD_FILE in $OLD_FILES; do
+    OLD_KEY="${R2_PREFIX}${OLD_FILE}"
+    aws s3 rm "s3://${R2_BUCKET}/${OLD_KEY}" --endpoint-url "$R2_ENDPOINT"
 
     log "Removed old backup: $OLD_KEY"
   done
@@ -86,21 +89,20 @@ elif [ "$ACTION" = "restore" ]; then
 
   if [ -z "$FILE_NAME" ]; then
     log "No backup file given; looking up the most recent backup in s3://${R2_BUCKET}/${R2_PREFIX}"
-    KEY=$(curl -sS -f -H "$R2_AUTH_HEADER" "${R2_API_BASE}?prefix=${R2_PREFIX}" \
-      | jq -r '.result[].key' | sort | tail -n 1)
+    FILE_NAME=$(aws s3 ls "s3://${R2_BUCKET}/${R2_PREFIX}" --endpoint-url "$R2_ENDPOINT" \
+      | awk '{print $4}' | sort | tail -n 1)
 
-    if [ -z "$KEY" ]; then
+    if [ -z "$FILE_NAME" ]; then
       echo "No backups found in s3://${R2_BUCKET}/${R2_PREFIX}" >&2
       exit 1
     fi
-  else
-    KEY="${R2_PREFIX}${FILE_NAME}"
   fi
 
-  LOCAL_FILE="$(basename "$KEY")"
+  KEY="${R2_PREFIX}${FILE_NAME}"
+  LOCAL_FILE="$FILE_NAME"
 
   log "Downloading backup s3://${R2_BUCKET}/${KEY}"
-  curl -sS -f -H "$R2_AUTH_HEADER" "${R2_API_BASE}/${KEY}" -o "$LOCAL_FILE"
+  aws s3 cp "s3://${R2_BUCKET}/${KEY}" "$LOCAL_FILE" --endpoint-url "$R2_ENDPOINT"
 
   log "Restoring database 'main' from $LOCAL_FILE"
   # pg_restore exits 1 whenever it reports any ignored error, even harmless

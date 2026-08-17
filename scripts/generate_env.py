@@ -34,7 +34,8 @@ def main() -> None:
         "VPN_SERVER_COUNTRY": vpn.server_country,
         "VPN_HTTP_PROXY_PORT": str(vpn.http_proxy_port),
         "R2_ACCOUNT_ID": cloudflare.account_id,
-        "R2_API_TOKEN": cloudflare.api_token,
+        "R2_ACCESS_KEY_ID": cloudflare.access_key_id,
+        "R2_SECRET_ACCESS_KEY": cloudflare.secret_access_key,
         "R2_BUCKET": cloudflare.bucket_id,
         "R2_BACKUP_PATH": cloudflare.backup_path,
     }

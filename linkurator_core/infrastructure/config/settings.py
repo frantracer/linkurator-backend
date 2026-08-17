@@ -137,7 +137,8 @@ class VpnSettings(BaseModel):
 
 
 class CloudflareSettings(BaseModel):
-    api_token: str
+    access_key_id: str
+    secret_access_key: str
     account_id: str
     bucket_id: str
     backup_path: str

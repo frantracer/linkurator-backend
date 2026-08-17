@@ -95,7 +95,8 @@
     ]
   },
   "cloudflare": {
-    "api_token": "",
+    "access_key_id": "",
+    "secret_access_key": "",
     "account_id": "",
     "bucket_id": "",
     "backup_path": "/develop"

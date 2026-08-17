@@ -182,7 +182,7 @@ check-certbot-account: check-ssh-connection
 
 provision: check-ssh-connection check-certbot-email check-certbot-account setup-backup
 	@echo "Provisioning"
-	@ssh $(SSH_TARGET) "apt update && apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin nginx certbot python3-certbot-nginx jq"
+	@ssh $(SSH_TARGET) "apt update && apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin nginx certbot python3-certbot-nginx"
 	@scp config/docker_daemon.json $(SSH_TARGET):/etc/docker/daemon.json
 	@ssh $(SSH_TARGET) "systemctl restart docker"
 	@ssh $(SSH_TARGET) "rm -rf /etc/nginx/sites-enabled/default"
@@ -194,7 +194,8 @@ provision: check-ssh-connection check-certbot-email check-certbot-account setup-
 
 setup-backup: check-ssh-connection
 	@echo "Setting up backup procedure"
-	@ssh $(SSH_TARGET) "apt update && apt install -y jq"
+	@ssh $(SSH_TARGET) "apt update && apt install -y unzip"
+	@ssh $(SSH_TARGET) "curl -fsSL https://awscli.amazonaws.com/v2/install.sh | bash"
 	@ssh $(SSH_TARGET) "mkdir -p $(REMOTE_DEPLOY_DIR)"
 	@scp scripts/db_backup.sh $(SSH_TARGET):$(REMOTE_DEPLOY_DIR)/db_backup.sh
 	@ssh $(SSH_TARGET) "chmod +x $(REMOTE_DEPLOY_DIR)/db_backup.sh"
