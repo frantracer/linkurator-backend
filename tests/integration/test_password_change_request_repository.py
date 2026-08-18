@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from ipaddress import IPv4Address
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 from pydantic import AnyUrl
@@ -11,26 +11,16 @@ from linkurator_core.domain.users.password_change_request_repository import Pass
 from linkurator_core.infrastructure.in_memory.password_change_request_repository import (
     InMemoryPasswordChangeRequestRepository,
 )
-from linkurator_core.infrastructure.mongodb.password_change_request_repository import (
-    MongoDBPasswordChangeRequestRepository,
+from linkurator_core.infrastructure.postgres.password_change_request_repository import (
+    PostgresPasswordChangeRequestRepository,
 )
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
 
 
-@pytest.fixture(name="pass_change_request_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="pass_change_request_repo", scope="session", params=["in_memory", "postgresql"])
 def fixture_password_change_repository(db_name: str, request: Any) -> PasswordChangeRequestRepository:
     if request.param == "in_memory":
         return InMemoryPasswordChangeRequestRepository()
-    return MongoDBPasswordChangeRequestRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
-
-
-@pytest.mark.asyncio()
-async def test_exception_is_raised_if_registration_request_collection_is_not_created() -> None:
-    non_existent_db_name = f"test-{uuid4()}"
-    with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBPasswordChangeRequestRepository(
-            IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop")
-        await repo.check_connection()
+    return PostgresPasswordChangeRequestRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
 
 
 @pytest.mark.asyncio()

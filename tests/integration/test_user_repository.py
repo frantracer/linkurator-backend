@@ -3,37 +3,27 @@ from datetime import datetime, timedelta, timezone
 from ipaddress import IPv4Address
 from math import floor
 from typing import Any
-from unittest import mock
-from unittest.mock import AsyncMock
 
 import pytest
 
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.exceptions import UsernameAlreadyInUseError
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.user import User, Username
 from linkurator_core.domain.users.user_repository import EmailAlreadyInUse, UserRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
-from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUser, MongoDBUserRepository
+from linkurator_core.infrastructure.postgres.user_repository import PostgresUserRepository
 
 
-@pytest.fixture(name="user_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="user_repo", scope="session", params=["in_memory", "postgresql"])
 def fixture_user_repo(db_name: str, request: Any) -> UserRepository:
-    if request.param == "mongodb":
-        return MongoDBUserRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
+    if request.param == "postgresql":
+        return PostgresUserRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return InMemoryUserRepository()
 
 
 @pytest.mark.asyncio()
-async def test_exception_is_raised_if_users_collection_is_not_created() -> None:
-    non_existent_db_name = f"test-{uuid.uuid4()}"
-    with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBUserRepository(IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop")
-        await repo.check_connection()
-
-
-@pytest.mark.asyncio()
-async def test_add_user_to_mongodb(user_repo: UserRepository) -> None:
+async def test_add_user(user_repo: UserRepository) -> None:
     user = User.new(
         first_name="test",
         last_name="test",
@@ -74,31 +64,6 @@ async def test_get_user_that_does_not_exist(user_repo: UserRepository) -> None:
     the_user = await user_repo.get(uuid.UUID("c04c2880-6376-4fe1-a0bf-eac1ae0801ad"))
 
     assert the_user is None
-
-
-@pytest.mark.asyncio()
-async def test_get_user_with_invalid_format_raises_an_exception(user_repo: UserRepository) -> None:
-    # This test is MongoDB-specific as it tests MongoDB document format validation
-    if isinstance(user_repo, InMemoryUserRepository):
-        pytest.skip("Test specific to MongoDB implementation")
-    user_dict = MongoDBUser(uuid=uuid.UUID("449e3bee-6f9b-4cbc-8a09-64a6fcface96"),
-                            first_name="test",
-                            last_name="test",
-                            username="test",
-                            email="test@email.com",
-                            locale="en",
-                            avatar_url="https://avatars.com/avatar.png",
-                            created_at=datetime.now(timezone.utc),
-                            updated_at=datetime.now(timezone.utc),
-                            last_login_at=datetime.now(timezone.utc),
-                            google_refresh_token="token",
-                            ).model_dump()
-    user_dict["uuid"] = "invalid_uuid"
-    user_collection_mock = AsyncMock()
-    user_collection_mock.find_one = AsyncMock(return_value=user_dict)
-    with mock.patch.object(MongoDBUserRepository, "_collection", return_value=user_collection_mock):
-        with pytest.raises(ValueError):
-            await user_repo.get(uuid.UUID("c0d59790-bb68-415b-9be5-79c3088aada0"))
 
 
 @pytest.mark.asyncio()
@@ -185,6 +150,33 @@ async def test_the_email_is_unique(user_repo: UserRepository) -> None:
     await user_repo.add(user_1)
 
     with pytest.raises(EmailAlreadyInUse):
+        await user_repo.add(user_2)
+
+
+@pytest.mark.asyncio()
+async def test_the_username_is_unique(user_repo: UserRepository) -> None:
+    user_1 = User.new(
+        first_name="test",
+        last_name="test",
+        username=Username("sample_3"),
+        email="sample_3@test.com",
+        locale="en",
+        avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+        uuid=uuid.UUID("2c1e3f0a-df9f-4d3f-9f10-3e6c2b1a8f10"),
+        google_refresh_token="token")
+    user_2 = User.new(
+        first_name="test",
+        last_name="test",
+        username=Username("sample_3"),
+        email="sample_3_bis@test.com",
+        locale="en",
+        avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+        uuid=uuid.UUID("6d2e9c34-1a7d-4c8b-8c0a-2f6b9d1e4a3c"),
+        google_refresh_token="token")
+
+    await user_repo.add(user_1)
+
+    with pytest.raises(UsernameAlreadyInUseError):
         await user_repo.add(user_2)
 
 

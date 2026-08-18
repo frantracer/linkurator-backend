@@ -11,23 +11,14 @@ from linkurator_core.domain.common.mock_factory import mock_topic
 from linkurator_core.domain.topics.topic import Topic
 from linkurator_core.domain.topics.topic_repository import TopicRepository
 from linkurator_core.infrastructure.in_memory.topic_repository import InMemoryTopicRepository
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
-from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
+from linkurator_core.infrastructure.postgres.topic_repository import PostgresTopicRepository
 
 
-@pytest.fixture(name="topic_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="topic_repo", scope="session", params=["in_memory", "postgresql"])
 def fixture_topic_repo(db_name: str, request: Any) -> TopicRepository:
     if request.param == "in_memory":
         return InMemoryTopicRepository()
-    return MongoDBTopicRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
-
-
-@pytest.mark.asyncio()
-async def test_exception_is_raised_if_topics_collection_is_not_created() -> None:
-    non_existent_db_name = f"test-{uuid.uuid4()}"
-    with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBTopicRepository(IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop")
-        await repo.check_connection()
+    return PostgresTopicRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
 
 
 @pytest.mark.asyncio()

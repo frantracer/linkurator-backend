@@ -83,7 +83,7 @@ class PatreonSettings(BaseModel):
     client_secret: str
 
 
-class MongoDBSettings(BaseModel):
+class PostgresSettings(BaseModel):
     ip_address: IPv4Address
     port: int
     user: str
@@ -128,6 +128,14 @@ class VpnSettings(BaseModel):
     http_proxy_port: int
 
 
+class CloudflareSettings(BaseModel):
+    access_key_id: str
+    secret_access_key: str
+    account_id: str
+    bucket_id: str
+    backup_path: str
+
+
 class ApplicationSettings(BaseModel):
     """
     Settings for the application.
@@ -140,11 +148,12 @@ class ApplicationSettings(BaseModel):
     openai: OpenAISettings
     spotify: SpotifySettings
     patreon: PatreonSettings | None
-    mongodb: MongoDBSettings
+    postgres: PostgresSettings
     rabbitmq: RabbitMQSettings
     logging: LogSettings
     website: WebsiteSettings
     vpn: VpnSettings
+    cloudflare: CloudflareSettings
 
     @classmethod
     def from_file(cls, file_path: str = DEFAULT_CONFIG_FILENAME) -> "ApplicationSettings":
@@ -168,9 +177,10 @@ class ApplicationSettings(BaseModel):
             openai=openai_settings,
             spotify=SpotifySettings(**config["spotify"]),
             patreon=patreon_settings,
-            mongodb=MongoDBSettings(**config["mongodb"]),
+            postgres=PostgresSettings(**config["postgres"]),
             rabbitmq=RabbitMQSettings(**config["rabbitmq"]),
             logging=LogSettings(**config["logging"]),
             website=WebsiteSettings(**config["website"]),
             vpn=VpnSettings(**config["vpn"]),
+            cloudflare=CloudflareSettings(**config["cloudflare"]),
         )

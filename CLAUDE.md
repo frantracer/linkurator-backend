@@ -8,10 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Environment setup
 make install-requirements  # Install system dependencies
 make install              # Setup Python environment with uv
-make docker-run-external-services  # Start MongoDB and RabbitMQ
+make docker-run-external-services  # Start PostgreSQL and RabbitMQ
 
 # Development server (requires external services first)
-make docker-run-external-services  # REQUIRED: Start MongoDB and RabbitMQ first
+make docker-run-external-services  # REQUIRED: Start PostgreSQL and RabbitMQ first
 export LINKURATOR_ENVIRONMENT=DEVELOPMENT
 export LINKURATOR_VAULT_PASSWORD=$(cat secrets/vault_password.txt)
 make run-api              # Start FastAPI server
@@ -43,7 +43,7 @@ make docker-run-processor
 
 **Key Technologies:**
 - FastAPI + Uvicorn/Gunicorn
-- MongoDB 5.0.5 with repository pattern
+- PostgreSQL 16 with repository pattern
 - RabbitMQ for event-driven processing
 - Google OAuth + YouTube Data API
 - Spotify Web API integration
@@ -87,7 +87,7 @@ pytest tests/integration/infrastructure/
 
 ## Database
 
-**MongoDB Collections:**
+**PostgreSQL Tables:**
 - `users`: User profiles and authentication
 - `subscriptions`: YouTube/Spotify channels
 - `items`: Video/podcast content
@@ -96,7 +96,7 @@ pytest tests/integration/infrastructure/
 - `credentials`: OAuth tokens
 
 **Migrations:**
-- Located in `/linkurator_core/infrastructure/mongodb/migrations/`
+- Located in `/linkurator_core/infrastructure/postgres/migrations/`
 - Run automatically on application start
 - Version tracked in database
 
@@ -121,7 +121,7 @@ Start processor with: `make run-processor`
 ## External Services
 
 **Required for development:**
-- MongoDB 5.0.5 (via Docker)
+- PostgreSQL 16 (via Docker)
 - RabbitMQ 3.13.0 (via Docker)
 - Google OAuth credentials
 - Spotify API credentials

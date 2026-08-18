@@ -51,15 +51,17 @@ from linkurator_core.infrastructure.google.youtube_api_client import YoutubeApiC
 from linkurator_core.infrastructure.google.youtube_rss_client import YoutubeRssClient
 from linkurator_core.infrastructure.google.youtube_service import YoutubeService
 from linkurator_core.infrastructure.logger import configure_logging
-from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
-from linkurator_core.infrastructure.mongodb.item_repository import MongoDBItemRepository
-from linkurator_core.infrastructure.mongodb.registration_request_repository import MongoDBRegistrationRequestRepository
-from linkurator_core.infrastructure.mongodb.rss_data_repository import MongoDBRssDataRepository
-from linkurator_core.infrastructure.mongodb.subscription_repository import MongoDBSubscriptionRepository
-from linkurator_core.infrastructure.mongodb.topic_repository import MongoDBTopicRepository
-from linkurator_core.infrastructure.mongodb.user_repository import MongoDBUserRepository
 from linkurator_core.infrastructure.patreon.patreon_api_client import PatreonApiClient
 from linkurator_core.infrastructure.patreon.patreon_service import PatreonSubscriptionService
+from linkurator_core.infrastructure.postgres.chat_repository import PostgresChatRepository
+from linkurator_core.infrastructure.postgres.item_repository import PostgresItemRepository
+from linkurator_core.infrastructure.postgres.registration_request_repository import (
+    PostgresRegistrationRequestRepository,
+)
+from linkurator_core.infrastructure.postgres.rss_data_repository import PostgresRssDataRepository
+from linkurator_core.infrastructure.postgres.subscription_repository import PostgresSubscriptionRepository
+from linkurator_core.infrastructure.postgres.topic_repository import PostgresTopicRepository
+from linkurator_core.infrastructure.postgres.user_repository import PostgresUserRepository
 from linkurator_core.infrastructure.rabbitmq_event_bus import RabbitMQEventBus
 from linkurator_core.infrastructure.rss.rss_feed_client import RssFeedClient
 from linkurator_core.infrastructure.rss.rss_service import RssSubscriptionService
@@ -86,36 +88,36 @@ class ProcessorReloadHandler(FileSystemEventHandler):
 async def run_processor() -> None:  # pylint: disable=too-many-locals
     # Read settings
     settings = ApplicationSettings.from_file()
-    db_settings = settings.mongodb
+    db_settings = settings.postgres
     spotify_secrets = settings.spotify
     rabbitmq_settings = settings.rabbitmq
 
     # Repositories
-    user_repository = MongoDBUserRepository(
+    user_repository = PostgresUserRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
-    subscription_repository = MongoDBSubscriptionRepository(
+    subscription_repository = PostgresSubscriptionRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
-    topic_repository = MongoDBTopicRepository(
+    topic_repository = PostgresTopicRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
-    item_repository = MongoDBItemRepository(
+    item_repository = PostgresItemRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
-    registration_request_repository = MongoDBRegistrationRequestRepository(
+    registration_request_repository = PostgresRegistrationRequestRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
-    chat_repository = MongoDBChatRepository(
+    chat_repository = PostgresChatRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )
-    rss_data_repository = MongoDBRssDataRepository(
+    rss_data_repository = PostgresRssDataRepository(
         ip=db_settings.ip_address, port=db_settings.port, db_name=db_settings.database,
         username=db_settings.user, password=db_settings.password,
     )

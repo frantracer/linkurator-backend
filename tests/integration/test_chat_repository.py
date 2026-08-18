@@ -11,23 +11,14 @@ from linkurator_core.domain.chats.chat import Chat, ChatRole
 from linkurator_core.domain.chats.chat_repository import ChatRepository
 from linkurator_core.domain.common.mock_factory import mock_chat, mock_chat_message
 from linkurator_core.infrastructure.in_memory.chat_repository import InMemoryChatRepository
-from linkurator_core.infrastructure.mongodb.chat_repository import MongoDBChatRepository
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
+from linkurator_core.infrastructure.postgres.chat_repository import PostgresChatRepository
 
 
-@pytest.fixture(name="chat_repo", params=["mongodb", "in_memory"])
+@pytest.fixture(name="chat_repo", scope="session", params=["in_memory", "postgresql"])
 def fixture_chat_repo(db_name: str, request: Any) -> ChatRepository:
     if request.param == "in_memory":
         return InMemoryChatRepository()
-    return MongoDBChatRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
-
-
-@pytest.mark.asyncio()
-async def test_exception_is_raised_if_chats_collection_is_not_created() -> None:
-    non_existent_db_name = f"test-{uuid.uuid4()}"
-    with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBChatRepository(IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop")
-        await repo.check_connection()
+    return PostgresChatRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
 
 
 @pytest.mark.asyncio()
@@ -310,7 +301,7 @@ async def test_concurrent_operations(chat_repo: ChatRepository) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_mongodb_serialization_with_unicode_and_special_chars(chat_repo: ChatRepository) -> None:
+async def test_serialization_with_unicode_and_special_chars(chat_repo: ChatRepository) -> None:
     """Test serialization/deserialization with unicode and special characters."""
     await chat_repo.delete_all()
 
@@ -356,6 +347,31 @@ async def test_mongodb_serialization_with_unicode_and_special_chars(chat_repo: C
     # Verify all UUIDs are properly typed
     for item_uuid in retrieved_chat.messages[1].item_uuids:
         assert isinstance(item_uuid, uuid.UUID)
+
+
+@pytest.mark.asyncio()
+async def test_content_and_title_with_nul_bytes(chat_repo: ChatRepository) -> None:
+    """
+    PostgreSQL text columns cannot store NUL bytes, so PostgresChatRepository drops them;
+    other backends preserve the content unmodified.
+    """
+    await chat_repo.delete_all()
+
+    chat = mock_chat(
+        title="Title\x00with nul",
+        messages=[mock_chat_message(role=ChatRole.USER, content="Hello\x00World")],
+    )
+
+    await chat_repo.add(chat)
+    retrieved_chat = await chat_repo.get(chat.uuid)
+
+    assert retrieved_chat is not None
+    if isinstance(chat_repo, PostgresChatRepository):
+        assert retrieved_chat.title == "Titlewith nul"
+        assert retrieved_chat.messages[0].content == "HelloWorld"
+    else:
+        assert retrieved_chat.title == "Title\x00with nul"
+        assert retrieved_chat.messages[0].content == "Hello\x00World"
 
 
 @pytest.mark.asyncio()

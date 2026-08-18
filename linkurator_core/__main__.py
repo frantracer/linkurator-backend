@@ -3,19 +3,11 @@ import logging
 
 import uvicorn.server
 
-from linkurator_core.infrastructure.config.settings import ApplicationSettings
-from linkurator_core.infrastructure.mongodb.repositories import run_mongodb_migrations
+from linkurator_core.infrastructure.config.settings import ApiSettings, ApplicationSettings
+from linkurator_core.infrastructure.postgres.repositories import run_postgres_migrations
 
 
-async def main() -> None:
-    app_settings = ApplicationSettings.from_file()
-    api_args = app_settings.api
-
-    # Migrations
-    run_mongodb_migrations(
-        app_settings.mongodb.ip_address, app_settings.mongodb.port, app_settings.mongodb.database,
-        app_settings.mongodb.user, app_settings.mongodb.password)
-
+async def main(api_args: ApiSettings) -> None:
     # API
     api_server = ApiServer(
         app_path="linkurator_core.infrastructure.fastapi.app:create_app",
@@ -61,4 +53,11 @@ class ApiServer:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    app_settings = ApplicationSettings.from_file()
+
+    # Migrations
+    run_postgres_migrations(
+        app_settings.postgres.ip_address, app_settings.postgres.port, app_settings.postgres.database,
+        app_settings.postgres.user, app_settings.postgres.password)
+
+    asyncio.run(main(app_settings.api))

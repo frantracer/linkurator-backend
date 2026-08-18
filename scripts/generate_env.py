@@ -12,14 +12,15 @@ def main() -> None:
     settings = ApplicationSettings.from_file()
     configure_logging(settings.logging)
 
-    mongodb = settings.mongodb
+    postgres = settings.postgres
     rabbitmq = settings.rabbitmq
     vpn = settings.vpn
+    cloudflare = settings.cloudflare
 
     values: dict[str, str] = {
-        "MONGODB_USER": mongodb.user,
-        "MONGODB_PASS": mongodb.password,
-        "MONGODB_PORT": str(mongodb.port),
+        "POSTGRES_USER": postgres.user,
+        "POSTGRES_PASS": postgres.password,
+        "POSTGRES_PORT": str(postgres.port),
         "RABBITMQ_USER": rabbitmq.user,
         "RABBITMQ_PASS": rabbitmq.password,
         "RABBITMQ_PORT": str(rabbitmq.port),
@@ -28,6 +29,11 @@ def main() -> None:
         "WIREGUARD_ADDRESSES": vpn.wireguard_addresses,
         "VPN_SERVER_COUNTRY": vpn.server_country,
         "VPN_HTTP_PROXY_PORT": str(vpn.http_proxy_port),
+        "R2_ACCOUNT_ID": cloudflare.account_id,
+        "R2_ACCESS_KEY_ID": cloudflare.access_key_id,
+        "R2_SECRET_ACCESS_KEY": cloudflare.secret_access_key,
+        "R2_BUCKET": cloudflare.bucket_id,
+        "R2_BACKUP_PATH": cloudflare.backup_path,
     }
 
     lines = [f"{k}={v}" for k, v in values.items()]

@@ -1,11 +1,8 @@
 import asyncio
 import uuid
-from datetime import datetime, timezone
 from ipaddress import IPv4Address
 from math import floor
 from typing import Any
-from unittest import mock
-from unittest.mock import AsyncMock
 
 import pytest
 
@@ -13,26 +10,14 @@ from linkurator_core.domain.common.mock_factory import mock_user_filter
 from linkurator_core.domain.users.user_filter import UserFilter
 from linkurator_core.domain.users.user_filter_repository import UserFilterRepository
 from linkurator_core.infrastructure.in_memory.user_filter_repository import InMemoryUserFilterRepository
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
-from linkurator_core.infrastructure.mongodb.user_filter_repository import (
-    MongoDBUserFilter,
-    MongoDBUserFilterRepository,
-)
+from linkurator_core.infrastructure.postgres.user_filter_repository import PostgresUserFilterRepository
 
 
-@pytest.fixture(name="user_filter_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="user_filter_repo", scope="session", params=["in_memory", "postgresql"])
 def fixture_user_filter_repo(db_name: str, request: Any) -> UserFilterRepository:
-    if request.param == "mongodb":
-        return MongoDBUserFilterRepository(IPv4Address("127.0.0.1"), 27017, db_name, "develop", "develop")
+    if request.param == "postgresql":
+        return PostgresUserFilterRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return InMemoryUserFilterRepository()
-
-
-@pytest.mark.asyncio()
-async def test_exception_is_raised_if_user_filters_collection_is_not_created() -> None:
-    non_existent_db_name = f"test-{uuid.uuid4()}"
-    with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBUserFilterRepository(IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop")
-        await repo.check_connection()
 
 
 @pytest.mark.asyncio()
@@ -72,28 +57,6 @@ async def test_get_user_filter_that_does_not_exist(user_filter_repo: UserFilterR
     retrieved_filter = await user_filter_repo.get(uuid.UUID("c04c2880-6376-4fe1-a0bf-eac1ae0801ad"))
 
     assert retrieved_filter is None
-
-
-@pytest.mark.asyncio()
-async def test_get_user_filter_with_invalid_format_raises_an_exception(
-    user_filter_repo: UserFilterRepository,
-) -> None:
-    # This test is MongoDB-specific as it tests MongoDB document format validation
-    if isinstance(user_filter_repo, InMemoryUserFilterRepository):
-        pytest.skip("Test specific to MongoDB implementation")
-
-    user_filter_dict = MongoDBUserFilter(
-        user_id=uuid.UUID("449e3bee-6f9b-4cbc-8a09-64a6fcface96"),
-        text_filter="test",
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
-    ).model_dump()
-    user_filter_dict["user_id"] = "invalid_uuid"
-    collection_mock = AsyncMock()
-    collection_mock.find_one = AsyncMock(return_value=user_filter_dict)
-    with mock.patch.object(MongoDBUserFilterRepository, "_collection", return_value=collection_mock):
-        with pytest.raises(ValueError):
-            await user_filter_repo.get(uuid.UUID("c0d59790-bb68-415b-9be5-79c3088aada0"))
 
 
 @pytest.mark.asyncio()

@@ -39,18 +39,19 @@ services:
       - ./.config.json:/app/.config.json:ro
     command: ["make", "run-processor"]
 
-  db:
-    image: mongo:7.0.34
-    container_name: linkurator-db
+  postgres:
+    image: postgres:16-alpine
+    container_name: linkurator-postgres
     restart: always
     profiles: ["infra"]
     ports:
-      - "${MONGODB_PORT:-27017}:27017"
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASS}
+      - POSTGRES_DB=postgres
     volumes:
-      - mongodb_data:/data/db
+      - postgres_data:/var/lib/postgresql/data
 
   queue:
     image: rabbitmq:3.13.0-management
@@ -87,5 +88,5 @@ services:
       - HTTPPROXY=on
 
 volumes:
-  mongodb_data:
+  postgres_data:
   rabbitmq_data:

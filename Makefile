@@ -1,6 +1,8 @@
 SHELL := /bin/bash
 
 DOMAIN := api.linkurator.com
+CERTBOT_ACCOUNT ?=
+CERTBOT_EMAIL ?=
 
 DOCKER_IMAGE := frantracer/linkurator-api
 DOCKER_CONTAINER_API := linkurator-api
@@ -163,16 +165,46 @@ check-ssh-connection:
 	@if [ -z "${SSH_IP_ADDRESS}" ]; then echo "SSH_IP_ADDRESS environment variable is not set"; exit 1; fi
 	@ssh $(SSH_TARGET) "echo Connection OK"
 
-provision: check-ssh-connection
+check-certbot-email:
+	@if [ -z "${CERTBOT_EMAIL}" ]; then echo "CERTBOT_EMAIL environment variable is not set"; exit 1; fi
+
+check-certbot-account: check-ssh-connection
+	@if [ -z "${CERTBOT_ACCOUNT}" ] && [ "$$(ssh $(SSH_TARGET) 'find /etc/letsencrypt/accounts -mindepth 3 -maxdepth 3 -type d 2>/dev/null | wc -l')" -gt 0 ]; then \
+		echo "CERTBOT_ACCOUNT environment variable is required (certbot is already configured on this host)."; \
+		echo "It must be the full account id (the directory name under"; \
+		echo "/etc/letsencrypt/accounts/<server>/directory/<id>), not the short prefix"; \
+		echo "certbot prints in parentheses. Available accounts on this host (id, server, email):"; \
+		ssh $(SSH_TARGET) 'for d in $$(find /etc/letsencrypt/accounts -mindepth 3 -maxdepth 3 -type d 2>/dev/null); do \
+			echo "  id=$$(basename $$d) server=$$(basename $$(dirname $$(dirname $$d))) $$(grep -o "mailto:[^\"]*" "$$d/regr.json" 2>/dev/null)"; \
+		done'; \
+		exit 1; \
+	fi
+
+provision: check-ssh-connection check-certbot-email check-certbot-account setup-backup
 	@echo "Provisioning"
-	@ssh $(SSH_TARGET) "apt update && apt install -y docker.io nginx certbot python3-certbot-nginx"
+	@ssh $(SSH_TARGET) "apt update && apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin nginx certbot python3-certbot-nginx"
 	@scp config/docker_daemon.json $(SSH_TARGET):/etc/docker/daemon.json
 	@ssh $(SSH_TARGET) "systemctl restart docker"
 	@ssh $(SSH_TARGET) "rm -rf /etc/nginx/sites-enabled/default"
 	@scp config/linkurator-api.conf $(SSH_TARGET):/etc/nginx/sites-enabled/linkurator-api.conf
-	@ssh $(SSH_TARGET) "certbot --nginx -d $(DOMAIN) -n --redirect"
+	@ssh $(SSH_TARGET) "certbot --nginx -d $(DOMAIN) -n --redirect --agree-tos -m $(CERTBOT_EMAIL) $(if $(CERTBOT_ACCOUNT),--account $(CERTBOT_ACCOUNT),)"
 	@ssh $(SSH_TARGET) "systemctl restart nginx"
 	@ssh $(SSH_TARGET) "apt autoremove -y"
+	@echo "Provisioning complete"
+
+setup-backup: check-ssh-connection
+	@echo "Setting up backup procedure"
+	@ssh $(SSH_TARGET) "apt update && apt install -y unzip"
+	@ssh $(SSH_TARGET) "curl -fsSL https://awscli.amazonaws.com/v2/install.sh | sudo bash -s -- --system"
+	@ssh $(SSH_TARGET) "mkdir -p $(REMOTE_DEPLOY_DIR)"
+	@scp scripts/db_backup.sh $(SSH_TARGET):$(REMOTE_DEPLOY_DIR)/db_backup.sh
+	@ssh $(SSH_TARGET) "chmod +x $(REMOTE_DEPLOY_DIR)/db_backup.sh"
+	@scp config/linkurator-backup-cron $(SSH_TARGET):/etc/cron.d/linkurator-backup-cron
+	@ssh $(SSH_TARGET) "chmod 644 /etc/cron.d/linkurator-backup-cron"
+	@scp config/linkurator-backup-logrotate $(SSH_TARGET):/etc/logrotate.d/linkurator-backup-logrotate
+	@ssh $(SSH_TARGET) "chmod 644 /etc/logrotate.d/linkurator-backup-logrotate"
+	@ssh $(SSH_TARGET) "apt autoremove -y"
+	@echo "Backup procedure set up"
 
 # Generate the deploy SSH keypair, authorize it on the host and print every
 # secret the cd.yml pipeline expects so they can be pasted into GitHub:
@@ -235,11 +267,11 @@ deploy: push-deploy-files
 	ssh $(SSH_TARGET) "docker image prune -a -f"
 	@echo "Latest image is deployed"
 
-deploy-infra: push-deploy-files
+deploy-infra: push-deploy-files setup-backup
 	$(call remote-compose,--profile infra up -d)
 
-deploy-db: push-deploy-files
-	$(call remote-compose,--profile infra up -d db)
+deploy-db: push-deploy-files setup-backup
+	$(call remote-compose,--profile infra up -d postgres)
 
 deploy-queue: push-deploy-files
 	$(call remote-compose,--profile infra up -d queue)

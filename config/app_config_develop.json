@@ -7,9 +7,9 @@
     "reload": true,
     "with_gunicorn": false
   },
-  "mongodb": {
+  "postgres": {
     "ip_address": "127.0.0.1",
-    "port": 27017,
+    "port": 5432,
     "database": "main",
     "user": "develop",
     "password": "develop"
@@ -86,5 +86,12 @@
     "valid_domains": [
       "localhost"
     ]
+  },
+  "cloudflare": {
+    "access_key_id": "",
+    "secret_access_key": "",
+    "account_id": "",
+    "bucket_id": "",
+    "backup_path": "/develop"
   }
 }

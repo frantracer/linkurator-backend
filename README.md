@@ -11,7 +11,7 @@ App services:
 * ⚙️ **processor** — fetches content from content providers in the background.
 
 Infrastructure:
-* **mongodb** and **rabbitmq** — required.
+* **postgresql** and **rabbitmq** — required.
 * **gluetun** — optional VPN.
 
 # 🐳 Run with Docker (recommended)

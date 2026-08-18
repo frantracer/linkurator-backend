@@ -16,27 +16,16 @@ from linkurator_core.domain.items.item_repository import (
     ItemRepository,
 )
 from linkurator_core.infrastructure.in_memory.item_repository import InMemoryItemRepository
-from linkurator_core.infrastructure.mongodb.item_repository import (
-    RIGHT_JOIN_OPTIMIZATION_THRESHOLD,
-    MongoDBItemRepository,
-)
-from linkurator_core.infrastructure.mongodb.repositories import CollectionIsNotInitialized
+from linkurator_core.infrastructure.postgres.item_repository import PostgresItemRepository
+
+LARGE_SCALE_ITEM_COUNT = 1_100
 
 
-@pytest.fixture(name="item_repo", scope="session", params=["mongodb", "in_memory"])
+@pytest.fixture(name="item_repo", scope="session", params=["in_memory", "postgresql"])
 def fixture_item_repo(db_name: str, request: Any) -> ItemRepository:
-    if request.param == "mongodb":
-        return MongoDBItemRepository(IPv4Address("127.0.0.1"), 27017, db_name,
-                                     "develop", "develop")
+    if request.param == "postgresql":
+        return PostgresItemRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
     return InMemoryItemRepository()
-
-
-@pytest.mark.asyncio()
-async def test_exception_is_raised_if_items_collection_is_not_created() -> None:
-    non_existent_db_name = f"test-{uuid4()}"
-    with pytest.raises(CollectionIsNotInitialized):
-        repo = MongoDBItemRepository(IPv4Address("127.0.0.1"), 27017, non_existent_db_name, "develop", "develop")
-        await repo.check_connection()
 
 
 @pytest.mark.asyncio()
@@ -135,6 +124,26 @@ async def test_create_and_update_items(item_repo: ItemRepository) -> None:
 async def test_create_and_update_items_with_no_items(item_repo: ItemRepository) -> None:
     await item_repo.upsert_items([])
     assert True
+
+
+@pytest.mark.asyncio()
+async def test_name_and_description_with_nul_bytes(item_repo: ItemRepository) -> None:
+    """
+    PostgreSQL text columns cannot store NUL bytes, so PostgresItemRepository drops them;
+    other backends preserve the content unmodified.
+    """
+    item = mock_item(name="Title\x00with nul", description="Description\x00with nul")
+
+    await item_repo.upsert_items([item])
+    item_found = await item_repo.get_item(item.uuid)
+
+    assert item_found is not None
+    if isinstance(item_repo, PostgresItemRepository):
+        assert item_found.name == "Titlewith nul"
+        assert item_found.description == "Descriptionwith nul"
+    else:
+        assert item_found.name == "Title\x00with nul"
+        assert item_found.description == "Description\x00with nul"
 
 
 @pytest.mark.asyncio()
@@ -657,8 +666,8 @@ async def test_find_items_when_every_item_has_an_interaction(
         item_repo: ItemRepository,
 ) -> None:
     """
-    Reproduces the "10K items, 10K interactions" scenario at a scale that crosses
-    RIGHT_JOIN_OPTIMIZATION_THRESHOLD, so the optimized query paths are exercised.
+    Reproduces the "10K items, 10K interactions" scenario at a scale large enough to exercise
+    interaction filtering and pagination over a large result set.
 
     Every item has exactly one interaction from `user_with_interactions`, with the four
     interaction types distributed round-robin. A second user has no interactions at all.
@@ -666,7 +675,7 @@ async def test_find_items_when_every_item_has_an_interaction(
     await item_repo.delete_all_items()
     await item_repo.delete_all_interactions()
 
-    total_items = RIGHT_JOIN_OPTIMIZATION_THRESHOLD + 100
+    total_items = LARGE_SCALE_ITEM_COUNT
     base_date = datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     interaction_types = [
         InteractionType.VIEWED,
@@ -1150,54 +1159,6 @@ async def test_find_interactions(item_repo: ItemRepository) -> None:
     assert len(found_interactions) == 2
     assert interaction1 in found_interactions
     assert interaction2 in found_interactions
-
-
-@pytest.mark.asyncio()
-async def test_find_items_with_interactions_and_duration_filter_right_join(item_repo: ItemRepository) -> None:
-    """
-    Test that finds items with interactions and duration filter using the right join optimization.
-    This test reproduces a bug where $or conditions for duration filtering were incorrectly prefixed
-    with "item." (creating "item.$or" instead of "$or" with prefixed fields inside).
-    The right join optimization is triggered when there are more than 1000 items matching the filter.
-    """
-    await item_repo.delete_all_items()
-    await item_repo.delete_all_interactions()
-
-    # Create enough items that ALL match the duration filter to trigger the right join optimization
-    # All items have duration=600 which is <= max_duration=900
-    items = [
-        mock_item(
-            item_uuid=UUID(f"00000000-0000-0000-0000-{i:012d}"),
-            duration=600,  # All items have duration that matches the filter
-            published_at=datetime(2020, 1, 1, 0, 0, i % 60, tzinfo=timezone.utc),
-        )
-        for i in range(RIGHT_JOIN_OPTIMIZATION_THRESHOLD + 1)
-    ]
-    await item_repo.upsert_items(items)
-
-    # Add an interaction for the first item
-    user_id = UUID("52819cca-4de6-4b8b-b313-5cbd5b169161")
-    await item_repo.add_interaction(Interaction(
-        uuid=UUID("76551ba4-1757-4cd6-9f98-5ef14b7c1209"),
-        item_uuid=items[0].uuid,
-        user_uuid=user_id,
-        type=InteractionType.VIEWED,
-        created_at=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-    ))
-
-    # This query triggers the right join (total > 1000) and use the $or clause for duration filtering
-    found_items = await item_repo.find_items(
-        criteria=ItemFilterCriteria(
-            interactions=AnyItemInteraction(viewed=True),
-            interactions_from_user=user_id,
-            max_duration=900,
-        ),
-        limit=10,
-        page_number=0,
-    )
-
-    assert len(found_items) == 1
-    assert found_items[0].uuid == items[0].uuid
 
 
 @pytest.mark.asyncio()
