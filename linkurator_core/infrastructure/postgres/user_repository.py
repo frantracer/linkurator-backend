@@ -8,6 +8,7 @@ from uuid import UUID
 import psycopg
 
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.exceptions import UsernameAlreadyInUseError
 from linkurator_core.domain.users.user import HashedPassword, User, Username
 from linkurator_core.domain.users.user_repository import EmailAlreadyInUse, UserRepository
 from linkurator_core.infrastructure.postgres.common import PostgresConnector
@@ -87,8 +88,10 @@ class PostgresUserRepository(UserRepository):
             if error.diag.constraint_name == "users_email_key":
                 msg = f"Email '{user.email}' is already in use"
                 raise EmailAlreadyInUse(msg) from error
-            # A username collision is silently swallowed here: only the email uniqueness
-            # violation is translated into a domain exception.
+            if error.diag.constraint_name == "users_username_key":
+                msg = f"Username '{user.username}' is already in use"
+                raise UsernameAlreadyInUseError(msg) from error
+            raise
 
     async def get(self, user_id: UUID) -> User | None:
         pool = await self._connector.pool()

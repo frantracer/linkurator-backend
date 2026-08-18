@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from linkurator_core.domain.common import utils
+from linkurator_core.domain.common.exceptions import UsernameAlreadyInUseError
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.user import User, Username
 from linkurator_core.domain.users.user_repository import EmailAlreadyInUse, UserRepository
@@ -149,6 +150,33 @@ async def test_the_email_is_unique(user_repo: UserRepository) -> None:
     await user_repo.add(user_1)
 
     with pytest.raises(EmailAlreadyInUse):
+        await user_repo.add(user_2)
+
+
+@pytest.mark.asyncio()
+async def test_the_username_is_unique(user_repo: UserRepository) -> None:
+    user_1 = User.new(
+        first_name="test",
+        last_name="test",
+        username=Username("sample_3"),
+        email="sample_3@test.com",
+        locale="en",
+        avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+        uuid=uuid.UUID("2c1e3f0a-df9f-4d3f-9f10-3e6c2b1a8f10"),
+        google_refresh_token="token")
+    user_2 = User.new(
+        first_name="test",
+        last_name="test",
+        username=Username("sample_3"),
+        email="sample_3_bis@test.com",
+        locale="en",
+        avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+        uuid=uuid.UUID("6d2e9c34-1a7d-4c8b-8c0a-2f6b9d1e4a3c"),
+        google_refresh_token="token")
+
+    await user_repo.add(user_1)
+
+    with pytest.raises(UsernameAlreadyInUseError):
         await user_repo.add(user_2)
 
 
