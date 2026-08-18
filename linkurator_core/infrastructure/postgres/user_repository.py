@@ -139,19 +139,28 @@ class PostgresUserRepository(UserRepository):
     async def update(self, user: User) -> None:
         pool = await self._connector.pool()
         uuid_param, *rest = user_params(user)
-        await pool.execute(
-            """
-            UPDATE users SET
-                first_name = %s, last_name = %s, username = %s, email = %s, avatar_url = %s, locale = %s,
-                created_at = %s, updated_at = %s, scanned_at = %s, last_login_at = %s,
-                google_refresh_token = %s, password_hash = %s, password_salt = %s,
-                subscription_uuids = %s, youtube_subscription_uuids = %s,
-                youtube_unfollowed_subscription_uuids = %s, followed_topics = %s, favorite_topics = %s,
-                is_admin = %s, curators = %s
-            WHERE uuid = %s
-            """,
-            *rest, uuid_param,
-        )
+        try:
+            await pool.execute(
+                """
+                UPDATE users SET
+                    first_name = %s, last_name = %s, username = %s, email = %s, avatar_url = %s, locale = %s,
+                    created_at = %s, updated_at = %s, scanned_at = %s, last_login_at = %s,
+                    google_refresh_token = %s, password_hash = %s, password_salt = %s,
+                    subscription_uuids = %s, youtube_subscription_uuids = %s,
+                    youtube_unfollowed_subscription_uuids = %s, followed_topics = %s, favorite_topics = %s,
+                    is_admin = %s, curators = %s
+                WHERE uuid = %s
+                """,
+                *rest, uuid_param,
+            )
+        except psycopg.errors.UniqueViolation as error:
+            if error.diag.constraint_name == "users_email_key":
+                msg = f"Email '{user.email}' is already in use"
+                raise EmailAlreadyInUse(msg) from error
+            if error.diag.constraint_name == "users_username_key":
+                msg = f"Username '{user.username}' is already in use"
+                raise UsernameAlreadyInUseError(msg) from error
+            raise
 
     async def find_latest_scan_before(self, timestamp: datetime.datetime) -> list[User]:
         pool = await self._connector.pool()

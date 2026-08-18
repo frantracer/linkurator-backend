@@ -181,6 +181,35 @@ async def test_the_username_is_unique(user_repo: UserRepository) -> None:
 
 
 @pytest.mark.asyncio()
+async def test_the_username_is_unique_when_updating(user_repo: UserRepository) -> None:
+    user_1 = User.new(
+        first_name="test",
+        last_name="test",
+        username=Username("sample_4"),
+        email="sample_4@test.com",
+        locale="en",
+        avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+        uuid=uuid.UUID("6e7a6f36-7f2f-4e6f-9f2e-5b8d3a2c1e4f"),
+        google_refresh_token="token")
+    user_2 = User.new(
+        first_name="test",
+        last_name="test",
+        username=Username("sample_4_bis"),
+        email="sample_4_bis@test.com",
+        locale="en",
+        avatar_url=utils.parse_url("https://avatars.com/avatar.png"),
+        uuid=uuid.UUID("6f1c2b0a-9d3e-4a5f-8b6c-7d2e9f4a1b3c"),
+        google_refresh_token="token")
+
+    await user_repo.add(user_1)
+    await user_repo.add(user_2)
+
+    user_2.username = user_1.username
+    with pytest.raises(UsernameAlreadyInUseError):
+        await user_repo.update(user_2)
+
+
+@pytest.mark.asyncio()
 async def test_find_latest_scan(user_repo: UserRepository) -> None:
     user1 = User.new(first_name="test",
                      last_name="test",

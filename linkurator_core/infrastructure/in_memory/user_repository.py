@@ -48,6 +48,13 @@ class InMemoryUserRepository(UserRepository):
         self.users = {}
 
     async def update(self, user: User) -> None:
+        for existing_user in self.users.values():
+            if existing_user.uuid == user.uuid:
+                continue
+            if existing_user.email == user.email:
+                raise EmailAlreadyInUse()
+            if existing_user.username == user.username:
+                raise UsernameAlreadyInUseError()
         self.users[user.uuid] = user
 
     async def find_latest_scan_before(self, timestamp: datetime) -> list[User]:
