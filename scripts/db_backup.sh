@@ -105,36 +105,10 @@ elif [ "$ACTION" = "restore" ]; then
   aws s3 cp "s3://${R2_BUCKET}/${KEY}" "$LOCAL_FILE" --endpoint-url "$R2_ENDPOINT"
 
   log "Restoring database 'main' from $LOCAL_FILE"
-  # pg_restore exits 1 whenever it reports any ignored error, even harmless
-  # "already exists"-style ones under --clean --if-exists, so it can't be
-  # allowed to abort the script here.
-  set +e
+  # pg_restore exits 1 whenever it reports any ignored error
+  # it is not allowed to abort the script here
   docker exec -i -e PGPASSWORD="$POSTGRES_PASS" linkurator-postgres \
-    pg_restore --username "$POSTGRES_USER" --clean --if-exists --no-owner --dbname main < "$LOCAL_FILE"
-  RESTORE_STATUS=$?
-  set -e
-
-  if [ "$RESTORE_STATUS" -ne 0 ]; then
-    echo "pg_restore reported errors (see above); reapplying full-text search objects as a safety net" >&2
-    echo "(expected only for backups taken before the immutable_unaccent search_path fix)" >&2
-  fi
-
-  log "Reapplying full-text search objects (idempotent safety net)"
-  # pg_dump/pg_restore always run with search_path='' for restore safety. Backups taken
-  # before immutable_unaccent's body was schema-qualified fail to create these indexes
-  # during restore for that reason; reapply them here (idempotent) so old backups still
-  # restore into a working state. Safe to remove once no such backups remain in rotation.
-  docker exec -i -e PGPASSWORD="$POSTGRES_PASS" linkurator-postgres \
-    psql --username "$POSTGRES_USER" --dbname main -v ON_ERROR_STOP=1 <<'SQL'
-CREATE EXTENSION IF NOT EXISTS unaccent;
-CREATE OR REPLACE FUNCTION immutable_unaccent(text)
-RETURNS text AS $$
-    SELECT public.unaccent('public.unaccent', $1)
-$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT;
-CREATE INDEX IF NOT EXISTS items_name_search_idx ON items USING GIN (to_tsvector('simple', immutable_unaccent(name)));
-CREATE INDEX IF NOT EXISTS subscriptions_name_search_idx ON subscriptions USING GIN (to_tsvector('simple', immutable_unaccent(name)));
-CREATE INDEX IF NOT EXISTS topics_name_search_idx ON topics USING GIN (to_tsvector('simple', immutable_unaccent(name)));
-SQL
+    pg_restore --username "$POSTGRES_USER" --clean --if-exists --no-owner --dbname main < "$LOCAL_FILE" || true
 
   rm "$LOCAL_FILE"
 
