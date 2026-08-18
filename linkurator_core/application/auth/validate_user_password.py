@@ -22,7 +22,7 @@ class ValidateUserPassword:
             return None
 
         session = Session.new(user_id=user.uuid, seconds_to_expire=SESSION_DURATION_IN_SECONDS)
-        self.session_repository.add(session)
+        await self.session_repository.add(session)
 
         user.last_login_at = datetime.now(timezone.utc)
         await self.user_repository.update(user)

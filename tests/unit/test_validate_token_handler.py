@@ -1,17 +1,18 @@
 import unittest
 import uuid
 from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from linkurator_core.application.auth.validate_session_token import ValidateTokenHandler
 from linkurator_core.domain.common.mock_factory import mock_user
 from linkurator_core.domain.users.session import Session
+from linkurator_core.domain.users.session_repository import SessionRepository
 from linkurator_core.infrastructure.in_memory.user_repository import InMemoryUserRepository
 
 
 class TestValidateTokenHandler(unittest.IsolatedAsyncioTestCase):
     async def test_create_a_new_session(self) -> None:
-        session_repo_mock = MagicMock()
+        session_repo_mock = AsyncMock(spec=SessionRepository)
         session_repo_mock.get.return_value = None
 
         user_repo_mock = InMemoryUserRepository()
@@ -33,7 +34,7 @@ class TestValidateTokenHandler(unittest.IsolatedAsyncioTestCase):
         assert updated_user.last_login_at >= dummy_user.last_login_at
 
     async def test_an_existing_session_returns_a_session(self) -> None:
-        session_repo_mock = MagicMock()
+        session_repo_mock = AsyncMock(spec=SessionRepository)
         user_id: uuid.UUID = uuid.UUID("15537505-3cc9-441a-9eb7-36045042fb4d")
         dummy_session = Session("mytoken", user_id, datetime.now(tz=timezone.utc) + timedelta(days=1))
         session_repo_mock.get.return_value = dummy_session
@@ -50,7 +51,7 @@ class TestValidateTokenHandler(unittest.IsolatedAsyncioTestCase):
         assert dummy_session == the_session
 
     async def test_a_invalid_session_returns_none(self) -> None:
-        session_repo_mock = MagicMock()
+        session_repo_mock = AsyncMock(spec=SessionRepository)
         session_repo_mock.get.return_value = None
 
         user_repo_mock = MagicMock()
@@ -65,7 +66,7 @@ class TestValidateTokenHandler(unittest.IsolatedAsyncioTestCase):
         assert the_session is None
 
     async def test_an_expired_session_returns_none(self) -> None:
-        session_repo_mock = MagicMock()
+        session_repo_mock = AsyncMock(spec=SessionRepository)
 
         session_repo_mock.get.return_value = Session(
             token="mytoken",

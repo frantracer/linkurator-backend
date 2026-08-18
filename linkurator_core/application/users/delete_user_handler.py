@@ -25,6 +25,6 @@ class DeleteUserHandler:
         except FailToRevokeCredentialsError:
             logging.warning("Failed to revoke credentials for user %s", user.username)
 
-        self.session_repository.delete(user_session.token)
+        await self.session_repository.delete(user_session.token)
 
         await self.user_repository.delete(user_id)

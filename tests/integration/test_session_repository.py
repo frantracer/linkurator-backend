@@ -18,15 +18,16 @@ def fixture_session_repo(db_name: str) -> SessionRepository:
     return PostgresSessionRepository(IPv4Address("127.0.0.1"), 5432, db_name, "develop", "develop")
 
 
-def test_get_session_by_token(session_repo: SessionRepository) -> None:
+@pytest.mark.asyncio()
+async def test_get_session_by_token(session_repo: SessionRepository) -> None:
     session = Session(
         token="test_token_1",
         user_id=uuid.UUID("4bf64498-239e-4bcb-a5a1-b84a7708ad01"),
         expires_at=datetime.now(tz=timezone.utc) + timedelta(days=1),
     )
 
-    session_repo.add(session)
-    the_session = session_repo.get(session.token)
+    await session_repo.add(session)
+    the_session = await session_repo.get(session.token)
 
     assert the_session is not None
     assert the_session.token == session.token
@@ -34,42 +35,45 @@ def test_get_session_by_token(session_repo: SessionRepository) -> None:
     assert int(the_session.expires_at.timestamp() * 100) == floor(session.expires_at.timestamp() * 100)
 
 
-def test_get_session_by_token_not_found(session_repo: SessionRepository) -> None:
-    the_session = session_repo.get("not_found")
+@pytest.mark.asyncio()
+async def test_get_session_by_token_not_found(session_repo: SessionRepository) -> None:
+    the_session = await session_repo.get("not_found")
 
     assert the_session is None
 
 
-def test_delete_session(session_repo: SessionRepository) -> None:
+@pytest.mark.asyncio()
+async def test_delete_session(session_repo: SessionRepository) -> None:
     session = Session(
         token="test_token_2",
         user_id=uuid.UUID("6e57581d-1046-4001-9c07-7de9fc19afa5"),
         expires_at=datetime.now(tz=timezone.utc) + timedelta(days=1),
     )
 
-    session_repo.add(session)
-    the_session = session_repo.get(session.token)
+    await session_repo.add(session)
+    the_session = await session_repo.get(session.token)
 
     assert the_session is not None
     assert the_session.token == session.token
 
-    session_repo.delete(session.token)
-    deleted_session = session_repo.get(session.token)
+    await session_repo.delete(session.token)
+    deleted_session = await session_repo.get(session.token)
     assert deleted_session is None
 
 
-def test_two_sessions_with_the_same_token_returns_an_error(session_repo: SessionRepository) -> None:
+@pytest.mark.asyncio()
+async def test_two_sessions_with_the_same_token_returns_an_error(session_repo: SessionRepository) -> None:
     session = Session(
         token="test_token_3",
         user_id=uuid.UUID("6e57581d-1046-4001-9c07-7de9fc19afa5"),
         expires_at=datetime.now(timezone.utc) + timedelta(days=1),
     )
 
-    session_repo.add(session)
-    the_session = session_repo.get(session.token)
+    await session_repo.add(session)
+    the_session = await session_repo.get(session.token)
 
     assert the_session is not None
     assert the_session.token == session.token
 
     with pytest.raises(TokenAlreadyExists):
-        session_repo.add(session)
+        await session_repo.add(session)

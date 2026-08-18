@@ -17,7 +17,7 @@ class ValidateTokenHandler:
         self.account_service = account_service
 
     async def handle(self, access_token: str) -> Session | None:
-        session = self.session_repository.get(access_token)
+        session = await self.session_repository.get(access_token)
         if session is not None and not session.is_expired():
             return session
 
@@ -34,7 +34,7 @@ class ValidateTokenHandler:
         session = Session(user_id=user.uuid,
                           token=access_token,
                           expires_at=now + timedelta(seconds=SESSION_DURATION_IN_SECONDS))
-        self.session_repository.add(session)
+        await self.session_repository.add(session)
 
         user.last_login_at = now
         await self.user_repository.update(user)
